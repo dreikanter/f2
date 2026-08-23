@@ -7,7 +7,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 - Adding or editing an AI or search key now starts with the cursor already in the first field.
 - While a token or credential is being checked, the rest of the page stays clickable — you can head back to the list instead of waiting for the check to finish.
 - Tokens and credentials that haven't been checked yet now show a question mark in the list, instead of a spinner that never spun.
-- A token check that gets cut off no longer leaves the page waiting forever — the token settles and tells you the check didn't get through.
+- A token check that gets cut off no longer leaves the page waiting forever — the token settles, tells you the check didn't get through, and leaves your feeds running.
 
 ## 2026-08-22
 

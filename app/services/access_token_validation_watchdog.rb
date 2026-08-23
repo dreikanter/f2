@@ -10,9 +10,12 @@
 # sweep is deliberate: the queue is the thing that just failed, so the repair
 # can't depend on it.
 #
-# An abandoned run tells us nothing about the token itself, only that the check
-# didn't happen — so the token lands in the same failed state as a check that
-# ran and said no, under an event type that names the real cause.
+# What an abandoned run tells us is that the check didn't happen — nothing about
+# the token itself. So this settles the token's own state and stops there: the
+# feeds behind it keep running. The window can't distinguish a dead run from a
+# job still sitting in a badly backed-up queue, and that job may yet land and
+# find the token perfectly good. Taking feeds down here would leave them down
+# after it did, needing a human to put them back.
 class AccessTokenValidationWatchdog
   EVENT_TYPE = "access_token_validation_abandoned".freeze
 
@@ -31,9 +34,24 @@ class AccessTokenValidationWatchdog
       # verdict is the one that counts.
       return false unless access_token.validation_abandoned?
 
-      access_token.disable_token_and_feeds(event_type: EVENT_TYPE)
+      access_token.update!(status: :inactive, validation_started_at: nil)
+      record_event
     end
 
     true
+  end
+
+  private
+
+  # Nothing else marks this: the token simply stops being checked. The log entry
+  # is what tells the user why it went quiet, so it's written every time —
+  # including for a token that has no feeds to speak for it.
+  def record_event
+    Event.create!(
+      type: EVENT_TYPE,
+      user: access_token.user,
+      subject: access_token,
+      level: :warning
+    )
   end
 end
