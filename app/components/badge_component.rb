@@ -7,10 +7,11 @@ class BadgeComponent < ViewComponent::Base
     danger: "bg-danger-subtle text-danger-strong ring-danger/20"
   }.freeze
 
-  def initialize(text:, color: :neutral, key: nil)
+  def initialize(text:, color: :neutral, key: nil, data: {})
     @text = text
     @color = color
     @key = key
+    @data = data
   end
 
   def call
@@ -27,6 +28,8 @@ class BadgeComponent < ViewComponent::Base
   end
 
   def data_attributes
-    @key ? { key: @key } : nil
+    attributes = @data.dup
+    attributes[:key] = @key if @key
+    attributes.presence
   end
 end
