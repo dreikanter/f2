@@ -29,7 +29,7 @@ bin/kamal
 - **Committed:** yes
 - **Format:** YAML
 - **Purpose:** Base Kamal config shared by all destinations.
-- **Contains:** service name, image name, GHCR registry settings, shared secret names, builder architecture, aliases.
+- **Contains:** service name, image name, GHCR registry settings, shared secret names, builder architecture and build cache, aliases.
 - **Used when:** any Kamal deploy/build/config command runs.
 
 ### `config/deploy.staging.yml`
