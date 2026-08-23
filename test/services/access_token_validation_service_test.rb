@@ -252,6 +252,17 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert_not access_token.allows_scope?(AccessToken::READ_MY_INFO_SCOPE)
   end
 
+  test "#call should close the open validation run when the token checks out" do
+    access_token.update!(validation_started_at: 1.minute.ago)
+    stub_app_token_info
+    stub_successful_account_calls
+
+    AccessTokenValidationService.new(access_token).call
+
+    assert access_token.reload.active?
+    assert_nil access_token.validation_started_at
+  end
+
   test "#call should report a missing identity permission as its own event" do
     access_token.update!(status: :active)
     feed = create(:feed, user: user, access_token: access_token, state: :enabled)

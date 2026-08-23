@@ -6,7 +6,7 @@ class AccessTokenValidationService
   end
 
   def call
-    access_token.validating! unless access_token.validating?
+    access_token.begin_validation! unless access_token.validating?
 
     # Scopes come first because that route is always allowed. It answers for any
     # live token, and tells us whether the rest of the sequence can succeed.
@@ -22,7 +22,8 @@ class AccessTokenValidationService
         owner: user_info[:username],
         freefeed_user_id: user_info[:id],
         scopes: scopes,
-        last_used_at: Time.current
+        last_used_at: Time.current,
+        validation_started_at: nil
       )
 
       access_token_detail = access_token.access_token_detail || access_token.build_access_token_detail

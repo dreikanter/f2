@@ -127,6 +127,21 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_not_includes result, "Account 'cats' was not found"
   end
 
+  test "#call should name an abandoned check as its own reason" do
+    token = create(:access_token, user: user)
+    event = Event.create!(
+      type: AccessTokenValidationWatchdog::EVENT_TYPE,
+      level: :warning,
+      subject: token,
+      user: user
+    )
+
+    result = render_inline(EventDescriptionComponent.for(event)).to_html
+
+    assert_includes result, "never finished checking"
+    assert_includes result, token.name
+  end
+
   test "#call should render links for multiple feeds from metadata" do
     event = Event.create!(
       type: "access_token_validation_failed",

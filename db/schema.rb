@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_08_22_140000) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_23_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -39,6 +39,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_22_140000) do
     t.uuid "user_id", null: false
     t.string "freefeed_user_id"
     t.string "scopes", default: [], null: false, array: true
+    t.datetime "validation_started_at"
     t.index ["freefeed_user_id"], name: "index_access_tokens_on_freefeed_user_id"
     t.index ["user_id", "name"], name: "index_access_tokens_on_user_id_and_name", unique: true
   end

@@ -94,6 +94,17 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_select "header [role='menu']", count: 0
   end
 
+  test "#show should keep the page clickable while the token is validating" do
+    sign_in_as user
+
+    get access_token_path(access_token)
+
+    assert_response :success
+    assert_select "[data-controller='polling'][aria-busy]", count: 0
+    assert_select "[data-controller='polling'][data-polling-indicate-busy-value='false']"
+    assert_select "[aria-busy='true'] a[href=?]", access_tokens_path, count: 0
+  end
+
   test "#show should warn when the token can't look up subscriber counts" do
     sign_in_as user
     active = create(:access_token, :active, user: user, scopes: ["read-my-info", "manage-posts"])
@@ -139,6 +150,17 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-key='access_token.missing-identity-permission']", count: 0
     assert_select "[data-status='inactive']", text: /expired, revoked, or incorrectly copied/
+  end
+
+  test "#show should not blame a permission when the check never read the token's scopes" do
+    sign_in_as user
+    token = create(:access_token, user: user, status: :inactive, scopes: [])
+
+    get access_token_path(token)
+
+    assert_response :success
+    assert_select "[data-key='access_token.missing-identity-permission']", count: 0
+    assert_select "[data-status='inactive']", text: /couldn't confirm this token/
   end
 
   test "#show should render Associated Feeds section when token has feeds" do

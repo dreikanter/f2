@@ -79,6 +79,27 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, edit_feed_path(draft.id)
   end
 
+  test "#show should settle a validation whose run never reported back" do
+    access_token.update!(status: :validating, validation_started_at: (AccessToken::VALIDATION_STALE_AFTER + 1.minute).ago)
+    sign_in_as user
+
+    get access_token_validation_path(access_token)
+
+    assert_response :success
+    assert_match /data-status="inactive"/, response.body
+    assert access_token.reload.inactive?
+  end
+
+  test "#show should keep waiting on a validation that is still in flight" do
+    access_token.update!(status: :validating, validation_started_at: 1.minute.ago)
+    sign_in_as user
+
+    get access_token_validation_path(access_token)
+
+    assert_response :no_content
+    assert access_token.reload.validating?
+  end
+
   test "#show should show inactive state with data-status attribute" do
     access_token.update!(status: :inactive, scopes: AccessToken::TOKEN_SCOPES)
     sign_in_as user
@@ -86,6 +107,6 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match /data-status="inactive"/, response.body
-    assert_match /Token is inactive/, response.body
+    assert_match /couldn't confirm this token/, response.body
   end
 end

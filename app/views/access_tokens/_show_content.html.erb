@@ -34,7 +34,9 @@
 <% if access_token.pending? || access_token.validating? %>
   <%= render CardComponent.new do %>
     <div class="space-y-6">
-      <div class="flex items-center justify-center py-8">
+      <%# aria-busy disables pointer events, so it stays on the waiting block —
+          on the page it would take the breadcrumb and menus down with it. %>
+      <div class="flex items-center justify-center py-8" aria-busy="true">
         <%= render SpinnerComponent.new(css_class: "mr-3") %>
         <span class="text-lg text-body">Validating token…</span>
       </div>
@@ -89,11 +91,10 @@
     </div>
   <% end %>
 <% elsif access_token.inactive? %>
-  <% if access_token.allows_scope?(AccessToken::READ_MY_INFO_SCOPE) %>
-    <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive" }) do %>
-      <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
-    <% end %>
-  <% else %>
+  <%# An empty scope list means the check never got far enough to read one, not
+      that the token is short a permission — only a scope list we actually read
+      can accuse it of that. %>
+  <% if access_token.scopes.any? && !access_token.allows_scope?(AccessToken::READ_MY_INFO_SCOPE) %>
     <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive", key: "access_token.missing-identity-permission" }) do %>
       <p>This token works, but it can't tell Feeder which FreeFeed account it belongs to, so there's no way to publish with it.</p>
       <p>
@@ -103,6 +104,14 @@
                     rel: "noopener",
                     class: "font-medium underline underline-offset-4" %>
         and <%= link_to "paste it here", edit_access_token_path(access_token), class: "font-medium underline underline-offset-4" %> to fix this.
+      </p>
+    <% end %>
+  <% else %>
+    <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive" }) do %>
+      <p>Feeder couldn't confirm this token, so it's inactive and feeds can't publish with it.</p>
+      <p>
+        It may be expired, revoked, or incorrectly copied — or the check didn't get through.
+        <%= link_to "Paste the token again", edit_access_token_path(access_token), class: "font-medium underline underline-offset-4" %> to try once more.
       </p>
     <% end %>
   <% end %>
