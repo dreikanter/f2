@@ -11,28 +11,34 @@
       polling_max_polls_value: polling_max_polls
     } : {} do %>
   <div class="space-y-2">
-    <div class="flex flex-wrap items-center gap-2">
-      <%= label_tag "feed[target_group]", "Target Group", class: "block font-semibold text-heading" %>
-      <% if refreshing %>
-        <span data-polling-target="content" data-key="feed.groups-refreshing">
-          <%= icon("loader-circle", css_class: "size-4 animate-spin text-muted", aria_label: "Refreshing groups") %>
-        </span>
-        <span hidden data-polling-target="timeoutMessage" data-key="feed.groups-refresh-timeout">
-          <span class="inline-flex flex-wrap items-center gap-2">
-            <%= render "feeds/groups_refresh_button" %>
-            <span class="text-sm text-warning">This is taking longer than expected — try again in a moment.</span>
-          </span>
-        </span>
-      <% elsif token&.active? %>
-        <%= render "feeds/groups_refresh_button" %>
+    <%= label_tag "feed[target_group]", "Target Group", class: "block font-semibold text-heading" %>
+
+    <%# The refresh control shares the picker's row and stretches to its height;
+        its timeout note wraps onto a line of its own. %>
+    <div class="flex flex-wrap items-stretch gap-2">
+      <% if groups.present? %>
+        <%= select_tag "feed[target_group]",
+                       options_for_select((selected.present? ? groups | [selected] : groups).sort, selected_group),
+                       class: "#{input_field_classes(disabled: true)} flex-1 min-w-0",
+                       required: true %>
+      <% else %>
+        <%= select_tag "feed[target_group]",
+                       options_for_select([[selected_group.presence || "Select a group", ""]]),
+                       class: "#{input_field_classes(disabled: true)} flex-1 min-w-0",
+                       disabled: true %>
       <% end %>
+      <%# The feed form already wraps this, so the trigger can't be a nested
+          form; a Stimulus click stands in for the submit. %>
+      <%= render GroupsRefreshControlComponent.new(key_prefix: "feed",
+                                                   refreshing: refreshing,
+                                                   available: token&.active?,
+                                                   data: {
+                                                     controller: "loading-button",
+                                                     action: "click->groups#refreshGroups"
+                                                   }) %>
     </div>
 
     <% if groups.present? %>
-      <%= select_tag "feed[target_group]",
-                     options_for_select((selected.present? ? groups | [selected] : groups).sort, selected_group),
-                     class: input_field_classes(disabled: true),
-                     required: true %>
       <% if refresh_failed %>
         <p class="text-sm text-danger" data-key="feed.groups-refresh-failed">
           <% if token&.active? %>
@@ -53,10 +59,6 @@
         <% end %>
       </p>
     <% else %>
-      <%= select_tag "feed[target_group]",
-                     options_for_select([[selected_group.presence || "Select a group", ""]]),
-                     class: input_field_classes(disabled: true),
-                     disabled: true %>
       <% unless refreshing %>
         <p class="text-sm text-danger">
           <% if token.nil? %>

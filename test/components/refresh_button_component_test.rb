@@ -39,4 +39,25 @@ class RefreshButtonComponentTest < ViewComponent::TestCase
     # caller data is merged alongside the built-in loading-button target
     assert_equal "button", button["data-loading-button-target"]
   end
+
+  test "#render should render the loading state as the same button, disabled and spinning" do
+    idle_button = render_inline(RefreshButtonComponent.new(title: "Refresh groups")).at_css("button")
+
+    button = render_inline(RefreshButtonComponent.new(title: "Refresh groups", loading: true)).at_css("button")
+
+    assert_equal "disabled", button["disabled"]
+    # same classes, so the button keeps its box across the two states
+    assert_equal idle_button["class"], button["class"]
+
+    default_icon, loading_icon = button.css("span").to_a
+    assert_includes default_icon["class"], "hidden"
+    assert_not_includes loading_icon["class"].to_s, "hidden"
+    assert_not_nil loading_icon.at_css("svg.animate-spin")
+  end
+
+  test "#render should keep the loading state off the loading-button controller" do
+    result = render_inline(RefreshButtonComponent.new(loading: true))
+
+    assert_empty result.css("[data-loading-button-target]")
+  end
 end
