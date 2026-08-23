@@ -245,6 +245,17 @@ The app connects through `config/database.yml` using:
 
 Do not put the database password in `DATABASE_URL`. Keep it in Kamal secrets.
 
+One database per destination holds everything, Solid Cache, Solid Queue and
+Solid Cable included, so a `pg_dump` of it is a complete backup. Hosts deployed
+before Solid Cache moved onto it also carry empty `f2_<env>_cache` and
+`f2_<env>_queue` databases from the old config. Nothing reads them; drop them:
+
+```bash
+bin/kamal accessory exec db --reuse \
+  "psql -U f2 -d f2_production -c 'DROP DATABASE IF EXISTS f2_production_cache' \
+                               -c 'DROP DATABASE IF EXISTS f2_production_queue'" -d production
+```
+
 ## Preflight
 
 Before deploying, verify the local environment and target host:

@@ -77,10 +77,10 @@ test:
 # Read https://guides.rubyonrails.org/configuring.html#configuring-a-database
 # for a full overview on how database connection configuration can be specified.
 #
-# One database per destination. Solid Cache, Solid Queue, and Solid Cable tables
-# all live in the primary schema (db/schema.rb), so splitting any of them into
-# its own database needs a db/<name>_schema.rb dump first: without one,
-# db:prepare creates the database empty and every query against it fails.
+# Solid Cache, Solid Queue and Solid Cable live in this one database: their
+# tables are part of db/schema.rb. Splitting any of them onto a database of its
+# own needs a schema dump or migrations for it first, or db:prepare creates the
+# extra database empty and the store fails on a missing table.
 production:
   <<: *default
   database: f2_production
