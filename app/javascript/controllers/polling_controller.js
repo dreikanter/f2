@@ -86,9 +86,11 @@ export default class extends Controller {
     }
   }
 
+  // A timed-out fragment can swap several pieces at once — say a spinning button
+  // for a live one plus a note explaining the wait — so every target is toggled.
   _onTimeout() {
-    if (this.hasTimeoutMessageTarget) this.timeoutMessageTarget.hidden = false
-    if (this.hasContentTarget) this.contentTarget.hidden = true
+    this.timeoutMessageTargets.forEach((el) => { el.hidden = false })
+    this.contentTargets.forEach((el) => { el.hidden = true })
   }
 
   async _performPoll(options = {}) {
