@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Installs the Kamal CLI standalone, at the version Gemfile.lock pins.
+#
+# For deploys that carry no app bundle, so there is no binstub to run: imgproxy
+# ships no Rails app and skips the bundle entirely. Reading the version here
+# keeps that install in step with the gem in the :development group, which the
+# hardcoded pin it replaces did not — that pin sat a version behind the lockfile.
+
+require "bundler"
+
+lockfile = File.expand_path("../Gemfile.lock", __dir__)
+spec = Bundler::LockfileParser.new(File.read(lockfile)).specs.find { |candidate| candidate.name == "kamal" }
+abort "bin/install-kamal: no kamal in Gemfile.lock" unless spec
+
+version = spec.version.to_s
+
+if system("gem", "list", "^kamal$", "-i", "--silent", "-v", version)
+  puts "kamal #{version} is already installed"
+  exit
+end
+
+puts "Installing kamal #{version}"
+system("gem", "install", "kamal", "-v", version, "--no-document", exception: true)

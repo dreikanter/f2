@@ -21,14 +21,13 @@ jobs:
         uses: actions/checkout@v7
 
       # imgproxy needs no app code, so skip the bundle and install only Kamal.
-      # Pin to the version in Gemfile.lock.
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
 
       - name: Install Kamal
-        run: gem install kamal -v 2.11.0
+        run: bin/install-kamal
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
