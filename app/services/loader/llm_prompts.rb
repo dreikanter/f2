@@ -34,9 +34,13 @@ module Loader
     # Providers whose structured-output mode is advisory (Kimi, and whichever
     # upstream OpenRouter picks) shape the reply from this text.
     OUTPUT_CONTRACT = <<~TEXT.strip
-      Reply with a single JSON object whose only key is "items", holding the
-      array of items. A bare array, or any other shape at the top level, is not
-      a valid reply.
+      Reply with one JSON object and nothing else, shaped like this:
+
+      {"items": [ ... ]}
+
+      Any other top level shape is invalid, whatever it contains: a bare array,
+      a different key name, an object wrapped in quotes, JSON with prose around
+      it.
 
       Each item is an object with these fields:
       - body (required): the post text, plain and readable.

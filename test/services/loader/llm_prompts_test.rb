@@ -32,8 +32,8 @@ class Loader::LlmPromptsTest < ActiveSupport::TestCase
   test "the output contract should require the items envelope" do
     contract = Loader::LlmPrompts::OUTPUT_CONTRACT
 
-    assert_match(/single JSON object whose only key is "items"/, contract)
-    assert_match(/bare array/, contract)
+    assert_match(/\{"items": \[ \.\.\. \]\}/, contract)
+    assert_match(/Any other top level shape is invalid/, contract)
   end
 
   # A model that never sees the schema needs the empty result named as a shape.
