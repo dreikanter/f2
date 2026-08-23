@@ -11,7 +11,7 @@
 
   <% case @ai_credential.state %>
   <% when "pending", "validating" %>
-    <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 shadow-xs"
+    <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3"
          data-key="ai_credential.validating">
       <div class="flex-shrink-0">
         <%= render SpinnerComponent.new %>

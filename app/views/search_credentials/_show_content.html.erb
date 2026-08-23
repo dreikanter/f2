@@ -14,7 +14,7 @@
   <% when "pending", "validating" %>
     <%# aria-busy disables pointer events, so it stays on the waiting block —
         on the page it would take the breadcrumb and menus down with it. %>
-    <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 shadow-xs"
+    <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3"
          data-key="search_credential.validating" aria-busy="true">
       <div class="flex-shrink-0"><%= render SpinnerComponent.new %></div>
       <div class="space-y-1">
