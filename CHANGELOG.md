@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-08-23
 
 - While a token or credential is being checked, the rest of the page stays clickable — you can head back to the list instead of waiting for the check to finish.
+- Tokens and credentials that haven't been checked yet now show a question mark in the list, instead of a spinner that never spun.
 
 ## 2026-08-22
 

@@ -89,6 +89,19 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_not_includes result, "aria-hidden"
   end
 
+  test "#credential_status_icon should mark an unsettled record unknown rather than in progress" do
+    ["pending", "validating"].each do |status|
+      result = credential_status_icon(status)
+      assert_includes result, 'data-icon="circle-question-mark"'
+      assert_includes result, 'title="Not checked yet"'
+    end
+  end
+
+  test "#credential_status_icon should render the settled statuses" do
+    assert_includes credential_status_icon("active"), 'data-icon="circle-check"'
+    assert_includes credential_status_icon("inactive"), 'data-icon="circle-x"'
+  end
+
   test "#post_status_icon returns draft icon for draft status" do
     result = post_status_icon("draft")
     assert_includes result, "<svg"

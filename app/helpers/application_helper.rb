@@ -73,6 +73,7 @@ module ApplicationHelper
     "circle-x"       => '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',
     "circle-play"    => '<circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>',
     "circle-pause"   => '<circle cx="12" cy="12" r="10"/><line x1="10" x2="10" y1="15" y2="9"/><line x1="14" x2="14" y1="15" y2="9"/>',
+    "circle-question-mark" => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
     "circle-dashed"  => '<path d="M10.1 2.18a9.93 9.93 0 0 1 3.8 0"/><path d="M17.6 3.71a9.95 9.95 0 0 1 2.69 2.7"/><path d="M21.82 10.1a9.93 9.93 0 0 1 0 3.8"/><path d="M20.29 17.6a9.95 9.95 0 0 1-2.7 2.69"/><path d="M13.9 21.82a9.94 9.94 0 0 1-3.8 0"/><path d="M6.4 20.29a9.95 9.95 0 0 1-2.69-2.7"/><path d="M2.18 13.9a9.93 9.93 0 0 1 0-3.8"/><path d="M3.71 6.4a9.95 9.95 0 0 1 2.7-2.69"/>',
     "square"         => '<rect width="18" height="18" x="3" y="3" rx="2"/>',
     "square-check-big" => '<path d="M21 10.656V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.344"/><path d="m9 11 3 3L22 4"/>',
@@ -131,6 +132,10 @@ module ApplicationHelper
   # Status icon for records sharing the pending/validating/active/inactive
   # lifecycle (access tokens, AI credentials). Mirrors feed_status_icon's role
   # as the leading glyph in a list row.
+  #
+  # An unsettled record reads as "unknown", not "working on it": list pages
+  # don't poll, so whatever they render is a snapshot that won't move on its
+  # own. A spinner glyph would promise an update that never arrives.
   def credential_status_icon(status)
     case status.to_s
     when "active"
@@ -138,7 +143,7 @@ module ApplicationHelper
     when "inactive"
       icon("circle-x", css_class: "size-4 text-danger", title: "Inactive", aria_label: "Inactive")
     else
-      icon("loader-circle", css_class: "size-4 text-muted", title: "Checking", aria_label: "Checking")
+      icon("circle-question-mark", css_class: "size-4 text-muted", title: "Not checked yet", aria_label: "Not checked yet")
     end
   end
 
