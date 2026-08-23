@@ -34,7 +34,9 @@
 <% if access_token.pending? || access_token.validating? %>
   <%= render CardComponent.new do %>
     <div class="space-y-6">
-      <div class="flex items-center justify-center py-8">
+      <%# aria-busy disables pointer events, so it stays on the waiting block —
+          on the page it would take the breadcrumb and menus down with it. %>
+      <div class="flex items-center justify-center py-8" aria-busy="true">
         <%= render SpinnerComponent.new(css_class: "mr-3") %>
         <span class="text-lg text-body">Validating token…</span>
       </div>

@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-23
+
+- While a token or credential is being checked, the rest of the page stays clickable — you can head back to the list instead of waiting for the check to finish.
+
 ## 2026-08-22
 
 - Fixed an error that could stop you from signing in, signing up, or refreshing a feed by hand.

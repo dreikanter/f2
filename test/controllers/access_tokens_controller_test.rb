@@ -94,6 +94,17 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_select "header [role='menu']", count: 0
   end
 
+  test "#show should keep the page clickable while the token is validating" do
+    sign_in_as user
+
+    get access_token_path(access_token)
+
+    assert_response :success
+    assert_select "[data-controller='polling'][aria-busy]", count: 0
+    assert_select "[data-controller='polling'][data-polling-indicate-busy-value='false']"
+    assert_select "[aria-busy='true'] a[href=?]", access_tokens_path, count: 0
+  end
+
   test "#show should warn when the token can't look up subscriber counts" do
     sign_in_as user
     active = create(:access_token, :active, user: user, scopes: ["read-my-info", "manage-posts"])
