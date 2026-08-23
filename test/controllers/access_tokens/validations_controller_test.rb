@@ -86,6 +86,6 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match /data-status="inactive"/, response.body
-    assert_match /Token is inactive/, response.body
+    assert_match /couldn't confirm this token/, response.body
   end
 end

@@ -152,6 +152,17 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-status='inactive']", text: /expired, revoked, or incorrectly copied/
   end
 
+  test "#show should not blame a permission when the check never read the token's scopes" do
+    sign_in_as user
+    token = create(:access_token, user: user, status: :inactive, scopes: [])
+
+    get access_token_path(token)
+
+    assert_response :success
+    assert_select "[data-key='access_token.missing-identity-permission']", count: 0
+    assert_select "[data-status='inactive']", text: /couldn't confirm this token/
+  end
+
   test "#show should render Associated Feeds section when token has feeds" do
     sign_in_as user
     active = create(:access_token, :active, user: user)
