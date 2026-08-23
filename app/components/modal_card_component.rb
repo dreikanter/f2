@@ -3,6 +3,6 @@
 # card dissolves into the page, leaving the layout's own padding as the only
 # inset.
 class ModalCardComponent < CardComponent
-  BASE_CLASSES = "w-full sm:rounded-lg sm:border sm:border-border sm:bg-surface sm:shadow-xs"
+  BASE_CLASSES = "w-full sm:rounded-lg sm:border sm:border-border sm:bg-surface"
   PADDED_CLASSES = "sm:p-6"
 end
