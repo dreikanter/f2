@@ -11,8 +11,22 @@
       polling_max_polls_value: polling_max_polls
     } : {} do %>
   <div class="space-y-2">
-    <div class="flex flex-wrap items-center gap-2">
-      <%= label_tag "feed[target_group]", "Target Group", class: "block font-semibold text-heading" %>
+    <%= label_tag "feed[target_group]", "Target Group", class: "block font-semibold text-heading" %>
+
+    <%# The refresh control shares the picker's row and stretches to its height;
+        its timeout note wraps onto a line of its own. %>
+    <div class="flex flex-wrap items-stretch gap-2">
+      <% if groups.present? %>
+        <%= select_tag "feed[target_group]",
+                       options_for_select((selected.present? ? groups | [selected] : groups).sort, selected_group),
+                       class: "#{input_field_classes(disabled: true)} flex-1 min-w-0",
+                       required: true %>
+      <% else %>
+        <%= select_tag "feed[target_group]",
+                       options_for_select([[selected_group.presence || "Select a group", ""]]),
+                       class: "#{input_field_classes(disabled: true)} flex-1 min-w-0",
+                       disabled: true %>
+      <% end %>
       <%# The feed form already wraps this, so the trigger can't be a nested
           form; a Stimulus click stands in for the submit. %>
       <%= render GroupsRefreshControlComponent.new(key_prefix: "feed",
@@ -25,10 +39,6 @@
     </div>
 
     <% if groups.present? %>
-      <%= select_tag "feed[target_group]",
-                     options_for_select((selected.present? ? groups | [selected] : groups).sort, selected_group),
-                     class: input_field_classes(disabled: true),
-                     required: true %>
       <% if refresh_failed %>
         <p class="text-sm text-danger" data-key="feed.groups-refresh-failed">
           <% if token&.active? %>
@@ -49,10 +59,6 @@
         <% end %>
       </p>
     <% else %>
-      <%= select_tag "feed[target_group]",
-                     options_for_select([[selected_group.presence || "Select a group", ""]]),
-                     class: input_field_classes(disabled: true),
-                     disabled: true %>
       <% unless refreshing %>
         <p class="text-sm text-danger">
           <% if token.nil? %>
