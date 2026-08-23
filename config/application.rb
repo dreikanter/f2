@@ -35,7 +35,7 @@ RubyLLM.configure do |config|
   config.use_new_acts_as = true
 end
 
-module F2Rails
+module Feeder
   GITHUB_REPO_URL = "https://github.com/dreikanter/f2".freeze
 
   class Application < Rails::Application

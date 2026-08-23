@@ -3,7 +3,7 @@ require "rake"
 
 class HoneybadgerNotifyDeployTest < ActiveSupport::TestCase
   setup do
-    F2Rails::Application.load_tasks unless Rake::Task.task_defined?("honeybadger:notify_deploy")
+    Feeder::Application.load_tasks unless Rake::Task.task_defined?("honeybadger:notify_deploy")
     @task = Rake::Task["honeybadger:notify_deploy"]
     @task.reenable
   end

@@ -3,7 +3,7 @@ require "rake"
 
 class AdminCreateTaskTest < ActiveSupport::TestCase
   setup do
-    F2Rails::Application.load_tasks unless Rake::Task.task_defined?("admin:create")
+    Feeder::Application.load_tasks unless Rake::Task.task_defined?("admin:create")
     @task = Rake::Task["admin:create"]
     @task.reenable
   end

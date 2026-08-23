@@ -3,7 +3,7 @@ require "rake"
 
 class AiVerifyExtractionTest < ActiveSupport::TestCase
   setup do
-    F2Rails::Application.load_tasks unless Rake::Task.task_defined?("ai:verify_extraction")
+    Feeder::Application.load_tasks unless Rake::Task.task_defined?("ai:verify_extraction")
     @task = Rake::Task["ai:verify_extraction"]
     @task.reenable
   end
