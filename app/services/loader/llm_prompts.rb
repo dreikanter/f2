@@ -30,10 +30,9 @@ module Loader
     # (the combined call and the two-step structure call). Field names match
     # FeedProfile::UNIVERSAL_OUTPUT_SCHEMA.
     #
-    # The envelope is spelled out because the schema alone doesn't guarantee it:
-    # providers whose structured-output mode is advisory (Kimi, and whichever
-    # upstream OpenRouter picks) shape the reply from this text, and "return
-    # items" reads as a bare array to a model that never sees the schema.
+    # The envelope is stated here because the schema alone doesn't guarantee it.
+    # Providers whose structured-output mode is advisory (Kimi, and whichever
+    # upstream OpenRouter picks) shape the reply from this text.
     OUTPUT_CONTRACT = <<~TEXT.strip
       Reply with a single JSON object whose only key is "items", holding the
       array of items. A bare array, or any other shape at the top level, is not

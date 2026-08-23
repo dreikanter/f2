@@ -8,17 +8,14 @@ class LlmClient
         {}
       end
 
-      # Provider-specific request params a schema-bearing call needs. Separate
-      # from web_params because the two-step path splits gathering and
-      # structuring across two calls: the schema rides on the one without tools,
-      # so a param that serves structured output has to travel on its own.
+      # Request params a schema-bearing call needs. Kept apart from web_params
+      # because the two-step path sends the schema on the call without tools.
       def schema_params(_model)
         {}
       end
 
-      # Everything one call sends, merged into a single set — RubyLLM's
-      # `with_params` replaces rather than merges, so a combined call would
-      # otherwise keep only whichever set was applied last.
+      # All params for one call, merged. RubyLLM's `with_params` replaces the
+      # whole set, so both kinds have to be sent together.
       def params_for(model, schema:, web:)
         params = schema ? schema_params(model) : {}
         web ? params.deep_merge(web_params(model)) : params

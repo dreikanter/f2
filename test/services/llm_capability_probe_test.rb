@@ -348,9 +348,7 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_predicate credential.chats.first.params, :present?
   end
 
-  # The structure check mirrors the loader's structuring call, params included:
-  # qualifying a model on an unconstrained call says nothing about the
-  # constrained one production sends.
+  # The structure check mirrors the loader's structuring call, params included.
   test "#run should carry the adapter's schema params onto the structure chat" do
     credential = FakeCredential.new(valid_payload, provider: "openrouter")
     LlmCapabilityProbe::Runner.new(credential: credential, model: "test-model", checks: ["schema"]).run

@@ -185,9 +185,8 @@ class LlmClient
     )
   end
 
-  # The provider's routing and decoding params for this call. Applied whether or
-  # not tools come along: on the two-step path the schema travels on the call
-  # that has none, and that is the call a schema param has to reach.
+  # Sent with or without tools: the two-step path carries the schema on the
+  # call that has none, and its routing is what decides the reply's shape.
   def apply_params(chat, model, schema:, web:)
     params = adapter.params_for(model, schema: schema, web: web)
     chat.with_params(**params) if params.present?

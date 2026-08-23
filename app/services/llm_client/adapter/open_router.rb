@@ -1,14 +1,12 @@
 class LlmClient
   module Adapter
     class OpenRouter < Base
-      # OpenRouter picks which upstream serves a model, and an upstream that
-      # doesn't implement a parameter drops it silently instead of failing. This
-      # narrows routing to upstreams that honor everything the request carries:
-      # the JSON schema when structuring, the client-side tools when gathering.
-      # Without it a structuring call can land where `response_format` is
-      # ignored and come back as prose or a bare list — a schema failure no
-      # payload repair can rescue. Web search and fetch are supplied by the
-      # shared client-side tools either way.
+      # OpenRouter picks the upstream, and one that doesn't implement a
+      # parameter drops it silently. This restricts routing to upstreams that
+      # honor what the request carries: the schema when structuring, the tools
+      # when gathering. Without it a structuring call can land where
+      # `response_format` is ignored and reply with prose. Web access still
+      # comes from the shared client-side tools, not an OpenRouter plugin.
       ROUTING = { provider: { require_parameters: true } }.freeze
 
       def web_params(_model)

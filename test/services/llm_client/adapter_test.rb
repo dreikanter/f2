@@ -88,10 +88,8 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_not params.key?(:plugins)
   end
 
-  # The two-step path carries the schema on the call without web tools, and an
-  # OpenRouter upstream that doesn't implement `response_format` drops it
-  # silently — so the routing constraint has to travel with the schema, not with
-  # the tools.
+  # An OpenRouter upstream that ignores `response_format` drops it silently, so
+  # the routing constraint has to travel with the schema, not with the tools.
   test "OpenRouter should require structured parameters on a schema-only call" do
     params = LlmClient::Adapter::OpenRouter.new.params_for("openai/gpt-4o", schema: true, web: false)
 
@@ -104,8 +102,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_equal({ reasoning_effort: "none" }, adapter.params_for("gpt-5.6-luna", schema: false, web: true))
   end
 
-  # Structuring is where reasoning earns its cost, and no tool is there to
-  # collide with it.
+  # Structuring keeps its reasoning: no tool is there to collide with it.
   test "OpenAI should keep reasoning on a schema-only call" do
     adapter = LlmClient::Adapter::OpenAi.new
 
@@ -118,8 +115,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     end
   end
 
-  # with_params replaces the whole set, so a combined call has to send one
-  # merged hash or lose whichever half was applied first.
+  # with_params replaces the whole set, so a combined call sends one merged hash.
   test "#params_for should merge the schema and web params of a combined call" do
     adapter = Class.new(LlmClient::Adapter::Base) do
       def schema_params(_model) = { provider: { require_parameters: true }, response_format: "json" }

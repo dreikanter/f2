@@ -214,9 +214,8 @@ module LlmCapabilityProbe
       chat
     end
 
-    # The params production sends for the shape being probed
-    # (LlmClient::Adapter::Base#params_for), so provider routing is qualified as
-    # it ships — a structuring call constrained the way the loader constrains it.
+    # The params production sends for the shape being probed, so a model is
+    # qualified on the request the loader actually makes.
     def apply_params(chat, schema:, web:)
       params = adapter.params_for(@model, schema: schema, web: web)
       chat.with_params(**params) if params.present?

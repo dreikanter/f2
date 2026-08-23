@@ -728,9 +728,8 @@ class LlmClientTest < ActiveSupport::TestCase
                                       credential_data: { "api_key" => "sk-or-test" })
   end
 
-  # The structuring call of the two-step path carries the schema and no tools,
-  # and it is the one that has to be routed to an upstream honoring the schema —
-  # an upstream that ignores it answers with something no repair can fit.
+  # The structuring call carries the schema and no tools. Its routing decides
+  # whether the schema is honored at all.
   test "#invoke_provider should send the provider's params on a schema call without web tools" do
     client = LlmClient.new(openrouter_credential)
     chat = FakeChat.new
