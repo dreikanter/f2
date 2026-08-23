@@ -61,6 +61,7 @@
 /Procfile.dev
 /REVIEW.yml
 /compose.yaml
+/screenshots
 /script
 
 # Ignore docs and design records. CHANGELOG.md must stay: the /changelog page
