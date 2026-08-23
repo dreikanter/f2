@@ -80,9 +80,30 @@ class AccessToken < ApplicationRecord
     new(defaults.merge(attributes))
   end
 
+  # A validation that hasn't reported back in this long has nothing left
+  # working on it: TokenValidationJob gives up on its rate-limit retries well
+  # inside the window, so anything still in flight would have settled by now.
+  # See AccessTokenValidationWatchdog.
+  VALIDATION_STALE_AFTER = 15.minutes
+
   def validate_token_async
-    validating!
+    begin_validation!
     TokenValidationJob.perform_later(self)
+  end
+
+  # Opens a validation run. The timestamp is what later tells a reader whether
+  # anything is still working on the token, so it moves with the state.
+  def begin_validation!
+    update!(status: :validating, validation_started_at: Time.current)
+  end
+
+  # In progress, with no run left to finish it. A blank timestamp means no run
+  # was ever opened under this marker, which says nothing either way, so it
+  # doesn't count as evidence.
+  def validation_abandoned?
+    (pending? || validating?) &&
+      validation_started_at.present? &&
+      validation_started_at < VALIDATION_STALE_AFTER.ago
   end
 
   def build_client
@@ -174,7 +195,7 @@ class AccessToken < ApplicationRecord
   # one read differently in the event log.
   def disable_token_and_feeds(event_type: "access_token_validation_failed")
     with_lock do
-      inactive!
+      update!(status: :inactive, validation_started_at: nil)
 
       enabled_feeds = feeds.enabled
       return unless enabled_feeds.exists?

@@ -163,6 +163,42 @@ class AccessTokenTest < ActiveSupport::TestCase
     end
 
     assert token.reload.validating?
+    assert_not_nil token.validation_started_at
+  end
+
+  test "#validation_abandoned? should be true once an in-progress run goes quiet" do
+    token = create(:access_token, status: :validating,
+                                  validation_started_at: (AccessToken::VALIDATION_STALE_AFTER + 1.minute).ago)
+
+    assert token.validation_abandoned?
+  end
+
+  test "#validation_abandoned? should be false while a run is still within its window" do
+    token = create(:access_token, status: :validating, validation_started_at: 1.minute.ago)
+
+    assert_not token.validation_abandoned?
+  end
+
+  test "#validation_abandoned? should be false without a run to judge" do
+    token = create(:access_token, status: :pending, validation_started_at: nil)
+
+    assert_not token.validation_abandoned?
+  end
+
+  test "#validation_abandoned? should be false once the token has settled" do
+    token = create(:access_token, :active,
+                   validation_started_at: (AccessToken::VALIDATION_STALE_AFTER + 1.minute).ago)
+
+    assert_not token.validation_abandoned?
+  end
+
+  test "#disable_token_and_feeds should close the open validation run" do
+    token = create(:access_token, status: :validating, validation_started_at: 1.minute.ago)
+
+    token.disable_token_and_feeds
+
+    assert token.reload.inactive?
+    assert_nil token.validation_started_at
   end
 
   # Host validation tests
