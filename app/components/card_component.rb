@@ -1,5 +1,4 @@
 class CardComponent < ViewComponent::Base
-  # Elevation belongs to LinkedCardComponent: a raised surface reads as clickable.
   BASE_CLASSES = "w-full rounded-lg border border-border bg-surface"
   PADDED_CLASSES = "p-6"
   SECTIONED_CLASSES = "overflow-hidden divide-y divide-border"
