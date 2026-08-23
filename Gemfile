@@ -72,8 +72,8 @@ group :development do
   gem "web-console"
 
   # Deploy this application anywhere as a Docker container [https://kamal-deploy.org].
-  # Kamal runs from CI or a workstation, never inside the container it deploys, so
-  # the production image skips it and its SSH stack (Dockerfile: BUNDLE_WITHOUT).
+  # Runs from CI or a workstation, reaching the deploy host over SSH, so the
+  # production image excludes it and its SSH stack (Dockerfile: BUNDLE_WITHOUT).
   gem "kamal", require: false
 
   # Duplication and complexity report, driven by bin/critic. Local only — it is
