@@ -60,7 +60,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
 
     LlmClient::Adapter::REGISTRY.each_key do |name|
       chat = fake_chat
-      LlmClient::Adapter.for(name).apply_web(chat, "model", search_provider: provider, **context)
+      LlmClient::Adapter.for(name).apply_web(chat, search_provider: provider, **context)
 
       search_tool, fetch_tool = chat.tools
       assert_instance_of LlmClient::Tools::WebSearch, search_tool, name
@@ -76,43 +76,55 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
   end
 
   test "Anthropic should not send provider-hosted web tools" do
-    chat = fake_chat
+    adapter = LlmClient::Adapter::Anthropic.new
 
-    LlmClient::Adapter::Anthropic.new.apply_web(
-      chat,
-      "claude-opus-4-8",
-      search_provider: Object.new,
-      **search_context
-    )
-
-    assert_equal({}, chat.params)
+    assert_equal({}, adapter.params_for("claude-opus-4-8", schema: true, web: true))
   end
 
   test "OpenRouter should require structured parameters without enabling its web plugin" do
-    chat = fake_chat
+    params = LlmClient::Adapter::OpenRouter.new.params_for("openai/gpt-4o", schema: false, web: true)
 
-    LlmClient::Adapter::OpenRouter.new.apply_web(
-      chat,
-      "openai/gpt-4o",
-      search_provider: Object.new,
-      **search_context
-    )
+    assert_equal({ provider: { require_parameters: true } }, params)
+    assert_not params.key?(:plugins)
+  end
 
-    assert_equal({ provider: { require_parameters: true } }, chat.params)
-    assert_not chat.params.key?(:plugins)
+  # An OpenRouter upstream that ignores `response_format` drops it silently, so
+  # the routing constraint has to travel with the schema, not with the tools.
+  test "OpenRouter should require structured parameters on a schema-only call" do
+    params = LlmClient::Adapter::OpenRouter.new.params_for("openai/gpt-4o", schema: true, web: false)
+
+    assert_equal({ provider: { require_parameters: true } }, params)
   end
 
   test "OpenAI should opt out of reasoning on tool-enabled calls" do
-    chat = fake_chat
+    adapter = LlmClient::Adapter::OpenAi.new
 
-    LlmClient::Adapter::OpenAi.new.apply_web(
-      chat,
-      "gpt-5.6-luna",
-      search_provider: Object.new,
-      **search_context
-    )
+    assert_equal({ reasoning_effort: "none" }, adapter.params_for("gpt-5.6-luna", schema: false, web: true))
+  end
 
-    assert_equal({ reasoning_effort: "none" }, chat.params)
+  # Structuring keeps its reasoning: no tool is there to collide with it.
+  test "OpenAI should keep reasoning on a schema-only call" do
+    adapter = LlmClient::Adapter::OpenAi.new
+
+    assert_equal({}, adapter.params_for("gpt-5.6-luna", schema: true, web: false))
+  end
+
+  test "#params_for should send nothing when a call carries neither a schema nor tools" do
+    LlmClient::Adapter::REGISTRY.each_key do |name|
+      assert_equal({}, LlmClient::Adapter.for(name).params_for("model", schema: false, web: false), name)
+    end
+  end
+
+  # with_params replaces the whole set, so a combined call sends one merged hash.
+  test "#params_for should merge the schema and web params of a combined call" do
+    adapter = Class.new(LlmClient::Adapter::Base) do
+      def schema_params(_model) = { provider: { require_parameters: true }, response_format: "json" }
+      def web_params(_model) = { provider: { sort: "latency" }, reasoning_effort: "none" }
+    end.new
+
+    assert_equal({ provider: { require_parameters: true, sort: "latency" },
+                   response_format: "json", reasoning_effort: "none" },
+                 adapter.params_for("model", schema: true, web: true))
   end
 
   def rate_limit_error(body)

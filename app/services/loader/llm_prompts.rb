@@ -29,7 +29,19 @@ module Loader
     # The output contract, injected into the stages that emit the JSON schema
     # (the combined call and the two-step structure call). Field names match
     # FeedProfile::UNIVERSAL_OUTPUT_SCHEMA.
+    #
+    # The envelope is stated here because the schema alone doesn't guarantee it.
+    # Providers whose structured-output mode is advisory (Kimi, and whichever
+    # upstream OpenRouter picks) shape the reply from this text.
     OUTPUT_CONTRACT = <<~TEXT.strip
+      Reply with one JSON object and nothing else, shaped like this:
+
+      {"items": [ ... ]}
+
+      Any other top level shape is invalid, whatever it contains: a bare array,
+      a different key name, an object wrapped in quotes, JSON with prose around
+      it.
+
       Each item is an object with these fields:
       - body (required): the post text, plain and readable.
       - source_url (required): the post's own permalink. For a standing-query
@@ -78,7 +90,7 @@ module Loader
       #{OUTPUT_CONTRACT}
 
       Use only what is present in the gathered content; if it contains no posts,
-      return no items.
+      return the object with an empty items array.
 
       #{SAFEGUARDS}
     TEXT

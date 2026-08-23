@@ -168,10 +168,10 @@ class LlmClient
     # by #ask travels as a separate user-role message (spec §8).
     chat.with_instructions(system) if system.present?
     chat.with_schema(adapter.schema_payload(output_schema)) if output_schema.present?
+    apply_params(chat, model, schema: output_schema.present?, web: web)
     if web
       adapter.apply_web(
         chat,
-        model,
         search_provider: search_provider_for(ctx),
         search_credential: ctx.search_credential,
         refresh_event: ctx.refresh_event
@@ -183,6 +183,13 @@ class LlmClient
       payload: response_content(recover_halted(chat, response)),
       **usage_totals(chat, response)
     )
+  end
+
+  # Sent with or without tools: the two-step path carries the schema on the
+  # call that has none, and its routing is what decides the reply's shape.
+  def apply_params(chat, model, schema:, web:)
+    params = adapter.params_for(model, schema: schema, web: web)
+    chat.with_params(**params) if params.present?
   end
 
   # A halted tool loop returns the halt notice in place of the model's message.

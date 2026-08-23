@@ -167,6 +167,7 @@ module LlmCapabilityProbe
     def check_schema
       chat = @credential.chat(@model).with_schema(adapter.schema_payload(PROBE_SCHEMA))
       chat.with_instructions(PROBE_INSTRUCTIONS)
+      apply_params(chat, schema: true, web: false)
       response = chat.ask(STRUCTURE_PROMPT_PREFIX + SAMPLE_TEXT)
       validate_items(response, expect_null_source_url: true)
     end
@@ -206,12 +207,18 @@ module LlmCapabilityProbe
       chat = @credential.chat(@model)
       chat.with_instructions(PROBE_INSTRUCTIONS)
       chat.with_schema(adapter.schema_payload(schema)) if schema
-      params = adapter.web_params(@model)
-      chat.with_params(**params) if params.present?
+      apply_params(chat, schema: !schema.nil?, web: true)
       budget = LlmClient::ToolBudget.new
       chat.with_tool(CannedWebSearch.new(budget: budget))
       chat.with_tool(LlmClient::Tools::WebFetch.new(budget: budget))
       chat
+    end
+
+    # The params production sends for the shape being probed, so a model is
+    # qualified on the request the loader actually makes.
+    def apply_params(chat, schema:, web:)
+      params = adapter.params_for(@model, schema: schema, web: web)
+      chat.with_params(**params) if params.present?
     end
 
     def grounding_failure(answer)
