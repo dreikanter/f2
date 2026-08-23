@@ -23,6 +23,7 @@
           <%= f.select :provider,
                        LlmProvider.all.map { |provider| [provider.display_name, provider.name] },
                        {},
+                       autofocus: true,
                        class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
                        data: { key: "ai_credentials.provider" } %>
         </div>

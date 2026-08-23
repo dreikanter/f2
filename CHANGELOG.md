@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-23
+
+- Adding or editing an AI or search key now starts with the cursor already in the first field.
+
 ## 2026-08-22
 
 - Fixed an error that could stop you from signing in, signing up, or refreshing a feed by hand.

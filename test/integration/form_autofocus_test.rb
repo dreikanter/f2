@@ -59,6 +59,30 @@ class FormAutofocusTest < ActionDispatch::IntegrationTest
     assert_autofocus_on_first_field "access_token_name"
   end
 
+  test "new AI credential form autofocuses the provider field" do
+    sign_in_as(user)
+    get new_ai_credential_path
+    assert_autofocus_on_first_field "ai_credential_provider"
+  end
+
+  test "edit AI credential form autofocuses the name field" do
+    sign_in_as(user)
+    get edit_ai_credential_path(create(:ai_credential, user: user))
+    assert_autofocus_on_first_field "ai_credential_display_name"
+  end
+
+  test "new search credential form autofocuses the provider field" do
+    sign_in_as(user)
+    get new_search_credential_path
+    assert_autofocus_on_first_field "search_credential_provider"
+  end
+
+  test "edit search credential form autofocuses the name field" do
+    sign_in_as(user)
+    get edit_search_credential_path(create(:search_credential, user: user))
+    assert_autofocus_on_first_field "search_credential_display_name"
+  end
+
   private
 
   def assert_autofocus_on_first_field(expected_id)
