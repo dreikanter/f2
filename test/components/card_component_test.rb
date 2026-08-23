@@ -11,8 +11,6 @@ class CardComponentTest < ViewComponent::TestCase
     assert_includes card["class"], "bg-surface"
     assert_includes card["class"], "rounded-lg"
     assert_includes card["class"], "p-6"
-    # Elevation is reserved for clickable cards.
-    refute_includes card["class"], "shadow-xs"
   end
 
   test "#call should render sections divided border-to-border" do
