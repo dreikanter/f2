@@ -10,18 +10,19 @@
     } : {} do %>
   <div class="flex flex-wrap items-center gap-3">
     <h2 class="text-2xl font-semibold text-heading">Available Groups</h2>
-    <% if refreshing %>
-      <span data-polling-target="content" data-key="access_token.groups-refreshing">
-        <%= icon("loader-circle", css_class: "size-4 animate-spin text-muted", aria_label: "Refreshing groups") %>
-      </span>
-      <span hidden data-polling-target="timeoutMessage" data-key="access_token.groups-refresh-timeout">
-        <span class="inline-flex flex-wrap items-center gap-2">
-          <%= render "access_tokens/groups_refresh_button", access_token: access_token %>
-          <span class="text-sm text-warning">This is taking longer than expected — try again in a moment.</span>
-        </span>
-      </span>
-    <% elsif access_token.active? %>
-      <%= render "access_tokens/groups_refresh_button", access_token: access_token %>
+    <%# The form is transparent to the layout, so the control lines up with the
+        heading and its timeout note wraps onto a line of its own. %>
+    <%= form_with url: access_token_groups_refresh_path(access_token),
+                  method: :post,
+                  class: "contents",
+                  data: {
+                    controller: "loading-button",
+                    action: "turbo:submit-start->loading-button#start turbo:submit-end->loading-button#end"
+                  } do %>
+      <%= render GroupsRefreshControlComponent.new(key_prefix: "access_token",
+                                                   refreshing: refreshing,
+                                                   available: access_token.active?,
+                                                   type: "submit") %>
     <% end %>
   </div>
   <% if refresh_failed %>

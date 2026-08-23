@@ -1,0 +1,3 @@
+<%= render loading_button if refreshing %>
+<%= render trigger_button %>
+<%= tag.p TIMEOUT_NOTE, **timeout_note_attributes if refreshing %>
