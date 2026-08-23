@@ -19,9 +19,7 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y curl libjemalloc2 postgresql-client && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Set production environment. BUNDLE_WITHOUT excludes :test alongside
-# :development — the Rails default drops only development-only gems, leaving the
-# shared :development, :test group (and all of :test) in the image.
+# Set production environment
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
