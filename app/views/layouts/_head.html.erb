@@ -8,9 +8,9 @@
 
 <%= yield :head %>
 
-<link rel="icon" href="/icon.png" type="image/png">
-<link rel="icon" href="/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/icon.png">
+<link rel="icon" href="<%= favicon_path("png") %>" type="image/png">
+<link rel="icon" href="<%= favicon_path("svg") %>" type="image/svg+xml">
+<link rel="apple-touch-icon" href="<%= favicon_path("png") %>">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

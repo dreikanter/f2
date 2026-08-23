@@ -30,6 +30,7 @@
           <%= f.label :display_name, "Name", class: "block font-semibold text-heading" %>
           <%= f.text_field :display_name,
                            placeholder: "Personal Anthropic key",
+                           autofocus: true,
                            class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
                            required: true,
                            data: { key: "ai_credentials.display-name" } %>
