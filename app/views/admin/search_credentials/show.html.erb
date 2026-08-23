@@ -3,6 +3,11 @@
 <div id="search-credential-show" class="space-y-6" data-key="admin.search_credential.show">
   <%= render PageHeaderComponent.new(title: @search_credential.display_name) do |header| %>
     <% header.with_breadcrumb(label: "Admin Panel", url: admin_path) %>
+    <% unless @search_credential.pending? || @search_credential.validating? %>
+      <% header.with_context_paragraph do %>
+        <%= render credential_status_badge(@search_credential) %>
+      <% end %>
+    <% end %>
     <% header.with_context_paragraph do %>
       Owner:
       <%= link_to @search_credential.user.email_address, admin_user_path(@search_credential.user), class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
@@ -20,20 +25,15 @@
       </div>
     </div>
   <% when "active" %>
-    <%= render AlertComponent.new(variant: :success, icon: "circle-check",
-                                  data: { credential_state: "active", key: "search_credential.active" }) do %>
-      <span>Credential is active</span>
-    <% end %>
     <%= render SearchCredentialDetailsComponent.new(search_credential: @search_credential) %>
   <% when "inactive" %>
-    <%= render AlertComponent.new(variant: :error, icon: "circle-x",
-                                  data: { credential_state: "inactive", key: "search_credential.inactive" }) do %>
+    <p class="max-w-2xl text-body" data-key="search_credential.inactive">
       <% if @search_credential.last_error.present? %>
-        <span><%= @search_credential.last_error %></span>
+        <%= @search_credential.last_error %>
       <% else %>
-        <span>This key didn't pass validation.</span>
+        This key didn't pass validation.
       <% end %>
-    <% end %>
+    </p>
     <%= render SearchCredentialDetailsComponent.new(search_credential: @search_credential) %>
   <% end %>
 

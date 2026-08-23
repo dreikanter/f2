@@ -71,6 +71,25 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", access_token.name
   end
 
+  test "#show should sum an active token up with a badge in the header" do
+    sign_in_as user
+    active = create(:access_token, :active, user: user)
+
+    get access_token_path(active)
+
+    assert_response :success
+    assert_select "header [data-key='access_token.status_badge'][data-status='active']", text: "Valid"
+  end
+
+  test "#show should not badge a token that is still being checked" do
+    sign_in_as user
+
+    get access_token_path(access_token)
+
+    assert_response :success
+    assert_select "[data-key='access_token.status_badge']", count: 0
+  end
+
   test "#show should place the token actions in the header menu" do
     sign_in_as user
     active = create(:access_token, :active, user: user)
@@ -149,7 +168,8 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='access_token.missing-identity-permission']", count: 0
-    assert_select "[data-status='inactive']", text: /expired, revoked, or incorrectly copied/
+    assert_select "[data-key='access_token.status_badge'][data-status='inactive']", text: "Inactive"
+    assert_select "[data-key='access_token.inactive-hint']", text: /expired, revoked, or incorrectly copied/
   end
 
   test "#show should not blame a permission when the check never read the token's scopes" do
@@ -160,7 +180,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='access_token.missing-identity-permission']", count: 0
-    assert_select "[data-status='inactive']", text: /couldn't confirm this token/
+    assert_select "[data-key='access_token.inactive-hint']", text: /couldn't confirm this token/
   end
 
   test "#show should render Associated Feeds section when token has feeds" do

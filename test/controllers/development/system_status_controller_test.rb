@@ -42,29 +42,27 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='configuration.mailer_from.value'] code", text: "noreply@example.com"
   end
 
-  test "should list every registered setting with its effective state" do
+  test "should list every optional integration with its effective state" do
     sign_in_as(dev_user)
 
     get development_system_status_path
 
     assert_response :success
-    Config.status.each_key do |name|
-      assert_select "[data-key='config.#{name}.label'] code", text: name.to_s
-    end
-    assert_select "[data-key='config.resend_api_key.value']", text: "Not set"
-    # A setting with a default counts as set.
-    assert_select "[data-key='config.metrics_flush_interval.value']", text: "Set"
+    assert_select "[data-key='integration.error_reporting.label']", text: "Error reporting"
+    assert_select "[data-key='integration.image_proxy.label']", text: "Image proxy"
+    assert_select "[data-key='integration.metrics.label']", text: "Metrics"
+    assert_select "[data-key='integration.metrics.value']", text: "Off"
   end
 
-  test "should show a configured setting as set" do
-    Config.stub(:status, { metrics_url: true }) do
+  test "should show a configured integration as on" do
+    Config.stub(:integrations, { metrics: true }) do
       sign_in_as(dev_user)
 
       get development_system_status_path
     end
 
     assert_response :success
-    assert_select "[data-key='config.metrics_url.value']", text: "Set"
+    assert_select "[data-key='integration.metrics.value']", text: "On"
   end
 
   test "should show other tables total in table usage" do

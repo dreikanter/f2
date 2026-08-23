@@ -64,7 +64,7 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match /data-status="active"/, response.body
-    assert_match /Token is valid and ready to use/, response.body
+    assert_match />Valid</, response.body
   end
 
   test "#show should render the Continue link with feed_id when feed_id is provided" do

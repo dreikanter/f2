@@ -74,6 +74,17 @@ class Config < ConfigRegistry
     IMGPROXY_SETTINGS.all? { |name| public_send("#{name}?") }
   end
 
+  # Optional integrations, for the system status page. Each is simply off when
+  # unconfigured. Required settings are left out: the boot gate means the app
+  # would not be running without them, so listing them says nothing.
+  def self.integrations
+    {
+      error_reporting: honeybadger_api_key?,
+      image_proxy: imgproxy?,
+      metrics: metrics_url?
+    }
+  end
+
   # imgproxy is configured all-or-nothing: off when every setting is absent,
   # on when all are present, and anything in between fails the gate. A
   # complete, individually valid trio must also sign a sample URL. Signing
