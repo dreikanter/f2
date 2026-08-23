@@ -1,7 +1,7 @@
 class Development::SystemStatusController < ApplicationController
   def show
     authorize :access, :dev?
-    @config = Config.status
+    @integrations = Config.integrations
     @release_info = release_info
     @configuration = configuration
     @disk_usage = Rails.cache.fetch("development/system_status/v5", expires_in: 5.minutes) do

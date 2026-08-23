@@ -159,15 +159,6 @@ class ConfigTest < ActiveSupport::TestCase
     assert_not_includes error.message, "sensitive secret value"
   end
 
-  test "#status should map setting names to presence booleans" do
-    registry = build_registry do
-      setting :set_key, source: -> { "value" }
-      setting :unset_key, source: -> { }
-    end
-
-    assert_equal({ set_key: true, unset_key: false }, registry.status)
-  end
-
   test "#validate! should pass with empty credentials in test" do
     assert_nothing_raised { Config.validate! }
   end
@@ -192,6 +183,18 @@ class ConfigTest < ActiveSupport::TestCase
     Rails.stub(:env, ActiveSupport::EnvironmentInquirer.new("production")) do
       stub_credentials(resend) do
         assert_nothing_raised { Config.validate! }
+      end
+    end
+  end
+
+  test "#integrations should report an unconfigured integration as off" do
+    assert_equal({ error_reporting: false, image_proxy: false, metrics: false }, Config.integrations)
+  end
+
+  test "#integrations should report a configured integration as on" do
+    stub_credentials(IMGPROXY_CONFIG.merge([:honeybadger, :api_key] => "hb-api-key")) do
+      with_env("METRICS_URL", "https://metrics.example.com/api/v1/import/prometheus") do
+        assert_equal({ error_reporting: true, image_proxy: true, metrics: true }, Config.integrations)
       end
     end
   end

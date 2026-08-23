@@ -42,12 +42,6 @@ class ConfigRegistry
       raise ConfigurationError, "Invalid application configuration:\n#{violations.map { |text| "- #{text}" }.join("\n")}"
     end
 
-    # Effective configuration for the system status page. Booleans only,
-    # never values: most settings are secrets.
-    def status
-      settings.keys.index_with { |name| public_send("#{name}?") }
-    end
-
     private
 
     def settings
