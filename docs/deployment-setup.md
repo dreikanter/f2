@@ -297,6 +297,18 @@ Expected result:
 - web and jobs containers are running
 - the `db` accessory is running
 
+## First user
+
+A fresh install has no accounts, and signing up needs an invite from an existing user, so create the first one from the host:
+
+```bash
+bin/kamal app exec --reuse "bin/rails admin:create EMAIL=you@example.com" -d production
+```
+
+That makes a confirmed admin account with 10 invites and prints a link to set its password, valid for an hour. No password is typed or shared, and the link works before mail or job workers do. `NAME` and `INVITES` override the defaults.
+
+Re-running is safe: an existing account keeps its password, name, and state, and only gets a fresh link. Use it to get back in if you're ever locked out.
+
 ## Staging database reset
 
 Staging data is disposable. To reset the schema inside the app container:
