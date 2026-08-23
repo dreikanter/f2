@@ -28,7 +28,13 @@ export default class extends Controller {
     const tokenId = this.tokenSelectTarget.value
     if (!tokenId) return
 
+    // Disable the button before anything awaits, so a double click can't start
+    // a second refresh — and do it here rather than leaving it to the
+    // loading-button controller, which may not have connected yet.
     const button = event.currentTarget
+    if (button.disabled) return
+    button.disabled = true
+
     const loading = this.application.getControllerForElementAndIdentifier(button, "loading-button")
     loading?.start()
 
@@ -50,7 +56,8 @@ export default class extends Controller {
     } catch {
       // Network failure: keep the current selector; the button re-enables below.
     } finally {
-      loading?.end()
+      if (loading) loading.end()
+      else button.disabled = false
     }
   }
 
