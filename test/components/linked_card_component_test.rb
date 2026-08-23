@@ -15,6 +15,7 @@ class LinkedCardComponentTest < ViewComponent::TestCase
     assert_equal "noopener", card["rel"]
     assert_includes card["class"], "bg-surface"
     assert_includes card["class"], "p-6"
+    assert_includes card["class"], "shadow-xs"
     assert_includes card["class"], "hover:shadow-md"
     assert_includes card["class"], "hover:bg-surface-muted"
     assert_includes card["class"], "no-underline"

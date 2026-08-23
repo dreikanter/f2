@@ -1,5 +1,5 @@
 class CardComponent < ViewComponent::Base
-  BASE_CLASSES = "w-full rounded-lg border border-border bg-surface shadow-xs"
+  BASE_CLASSES = "w-full rounded-lg border border-border bg-surface"
   PADDED_CLASSES = "p-6"
   SECTIONED_CLASSES = "overflow-hidden divide-y divide-border"
 
