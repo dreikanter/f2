@@ -3,6 +3,11 @@
 <div id="access-token-show" class="space-y-8" data-key="admin.access_token.show">
   <%= render PageHeaderComponent.new(title: @access_token.name) do |header| %>
     <% header.with_breadcrumb(label: "Admin Panel", url: admin_path) %>
+    <% unless @access_token.pending? || @access_token.validating? %>
+      <% header.with_context_paragraph do %>
+        <%= render access_token_status_badge(@access_token) %>
+      <% end %>
+    <% end %>
     <% header.with_context_paragraph do %>
       Owner:
       <%= link_to @access_token.user.email_address, admin_user_path(@access_token.user), class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
@@ -19,10 +24,6 @@
       </div>
     <% end %>
   <% elsif @access_token.active? %>
-    <%= render AlertComponent.new(variant: :success, icon: "circle-check", data: { status: "active" }) do %>
-      <span>Token is valid and ready to use</span>
-    <% end %>
-
     <%= render TokenDetailsComponent.new(access_token: @access_token) %>
 
     <% if @access_token.access_token_detail.present? %>
@@ -64,9 +65,9 @@
       <% end %>
     </div>
   <% elsif @access_token.inactive? %>
-    <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive" }) do %>
-      <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
-    <% end %>
+    <p class="max-w-2xl text-body" data-key="access_token.inactive-hint">
+      This token failed validation, so feeds can't publish with it. It may be expired, revoked, or incorrectly copied.
+    </p>
 
     <%= render TokenDetailsComponent.new(access_token: @access_token) %>
   <% end %>
