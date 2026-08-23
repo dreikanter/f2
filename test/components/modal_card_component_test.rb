@@ -15,5 +15,6 @@ class ModalCardComponentTest < ViewComponent::TestCase
     refute_includes classes, "border"
     refute_includes classes, "rounded-lg"
     refute_includes classes, "p-6"
+    refute_includes classes, "sm:shadow-xs"
   end
 end

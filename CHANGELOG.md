@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-08-23
 
 - The group refresh button now spins in place instead of turning into a bare icon, and in the feed form it sits right next to the group picker.
+- Cards only lift off the page when they're actually clickable, so a subtle shadow now means "you can tap this".
 - Token and credential pages now sum the status up with a small badge next to the name, instead of a banner repeating what the page already says.
 - Adding or editing an AI or search key now starts with the cursor already in the first field.
 - While a token or credential is being checked, the rest of the page stays clickable — you can head back to the list instead of waiting for the check to finish.

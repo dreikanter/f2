@@ -76,7 +76,7 @@
       <p class="text-body mb-4">
         Posts created with this token will appear on FreeFeed on behalf of the user who created this token.
       </p>
-      <div class="w-fit min-w-[240px] rounded-xl border border-border bg-surface p-4 shadow-sm">
+      <div class="w-fit min-w-[240px] rounded-xl border border-border bg-surface p-4">
         <%= render FreefeedUserComponent.new(user: access_token.access_token_detail.freefeed_user_info) %>
       </div>
     </div>
