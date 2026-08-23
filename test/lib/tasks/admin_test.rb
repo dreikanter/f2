@@ -73,6 +73,16 @@ class AdminCreateTaskTest < ActiveSupport::TestCase
     assert User.exists?(email_address: "owner@example.com")
   end
 
+  test "admin:create should match an existing account whatever the casing" do
+    user = create(:user, email_address: "owner@example.com", name: "Original")
+    ENV["EMAIL"] = "  Owner@Example.COM "
+
+    run_task
+
+    assert_equal "Original", user.reload.name
+    assert_equal 1, User.where(email_address: "owner@example.com").count
+  end
+
   test "admin:create should warn when the account can't sign in" do
     create(:user, :suspended, email_address: "owner@example.com")
     ENV["EMAIL"] = "owner@example.com"
