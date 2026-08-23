@@ -14,7 +14,17 @@ export default class extends Controller {
   static targets = ["timeoutMessage", "content"]
 
   connect() {
+    // Turbo shows a cached snapshot while it fetches the real page, and
+    // controllers connect inside that preview too. A poll fired there is
+    // aborted seconds later when the fresh body replaces the preview — the
+    // browser reports it as a cancelled request and nothing consumes the
+    // response. The real render connects again; that is the run that counts.
+    if (this.renderingTurboPreview) return
     if (this.hasEndpointValue) this.startPolling()
+  }
+
+  get renderingTurboPreview() {
+    return document.documentElement.hasAttribute("data-turbo-preview")
   }
 
   disconnect() {
