@@ -5,6 +5,46 @@ class CredentialHelperTest < ActionView::TestCase
     @user ||= create(:user)
   end
 
+  test "#access_token_status_badge should label an active token valid" do
+    access_token = create(:access_token, :active, user: user)
+
+    badge = render_inline_badge(access_token_status_badge(access_token))
+
+    assert_equal "Valid", badge.text
+    assert_equal "active", badge["data-status"]
+  end
+
+  test "#access_token_status_badge should label an inactive token inactive" do
+    access_token = create(:access_token, user: user, status: :inactive)
+
+    badge = render_inline_badge(access_token_status_badge(access_token))
+
+    assert_equal "Inactive", badge.text
+    assert_equal "inactive", badge["data-status"]
+  end
+
+  test "#access_token_status_badge should stay silent while the check is in flight" do
+    access_token = create(:access_token, user: user, status: :validating)
+
+    assert_nil access_token_status_badge(access_token)
+  end
+
+  test "#credential_status_badge should label a credential by its state" do
+    credential = create(:ai_credential, :inactive, user: user)
+
+    badge = render_inline_badge(credential_status_badge(credential))
+
+    assert_equal "Inactive", badge.text
+    assert_equal "inactive", badge["data-credential-state"]
+    assert_equal "ai_credential.status_badge", badge["data-key"]
+  end
+
+  test "#credential_status_badge should stay silent while the check is in flight" do
+    credential = create(:search_credential, user: user, state: :validating)
+
+    assert_nil credential_status_badge(credential)
+  end
+
   test "#credential_actions_menu_items should list edit, make default, and delete" do
     credential = create(:ai_credential, user: user)
 
@@ -69,5 +109,11 @@ class CredentialHelperTest < ActionView::TestCase
 
     assert_equal "delete-token-modal", delete_item.dig(:data, :modal_trigger_modal_id_value)
     assert_equal "click->modal-trigger#open", delete_item.dig(:data, :action)
+  end
+
+  private
+
+  def render_inline_badge(badge)
+    Nokogiri::HTML5.fragment(render(badge)).at_css("span")
   end
 end

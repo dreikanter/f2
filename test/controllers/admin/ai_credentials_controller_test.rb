@@ -37,7 +37,7 @@ class Admin::AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", ai_credential.display_name
     assert_select "a[href=?]", admin_user_path(ai_credential.user), text: ai_credential.user.email_address
     assert_select "a[href=?]", admin_path, text: "Admin Panel"
-    assert_select "[data-key='ai_credential.active']"
+    assert_select "[data-key='ai_credential.status_badge'][data-credential-state='active']", text: "Valid"
     assert_select "[data-key='ai_credential.provider']"
   end
 

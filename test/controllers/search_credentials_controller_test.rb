@@ -174,7 +174,7 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-controller='polling']", count: 0
-    assert_select "[data-key='search_credential.active']"
+    assert_select "[data-key='search_credential.status_badge'][data-credential-state='active']", text: "Valid"
   end
 
   test "#show should render the inactive state without polling" do

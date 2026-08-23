@@ -229,7 +229,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-controller='polling']", false
-    assert_select "[data-key='ai_credential.active']"
+    assert_select "[data-key='ai_credential.status_badge'][data-credential-state='active']", text: "Valid"
   end
 
   test "#show should 404 for another user's credential" do

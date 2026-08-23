@@ -35,4 +35,12 @@ class BadgeComponentTest < ViewComponent::TestCase
 
     assert_nil result.at_css("span")["data-key"]
   end
+
+  test "#call should render extra data attributes alongside the key" do
+    result = render_inline(BadgeComponent.new(text: "Valid", color: :success, key: "access_token.active", data: { status: "active" }))
+
+    badge = result.at_css("span")
+    assert_equal "active", badge["data-status"]
+    assert_equal "access_token.active", badge["data-key"]
+  end
 end
