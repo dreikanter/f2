@@ -37,7 +37,7 @@ class Admin::SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", search_credential.display_name
     assert_select "a[href=?]", admin_user_path(search_credential.user), text: search_credential.user.email_address
     assert_select "a[href=?]", admin_path, text: "Admin Panel"
-    assert_select "[data-key='search_credential.active']"
+    assert_select "[data-key='search_credential.status_badge'][data-credential-state='active']", text: "Valid"
     assert_select "[data-key='search_credential.usage']"
   end
 

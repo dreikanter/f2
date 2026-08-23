@@ -3,6 +3,11 @@
 <div id="ai-credential-show" class="space-y-6" data-key="admin.ai_credential.show">
   <%= render PageHeaderComponent.new(title: @ai_credential.display_name) do |header| %>
     <% header.with_breadcrumb(label: "Admin Panel", url: admin_path) %>
+    <% unless @ai_credential.pending? || @ai_credential.validating? %>
+      <% header.with_context_paragraph do %>
+        <%= render credential_status_badge(@ai_credential) %>
+      <% end %>
+    <% end %>
     <% header.with_context_paragraph do %>
       Owner:
       <%= link_to @ai_credential.user.email_address, admin_user_path(@ai_credential.user), class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
@@ -22,23 +27,17 @@
       </div>
     </div>
   <% when "active" %>
-    <%= render AlertComponent.new(variant: :success, icon: "circle-check",
-                                  data: { credential_state: "active", key: "ai_credential.active" }) do %>
-      <span>Credential is active</span>
-    <% end %>
-
     <%= render AiCredentialDetailsComponent.new(ai_credential: @ai_credential) %>
 
     <%= render AiCredentialModelsComponent.new(ai_credential: @ai_credential) %>
   <% when "inactive" %>
-    <%= render AlertComponent.new(variant: :error, icon: "circle-x",
-                                  data: { credential_state: "inactive", key: "ai_credential.inactive" }) do %>
+    <p class="max-w-2xl text-body" data-key="ai_credential.inactive">
       <% if @ai_credential.last_error.present? %>
-        <span><%= @ai_credential.last_error %></span>
+        <%= @ai_credential.last_error %>
       <% else %>
-        <span>This key didn't pass validation.</span>
+        This key didn't pass validation.
       <% end %>
-    <% end %>
+    </p>
 
     <%= render AiCredentialDetailsComponent.new(ai_credential: @ai_credential) %>
   <% end %>

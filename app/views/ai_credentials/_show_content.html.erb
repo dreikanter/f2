@@ -2,6 +2,11 @@
 <div class="space-y-6" data-key="ai_credential.show">
   <%= render PageHeaderComponent.new(title: ai_credential.display_name) do |header| %>
     <% header.with_breadcrumb(label: "AI credentials", url: ai_credentials_path) %>
+    <% unless ai_credential.pending? || ai_credential.validating? %>
+      <% header.with_context_paragraph do %>
+        <%= render credential_status_badge(ai_credential) %>
+      <% end %>
+    <% end %>
     <% header.with_action_button do %>
       <%= render HeaderMenuComponent.new(
         menu_id: "ai-credential-header-menu-#{ai_credential.id}",
@@ -25,23 +30,17 @@
       </div>
     </div>
   <% when "active" %>
-    <%= render AlertComponent.new(variant: :success, icon: "circle-check",
-                                  data: { credential_state: "active", key: "ai_credential.active" }) do %>
-      <span>Credential is active</span>
-    <% end %>
-
     <%= render AiCredentialDetailsComponent.new(ai_credential: ai_credential) %>
 
     <%= render AiCredentialModelsComponent.new(ai_credential: ai_credential) %>
   <% when "inactive" %>
-    <%= render AlertComponent.new(variant: :error, icon: "circle-x",
-                                  data: { credential_state: "inactive", key: "ai_credential.inactive" }) do %>
+    <p class="max-w-2xl text-body" data-key="ai_credential.inactive">
       <% if ai_credential.last_error.present? %>
-        <span><%= ai_credential.last_error %></span>
+        <%= ai_credential.last_error %>
       <% else %>
-        <span>This key didn't work. Grab a fresh key from your provider's dashboard and add it again.</span>
+        This key didn't work. Grab a fresh key from your provider's dashboard and add it again.
       <% end %>
-    <% end %>
+    </p>
 
     <%= render AiCredentialDetailsComponent.new(ai_credential: ai_credential) %>
   <% end %>

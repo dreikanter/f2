@@ -50,7 +50,7 @@ class SearchCredentials::ValidationsControllerTest < ActionDispatch::Integration
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
     assert_includes response.body, "search-credential-show"
-    assert_includes response.body, "search_credential.active"
+    assert_includes response.body, "search_credential.status_badge"
   end
 
   test "#show should 404 for another user's credential" do

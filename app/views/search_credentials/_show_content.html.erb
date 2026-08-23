@@ -2,6 +2,11 @@
 <div class="space-y-6" data-key="search_credential.show">
   <%= render PageHeaderComponent.new(title: search_credential.display_name) do |header| %>
     <% header.with_breadcrumb(label: "Search credentials", url: search_credentials_path) %>
+    <% unless search_credential.pending? || search_credential.validating? %>
+      <% header.with_context_paragraph do %>
+        <%= render credential_status_badge(search_credential) %>
+      <% end %>
+    <% end %>
     <% header.with_action_button do %>
       <%= render HeaderMenuComponent.new(
         menu_id: "search-credential-header-menu-#{search_credential.id}",
@@ -23,20 +28,15 @@
       </div>
     </div>
   <% when "active" %>
-    <%= render AlertComponent.new(variant: :success, icon: "circle-check",
-                                  data: { credential_state: "active", key: "search_credential.active" }) do %>
-      <span>Credential is active</span>
-    <% end %>
     <%= render SearchCredentialDetailsComponent.new(search_credential: search_credential) %>
   <% when "inactive" %>
-    <%= render AlertComponent.new(variant: :error, icon: "circle-x",
-                                  data: { credential_state: "inactive", key: "search_credential.inactive" }) do %>
+    <p class="max-w-2xl text-body" data-key="search_credential.inactive">
       <% if search_credential.last_error.present? %>
-        <span><%= search_credential.last_error %></span>
+        <%= search_credential.last_error %>
       <% else %>
-        <span>This key didn't work. Get a fresh key from your search provider and replace it.</span>
+        This key didn't work. Get a fresh key from your search provider and replace it.
       <% end %>
-    <% end %>
+    </p>
     <%= render SearchCredentialDetailsComponent.new(search_credential: search_credential) %>
   <% end %>
 

@@ -8,6 +8,10 @@
   <% end %>
 
   <% unless access_token.pending? || access_token.validating? %>
+    <% header.with_context_paragraph do %>
+      <%= render access_token_status_badge(access_token) %>
+    <% end %>
+
     <% header.with_action_button do %>
       <%= render HeaderMenuComponent.new(
         menu_id: "access-token-header-menu-#{access_token.id}",
@@ -43,10 +47,6 @@
     </div>
   <% end %>
 <% elsif access_token.active? %>
-  <%= render AlertComponent.new(variant: :success, icon: "circle-check", data: { status: "active" }) do %>
-    <span>Token is valid and ready to use</span>
-  <% end %>
-
   <% unless access_token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE) %>
     <%= render AlertComponent.new(variant: :warning, icon: "triangle-alert", data: { key: "access_token.missing-subscriber-permission" }) do %>
       <p>This token can't look up subscriber counts, so feeds using it won't show how many people follow their group. Everything else works as usual.</p>
@@ -95,25 +95,25 @@
       that the token is short a permission — only a scope list we actually read
       can accuse it of that. %>
   <% if access_token.scopes.any? && !access_token.allows_scope?(AccessToken::READ_MY_INFO_SCOPE) %>
-    <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive", key: "access_token.missing-identity-permission" }) do %>
+    <div class="max-w-2xl space-y-2 text-body" data-key="access_token.missing-identity-permission">
       <p>This token works, but it can't tell Feeder which FreeFeed account it belongs to, so there's no way to publish with it.</p>
       <p>
         A token's permissions are fixed when it's created, so this one can't be updated.
         <%= link_to "Create a new token", access_token.token_creation_url,
                     target: "_blank",
                     rel: "noopener",
-                    class: "font-medium underline underline-offset-4" %>
-        and <%= link_to "paste it here", edit_access_token_path(access_token), class: "font-medium underline underline-offset-4" %> to fix this.
+                    class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+        and <%= link_to "paste it here", edit_access_token_path(access_token), class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %> to fix this.
       </p>
-    <% end %>
+    </div>
   <% else %>
-    <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive" }) do %>
-      <p>Feeder couldn't confirm this token, so it's inactive and feeds can't publish with it.</p>
+    <div class="max-w-2xl space-y-2 text-body" data-key="access_token.inactive-hint">
+      <p>Feeder couldn't confirm this token, so feeds can't publish with it.</p>
       <p>
         It may be expired, revoked, or incorrectly copied — or the check didn't get through.
-        <%= link_to "Paste the token again", edit_access_token_path(access_token), class: "font-medium underline underline-offset-4" %> to try once more.
+        <%= link_to "Paste the token again", edit_access_token_path(access_token), class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %> to try once more.
       </p>
-    <% end %>
+    </div>
   <% end %>
 
   <%= render TokenDetailsComponent.new(access_token: access_token) %>
