@@ -46,6 +46,27 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "p", text: "You have 1 active feed, 1 inactive feed, and 2 draft feeds"
   end
 
+  test "#index should guide users without feeds to create one" do
+    sign_in_as(user)
+    access_token
+
+    get feeds_url
+
+    assert_response :success
+    assert_select "[data-key='empty-state'] a[href=?]", new_feed_path, text: "Create your first feed"
+    assert_select "[data-key='feeds.empty.token-note']", count: 0
+  end
+
+  test "#index should mention the missing token in the empty state" do
+    sign_in_as(user)
+
+    get feeds_url
+
+    assert_response :success
+    assert_select "[data-key='empty-state'] a[href=?]", new_feed_path, text: "Create your first feed"
+    assert_select "[data-key='feeds.empty.token-note']", count: 1
+  end
+
   test "#index should render tailwind pagination controls" do
     sign_in_as(user)
     create_list(:feed, 4, user: user)

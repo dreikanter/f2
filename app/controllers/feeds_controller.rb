@@ -36,6 +36,7 @@ class FeedsController < ApplicationController
     @draft_feed_count = scope.draft.count
     @sortable_presenter = sortable_presenter
     @feeds = paginate_scope
+    @has_active_token = current_user.access_tokens.active.exists?
   end
 
   def new
