@@ -69,6 +69,30 @@ class PostPreviewComponentTest < ViewComponent::TestCase
     assert_not_nil section.at_css('a[href="https://example.com/plain.jpg"] img')
   end
 
+  # Bluesky and most modern CDNs serve content-addressed image URLs with no file
+  # extension; those used to fall through to the plain-link list.
+  test "#render should thumbnail attachment urls that carry no file extension" do
+    url = "https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:author/bafkphoto"
+    post_data = { "content" => "Body", "attachments" => [url] }
+
+    result = render_inline(PostPreviewComponent.new(post_data: post_data))
+
+    section = result.at_css('[data-key="preview.attachments"]')
+    assert_not_nil section.at_css("a[href='#{url}'] img")
+    assert_empty section.css("li")
+  end
+
+  test "#render should size attachment thumbnails through imgproxy" do
+    url = "https://example.com/photo.png"
+
+    result = render_inline(PostPreviewComponent.new(post_data: { "attachments" => [url] }))
+
+    image = result.at_css('[data-key="preview.attachments"] img')
+    assert_equal ImgproxyUrl.preview(url), image["src"]
+    assert_equal ImgproxyUrl.preview_srcset(url), image["srcset"]
+    assert_equal ImgproxyUrl::THUMBNAIL_SIZE.to_s, image["width"]
+  end
+
   test "keeps non-image attachments as links" do
     post_data = {
       "content" => "Body",
@@ -85,7 +109,7 @@ class PostPreviewComponentTest < ViewComponent::TestCase
     assert_not_nil section.at_css('a[href="https://example.com/clip.mp4"]')
   end
 
-  test "treats attachments with unparseable urls as non-images" do
+  test "#render should thumbnail attachments with unparseable urls" do
     post_data = {
       "content" => "Body",
       "attachments" => ["https://example.com/bad image.jpg"]
@@ -94,9 +118,8 @@ class PostPreviewComponentTest < ViewComponent::TestCase
     result = render_inline(PostPreviewComponent.new(post_data: post_data))
 
     section = result.at_css('[data-key="preview.attachments"]')
-    assert_not_nil section
-    assert_empty section.css("img")
-    assert_includes section.text, "https://example.com/bad image.jpg"
+    assert_not_nil section.at_css("img")
+    assert_empty section.css("li")
   end
 
   test "renders content without a synthesized title heading" do
