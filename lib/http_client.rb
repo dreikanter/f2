@@ -11,12 +11,17 @@ require_relative "http_client/caching_adapter"
 
 module HttpClient
   class Response
-    attr_reader :status, :body, :headers
+    attr_reader :status, :body, :headers, :url
 
-    def initialize(status:, body:, headers: {})
+    # `url` is the final URL the response came from — after redirects, it names
+    # the landing URL rather than the requested one, so relative references in
+    # the body can be resolved against the right base. nil when the adapter
+    # doesn't track it (e.g. hand-built responses in tests).
+    def initialize(status:, body:, headers: {}, url: nil)
       @status = status
       @body = body
       @headers = headers
+      @url = url
     end
 
     def success?
