@@ -467,6 +467,48 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "label[data-key='candidate.xkcd'] [data-key='candidate.suggested-badge']"
   end
 
+  test "#show should carry the discovered feed URL into the form for a page URL" do
+    sign_in_as(user)
+    page_url = "http://example.com/blog"
+    feed_url = "http://example.com/feed.xml"
+    html = %(<html><head><link rel="alternate" type="application/rss+xml" href="/feed.xml"></head><body></body></html>)
+    rss_body = "<?xml version=\"1.0\"?><rss><channel><title>Example Blog</title></channel></rss>"
+    stub_request(:get, page_url).to_return(status: 200, body: html)
+    stub_request(:get, feed_url).to_return(status: 200, body: rss_body)
+
+    post feed_identifications_path, params: { url: page_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    perform_enqueued_jobs
+
+    get feed_identifications_path, params: { url: page_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    # The feed anchors to the discovered feed URL, and the swap is visible: the
+    # source field shows the feed URL with the discovery note underneath.
+    assert_select "input[type=hidden][name='feed[params][url]'][value=?]", feed_url
+    assert_select "input[data-key='form.source-display'][value=?]", feed_url
+    assert_select "[data-key='form.source-discovered-note']"
+    assert_select "input[type=hidden][name='feed[feed_profile_key]'][value=?]", "rss"
+  end
+
+  test "#show should not show the discovery note when the input identified directly" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    create(
+      :feed_identification,
+      user: user,
+      input: url,
+      started_at: Time.current,
+      status: :success,
+      candidates: [{ "profile_key" => "rss", "title" => "Example", "test_status" => "passed" }]
+    )
+
+    get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "input[type=hidden][name='feed[params][url]'][value=?]", url
+    assert_select "[data-key='form.source-discovered-note']", count: 0
+  end
+
   test "#show should preselect the default schedule interval with no blank option" do
     sign_in_as(user)
     create(:access_token, :active, user: user)

@@ -209,10 +209,12 @@ class FeedsController < ApplicationController
   # The settled working identification for the submitted URL, or nil. A source
   # change is confirmed only when one exists and the submitted profile is one of
   # its working candidates — a candidate that actually read the source (spec §4).
+  # Looked up via for_source: a URL discovered on a submitted page (#1290) is
+  # backed by the identification of that page, not of the URL itself.
   def settled_working_identification
     return @settled_working_identification if defined?(@settled_working_identification)
 
-    fi = canonical_submitted_url && FeedIdentification.find_by(user: current_user, input: canonical_submitted_url)
+    fi = FeedIdentification.for_source(user: current_user, url: canonical_submitted_url)
     @settled_working_identification = (fi&.success? && fi.outcome == :working) ? fi : nil
   end
 
@@ -316,9 +318,7 @@ class FeedsController < ApplicationController
   end
 
   def cleanup_feed_identification(input)
-    return if input.blank?
-
-    FeedIdentification.find_by(user: current_user, input: input)&.destroy
+    FeedIdentification.for_source(user: current_user, url: input)&.destroy
   end
 
   # Minted with the feed so the URL is pasteable immediately, destroyed when

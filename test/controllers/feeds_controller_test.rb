@@ -172,6 +172,30 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Feed saved as draft", flash[:success]
   end
 
+  test "#create should clean up the page identification behind a discovered feed URL" do
+    sign_in_as(user)
+    access_token
+    create(:feed_identification, user: user, input: "https://example.com/blog",
+                                 status: :success, started_at: Time.current,
+                                 candidates: [{ "profile_key" => "rss", "test_status" => "passed",
+                                                "resolved_url" => "http://example.com/feed.xml" }])
+
+    feed_params = {
+      params: { url: "http://example.com/feed.xml" },
+      name: "Blog",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "0" }
+    end
+
+    assert_nil FeedIdentification.find_by(user: user, input: "https://example.com/blog")
+  end
+
   test "#create should enable a feed without any preview" do
     sign_in_as(user)
     access_token
@@ -1230,6 +1254,30 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     disabled.reload
     assert_equal "https://original.com/feed.xml", disabled.url
+  end
+
+  test "#update should apply a discovered feed URL once its page identification confirms it" do
+    sign_in_as(user)
+    disabled = create(:feed, :disabled, user: user,
+                      params: { "url" => "https://original.com/feed.xml" })
+    create(:feed_identification, user: user, input: "https://example.com/blog",
+                                 status: :success, started_at: Time.current,
+                                 candidates: [{ "profile_key" => "rss", "test_status" => "passed",
+                                                "resolved_url" => "https://example.com/feed.xml" }])
+
+    # The re-rendered form carries the discovered feed URL (not the typed page
+    # URL), so the confirming save submits it; the page's settled identification
+    # backs it as a working source — no re-detection round.
+    assert_no_enqueued_jobs(only: FeedIdentificationJob) do
+      patch feed_url(disabled), params: {
+        feed: { feed_profile_key: "rss", params: { url: "https://example.com/feed.xml" } }
+      }
+    end
+
+    disabled.reload
+    assert_equal "https://example.com/feed.xml", disabled.url
+    assert_nil FeedIdentification.find_by(user: user, input: "https://example.com/blog"),
+               "the page identification should be cleaned up after the confirming save"
   end
 
   test "#update should reset schedule next_run_at when interval changes" do
