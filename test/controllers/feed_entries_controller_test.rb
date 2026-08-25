@@ -63,6 +63,25 @@ class FeedEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_select "pre", text: /#{feed_entry.uid}/
   end
 
+  test "#show should display the source URL under the header" do
+    sign_in_as(user)
+    entry = create(:feed_entry, feed: feed, raw_data: { "url" => "https://example.com/post/1" })
+    get feed_entry_url(entry)
+    assert_response :success
+    assert_select "[data-key='feed_entry.source_url']" do |links|
+      assert_equal "https://example.com/post/1", links.first["href"]
+      assert_equal "https://example.com/post/1", links.first.text.strip
+    end
+  end
+
+  test "#show should skip the source URL when the entry has none" do
+    sign_in_as(user)
+    entry = create(:feed_entry, feed: feed, uid: "entry-without-url", raw_data: { "title" => "Sample" })
+    get feed_entry_url(entry)
+    assert_response :success
+    assert_select "[data-key='feed_entry.source_url']", false
+  end
+
   test "#show should display link to post when post exists" do
     sign_in_as(user)
     post = create(:post, feed: feed, feed_entry: feed_entry)
