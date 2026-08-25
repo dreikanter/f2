@@ -1,6 +1,4 @@
 class PostPreviewComponent < ViewComponent::Base
-  IMAGE_EXTENSIONS = %w[jpg jpeg png gif webp avif bmp svg].freeze
-
   def initialize(post_data:, index: nil)
     @post_data = post_data || {}
     @index = index
@@ -114,17 +112,12 @@ class PostPreviewComponent < ViewComponent::Base
     attachment.is_a?(Hash) ? attachment["type"].presence : nil
   end
 
-  # Treat an attachment as an image when its declared type says so, or — when no
-  # type is given — when the URL ends in a known image extension. Only images get
-  # a thumbnail; everything else stays a link to avoid broken previews.
+  # Preview attachments arrive as bare URLs (FeedPreviewWorkflow passes
+  # Post#attachment_urls straight through), so an untyped one is an image the
+  # normalizer collected — thumbnail it, like the published post will.
   def image_attachment?(attachment)
     type = attachment[:type].to_s.downcase
-    return type.start_with?("image") if type.present?
-
-    extension = File.extname(URI.parse(attachment[:url]).path).delete(".").downcase
-    IMAGE_EXTENSIONS.include?(extension)
-  rescue URI::InvalidURIError
-    false
+    type.blank? || type.start_with?("image")
   end
 
   def attachment_list_item(attachment)

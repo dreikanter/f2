@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-25
 
+- Feed previews now show attached pictures as small thumbnails instead of a list of links.
 - Hover any number in the stats row to see the full name of what it counts.
 - Feed entry pages now link to the original post, when the entry says where it came from.
 - Feed entry pages now show a breadcrumb back to the post, above the title, instead of a button off to the side.
