@@ -8,7 +8,8 @@ class StatsPanelComponentTest < ViewComponent::TestCase
     def layout_items
       [
         { key: "plain", label: "Plain figure", label_short: "Plain", value: "1" },
-        { key: "dimmed", label: "Dimmed figure", label_short: "Dimmed", value: "0", muted: true }
+        { key: "dimmed", label: "Dimmed figure", label_short: "Dimmed", value: "0", muted: true },
+        { key: "same", label: "Same", label_short: "Same", value: "2" }
       ]
     end
   end
@@ -41,6 +42,25 @@ class StatsPanelComponentTest < ViewComponent::TestCase
 
     assert_not_nil result.css('[data-key="custom_stats.plain.label"]').first
     assert_nil result.css('[data-key="stats.plain.label"]').first
+  end
+
+  test "#render should show the full label as a tooltip on the bar only" do
+    result = render_inline(SampleStatsComponent.new)
+
+    assert_equal "Plain figure", result.css('.hidden.md\\:flex [data-key="stats.plain"]').first["data-tippy-content"]
+    assert_nil result.css('.md\\:hidden [data-key="stats.plain"]').first["data-tippy-content"]
+  end
+
+  test "#render should skip the tooltip when both labels read the same" do
+    result = render_inline(SampleStatsComponent.new)
+
+    assert_nil result.css('.hidden.md\\:flex [data-key="stats.same"]').first["data-tippy-content"]
+  end
+
+  test "#render should hook the bar up to the tooltips controller" do
+    result = render_inline(SampleStatsComponent.new)
+
+    assert_equal "tooltips", result.css(".hidden.md\\:flex").first["data-controller"]
   end
 
   test "#layout_items should raise NotImplementedError when not overridden" do

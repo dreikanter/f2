@@ -49,7 +49,7 @@ class AdminsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='stats.total_users.value']", text: User.count.to_s
     assert_select "[data-key='stats.total_feeds.value']", text: Feed.count.to_s
     assert_select "[data-key='stats.total_published_posts.value']", text: "1"
-    assert_select "[data-controller='tooltips']", count: 1
+    assert_select "[data-key='posts_heatmap']", count: 1
   end
 
   test "should redirect when authenticated as regular user" do

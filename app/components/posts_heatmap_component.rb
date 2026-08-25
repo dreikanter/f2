@@ -14,7 +14,7 @@ class PostsHeatmapComponent < ViewComponent::Base
 
   def call
     render(CardComponent.new) do
-      tag.div(class: "overflow-x-auto", data: { controller: "tooltips" }) do
+      tag.div(class: "overflow-x-auto", data: { controller: "tooltips", key: "posts_heatmap" }) do
         tag.div(class: "w-max mx-auto") do
           raw(heatmap_svg)
         end

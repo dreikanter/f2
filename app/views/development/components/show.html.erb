@@ -466,12 +466,12 @@
     <%# Stats bar %>
     <section id="stats-bar" class="scroll-mt-6 space-y-4" data-key="section.stats-bar">
       <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Stats bar</h2>
-      <p class="text-body">A compact row of headline numbers.</p>
+      <p class="text-body">A compact row of headline numbers. Pass <code>tooltip:</code> to spell out a shortened label on hover.</p>
       <% stats_bar = StatsBarComponent.new %>
       <% stats_bar.with_item(StatBarItemComponent.new(label: "Total feeds", value: "42")) %>
-      <% stats_bar.with_item(StatBarItemComponent.new(label: "Active", value: "38")) %>
-      <% stats_bar.with_item(StatBarItemComponent.new(label: "Posts", value: "1,234")) %>
-      <% stats_bar.with_item(StatBarItemComponent.new(label: "Last updated", value: "2h ago")) %>
+      <% stats_bar.with_item(StatBarItemComponent.new(label: "Active", value: "38", tooltip: "Active feeds")) %>
+      <% stats_bar.with_item(StatBarItemComponent.new(label: "Posts", value: "1,234", tooltip: "Imported posts")) %>
+      <% stats_bar.with_item(StatBarItemComponent.new(label: "Last updated", value: "2h ago", tooltip: "Last updated at")) %>
       <%= render stats_bar %>
     </section>
 

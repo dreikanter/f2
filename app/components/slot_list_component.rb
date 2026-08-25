@@ -12,12 +12,16 @@ class SlotListComponent < ViewComponent::Base
   def call
     return unless items?
 
-    content_tag container_tag, class: @css_class || self.class::DEFAULT_CSS_CLASSES, data: @data do
+    content_tag container_tag, class: @css_class || self.class::DEFAULT_CSS_CLASSES, data: default_data.merge(@data) do
       safe_join(items)
     end
   end
 
   private
+
+  def default_data
+    {}
+  end
 
   def container_tag
     raise NotImplementedError, "#{self.class} must define #container_tag"

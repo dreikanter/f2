@@ -30,4 +30,16 @@ class StatBarItemComponentTest < ViewComponent::TestCase
     assert_includes result.at_css("dd")["class"], "text-muted"
     assert_not_includes result.at_css("dd")["class"], "text-heading"
   end
+
+  test "#render should expose the tooltip as tippy content" do
+    result = render_inline(StatBarItemComponent.new(label: "Active", value: "38", tooltip: "Active feeds"))
+
+    assert_equal "Active feeds", result.at_css("div")["data-tippy-content"]
+  end
+
+  test "#render should omit tippy content when no tooltip is given" do
+    result = render_inline(StatBarItemComponent.new(label: "Active", value: "38"))
+
+    assert_nil result.at_css("div")["data-tippy-content"]
+  end
 end

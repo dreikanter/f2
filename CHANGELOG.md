@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-25
 
+- Hover any number in the stats row to see the full name of what it counts.
 - Feed entry pages now link to the original post, when the entry says where it came from.
 
 ## 2026-08-23

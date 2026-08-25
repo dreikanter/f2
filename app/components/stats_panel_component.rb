@@ -3,7 +3,8 @@
 #
 # Subclasses supply #layout_items — one hash per figure with :key, :label,
 # :label_short, :value, and an optional :muted — and override #key_prefix when
-# their data-key hooks live under a different namespace.
+# their data-key hooks live under a different namespace. The bar shows
+# :label_short and reveals :label on hover.
 class StatsPanelComponent < ViewComponent::Base
   def call
     tag.div { safe_join([mobile_layout, desktop_layout]) }
@@ -45,8 +46,14 @@ class StatsPanelComponent < ViewComponent::Base
       label: item[:label_short],
       value: item[:value],
       key: item_key(item),
-      muted: item.fetch(:muted, false)
+      muted: item.fetch(:muted, false),
+      tooltip: desktop_tooltip(item)
     )
+  end
+
+  # The bar only has room for the short label, so the tooltip spells it out.
+  def desktop_tooltip(item)
+    item[:label] unless item[:label] == item[:label_short]
   end
 
   def item_key(item)
