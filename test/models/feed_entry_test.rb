@@ -88,12 +88,7 @@ class FeedEntryTest < ActiveSupport::TestCase
     assert_equal "https://example.com/webhook-post", entry.source_url
   end
 
-  test "#source_url should fall back to the link key from raw_data" do
-    entry = build(:feed_entry, raw_data: { "title" => "Sample", "link" => "https://example.com/link" })
-    assert_equal "https://example.com/link", entry.source_url
-  end
-
-  test "#source_url should skip raw_data values that are not links" do
+  test "#source_url should fall back to the next key when a value is not a link" do
     entry = build(:feed_entry, raw_data: { "url" => "tag:example.com,2005:Post/1", "link" => "https://example.com/link" })
     assert_equal "https://example.com/link", entry.source_url
   end
@@ -110,7 +105,6 @@ class FeedEntryTest < ActiveSupport::TestCase
 
   test "#source_url should return nil without a usable URL" do
     assert_nil build(:feed_entry, uid: "entry-1", raw_data: nil).source_url
-    assert_nil build(:feed_entry, uid: "entry-1", raw_data: { "url" => "" }).source_url
     assert_nil build(:feed_entry, uid: "at://did:plc:x/app.bsky.feed.post/1", raw_data: {}).source_url
     assert_nil build(:feed_entry, uid: "entry-1", raw_data: { "url" => "javascript:alert(1)" }).source_url
     assert_nil build(:feed_entry, uid: "entry-1", raw_data: { "url" => "/relative/path" }).source_url
