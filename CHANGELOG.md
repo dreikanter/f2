@@ -4,7 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-25
 
-- The post source page now links back to the post with a breadcrumb above the title, instead of a button off to the side.
+- Feed entry pages now link to the original post, when the entry says where it came from.
+- Feed entry pages now show a breadcrumb back to the post, above the title, instead of a button off to the side.
 
 ## 2026-08-23
 

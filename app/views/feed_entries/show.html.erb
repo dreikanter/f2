@@ -1,4 +1,5 @@
 <% feed_entry_title = "Feed Entry #{short_ref(@feed_entry.id)}" %>
+<% source_url = @feed_entry.source_url %>
 <% content_for :title, feed_entry_title %>
 <% post = @feed_entry.posts.first %>
 
@@ -13,6 +14,13 @@
         color: feed_entry_status_badge_color(@feed_entry.status),
         key: "feed_entry.status_badge"
       ) %>
+    <% end %>
+    <% if source_url %>
+      <% header.with_context_paragraph do %>
+        <%= link_to source_url, source_url, target: "_blank", rel: "noopener",
+              class: "break-all text-brand underline underline-offset-4 transition hover:text-brand-hover",
+              data: { key: "feed_entry.source_url" } %>
+      <% end %>
     <% end %>
   <% end %>
 
