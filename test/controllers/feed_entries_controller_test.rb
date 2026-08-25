@@ -82,18 +82,19 @@ class FeedEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='feed_entry.source_url']", false
   end
 
-  test "#show should display link to post when post exists" do
+  test "#show should display breadcrumb to post when post exists" do
     sign_in_as(user)
     post = create(:post, feed: feed, feed_entry: feed_entry)
     get feed_entry_url(feed_entry)
     assert_response :success
-    assert_select "a[href='#{post_path(post)}']", text: "Back to Post"
+    assert_select "nav[aria-label='Breadcrumb'] a[href='#{post_path(post)}']",
+                  text: "Post #{post.id.to_s.last(5)}"
   end
 
-  test "#show should display disabled link when no post exists" do
+  test "#show should omit breadcrumb when no post exists" do
     sign_in_as(user)
     get feed_entry_url(feed_entry)
     assert_response :success
-    assert_select "span.opacity-50", text: "Back to Post"
+    assert_select "nav[aria-label='Breadcrumb']", false
   end
 end
