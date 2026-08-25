@@ -3,6 +3,11 @@ class StatsBarComponent < SlotListComponent
 
   private
 
+  # Activates the hover tooltips that stat items declare.
+  def default_data
+    { controller: "tooltips" }
+  end
+
   def container_tag
     :dl
   end

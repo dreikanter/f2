@@ -1,15 +1,16 @@
 # Abstract base class — subclasses must define DEFAULT_ITEM_CLASS, LABEL_CLASSES, and VALUE_CLASSES.
 class StatItemComponent < ViewComponent::Base
-  def initialize(label:, value:, key: nil, muted: false, truncate: false)
+  def initialize(label:, value:, key: nil, muted: false, truncate: false, tooltip: nil)
     @label = label
     @value = value
     @key = key
     @muted = muted
     @truncate = truncate
+    @tooltip = tooltip
   end
 
   def call
-    content_tag :div, class: self.class::DEFAULT_ITEM_CLASS, data: { key: @key } do
+    content_tag :div, class: self.class::DEFAULT_ITEM_CLASS, data: { key: @key, tippy_content: @tooltip } do
       safe_join([label_element, value_element])
     end
   end

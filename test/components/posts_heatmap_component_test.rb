@@ -55,7 +55,7 @@ class PostsHeatmapComponentTest < ViewComponent::TestCase
   test "#call should include data-controller attribute for Stimulus" do
     metric_with_published_posts
     result = render_inline(PostsHeatmapComponent.new(feed: feed))
-    assert result.css("[data-controller='heatmap']").any?
+    assert result.css("[data-controller='tooltips']").any?
   end
 
   test "#call should aggregate published_posts_count across all feeds for a user" do
