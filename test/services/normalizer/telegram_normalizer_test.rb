@@ -27,6 +27,11 @@ class Normalizer::TelegramNormalizerTest < ActiveSupport::TestCase
     assert_equal "https://t.me/testchannel/2", posts[1].content
   end
 
+  test "#normalize should carry a link's query string into the post unbroken" do
+    assert_includes posts[3].content, "https://example.com/tickets?utm_source=tg&utm_campaign=spring"
+    assert_not_includes posts[3].content, "&amp;"
+  end
+
   test "#normalize should expose photos as attachments" do
     assert_equal ["https://cdn-test.telesco.pe/file/photo2.jpg"], posts[1].attachment_urls
   end
