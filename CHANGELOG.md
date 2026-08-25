@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-25
+
+- Feed entry pages now link to the original post, when the entry says where it came from.
+
 ## 2026-08-23
 
 - The group refresh button now spins in place instead of turning into a bare icon, and in the feed form it sits right next to the group picker.

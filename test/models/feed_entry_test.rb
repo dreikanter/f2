@@ -77,4 +77,42 @@ class FeedEntryTest < ActiveSupport::TestCase
     assert_not entry.valid?
     assert entry.errors.of_kind?(:uid, :blank)
   end
+
+  test "#source_url should prefer the source_url key from raw_data" do
+    entry = build(:feed_entry, raw_data: {
+      "source_url" => "https://example.com/webhook-post",
+      "url" => "https://example.com/entry",
+      "link" => "https://example.com/link"
+    })
+
+    assert_equal "https://example.com/webhook-post", entry.source_url
+  end
+
+  test "#source_url should fall back to the link key from raw_data" do
+    entry = build(:feed_entry, raw_data: { "title" => "Sample", "link" => "https://example.com/link" })
+    assert_equal "https://example.com/link", entry.source_url
+  end
+
+  test "#source_url should skip raw_data values that are not links" do
+    entry = build(:feed_entry, raw_data: { "url" => "tag:example.com,2005:Post/1", "link" => "https://example.com/link" })
+    assert_equal "https://example.com/link", entry.source_url
+  end
+
+  test "#source_url should fall back to the uid when it is a URL" do
+    entry = build(:feed_entry, uid: "https://example.com/post/1", raw_data: { "title" => "Sample" })
+    assert_equal "https://example.com/post/1", entry.source_url
+  end
+
+  test "#source_url should accept a non-ASCII URL" do
+    entry = build(:feed_entry, raw_data: { "url" => "https://example.com/привет" })
+    assert_equal "https://example.com/привет", entry.source_url
+  end
+
+  test "#source_url should return nil without a usable URL" do
+    assert_nil build(:feed_entry, uid: "entry-1", raw_data: nil).source_url
+    assert_nil build(:feed_entry, uid: "entry-1", raw_data: { "url" => "" }).source_url
+    assert_nil build(:feed_entry, uid: "at://did:plc:x/app.bsky.feed.post/1", raw_data: {}).source_url
+    assert_nil build(:feed_entry, uid: "entry-1", raw_data: { "url" => "javascript:alert(1)" }).source_url
+    assert_nil build(:feed_entry, uid: "entry-1", raw_data: { "url" => "/relative/path" }).source_url
+  end
 end
