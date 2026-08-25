@@ -2,8 +2,9 @@ module Processor
   # Parses a Bluesky getAuthorFeed JSON payload into FeedEntry objects. Only
   # the author's own top-level posts survive: reposts (items carrying a
   # `reason`) and replies are skipped. Truncated link text is expanded to the
-  # full target URL from the post's facets, and embedded images, gallery
-  # items, and video thumbnails are collected as attachment candidates.
+  # full target URL from the post's facets, embedded images, gallery items, and
+  # video thumbnails are collected as attachment candidates, and an external
+  # link card contributes its target URL and title.
   class BlueskyProcessor < Base
     LINK_FACET = "app.bsky.richtext.facet#link".freeze
     # Placeholder the AppView serves when an account's handle no longer
@@ -42,6 +43,8 @@ module Processor
       published_at = parse_time(post.dig("record", "createdAt"))
       return nil unless published_at
 
+      embed = post["embed"] || {}
+
       FeedEntry.new(
         feed: feed,
         uid: uid,
@@ -51,7 +54,8 @@ module Processor
           "uid" => uid,
           "url" => post_url(post),
           "text" => post_text(post["record"] || {}),
-          "images" => embed_images(post["embed"] || {})
+          "images" => embed_images(embed),
+          "link_card" => embed_link_card(embed)
         }
       )
     end
@@ -114,6 +118,20 @@ module Processor
       else
         []
       end.uniq
+    end
+
+    # A link card keeps its target outside the post text, so a post that is
+    # nothing but a card would otherwise normalize to an empty body.
+    def embed_link_card(embed)
+      case embed["$type"]
+      when "app.bsky.embed.external#view"
+        external = embed["external"]
+        return nil unless external.is_a?(Hash) && external["uri"].present?
+
+        { "url" => external["uri"], "title" => external["title"].presence }.compact
+      when "app.bsky.embed.recordWithMedia#view"
+        embed_link_card(embed["media"] || {})
+      end
     end
 
     def parse_time(value)
