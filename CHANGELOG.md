@@ -4,7 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-25
 
-- Paste a blog or site link when adding a feed and we'll find the feed it advertises for you — no more hunting for the RSS URL.
+- Paste a blog or site link when adding a feed and we'll find its feed for you. No more hunting for the RSS URL.
 - Feed previews now show attached pictures as small thumbnails instead of a list of links.
 - Hover any number in the stats row to see the full name of what it counts.
 - Feed entry pages now link to the original post, when the entry says where it came from.

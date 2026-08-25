@@ -153,9 +153,8 @@ class FeedIdentificationsController < ApplicationController
     suggested = feed_identification.suggested_candidate
     profile_key = suggested&.profile_key
     source_key = FeedProfile.source_key_for(profile_key)
-    # A page URL identifies through the feed it advertises (#1290): the form
-    # carries the discovered feed URL — the URL the feed will actually read —
-    # and says so, keeping the swap visible.
+    # The form carries the URL the feed will actually read; for a page URL
+    # that's the discovered feed, and a note explains the swap.
     source_url = feed_identification.source_url_for(profile_key)
     discovered = source_url != feed_identification.input
 

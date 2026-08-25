@@ -1265,9 +1265,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
                                  candidates: [{ "profile_key" => "rss", "test_status" => "passed",
                                                 "resolved_url" => "https://example.com/feed.xml" }])
 
-    # The re-rendered form carries the discovered feed URL (not the typed page
-    # URL), so the confirming save submits it; the page's settled identification
-    # backs it as a working source — no re-detection round.
+    # The form carries the discovered feed URL, so the confirming save
+    # submits it directly.
     assert_no_enqueued_jobs(only: FeedIdentificationJob) do
       patch feed_url(disabled), params: {
         feed: { feed_profile_key: "rss", params: { url: "https://example.com/feed.xml" } }

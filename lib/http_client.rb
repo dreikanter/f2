@@ -13,10 +13,8 @@ module HttpClient
   class Response
     attr_reader :status, :body, :headers, :url
 
-    # `url` is the final URL the response came from — after redirects, it names
-    # the landing URL rather than the requested one, so relative references in
-    # the body can be resolved against the right base. nil when the adapter
-    # doesn't track it (e.g. hand-built responses in tests).
+    # Final URL after redirects, for resolving relative references in the
+    # body. nil when the adapter doesn't track it.
     def initialize(status:, body:, headers: {}, url: nil)
       @status = status
       @body = body

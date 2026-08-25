@@ -47,18 +47,15 @@ class FeedIdentification < ApplicationRecord
     working_candidates.map(&:profile_key)
   end
 
-  # The source URL the chosen profile's working candidate actually reads: the
-  # feed discovered on the submitted page (#1290) when there is one, otherwise
-  # the input itself. Feeds anchor to this, never to a page URL a profile
-  # can't parse.
+  # The URL the profile's working candidate actually reads: the discovered
+  # feed URL when there is one, otherwise the input. Feeds anchor to this.
   def source_url_for(profile_key)
     candidate = working_candidates.find { |c| c.profile_key == profile_key }
     candidate&.resolved_url || input
   end
 
-  # The identification behind a feed's source URL: keyed by the input itself,
-  # or — when the feed was created from a discovered feed URL (#1290) — the
-  # settled identification of the page that resolved to it.
+  # The identification behind a source URL: keyed by the input itself, or
+  # the identification of the page whose candidate resolved to the URL.
   def self.for_source(user:, url:)
     return nil if url.blank?
 

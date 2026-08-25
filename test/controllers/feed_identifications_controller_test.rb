@@ -482,8 +482,6 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { url: page_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    # The feed anchors to the discovered feed URL, and the swap is visible: the
-    # source field shows the feed URL with the discovery note underneath.
     assert_select "input[type=hidden][name='feed[params][url]'][value=?]", feed_url
     assert_select "input[data-key='form.source-display'][value=?]", feed_url
     assert_select "[data-key='form.source-discovered-note']"

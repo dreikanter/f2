@@ -50,7 +50,7 @@ module HttpClient
         status: response.status,
         body: response.body,
         headers: response.headers.to_hash,
-        # After redirects env.url names the final hop, not the requested URL.
+        # env.url is the final hop after redirects.
         url: response.env.url.to_s
       )
     rescue Faraday::TimeoutError, Timeout::Error => e

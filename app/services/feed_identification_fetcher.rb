@@ -60,8 +60,7 @@ class FeedIdentificationFetcher
     response = http_client.get(@input)
     raise ResponseStatusError, "HTTP #{response.status}" unless response.success?
 
-    # Discovery resolves the page's relative feed links against where the
-    # fetch landed (after redirects), not necessarily the typed URL.
+    # The base for resolving discovered relative feed links.
     @fetched_url = response.url.presence || @input
     response.body
   rescue HttpClient::TooManyRedirectsError => e
@@ -70,10 +69,6 @@ class FeedIdentificationFetcher
     raise UnreachableError, e.message
   end
 
-  # Direct identification of the input URL, falling back to the feeds the
-  # page advertises (#1290) when its body matches no profile: a blog or site
-  # URL then identifies through its feed links instead of dead-ending on
-  # "no feed here".
   def identify_candidates(body)
     direct = FeedProfileDetector.call(input: @input, fetched_body: body).candidates
     return tested_candidates(direct, input: @input) if direct.any?
@@ -81,13 +76,10 @@ class FeedIdentificationFetcher
     discovered_candidates(body)
   end
 
-  # Identify each advertised feed URL the normal way (bounded fan-out, same
-  # caching client), tagging candidates with the URL they were verified
-  # against so the created feed anchors to the feed, not the page. Stops at
-  # the first URL yielding a working candidate: one identification maps to
-  # one source URL — the chooser, the preview, and the edit confirmation all
-  # rely on that — and document order conventionally lists the main feed
-  # ahead of auxiliary ones.
+  # Runs regular identification against each advertised feed URL, tagging
+  # candidates with the URL they were verified against. Stops at the first
+  # URL with a working candidate: the chooser, the preview, and the edit
+  # confirmation all expect one source URL per identification.
   def discovered_candidates(body)
     candidates = []
 
@@ -105,8 +97,7 @@ class FeedIdentificationFetcher
     candidates
   end
 
-  # A discovered URL that can't be fetched is skipped, not fatal: the page
-  # itself was reachable, and another advertised feed may still work.
+  # A broken advertised feed is skipped; another may still work.
   def fetch_discovered_body(feed_url)
     response = http_client.get(feed_url)
     response.success? ? response.body : nil
@@ -134,10 +125,10 @@ class FeedIdentificationFetcher
     end
   end
 
-  # Serialize each candidate with its self-test verdict from running the real
-  # pipeline against `input` — the typed URL, or a discovered feed URL. Only
-  # deterministic profiles can appear here — the AI profile registers no
-  # matcher — so detection stays LLM-free.
+  # Serialize each candidate with its self-test verdict from running the
+  # real pipeline against input (the typed URL or a discovered feed URL).
+  # Only deterministic profiles appear here; the AI profile registers no
+  # matcher, so detection stays LLM-free.
   def tested_candidates(candidates, input:)
     candidates.map { |candidate| candidate.as_json.merge(test_result(candidate, input: input)) }
   end

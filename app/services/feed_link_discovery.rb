@@ -1,16 +1,8 @@
-# Finds the feeds a web page advertises: typed alternate links in its markup
-# (application/rss+xml, application/atom+xml, application/feed+json), resolved
-# against the URL the page was fetched from — the final one after redirects,
-# so relative hrefs point where the page actually lives.
-#
-# This feeds the identification fallback for page URLs (#1290): when a pasted
-# link matches no profile directly, these are the URLs worth checking next.
-#
-# Page authors control the hrefs, so every resolved URL passes the PublicUrl
-# SSRF guard before being offered for fetching (redirect hops stay the fetch
-# layer's concern, #920). Returns at most LIMIT URLs, deduplicated, in
-# document order — sites conventionally list the main feed before auxiliary
-# ones like comment feeds.
+# Extracts the feed URLs a page advertises via typed alternate links
+# (RSS, Atom, JSON Feed). Relative hrefs resolve against base_url, the
+# final URL after redirects. The hrefs are author-controlled, so non-public
+# URLs are dropped (SSRF). Returns at most LIMIT URLs, deduplicated, in
+# document order; sites conventionally list the main feed first.
 class FeedLinkDiscovery
   FEED_MIME_TYPES = %w[application/rss+xml application/atom+xml application/feed+json].freeze
   LIMIT = 3
@@ -48,8 +40,8 @@ class FeedLinkDiscovery
     nil
   end
 
-  # rel is a space-separated token list, and type may carry parameters
-  # ("application/rss+xml; charset=utf-8"); both compare case-insensitively.
+  # rel is a space-separated token list; type may carry parameters
+  # ("application/rss+xml; charset=utf-8").
   def alternate_feed_link?(link)
     rel_tokens = link["rel"].to_s.downcase.split
     type = link["type"].to_s.downcase.split(";").first.to_s.strip

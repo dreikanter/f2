@@ -26,9 +26,8 @@ class FeedFormComponent < ViewComponent::Base
   def source_changed? = @source_changed
   def profile_changed? = @profile_changed
 
-  # The source URL was discovered on the page the user submitted (#1290): the
-  # form carries the feed's URL, not the pasted one, and a note explains the
-  # swap.
+  # The source URL was discovered on the submitted page; a note under the
+  # source field explains the swap.
   def source_discovered? = @source_discovered
 
   # Editing an existing feed vs. creating one. Every caller passes a persisted
