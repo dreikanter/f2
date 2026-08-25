@@ -14,6 +14,11 @@ module Processor
     ].join(", ").freeze
     BACKGROUND_IMAGE = /background-image:\s*url\(['"]?(.*?)['"]?\)/i
 
+    # t.me escapes a link URL's ampersands twice, so one decode still leaves a
+    # literal "&amp;" in the query string. Repairing an already decoded value
+    # is a no-op when the markup was escaped once.
+    ESCAPED_AMPERSAND = /&amp;/i
+
     def process
       entries = document.css(MESSAGE_SELECTOR).filter_map { |wrap| build_entry(wrap) }
       Result.new(entries: entries, recognized: true)
@@ -44,14 +49,39 @@ module Processor
         raw_data: {
           "uid" => uid,
           "url" => message_url(wrap, uid),
-          "text_html" => wrap.at_css(".tgme_widget_message_text")&.inner_html.to_s,
+          "text_html" => text_html(wrap),
           "images" => image_urls(wrap)
         }
       )
     end
 
     def message_url(wrap, uid)
-      wrap.at_css(".tgme_widget_message_date")&.[]("href").presence || "https://t.me/#{uid}"
+      href = wrap.at_css(".tgme_widget_message_date")&.[]("href").presence
+      href ? unescape_ampersands(href) : "https://t.me/#{uid}"
+    end
+
+    def text_html(wrap)
+      text = wrap.at_css(".tgme_widget_message_text")
+      return "" unless text
+
+      repair_link_urls(text)
+      text.inner_html
+    end
+
+    # Skips captions: a rendered URL never carries whitespace.
+    def repair_link_urls(node)
+      node.css("a[href]").each do |anchor|
+        anchor["href"] = unescape_ampersands(anchor["href"])
+        anchor.xpath(".//text()").each do |text|
+          next if text.content.match?(/\s/)
+
+          text.content = unescape_ampersands(text.content)
+        end
+      end
+    end
+
+    def unescape_ampersands(url)
+      url.gsub(ESCAPED_AMPERSAND, "&")
     end
 
     def image_urls(wrap)
