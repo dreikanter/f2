@@ -12,6 +12,12 @@ class FeedIdentification::CandidateTest < ActiveSupport::TestCase
     assert_equal "Example", subject.title
   end
 
+  test "#resolved_url should read the discovered feed URL when present" do
+    assert_equal "https://example.com/feed.xml",
+                 candidate("resolved_url" => "https://example.com/feed.xml").resolved_url
+    assert_nil candidate({}).resolved_url
+  end
+
   test "#posts_found should default to zero" do
     assert_equal 0, candidate({}).posts_found
     assert_equal 3, candidate("posts_found" => 3).posts_found

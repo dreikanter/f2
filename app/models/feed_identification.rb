@@ -47,6 +47,27 @@ class FeedIdentification < ApplicationRecord
     working_candidates.map(&:profile_key)
   end
 
+  # The source URL the chosen profile's working candidate actually reads: the
+  # feed discovered on the submitted page (#1290) when there is one, otherwise
+  # the input itself. Feeds anchor to this, never to a page URL a profile
+  # can't parse.
+  def source_url_for(profile_key)
+    candidate = working_candidates.find { |c| c.profile_key == profile_key }
+    candidate&.resolved_url || input
+  end
+
+  # The identification behind a feed's source URL: keyed by the input itself,
+  # or — when the feed was created from a discovered feed URL (#1290) — the
+  # settled identification of the page that resolved to it.
+  def self.for_source(user:, url:)
+    return nil if url.blank?
+
+    find_by(user: user, input: url) ||
+      where(user: user, status: :success).detect do |identification|
+        identification.working_candidates.any? { |c| c.resolved_url == url }
+      end
+  end
+
   # How the detection result should present (spec §7):
   #   :working     — at least one candidate read the source → the feed form
   #   :unreachable — nothing connected (couldn't-reach) → the transient retry state

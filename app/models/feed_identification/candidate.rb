@@ -14,6 +14,13 @@ class FeedIdentification
       @attributes["title"]
     end
 
+    # The feed URL discovered on the submitted page (#1290): the candidate was
+    # detected and tested against this URL, not the input itself. Absent when
+    # the input identified directly.
+    def resolved_url
+      @attributes["resolved_url"]
+    end
+
     def posts_found
       @attributes["posts_found"].to_i
     end
