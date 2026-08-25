@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-25
 
+- Empty pages now point at the next setup step: the feeds and posts pages explain how to get your first feed going, the status page picks up where a draft feed left off, and the token and credential pages say what each key is for.
 - Feed previews now show attached pictures as small thumbnails instead of a list of links.
 - Hover any number in the stats row to see the full name of what it counts.
 - Feed entry pages now link to the original post, when the entry says where it came from.

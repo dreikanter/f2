@@ -1,10 +1,6 @@
 <%= turbo_stream.replace "search_credentials_list" do %>
   <div id="search_credentials_list">
-    <% if @credentials.any? %>
-      <%= render SearchCredentialsListComponent.new(credentials: @credentials) %>
-    <% else %>
-      <%= render EmptyStateComponent.new("No search credentials yet") %>
-    <% end %>
+    <%= render "search_credentials/list", credentials: @credentials %>
   </div>
 <% end %>
 

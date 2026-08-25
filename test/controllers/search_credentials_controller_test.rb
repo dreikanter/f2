@@ -42,6 +42,7 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
     get search_credentials_url
 
     assert_response :success
+    assert_select "[data-key='empty-state']", text: /No search credentials yet/
     assert_select "[data-key='empty-state']", text: /AI feeds need a search-provider API key to search the web/
     assert_select "[data-key='empty-state']", text: /Non-AI feeds never need one/
   end

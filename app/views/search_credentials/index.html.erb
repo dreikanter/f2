@@ -13,12 +13,6 @@
   <% end %>
 
   <div id="search_credentials_list">
-    <% if @credentials.any? %>
-      <%= render SearchCredentialsListComponent.new(credentials: @credentials) %>
-    <% else %>
-      <%= render EmptyStateComponent.new("No search credentials yet") do %>
-        <p>AI feeds need a search-provider API key to search the web. Non-AI feeds never need one.</p>
-      <% end %>
-    <% end %>
+    <%= render "list", credentials: @credentials %>
   </div>
 </div>
