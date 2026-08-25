@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-25
 
+- Links in Telegram posts now keep their full address, instead of breaking on a stray `&amp;`.
 - Bluesky posts that are just a shared link now come through with the link and its title, instead of only a link back to Bluesky.
 - Feed previews now show attached pictures as small thumbnails instead of a list of links.
 - Hover any number in the stats row to see the full name of what it counts.
