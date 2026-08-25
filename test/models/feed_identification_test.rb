@@ -232,6 +232,22 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     assert_equal identification, FeedIdentification.for_source(user: user, url: "https://example.com/feed.xml")
   end
 
+  test ".for_source should prefer a working page identification over a stale keyed row" do
+    create(:feed_identification, user: user, input: "https://example.com/feed.xml",
+                                 status: :failed, error: "unreachable")
+    page = create(
+      :feed_identification,
+      user: user,
+      input: "https://example.com/blog",
+      status: :success,
+      candidates: [
+        { "profile_key" => "rss", "test_status" => "passed", "resolved_url" => "https://example.com/feed.xml" }
+      ]
+    )
+
+    assert_equal page, FeedIdentification.for_source(user: user, url: "https://example.com/feed.xml")
+  end
+
   test ".for_source should scope discovered lookups to the user and working candidates" do
     create(
       :feed_identification,
