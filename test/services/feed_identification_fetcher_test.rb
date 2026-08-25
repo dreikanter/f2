@@ -360,6 +360,40 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal "unidentifiable", feed_identification.error
   end
 
+  test "#identify should not follow an advertised feed's redirect to a private address" do
+    page_url = "http://example.com/blog"
+
+    stub_request(:get, page_url).to_return(status: 200, body: page_body(%(<link rel="alternate" type="application/rss+xml" href="/feed.xml">)))
+    stub_request(:get, "http://example.com/feed.xml")
+      .to_return(status: 302, headers: { "Location" => "http://127.0.0.1/feed.xml" })
+
+    FeedIdentificationFetcher.new(user: user, input: page_url, logger: @logger).identify
+
+    assert_equal "unidentifiable", FeedIdentification.find_by(user: user, input: page_url).error
+    assert_not_requested :get, "http://127.0.0.1/feed.xml"
+  end
+
+  test "#identify should fall back to advertised feeds when a matched candidate fails its test" do
+    page_url = "http://example.com/blog"
+    html = <<~HTML
+      <html><head>
+        <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+      </head><body>
+        <p>Example markup:</p>
+        <pre><rss version="2.0"><channel></channel></rss></pre>
+      </body></html>
+    HTML
+
+    stub_request(:get, page_url).to_return(status: 200, body: html)
+    stub_request(:get, "http://example.com/feed.xml").to_return(status: 200, body: rss_body("Real Feed"))
+
+    FeedIdentificationFetcher.new(user: user, input: page_url, logger: @logger).identify
+
+    feed_identification = FeedIdentification.find_by(user: user, input: page_url)
+    assert_equal :working, feed_identification.outcome
+    assert_equal "http://example.com/feed.xml", feed_identification.suggested_candidate.resolved_url
+  end
+
   test "#identify should never fetch a non-public advertised feed URL" do
     page_url = "http://example.com/blog"
 

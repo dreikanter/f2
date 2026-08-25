@@ -69,11 +69,14 @@ class FeedIdentificationFetcher
     raise UnreachableError, e.message
   end
 
+  # Falls back to the advertised feeds unless a direct candidate actually
+  # reads the source; a matcher can trip on page markup that no profile can
+  # parse.
   def identify_candidates(body)
-    direct = FeedProfileDetector.call(input: @input, fetched_body: body).candidates
-    return tested_candidates(direct, input: @input) if direct.any?
+    direct = tested_candidates(FeedProfileDetector.call(input: @input, fetched_body: body).candidates, input: @input)
+    return direct if direct.any? { |candidate| working?(candidate) }
 
-    discovered_candidates(body)
+    direct + discovered_candidates(body)
   end
 
   # Runs regular identification against each advertised feed URL, tagging
@@ -91,17 +94,26 @@ class FeedIdentificationFetcher
       tested = tested_candidates(detected, input: feed_url)
                  .map { |attributes| attributes.merge("resolved_url" => feed_url) }
       candidates.concat(tested)
-      break if tested.any? { |attributes| attributes["test_status"] == "passed" }
+      break if tested.any? { |attributes| working?(attributes) }
     end
 
     candidates
   end
 
-  # A broken advertised feed is skipped; another may still work.
+  def working?(candidate_attributes)
+    candidate_attributes["test_status"] == "passed"
+  end
+
+  # A broken advertised feed is skipped; another may still work. The hrefs
+  # are author-controlled, so redirect hops are validated too (SSRF).
   def fetch_discovered_body(feed_url)
-    response = http_client.get(feed_url)
-    response.success? ? response.body : nil
-  rescue HttpClient::Error
+    response = http_client.get(feed_url, options: { validate_url: PublicUrl.method(:safe?) })
+    return response.body if response.success?
+
+    @logger.info("Feed discovery skipped #{sanitize_input_for_logging(feed_url)}: HTTP #{response.status}")
+    nil
+  rescue HttpClient::Error => e
+    @logger.info("Feed discovery skipped #{sanitize_input_for_logging(feed_url)}: #{e.class} (#{e.message})")
     nil
   end
 
