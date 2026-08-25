@@ -18,15 +18,10 @@ class FeedIdentificationFetcher
 
   def identify
     body = fetch_body_for_input
+    candidates = identify_candidates(body)
 
-    result = FeedProfileDetector.call(input: @input, fetched_body: body)
-
-    if result.candidates.any?
-      feed_identification.update!(
-        status: :success,
-        candidates: tested_candidates(result.candidates),
-        error: nil
-      )
+    if candidates.any?
+      feed_identification.update!(status: :success, candidates: candidates, error: nil)
     else
       feed_identification.update!(status: :failed, candidates: [], error: "unidentifiable")
     end
@@ -65,11 +60,58 @@ class FeedIdentificationFetcher
     response = http_client.get(@input)
     raise ResponseStatusError, "HTTP #{response.status}" unless response.success?
 
+    # Discovery resolves the page's relative feed links against where the
+    # fetch landed (after redirects), not necessarily the typed URL.
+    @fetched_url = response.url.presence || @input
     response.body
   rescue HttpClient::TooManyRedirectsError => e
     raise RedirectLimitError, e.message
   rescue HttpClient::Error => e
     raise UnreachableError, e.message
+  end
+
+  # Direct identification of the input URL, falling back to the feeds the
+  # page advertises (#1290) when its body matches no profile: a blog or site
+  # URL then identifies through its feed links instead of dead-ending on
+  # "no feed here".
+  def identify_candidates(body)
+    direct = FeedProfileDetector.call(input: @input, fetched_body: body).candidates
+    return tested_candidates(direct, input: @input) if direct.any?
+
+    discovered_candidates(body)
+  end
+
+  # Identify each advertised feed URL the normal way (bounded fan-out, same
+  # caching client), tagging candidates with the URL they were verified
+  # against so the created feed anchors to the feed, not the page. Stops at
+  # the first URL yielding a working candidate: one identification maps to
+  # one source URL — the chooser, the preview, and the edit confirmation all
+  # rely on that — and document order conventionally lists the main feed
+  # ahead of auxiliary ones.
+  def discovered_candidates(body)
+    candidates = []
+
+    FeedLinkDiscovery.call(body, base_url: @fetched_url).each do |feed_url|
+      feed_body = fetch_discovered_body(feed_url)
+      next if feed_body.nil?
+
+      detected = FeedProfileDetector.call(input: feed_url, fetched_body: feed_body).candidates
+      tested = tested_candidates(detected, input: feed_url)
+                 .map { |attributes| attributes.merge("resolved_url" => feed_url) }
+      candidates.concat(tested)
+      break if tested.any? { |attributes| attributes["test_status"] == "passed" }
+    end
+
+    candidates
+  end
+
+  # A discovered URL that can't be fetched is skipped, not fatal: the page
+  # itself was reachable, and another advertised feed may still work.
+  def fetch_discovered_body(feed_url)
+    response = http_client.get(feed_url)
+    response.success? ? response.body : nil
+  rescue HttpClient::Error
+    nil
   end
 
   def sanitize_input_for_logging(input)
@@ -93,16 +135,17 @@ class FeedIdentificationFetcher
   end
 
   # Serialize each candidate with its self-test verdict from running the real
-  # pipeline. Only deterministic profiles can appear here — the AI profile
-  # registers no matcher — so detection stays LLM-free.
-  def tested_candidates(candidates)
-    candidates.map { |candidate| candidate.as_json.merge(test_result(candidate)) }
+  # pipeline against `input` — the typed URL, or a discovered feed URL. Only
+  # deterministic profiles can appear here — the AI profile registers no
+  # matcher — so detection stays LLM-free.
+  def tested_candidates(candidates, input:)
+    candidates.map { |candidate| candidate.as_json.merge(test_result(candidate, input: input)) }
   end
 
-  def test_result(candidate)
+  def test_result(candidate, input:)
     result = CandidateTester.new(
       user: @user,
-      input: @input,
+      input: input,
       profile_key: candidate.profile_key,
       http_client: http_client
     ).call

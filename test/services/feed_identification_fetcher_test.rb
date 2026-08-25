@@ -268,4 +268,129 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     profile_keys = feed_identification.candidates.map { |c| c["profile_key"] }
     assert_equal %w[xkcd rss], profile_keys, "xkcd > rss for xkcd.com URLs"
   end
+
+  test "#identify should not tag directly identified candidates with a resolved URL" do
+    url = "http://example.com/feed.xml"
+    stub_request(:get, url).to_return(status: 200, body: rss_body("Direct Feed"))
+
+    FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+
+    candidate = FeedIdentification.find_by(user: user, input: url).candidates.first
+    assert_nil candidate["resolved_url"]
+  end
+
+  test "#identify should discover the feed a page advertises" do
+    page_url = "http://example.com/blog"
+    feed_url = "http://example.com/feed.xml"
+
+    stub_request(:get, page_url).to_return(status: 200, body: page_body(%(<link rel="alternate" type="application/rss+xml" href="/feed.xml">)))
+    stub_request(:get, feed_url).to_return(status: 200, body: rss_body("Discovered Feed"))
+
+    FeedIdentificationFetcher.new(user: user, input: page_url, logger: @logger).identify
+
+    feed_identification = FeedIdentification.find_by(user: user, input: page_url)
+    assert_equal "success", feed_identification.status
+    assert_equal :working, feed_identification.outcome
+
+    candidate = feed_identification.suggested_candidate
+    assert_equal "rss", candidate.profile_key
+    assert_equal "Discovered Feed", candidate.title
+    assert_equal feed_url, candidate.resolved_url
+    assert_equal feed_url, feed_identification.source_url_for("rss")
+  end
+
+  test "#identify should resolve relative feed links against the final redirected URL" do
+    stub_request(:get, "http://example.com/").to_return(status: 301, headers: { "Location" => "http://www.example.com/blog/" })
+    stub_request(:get, "http://www.example.com/blog/").to_return(status: 200, body: page_body(%(<link rel="alternate" type="application/rss+xml" href="feed.xml">)))
+    stub_request(:get, "http://www.example.com/blog/feed.xml").to_return(status: 200, body: rss_body("Moved Feed"))
+
+    FeedIdentificationFetcher.new(user: user, input: "http://example.com/", logger: @logger).identify
+
+    feed_identification = FeedIdentification.find_by(user: user, input: "http://example.com/")
+    assert_equal :working, feed_identification.outcome
+    assert_equal "http://www.example.com/blog/feed.xml", feed_identification.suggested_candidate.resolved_url
+  end
+
+  test "#identify should keep trying advertised feeds until one works" do
+    page_url = "http://example.com/blog"
+    links = <<~HTML
+      <link rel="alternate" type="application/rss+xml" href="/missing.xml">
+      <link rel="alternate" type="application/atom+xml" href="/feed.xml">
+    HTML
+
+    stub_request(:get, page_url).to_return(status: 200, body: page_body(links))
+    stub_request(:get, "http://example.com/missing.xml").to_return(status: 404)
+    stub_request(:get, "http://example.com/feed.xml").to_return(status: 200, body: rss_body("Second Feed"))
+
+    FeedIdentificationFetcher.new(user: user, input: page_url, logger: @logger).identify
+
+    feed_identification = FeedIdentification.find_by(user: user, input: page_url)
+    assert_equal :working, feed_identification.outcome
+    assert_equal "http://example.com/feed.xml", feed_identification.suggested_candidate.resolved_url
+  end
+
+  test "#identify should stop at the first advertised feed that works" do
+    page_url = "http://example.com/blog"
+    links = <<~HTML
+      <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+      <link rel="alternate" type="application/rss+xml" href="/comments.xml">
+    HTML
+
+    stub_request(:get, page_url).to_return(status: 200, body: page_body(links))
+    stub_request(:get, "http://example.com/feed.xml").to_return(status: 200, body: rss_body("Main Feed"))
+    stub_request(:get, "http://example.com/comments.xml").to_return(status: 200, body: rss_body("Comments Feed"))
+
+    FeedIdentificationFetcher.new(user: user, input: page_url, logger: @logger).identify
+
+    feed_identification = FeedIdentification.find_by(user: user, input: page_url)
+    assert_equal %w[http://example.com/feed.xml], feed_identification.working_candidates.map(&:resolved_url).uniq
+    assert_not_requested :get, "http://example.com/comments.xml"
+  end
+
+  test "#identify should stay unidentifiable when no advertised feed works" do
+    page_url = "http://example.com/blog"
+
+    stub_request(:get, page_url).to_return(status: 200, body: page_body(%(<link rel="alternate" type="application/rss+xml" href="/gone.xml">)))
+    stub_request(:get, "http://example.com/gone.xml").to_return(status: 404)
+
+    FeedIdentificationFetcher.new(user: user, input: page_url, logger: @logger).identify
+
+    feed_identification = FeedIdentification.find_by(user: user, input: page_url)
+    assert_equal "failed", feed_identification.status
+    assert_equal "unidentifiable", feed_identification.error
+  end
+
+  test "#identify should never fetch a non-public advertised feed URL" do
+    page_url = "http://example.com/blog"
+
+    stub_request(:get, page_url).to_return(status: 200, body: page_body(%(<link rel="alternate" type="application/rss+xml" href="http://127.0.0.1/feed.xml">)))
+
+    FeedIdentificationFetcher.new(user: user, input: page_url, logger: @logger).identify
+
+    assert_equal "unidentifiable", FeedIdentification.find_by(user: user, input: page_url).error
+    assert_not_requested :get, "http://127.0.0.1/feed.xml"
+  end
+
+  private
+
+  def page_body(links)
+    "<html><head><title>My Blog</title>#{links}</head><body>Posts</body></html>"
+  end
+
+  def rss_body(title)
+    <<~XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <title>#{title}</title>
+          <link>http://example.com</link>
+          <item>
+            <title>Hello</title>
+            <description>World</description>
+            <link>http://example.com/post1</link>
+          </item>
+        </channel>
+      </rss>
+    XML
+  end
 end
