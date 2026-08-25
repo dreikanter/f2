@@ -32,5 +32,15 @@
     "status": "enqueued",
     "uid": "testchannel/3",
     "validation_errors": []
+  },
+  {
+    "attachment_urls": [],
+    "comments": [],
+    "content": "Tickets: https://example.com/tickets?utm_source=tg&utm_campaign=spring - https://t.me/testchannel/4",
+    "published_at": "2026-06-01T12:15:00.000Z",
+    "source_url": "https://t.me/testchannel/4",
+    "status": "enqueued",
+    "uid": "testchannel/4",
+    "validation_errors": []
   }
 ]
