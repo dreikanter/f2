@@ -1,23 +1,18 @@
 <% feed_entry_title = "Feed Entry #{short_ref(@feed_entry.id)}" %>
 <% content_for :title, feed_entry_title %>
+<% post = @feed_entry.posts.first %>
 
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: feed_entry_title) do |header| %>
+    <% if post %>
+      <% header.with_breadcrumb(label: "Post #{short_ref(post.id)}", url: post_path(post)) %>
+    <% end %>
     <% header.with_context_paragraph do %>
       <%= render BadgeComponent.new(
         text: @feed_entry.status.capitalize,
         color: feed_entry_status_badge_color(@feed_entry.status),
         key: "feed_entry.status_badge"
       ) %>
-    <% end %>
-    <% header.with_action_button do %>
-      <% if @feed_entry.posts.any? %>
-        <%= link_to "Back to Post", post_path(@feed_entry.posts.first), class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1") %>
-      <% else %>
-        <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 opacity-50 cursor-not-allowed">
-          Back to Post
-        </span>
-      <% end %>
     <% end %>
   <% end %>
 

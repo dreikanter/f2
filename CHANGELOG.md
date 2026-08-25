@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-25
+
+- The post source page now links back to the post with a breadcrumb above the title, instead of a button off to the side.
+
 ## 2026-08-23
 
 - The group refresh button now spins in place instead of turning into a bare icon, and in the feed form it sits right next to the group picker.
