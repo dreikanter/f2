@@ -13,11 +13,26 @@ class Processor::BlueskyProcessorTest < ActiveSupport::TestCase
     @entries ||= Processor::BlueskyProcessor.new(feed, sample_json).process.entries
   end
 
+  def external_embed_payload(embed:)
+    {
+      "feed" => [
+        {
+          "post" => {
+            "uri" => "at://did:plc:testauthor/app.bsky.feed.post/3nnn",
+            "author" => { "did" => "did:plc:testauthor", "handle" => "testuser.bsky.social" },
+            "record" => { "createdAt" => "2026-06-04T18:00:00.000Z", "text" => "" },
+            "embed" => embed
+          }
+        }
+      ]
+    }.to_json
+  end
+
   test "#process should create a FeedEntry per own post and skip reposts and replies" do
-    assert_equal 5, entries.size
+    assert_equal 7, entries.size
     assert entries.all? { |entry| entry.is_a?(FeedEntry) }
     assert entries.all? { |entry| entry.status == "pending" }
-    assert_equal %w[3aaa 3bbb 3ccc 3ddd 3eee], entries.map { |entry| entry.uid.split("/").last }
+    assert_equal %w[3aaa 3bbb 3ccc 3ddd 3eee 3lll 3mmm], entries.map { |entry| entry.uid.split("/").last }
   end
 
   test "#process should use the at:// URI as the uid" do
@@ -110,6 +125,56 @@ class Processor::BlueskyProcessorTest < ActiveSupport::TestCase
 
   test "#process should extract images from a quote post with media" do
     assert_equal ["https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:testauthor/bafkquotepic"], entries[4].raw_data["images"]
+  end
+
+  test "#process should extract the external link card URL and title" do
+    assert_equal(
+      { "url" => "https://example.com/an-article", "title" => "An Article Worth Reading" },
+      entries[5].raw_data["link_card"]
+    )
+  end
+
+  test "#process should extract the link card of a post with no text" do
+    assert_equal "", entries[6].raw_data["text"]
+    assert_equal "https://example.com/link-only", entries[6].raw_data["link_card"]["url"]
+  end
+
+  test "#process should leave the link empty for posts without a card" do
+    assert_nil entries.first.raw_data["link_card"]
+    assert_nil entries[1].raw_data["link_card"]
+  end
+
+  test "#process should extract the link card of a quote post with an external embed" do
+    result = Processor::BlueskyProcessor.new(feed, external_embed_payload(embed: {
+      "$type" => "app.bsky.embed.recordWithMedia#view",
+      "media" => {
+        "$type" => "app.bsky.embed.external#view",
+        "external" => { "uri" => "https://example.com/quoted", "title" => "Quoted card" }
+      }
+    })).process
+
+    assert_equal(
+      { "url" => "https://example.com/quoted", "title" => "Quoted card" },
+      result.entries.first.raw_data["link_card"]
+    )
+  end
+
+  test "#process should omit a blank link card title" do
+    result = Processor::BlueskyProcessor.new(feed, external_embed_payload(embed: {
+      "$type" => "app.bsky.embed.external#view",
+      "external" => { "uri" => "https://example.com/untitled", "title" => "" }
+    })).process
+
+    assert_equal({ "url" => "https://example.com/untitled" }, result.entries.first.raw_data["link_card"])
+  end
+
+  test "#process should ignore a link card without a URL" do
+    result = Processor::BlueskyProcessor.new(feed, external_embed_payload(embed: {
+      "$type" => "app.bsky.embed.external#view",
+      "external" => { "title" => "No target" }
+    })).process
+
+    assert_nil result.entries.first.raw_data["link_card"]
   end
 
   test "#process should fall back to the DID permalink when the handle did not resolve" do
