@@ -4,7 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-25
 
-- Links in Telegram posts now keep their full address — a stray `&amp;` no longer sneaks into the middle and breaks them.
+- Links in Telegram posts now keep their full address, instead of breaking on a stray `&amp;`.
 - Feed previews now show attached pictures as small thumbnails instead of a list of links.
 - Hover any number in the stats row to see the full name of what it counts.
 - Feed entry pages now link to the original post, when the entry says where it came from.

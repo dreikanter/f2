@@ -14,11 +14,9 @@ module Processor
     ].join(", ").freeze
     BACKGROUND_IMAGE = /background-image:\s*url\(['"]?(.*?)['"]?\)/i
 
-    # t.me escapes the ampersands of a link URL on top of the escaping the
-    # surrounding HTML already gets — anchors carrying an onclick handler are
-    # the usual offenders — so one decode leaves a literal "&amp;" sitting in
-    # the query string. Left alone it travels into the post and breaks the
-    # link. Repairing decoded values is a no-op for correctly escaped markup.
+    # t.me escapes a link URL's ampersands twice, so one decode still leaves a
+    # literal "&amp;" in the query string. Repairing an already decoded value
+    # is a no-op when the markup was escaped once.
     ESCAPED_AMPERSAND = /&amp;/i
 
     def process
@@ -70,8 +68,7 @@ module Processor
       text.inner_html
     end
 
-    # Repairs both the href and the URL t.me renders as the link's own text.
-    # A caption is left as typed: a rendered URL never carries whitespace.
+    # Skips captions: a rendered URL never carries whitespace.
     def repair_link_urls(node)
       node.css("a[href]").each do |anchor|
         anchor["href"] = unescape_ampersands(anchor["href"])
