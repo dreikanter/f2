@@ -9,8 +9,7 @@ codebase changes.
 - `kebab-case.png`, named after the page and the state it captures:
   `<page>-<state>.png` (e.g. `feeds-empty-no-token.png`,
   `status-empty-draft-feeds.png`).
-- Variants append a qualifier: `-mobile` for a narrow viewport, `-before` for a
-  pre-change reference.
+- Variants append a qualifier, e.g. `-mobile` for a narrow viewport.
 
 ## Annotation files
 
