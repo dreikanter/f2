@@ -49,6 +49,8 @@
                 <p class="text-sm text-muted" role="status" data-key="form.source-checking">Checking this feed. This usually takes a few seconds.</p>
               <% elsif source_error %>
                 <p class="text-sm text-danger" data-key="form.source-error"><%= source_error %></p>
+              <% elsif source_discovered? %>
+                <p class="text-sm text-muted" data-key="form.source-discovered-note">That link goes to a page, not a feed. We found the page's feed, so that's what we'll follow.</p>
               <% else %>
                 <p class="text-sm text-muted" data-key="form.source-edit-note">Point this at a different feed and we'll re-check it before saving.</p>
               <% end %>
@@ -64,6 +66,9 @@
                                data: { key: "form.source-display" } %>
               <% feed.params&.each do |key, value| %>
                 <%= hidden_field_tag "feed[params][#{key}]", value %>
+              <% end %>
+              <% if source_discovered? %>
+                <p class="text-sm text-muted" data-key="form.source-discovered-note">That link goes to a page, not a feed. We found the page's feed, so that's what we'll follow.</p>
               <% end %>
             </div>
           <% end %>

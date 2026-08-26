@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-25
 
+- Paste a blog or site link when adding a feed and we'll find its feed for you. No more hunting for the RSS URL.
 - Links in Telegram posts now keep their full address, instead of breaking on a stray `&amp;`.
 - Bluesky posts that are just a shared link now come through with the link and its title, instead of only a link back to Bluesky.
 - Feed previews now show attached pictures as small thumbnails instead of a list of links.

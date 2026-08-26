@@ -125,6 +125,27 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert response.success?
   end
 
+  test "exposes the requested URL on the response" do
+    stub_request(:get, "https://example.com/test")
+      .to_return(status: 200, body: "ok")
+
+    response = client.get("https://example.com/test")
+
+    assert_equal "https://example.com/test", response.url
+  end
+
+  test "exposes the final URL after redirects" do
+    stub_request(:get, "https://example.com/redirect")
+      .to_return(status: 302, headers: { "Location" => "https://blog.example.com/final" })
+
+    stub_request(:get, "https://blog.example.com/final")
+      .to_return(status: 200, body: "Final destination")
+
+    response = client.get("https://example.com/redirect")
+
+    assert_equal "https://blog.example.com/final", response.url
+  end
+
   test "does not follow redirects when explicitly disabled" do
     stub_request(:get, "https://example.com/redirect")
       .to_return(status: 302, headers: { "Location" => "https://example.com/final" })

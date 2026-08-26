@@ -11,12 +11,15 @@ require_relative "http_client/caching_adapter"
 
 module HttpClient
   class Response
-    attr_reader :status, :body, :headers
+    attr_reader :status, :body, :headers, :url
 
-    def initialize(status:, body:, headers: {})
+    # The URL this response came from: the requested URL, or the final hop
+    # when redirects were followed. nil when the adapter doesn't track it.
+    def initialize(status:, body:, headers: {}, url: nil)
       @status = status
       @body = body
       @headers = headers
+      @url = url
     end
 
     def success?

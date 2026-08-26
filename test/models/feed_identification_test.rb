@@ -187,4 +187,88 @@ class FeedIdentificationTest < ActiveSupport::TestCase
 
     assert_equal %w[rss], identification.working_candidate_profile_keys
   end
+
+  test "#source_url_for should prefer the working candidate's discovered feed URL" do
+    identification = FeedIdentification.new(
+      input: "https://example.com/blog",
+      status: :success,
+      candidates: [
+        { "profile_key" => "rss", "test_status" => "failed", "resolved_url" => "https://example.com/broken.xml" },
+        { "profile_key" => "rss", "test_status" => "passed", "resolved_url" => "https://example.com/feed.xml" }
+      ]
+    )
+
+    assert_equal "https://example.com/feed.xml", identification.source_url_for("rss")
+  end
+
+  test "#source_url_for should fall back to the input for direct candidates" do
+    identification = FeedIdentification.new(
+      input: "https://example.com/feed.xml",
+      status: :success,
+      candidates: [{ "profile_key" => "rss", "test_status" => "passed" }]
+    )
+
+    assert_equal "https://example.com/feed.xml", identification.source_url_for("rss")
+    assert_equal "https://example.com/feed.xml", identification.source_url_for("json_feed")
+  end
+
+  test ".for_source should find the identification keyed by the URL itself" do
+    identification = create(:feed_identification, user: user, input: "https://example.com/feed.xml")
+
+    assert_equal identification, FeedIdentification.for_source(user: user, url: "https://example.com/feed.xml")
+  end
+
+  test ".for_source should find the identification whose candidate resolved to the URL" do
+    identification = create(
+      :feed_identification,
+      user: user,
+      input: "https://example.com/blog",
+      status: :success,
+      candidates: [
+        { "profile_key" => "rss", "test_status" => "passed", "resolved_url" => "https://example.com/feed.xml" }
+      ]
+    )
+
+    assert_equal identification, FeedIdentification.for_source(user: user, url: "https://example.com/feed.xml")
+  end
+
+  test ".for_source should prefer a working page identification over a stale keyed row" do
+    create(:feed_identification, user: user, input: "https://example.com/feed.xml",
+                                 status: :failed, error: "unreachable")
+    page = create(
+      :feed_identification,
+      user: user,
+      input: "https://example.com/blog",
+      status: :success,
+      candidates: [
+        { "profile_key" => "rss", "test_status" => "passed", "resolved_url" => "https://example.com/feed.xml" }
+      ]
+    )
+
+    assert_equal page, FeedIdentification.for_source(user: user, url: "https://example.com/feed.xml")
+  end
+
+  test ".for_source should scope discovered lookups to the user and working candidates" do
+    create(
+      :feed_identification,
+      user: create(:user),
+      input: "https://example.com/blog",
+      status: :success,
+      candidates: [
+        { "profile_key" => "rss", "test_status" => "passed", "resolved_url" => "https://example.com/feed.xml" }
+      ]
+    )
+    create(
+      :feed_identification,
+      user: user,
+      input: "https://example.com/other",
+      status: :success,
+      candidates: [
+        { "profile_key" => "rss", "test_status" => "failed", "resolved_url" => "https://example.com/feed.xml" }
+      ]
+    )
+
+    assert_nil FeedIdentification.for_source(user: user, url: "https://example.com/feed.xml")
+    assert_nil FeedIdentification.for_source(user: user, url: nil)
+  end
 end
