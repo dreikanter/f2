@@ -28,9 +28,10 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     get access_tokens_path
 
     assert_response :success
-    assert_select "[data-key='empty-state']", text: /No FreeFeed access tokens yet/
-    assert_select "[data-key='empty-state']", text: /post to FreeFeed on your behalf/
-    assert_select "[data-key='empty-state'] a[href=?]", new_access_token_path, text: "Add FreeFeed token"
+    assert_select "p", text: /No tokens yet/
+    assert_select "p", text: /post to FreeFeed on your behalf/
+    assert_select "[data-key='access_tokens.empty.new-token'][href=?]", new_access_token_path, text: "New Token"
+    assert_select "header a[href=?]", new_access_token_path, count: 0
   end
 
   test "#index should display existing tokens" do

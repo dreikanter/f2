@@ -10,11 +10,12 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "#show should render status when authenticated with no feeds" do
+  test "#show should guide users without an active token to add one" do
     sign_in_as user
     get status_path
     assert_response :success
-    assert_select "h1", "Welcome to Feeder"
+    assert_select "h1", "Status"
+    assert_select "a[href=?]", new_access_token_path, text: "Add FreeFeed token"
   end
 
   test "#show should guide users with a token but no feeds to add one" do
@@ -23,7 +24,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     get status_path
     assert_response :success
     assert_select "h1", "Status"
-    assert_select "a[href=?]", new_feed_path, text: "Add your first feed"
+    assert_select "a[href=?]", new_feed_path, text: "Add a feed"
   end
 
   test "#show should guide users whose only feed is a draft to continue setup" do

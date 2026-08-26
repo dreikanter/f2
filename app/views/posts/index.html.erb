@@ -10,7 +10,20 @@
     <% else %>
       <% header.with_context_paragraph("Everything Feeder imports from your feeds shows up here, along with each post's status on FreeFeed.") %>
     <% end %>
-    <% if @feeds.any? %>
+    <% if @posts.empty? %>
+      <% if @feed %>
+        <% header.with_context_paragraph("No posts imported yet from this feed.") %>
+      <% elsif @feeds.any?(&:enabled?) %>
+        <% header.with_context_paragraph("No posts yet — they'll show up here as your feeds import new content.") %>
+      <% elsif @feeds.any? %>
+        <% header.with_context_paragraph do %>
+          No posts yet. <%= link_to "Enable one of your feeds", feeds_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %> and new content will show up here.
+        <% end %>
+      <% else %>
+        <% header.with_context_paragraph("No posts yet — add a feed to start importing content.") %>
+      <% end %>
+    <% end %>
+    <% if @feeds.any? && (@posts.any? || @feed) %>
       <% header.with_action_button do %>
         <%= render FeedFilterDropdownComponent.new(
               feeds: @feeds,
@@ -20,25 +33,19 @@
             ) %>
       <% end %>
     <% end %>
-    <% header.with_action_button do %>
-      <%= render SortDropdownComponent.new(presenter: @sortable_presenter, menu_id: "posts-sort-menu") %>
+    <% if @posts.any? %>
+      <% header.with_action_button do %>
+        <%= render SortDropdownComponent.new(presenter: @sortable_presenter, menu_id: "posts-sort-menu") %>
+      <% end %>
     <% end %>
   <% end %>
 
   <% if @posts.any? %>
     <%= render PostsListComponent.new(posts: @posts, show_feed: @feed.blank?) %>
-  <% elsif @feed %>
-    <%= render EmptyStateComponent.new("No posts imported yet from this feed.") %>
-  <% elsif @feeds.any?(&:enabled?) %>
-    <%= render EmptyStateComponent.new("No posts yet — they'll show up here as your feeds import new content.") %>
-  <% elsif @feeds.any? %>
-    <%= render EmptyStateComponent.new do %>
-      <p class="text-muted">No posts yet. <%= link_to "Enable one of your feeds", feeds_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %> and new content will show up here.</p>
-    <% end %>
-  <% else %>
-    <%= render EmptyStateComponent.new do %>
-      <p class="text-muted">No posts yet. <%= link_to "Add your first feed", new_feed_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %> to start importing content.</p>
-    <% end %>
+  <% elsif @feeds.none? %>
+    <div>
+      <%= link_to "Add a feed", new_feed_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1", data: { key: "posts.empty.new-feed" } %>
+    </div>
   <% end %>
 
   <% if pagination_total_pages > 1 %>

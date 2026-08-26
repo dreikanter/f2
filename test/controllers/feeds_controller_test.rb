@@ -53,7 +53,9 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     get feeds_url
 
     assert_response :success
-    assert_select "[data-key='empty-state'] a[href=?]", new_feed_path, text: "Create your first feed"
+    assert_select "p", text: /No feeds yet/
+    assert_select "[data-key='feeds.empty.new-feed'][href=?]", new_feed_path, text: "New Feed"
+    assert_select "header a[href=?]", new_feed_path, count: 0
     assert_select "[data-key='feeds.empty.token-note']", count: 0
   end
 
@@ -63,7 +65,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     get feeds_url
 
     assert_response :success
-    assert_select "[data-key='empty-state'] a[href=?]", new_feed_path, text: "Create your first feed"
+    assert_select "[data-key='feeds.empty.new-feed'][href=?]", new_feed_path, text: "New Feed"
     assert_select "[data-key='feeds.empty.token-note']", count: 1
   end
 

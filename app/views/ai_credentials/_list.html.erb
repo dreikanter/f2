@@ -1,9 +1,4 @@
 <%# locals: (credentials:) %>
-<% if credentials.any? %>
-  <%= render AiCredentialsListComponent.new(credentials: credentials) %>
-<% else %>
-  <%= render EmptyStateComponent.new do %>
-    <p class="font-semibold text-heading">No AI credentials yet</p>
-    <p>Only AI-powered feeds use these — add a provider key if you want AI to follow sources for you. Regular feeds don't need one.</p>
-  <% end %>
-<% end %>
+<%# The empty-state note lives in the index page header; nothing to render
+    without records. %>
+<%= render AiCredentialsListComponent.new(credentials: credentials) if credentials.any? %>

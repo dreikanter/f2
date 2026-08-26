@@ -4,15 +4,25 @@
   <%= render PageHeaderComponent.new(title: "Search Credentials") do |header| %>
     <% header.with_breadcrumb(label: "Settings", url: settings_path) %>
     <% header.with_context_paragraph("AI feeds need a search key to find grounded web content. Non-AI feeds do not use search credentials.") %>
-    <% header.with_action_button do %>
-      <%= link_to "New Credential",
-                  new_search_credential_path,
-                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
-                  data: { key: "search_credentials.new-button" } %>
+    <% if @credentials.any? %>
+      <% header.with_action_button do %>
+        <%= link_to "New Credential",
+                    new_search_credential_path,
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
+                    data: { key: "search_credentials.new-button" } %>
+      <% end %>
+    <% else %>
+      <% header.with_context_paragraph("No search credentials yet.") %>
     <% end %>
   <% end %>
 
-  <div id="search_credentials_list">
-    <%= render "list", credentials: @credentials %>
-  </div>
+  <% if @credentials.any? %>
+    <div id="search_credentials_list">
+      <%= render "list", credentials: @credentials %>
+    </div>
+  <% else %>
+    <div>
+      <%= link_to "New Credential", new_search_credential_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1", data: { key: "search_credentials.empty.new-credential" } %>
+    </div>
+  <% end %>
 </div>

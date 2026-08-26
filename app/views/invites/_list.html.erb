@@ -6,5 +6,7 @@
     <% end %>
   </div>
 <% else %>
-  <%= render EmptyStateComponent.new("No invites yet — created invites show up here with a link you can share.") %>
+  <%# Plain note instead of a boxed empty state: the list is turbo-updated in
+      place, so the note has to live inside this frame to stay accurate. %>
+  <p class="text-body" data-key="invites.empty-note">No invites yet — created invites show up here with a link you can share.</p>
 <% end %>

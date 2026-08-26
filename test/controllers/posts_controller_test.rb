@@ -47,7 +47,8 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get posts_url
     assert_response :success
-    assert_select "[data-key='empty-state'] a[href=?]", new_feed_path, text: "Add your first feed"
+    assert_select "p", text: /No posts yet — add a feed to start importing content/
+    assert_select "[data-key='posts.empty.new-feed'][href=?]", new_feed_path, text: "Add a feed"
   end
 
   test "#index should explain the empty state when enabled feeds have no posts" do
@@ -55,8 +56,8 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     create(:feed, :enabled, user: user)
     get posts_url
     assert_response :success
-    assert_select "[data-key='empty-state']", text: /No posts yet/
-    assert_select "[data-key='empty-state'] a", false
+    assert_select "p", text: /No posts yet — they'll show up here as your feeds import new content/
+    assert_select "[data-key='posts.empty.new-feed']", count: 0
   end
 
   test "#index should point at the feeds list when no feed is enabled" do
@@ -64,7 +65,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     feed
     get posts_url
     assert_response :success
-    assert_select "[data-key='empty-state'] a[href=?]", feeds_path, text: "Enable one of your feeds"
+    assert_select "header a[href=?]", feeds_path, text: "Enable one of your feeds"
   end
 
   test "#index should show only user's posts" do
@@ -376,7 +377,8 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
   test "#index should show feed filter dropdown with user's feeds" do
     sign_in_as(user)
-    create(:feed, user: user, name: "Alpha Feed")
+    alpha_feed = create(:feed, user: user, name: "Alpha Feed")
+    create(:post, feed: alpha_feed, content: "Alpha post")
     create(:feed, user: other_user, name: "Other User Feed")
 
     get posts_url

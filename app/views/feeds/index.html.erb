@@ -3,16 +3,23 @@
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Feeds") do |header| %>
     <% header.with_context_paragraph("Each feed is a source Feeder watches. It reposts new content to a FreeFeed group on the schedule you pick.") %>
-    <% if (summary_line = feed_summary_line(active_count: @active_feed_count, inactive_count: @inactive_feed_count, draft_count: @draft_feed_count)) %>
-      <% header.with_context_paragraph(summary_line) %>
-    <% end %>
     <% if @feeds.any? %>
+      <% if (summary_line = feed_summary_line(active_count: @active_feed_count, inactive_count: @inactive_feed_count, draft_count: @draft_feed_count)) %>
+        <% header.with_context_paragraph(summary_line) %>
+      <% end %>
       <% header.with_action_button do %>
         <%= render SortDropdownComponent.new(presenter: @sortable_presenter, menu_id: "feed-sort-menu") %>
       <% end %>
-    <% end %>
-    <% header.with_action_button do %>
-      <%= link_to "New Feed", new_feed_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1", "w-full sm:w-auto") %>
+      <% header.with_action_button do %>
+        <%= link_to "New Feed", new_feed_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1", "w-full sm:w-auto") %>
+      <% end %>
+    <% else %>
+      <% header.with_context_paragraph("No feeds yet — create one and Feeder will start reposting new content to FreeFeed for you.") %>
+      <% unless @has_active_token %>
+        <% header.with_context_paragraph do %>
+          <span data-key="feeds.empty.token-note">You'll also need a FreeFeed access token — we'll help you add one along the way.</span>
+        <% end %>
+      <% end %>
     <% end %>
   <% end %>
 
@@ -27,17 +34,8 @@
 
     <%= render_pagination { |pagination| feeds_path(pagination) } %>
   <% else %>
-    <%= render EmptyStateComponent.new do %>
-      <div class="space-y-2">
-        <p class="font-semibold text-heading">No feeds yet</p>
-        <p>Create your first feed and Feeder will start reposting new content to FreeFeed for you.</p>
-        <% unless @has_active_token %>
-          <p data-key="feeds.empty.token-note">You'll also need a FreeFeed access token — we'll help you add one along the way.</p>
-        <% end %>
-      </div>
-      <div>
-        <%= link_to "Create your first feed", new_feed_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1", data: { key: "feeds.empty.new-feed" } %>
-      </div>
-    <% end %>
+    <div>
+      <%= link_to "New Feed", new_feed_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1", data: { key: "feeds.empty.new-feed" } %>
+    </div>
   <% end %>
 </div>

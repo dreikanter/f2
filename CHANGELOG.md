@@ -6,7 +6,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 - Links in Telegram posts now keep their full address, instead of breaking on a stray `&amp;`.
 - Bluesky posts that are just a shared link now come through with the link and its title, instead of only a link back to Bluesky.
-- Empty pages now point at the next setup step: the feeds and posts pages explain how to get your first feed going, the status page picks up where a draft feed left off, and the token and credential pages say what each key is for.
+- Empty pages now share one tidy look — a short note and the next action right under the page title. The feeds and posts pages explain how to get a feed going, the status page picks up where a draft feed left off, and the token and credential pages say what each key is for.
 - Feed previews now show attached pictures as small thumbnails instead of a list of links.
 - Hover any number in the stats row to see the full name of what it counts.
 - Feed entry pages now link to the original post, when the entry says where it came from.
