@@ -42,10 +42,10 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     refute_predicate identification, :invalid_processing?
   end
 
-  test "#restart_detection! should reset the row to a fresh in-flight detection" do
+  test "#restart_detection should reset the row to a fresh in-flight detection" do
     identification = create(:feed_identification, :failed, user: user)
 
-    assert identification.restart_detection!
+    assert identification.restart_detection
 
     identification.reload
     assert_predicate identification, :processing?
@@ -54,13 +54,13 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     assert_nil identification.error
   end
 
-  test "#restart_detection! should return false after losing the insert race" do
+  test "#restart_detection should return false after losing the insert race" do
     winner = create(:feed_identification, user: user, started_at: Time.current).reload
     # The loser's stale lookup result: it missed the winner's row, so its
     # insert collides with the user+input unique index.
     loser = FeedIdentification.new(user: user, input: winner.input)
 
-    assert_not loser.restart_detection!
+    assert_not loser.restart_detection
     assert_predicate loser, :new_record?
     assert_equal winner.started_at, winner.reload.started_at, "the winner's detection should not be restarted"
   end

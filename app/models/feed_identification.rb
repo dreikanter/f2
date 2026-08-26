@@ -17,7 +17,7 @@ class FeedIdentification < ApplicationRecord
   # loser's insert then hits the user+input unique index. Returns false in that
   # case — the winner's detection is already in flight, so the stale copy
   # should be discarded — and true when this call (re)started detection.
-  def restart_detection!
+  def restart_detection
     update!(status: :processing, started_at: Time.current, candidates: [], error: nil)
     true
   rescue ActiveRecord::RecordNotUnique
