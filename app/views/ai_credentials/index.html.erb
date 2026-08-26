@@ -18,7 +18,7 @@
 
   <% if @credentials.any? %>
     <div id="ai_credentials_list">
-      <%= render "list", credentials: @credentials %>
+      <%= render AiCredentialsListComponent.new(credentials: @credentials) %>
     </div>
   <% else %>
     <div>

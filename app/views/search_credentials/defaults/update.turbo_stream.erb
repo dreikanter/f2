@@ -1,6 +1,6 @@
 <%= turbo_stream.replace "search_credentials_list" do %>
   <div id="search_credentials_list">
-    <%= render "search_credentials/list", credentials: @credentials %>
+    <%= render SearchCredentialsListComponent.new(credentials: @credentials) %>
   </div>
 <% end %>
 
