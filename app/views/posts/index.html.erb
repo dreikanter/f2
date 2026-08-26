@@ -14,13 +14,13 @@
       <% if @feed %>
         <% header.with_context_paragraph("No posts imported yet from this feed.") %>
       <% elsif @feeds.any?(&:enabled?) %>
-        <% header.with_context_paragraph("No posts yet — they'll show up here as your feeds import new content.") %>
+        <% header.with_context_paragraph("No posts yet. They'll show up here as your feeds import new content.") %>
       <% elsif @feeds.any? %>
         <% header.with_context_paragraph do %>
           No posts yet. <%= link_to "Enable one of your feeds", feeds_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %> and new content will show up here.
         <% end %>
       <% else %>
-        <% header.with_context_paragraph("No posts yet — add a feed to start importing content.") %>
+        <% header.with_context_paragraph("No posts yet. Add a feed to start importing content.") %>
       <% end %>
     <% end %>
     <% if @feeds.any? && (@posts.any? || @feed) %>

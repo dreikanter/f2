@@ -14,10 +14,10 @@
         <%= link_to "New Feed", new_feed_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1", "w-full sm:w-auto") %>
       <% end %>
     <% else %>
-      <% header.with_context_paragraph("No feeds yet — create one and Feeder will start reposting new content to FreeFeed for you.") %>
+      <% header.with_context_paragraph("No feeds yet. Create one and Feeder will start reposting new content to FreeFeed for you.") %>
       <% unless @has_active_token %>
         <% header.with_context_paragraph do %>
-          <span data-key="feeds.empty.token-note">You'll also need a FreeFeed access token — we'll help you add one along the way.</span>
+          <span data-key="feeds.empty.token-note">You'll also need a FreeFeed access token. We'll help you add one along the way.</span>
         <% end %>
       <% end %>
     <% end %>
