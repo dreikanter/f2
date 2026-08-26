@@ -14,7 +14,7 @@ class FeedPreviewsController < ApplicationController
 
   # AI previews browse the web (Sonnet gather runs 40–120s, plus structuring), so
   # they need a far longer budget than a deterministic fetch or they'd time out
-  # mid-run (spec §6). ~4 minutes at the shared 2.5s poll interval.
+  # mid-run. ~4 minutes at the shared 2.5s poll interval.
   AI_PREVIEW_MAX_POLLS = 98
 
   # GET /feed_preview?profile_key=…&params[…]=…

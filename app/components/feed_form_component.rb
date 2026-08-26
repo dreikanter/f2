@@ -2,8 +2,8 @@
 # known (or when it needs none) — source identity, name, AI settings, preview,
 # reposting settings, advanced options, and the enable checkbox.
 #
-# Also paints the identification states of an edit's source re-detection
-# (spec §4/§7): frozen and polling while a check runs, or re-enabled with the
+# Also paints the identification states of an edit's source re-detection:
+# frozen and polling while a check runs, or re-enabled with the
 # failure hint under the source field.
 class FeedFormComponent < ViewComponent::Base
   POLLING_STOP_CONDITION = "[data-identification-state='complete'], [data-identification-state='error']"
@@ -40,7 +40,7 @@ class FeedFormComponent < ViewComponent::Base
   # preview-button is mounted on the whole form so it can read the selected
   # feed_profile_key (radios or hidden field) and react to candidate changes;
   # the button and the modal's frame are nested targets within it. While an
-  # edit's source re-detection runs (spec §4), the same wrapper freezes the
+  # edit's source re-detection runs, the same wrapper freezes the
   # form and polls for the outcome; a failure re-renders it enabled with the
   # hint under the source field.
   def wrapper_data
@@ -90,7 +90,7 @@ class FeedFormComponent < ViewComponent::Base
   end
 
   # The chooser is a real choice only with two or more working candidates; one
-  # working candidate is shown as a read-only annotation (spec §7). In edit
+  # working candidate is shown as a read-only annotation. In edit
   # mode it appears only after a source re-detection resolves to multiple
   # candidates.
   def show_chooser?
@@ -103,13 +103,13 @@ class FeedFormComponent < ViewComponent::Base
 
   # For an AI feed the prompt *is* the source: it stays an editable textarea
   # throughout, including edits to a live feed — the uid scheme is unchanged,
-  # so there's no duplicate risk, at most some older posts backfilled (spec §4).
+  # so there's no duplicate risk, at most some older posts backfilled.
   def ai_prompt_editable?
     FeedProfile.depends_on_ai?(feed.feed_profile_key)
   end
 
   # A deterministic feed's URL is editable when editing an existing feed — a
-  # change re-runs detection before saving (spec §4).
+  # change re-runs detection before saving.
   def source_editable?
     edit_mode? && !ai_prompt_editable?
   end
@@ -168,7 +168,7 @@ class FeedFormComponent < ViewComponent::Base
   end
 
   # A profile change reworks how posts are identified, so it defaults the
-  # skip-older-posts threshold on (spec §4); checkbox and panel visibility
+  # skip-older-posts threshold on; checkbox and panel visibility
   # must agree.
   def import_after_on?
     feed.import_after_enabled || profile_changed?

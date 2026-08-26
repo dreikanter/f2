@@ -1,5 +1,5 @@
 module Normalizer
-  # Maps a stored webhook payload (spec 006 §3) onto a Post through the Base
+  # Maps a stored webhook payload onto a Post through the Base
   # choke-point guarantees: attachment SSRF filtering, comment clamping, and
   # the content rules.
   class WebhookNormalizer < Base
@@ -20,7 +20,7 @@ module Normalizer
 
     def normalize_comments = payload.comments
 
-    # Content is required unless images are present (spec 006 §3). Checked on
+    # Content is required unless images are present. Checked on
     # the raw payload field: in the composed content a bare source_url would
     # masquerade as content.
     def validate_content

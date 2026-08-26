@@ -49,7 +49,7 @@ class Feed < ApplicationRecord
   }, default: :draft
 
   # Set true by the edit controller only after a settled detection confirmed the
-  # new source (spec §4). Lets `source_change_reverified` reject a Mode A source
+  # new source. Lets `source_change_reverified` reject a Mode A source
   # move that never passed through identification.
   attr_accessor :source_verified
 
@@ -239,7 +239,7 @@ class Feed < ApplicationRecord
 
     # A dropped model no longer blocks preview — a run resolves to the
     # credential's default supported model, so preview only needs some verified
-    # model to exist (spec §5).
+    # model to exist.
     ai_credential.supported_models.any?
   end
 
@@ -252,7 +252,7 @@ class Feed < ApplicationRecord
   # The model an AI run/preview actually uses with `credential`: the chosen one
   # when still supported, otherwise the credential's default supported model.
   # Never hard-fails on a dropped model — the caller records the fallback so the
-  # feed page can prompt a re-pick (spec §5).
+  # feed page can prompt a re-pick.
   def effective_ai_model(credential = ai_credential)
     return ai_model if credential.nil?
     return ai_model if credential.supports_model?(ai_model)
@@ -278,7 +278,7 @@ class Feed < ApplicationRecord
   end
 
   # Records that an AI gather came back empty, so the structure call was skipped
-  # and the run produced nothing (spec §6/§8). Debug level keeps this routine,
+  # and the run produced nothing. Debug level keeps this routine,
   # expected outcome out of the user event feed while leaving it visible to
   # operators. No-op for an unpersisted (preview) feed.
   def note_ai_gather_empty!
@@ -485,8 +485,7 @@ class Feed < ApplicationRecord
   end
 
   # The engine (deterministic vs AI) is fixed at creation: an existing feed never
-  # switches across the AI boundary in edit — you create a new feed instead (spec
-  # §4). A deterministic → deterministic profile change is fine.
+  # switches across the AI boundary in edit — you create a new feed instead. A deterministic → deterministic profile change is fine.
   def engine_fixed_on_edit
     return unless persisted? && feed_profile_key_changed?
     return unless FeedProfile.exists?(feed_profile_key) && FeedProfile.exists?(feed_profile_key_was)
@@ -495,7 +494,7 @@ class Feed < ApplicationRecord
     errors.add(:feed_profile_key, "can't switch between AI and non-AI feeds — start a new feed instead")
   end
 
-  # A deterministic feed's source can only move through identification (spec §4):
+  # A deterministic feed's source can only move through identification:
   # the edit controller re-runs detection and sets `source_verified` once a
   # working candidate confirms the new source. This blocks a forged direct edit
   # from silently pointing a live feed at an unverified, possibly-broken source.

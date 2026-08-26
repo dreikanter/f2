@@ -532,7 +532,7 @@ class LlmClientTest < ActiveSupport::TestCase
 
   # A chat double that records the system prompt and the asked user prompt, so we
   # can verify the system message travels via with_instructions and the user
-  # prompt via #ask — the injection-defense channel separation (spec §8).
+  # prompt via #ask — the injection-defense channel separation.
   class FakeChat
     attr_reader :instructions, :asked, :schema, :params
 

@@ -36,7 +36,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
 
   test "#normalize should drop a non-public attachment URL and keep the public one" do
     # A feed-supplied local path or relative URL must not reach FileBuffer, where
-    # File.exist? would read it off the server at publish (§8, LFI).
+    # File.exist? would read it off the server at publish (LFI).
     entry = create(:feed_entry, raw_data: {
       "summary" => "Photo of the day.",
       "link" => "https://example.com/photo",

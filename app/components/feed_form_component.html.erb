@@ -99,7 +99,7 @@
           <%= f.hidden_field :feed_profile_key %>
         <% end %>
 
-        <%# Duplicate-risk warning for a pending source/profile change (spec §4).
+        <%# Duplicate-risk warning for a pending source/profile change.
             A profile change reworks how posts are identified, so it's the louder
             warning and turns the "skip older posts" threshold on by default. %>
         <% if source_changed? && profile_changed? %>
@@ -140,7 +140,7 @@
               class: "inline-flex items-center gap-1 rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-heading shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
               data: { preview_button_target: "button", action: "click->preview-button#open", key: "preview.open" } %>
 
-        <%# Explains why Preview is disabled instead of leaving it inert (spec §4);
+        <%# Explains why Preview is disabled instead of leaving it inert;
             the preview-button controller fills and reveals it to match the button. %>
         <p class="mt-2 text-sm text-muted" hidden
            data-preview-button-target="hint"
@@ -198,7 +198,7 @@
             <% end %>
           <% end %>
 
-          <%# A push-ingested feed has no refresh cadence to pick (spec 006 §7). %>
+          <%# A push-ingested feed has no refresh cadence to pick. %>
           <% if feed.scheduled? %>
             <%= render PanelComponent.new do %>
               <div class="space-y-2">

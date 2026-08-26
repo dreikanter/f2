@@ -1,6 +1,6 @@
 require "addressable/uri"
 
-# Ingests one webhook delivery into the existing pipeline (spec 006 §§3-4):
+# Ingests one webhook delivery into the existing pipeline:
 # validate the payload, resolve its uid, run it through the profile normalizer,
 # then persist FeedEntry + FeedEntryUid + Post in a single transaction and kick
 # the publish chain. A payload that fails validation persists nothing — the
@@ -187,7 +187,7 @@ class WebhookIngestion
   # the delivery falls back to a random uid instead of a 500.
   MAX_URL_UID_BYTES = 2048
 
-  # Uid precedence (spec 006 §4): explicit idempotency key (the uid field or
+  # Uid precedence: explicit idempotency key (the uid field or
   # the equivalent Idempotency-Key header — validation guarantees they agree),
   # then the permalink normalized exactly like pull feeds', then a random uuid
   # (each request is a new post; callers with retrying pipelines should pass a

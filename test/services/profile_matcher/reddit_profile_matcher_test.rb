@@ -31,7 +31,7 @@ class ProfileMatcher::RedditProfileMatcherTest < ActiveSupport::TestCase
   end
 
   test "#match? should not match bare r/x shorthand (only full reddit URLs)" do
-    # Shorthand expansion was dropped with the smart input (spec 005 §1); a
+    # Shorthand expansion was dropped with the smart input; a
     # subreddit is followed by pasting its full URL.
     assert_not matcher("r/worldnews").match?
     assert_not matcher("user/someuser").match?

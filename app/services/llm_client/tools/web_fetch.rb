@@ -2,7 +2,7 @@ class LlmClient
   module Tools
     # Client-side retrieval for providers without usable server-side web access
     # (Moonshot/Kimi). The model supplies the URL, so it is validated as a
-    # public http(s) URL (PublicUrl, spec 005 §8) before any request.
+    # public http(s) URL (PublicUrl) before any request.
     class WebFetch < RubyLLM::Tool
       description "Fetch the readable text of a public web page. Pass one absolute http(s) URL."
       param :url, desc: "Absolute http(s) URL of the page to fetch", required: true
@@ -24,7 +24,7 @@ class LlmClient
         return { error: "Refused: pass one absolute public http(s) URL." }.to_json unless PublicUrl.safe?(url)
 
         # public-only so a redirect can't slip past the check above to an
-        # internal address (SSRF; spec 005 §8).
+        # internal address (SSRF).
         response = HttpClient.build(max_redirects: MAX_REDIRECTS)
                              .get(url.to_s.strip, options: { validate_url: PublicUrl.method(:safe?) })
         return { error: "HTTP #{response.status}" }.to_json unless response.success?

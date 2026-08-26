@@ -1,6 +1,6 @@
 require "test_helper"
 
-# FR-018 + FR-019 reload semantics: reloading an in-progress confirmation
+# Reload semantics: reloading an in-progress confirmation
 # does not re-run detection or the preview. An explicit Refresh control
 # re-runs the preview on demand.
 class SmartFeedCreationReloadTest < ActionDispatch::IntegrationTest

@@ -9,7 +9,7 @@ class FeedRefreshJob < ApplicationJob
     feed = Feed.find_by(id: feed_id)
     return unless feed
 
-    # Webhook feeds have no loader to run; drop stray kicks (spec 006 §7).
+    # Webhook feeds have no loader to run; drop stray kicks.
     return if feed.feed_profile_key == "webhook"
 
     Feed.with_advisory_lock!("feed_refresh_#{feed.id}", timeout_seconds: 0) do

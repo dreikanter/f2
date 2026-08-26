@@ -5,8 +5,7 @@ require "socket"
 # uploads at publish time and the client-side web-fetch tool. A URL is safe
 # only if it is an absolute http(s) URL to a public host; non-http schemes,
 # embedded credentials, localhost, and any address literal in a private,
-# loopback, or link-local range are rejected (server-side request forgery;
-# spec 005 §8).
+# loopback, or link-local range are rejected (server-side request forgery).
 #
 # Address literals are canonicalized the way the HTTP client's resolver reads
 # them, so encoded forms (decimal/hex/octal, e.g. http://2130706433 → 127.0.0.1)

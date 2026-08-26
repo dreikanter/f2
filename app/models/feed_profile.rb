@@ -13,7 +13,7 @@ class FeedProfile
           "type" => "object",
           "properties" => {
             # The model never mints the uid — the processor derives it from
-            # source_url (spec §3). `uid` stays an accepted-but-optional property
+            # source_url. `uid` stays an accepted-but-optional property
             # only so a stray field from a non-strict provider doesn't fail the
             # schema; it's ignored downstream.
             "uid" => { "type" => "string" },
@@ -22,7 +22,7 @@ class FeedProfile
             "supplementary" => { "type" => "array", "items" => { "type" => "string" } },
             "images" => { "type" => "array", "items" => { "type" => "string" } },
             # An explicit null signals the digest/standing-query regime; a real
-            # permalink signals feed-style (spec §3). The key is always required —
+            # permalink signals feed-style. The key is always required —
             # a missing key is malformed, not a digest.
             "source_url" => { "type" => ["string", "null"] },
             "published_at" => { "type" => "string" }
@@ -298,7 +298,7 @@ class FeedProfile
       # Accepts anything (a link, several links, or a description); the prompt
       # is the source. The params key is `prompt`, not derived from input_shape.
       # Registers NO matcher: the AI profile is structurally excluded from
-      # detection (spec §7) — Mode B selects it directly, detection never can.
+      # detection — Mode B selects it directly, detection never can.
       input_shape: :any,
       depends_on_ai: true,
       scheduled: true,
@@ -316,7 +316,7 @@ class FeedProfile
           # The user message: the task, output contract, and safeguards live in
           # the system prompt (Loader::LlmPrompts). The user's own prompt is a
           # legitimate instruction — it says what to follow and how to transform
-          # it (spec §2/§8) — so it travels as the user message, distinct from
+          # it — so it travels as the user message, distinct from
           # the untrusted web content the model later fetches. Web access is
           # provided per-provider by the adapter.
           prompt_template: <<~PROMPT,
@@ -386,7 +386,7 @@ class FeedProfile
     "webhook" => {
       display_name: "Webhook",
       description: "Posts sent in from your own scripts through a secret URL",
-      # Push-ingested (spec 006): content arrives over HTTP, so there is
+      # Push-ingested: content arrives over HTTP, so there is
       # nothing to fetch and nothing to detect — no loader/processor, no
       # matcher, no schedule.
       input_shape: :none,
@@ -430,7 +430,7 @@ class FeedProfile
     end
 
     # Matcher classes for every profile that registers one, in registration
-    # order. The AI profile deliberately registers none (spec 005 §7), so it
+    # order. The AI profile deliberately registers none, so it
     # can never be detected.
     # @return [Array<Class>] matcher classes
     def matchers

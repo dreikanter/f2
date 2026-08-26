@@ -1,5 +1,5 @@
 # Decides whether a Mode A input counts as a source URL and returns the URL to
-# fetch, applying the silent scheme-fix from spec 005 §1:
+# fetch, applying the silent scheme-fix:
 #
 # - An explicit `http(s)://` input is honored as typed — `http://` is never
 #   forced to `https://`, since some feeds are http-only.

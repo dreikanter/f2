@@ -28,7 +28,7 @@ module Uid
     end
 
     # The system-owned period for a digest run: the UTC date of the run. Shared
-    # with the cadence guard so both agree on "this period" (spec §3).
+    # with the cadence guard so both agree on "this period".
     def self.digest_period(clock)
       clock.utc.to_date
     end
@@ -77,7 +77,7 @@ module Uid
       # Non-ASCII/IDN permalinks make URI.parse raise, which used to silently
       # drop the item. Percent-encode the path and punycode the host via
       # Addressable, then retry — a Cyrillic URL should yield a stable uid,
-      # not vanish (spec §3).
+      # not vanish.
       def parse_http(raw)
         URI.parse(raw)
       rescue URI::InvalidURIError
@@ -93,7 +93,7 @@ module Uid
       def normalize(uri)
         # The uid is an identity key, not a fetch URL. Coerce the scheme to
         # https and drop a leading www. and default ports, so a model flipping
-        # http/https/www between runs doesn't mint a duplicate repost (spec §3).
+        # http/https/www between runs doesn't mint a duplicate repost.
         uri.scheme = "https"
         uri.host = uri.host.downcase.sub(/\Awww\./, "")
         uri.port = nil if [80, 443].include?(uri.port)
@@ -128,7 +128,7 @@ module Uid
 
     # The digest regime is signalled only by an explicit null source_url. A
     # missing key is malformed and an empty/unusable string is dropped — neither
-    # is reinterpreted as a digest (spec §3's "unusable ≠ null").
+    # is reinterpreted as a digest.
     def digest?
       item.key?("source_url") && item["source_url"].nil?
     end

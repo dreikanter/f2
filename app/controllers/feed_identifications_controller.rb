@@ -17,7 +17,7 @@ class FeedIdentificationsController < ApplicationController
 
     # Mode A input that isn't a link can't be detected: the entry form re-renders
     # with the AI panel carrying the text, so switching the mode radio is the
-    # bridge (spec §1) — the user stays in the mode they chose.
+    # bridge — the user stays in the mode they chose.
     return render(not_a_link_error) if source_url.nil?
 
     # A settled result — a working feed, or a reachable link with no feed — is
@@ -76,7 +76,7 @@ class FeedIdentificationsController < ApplicationController
   end
 
   # Build a draft webhook feed straight away — there is no source input at all;
-  # the secret posting URL is minted when the draft is saved (spec 006 §7).
+  # the secret posting URL is minted when the draft is saved.
   def handle_webhook_submission
     feed = Current.user.feeds.build(feed_profile_key: "webhook")
     render(identification_success(feed, candidates: []))
@@ -84,7 +84,7 @@ class FeedIdentificationsController < ApplicationController
 
   # Build a draft AI feed straight from the prompt — no detection, the AI
   # profile is the destination and the prompt is the source. AI feeds default
-  # to a daily cadence (spec §1).
+  # to a daily cadence.
   def handle_prompt_submission
     if raw_prompt.blank?
       return render(entry_form(mode: "ai", error: "Tell AI what to follow — a link or a few words about it."))
@@ -138,8 +138,8 @@ class FeedIdentificationsController < ApplicationController
     feed_identification.success? && feed_identification.outcome == :unreachable
   end
 
-  # Present the finished identification by how many candidates actually work
-  # (spec §7): the feed form when at least one does, otherwise the form re-renders
+  # Present the finished identification by how many candidates actually
+  # work: the feed form when at least one does, otherwise the form re-renders
   # with the transient couldn't-reach hint or the terminal no-feed one.
   def present_outcome
     case feed_identification.outcome
@@ -161,7 +161,7 @@ class FeedIdentificationsController < ApplicationController
     if editing?
       # Re-render the feed being edited with the proposed source + profile
       # applied in memory only; the confirming PATCH persists it after the
-      # source-verified guard clears (spec §4). Operational edits were saved
+      # source-verified guard clears. Operational edits were saved
       # on the propose PATCH, so the reloaded record already carries them.
       profile_changed = edit_feed.feed_profile_key != profile_key
       feed = edit_feed.tap do |f|
@@ -170,7 +170,7 @@ class FeedIdentificationsController < ApplicationController
       end
 
       # A source (and possibly profile) change is pending confirmation, so the
-      # form surfaces the matching duplicate-risk warning (spec §4).
+      # form surfaces the matching duplicate-risk warning.
       render(identification_success(feed, candidates: feed_identification.working_candidates,
                                           source_changed: true, profile_changed: profile_changed,
                                           source_discovered: discovered))
@@ -185,7 +185,7 @@ class FeedIdentificationsController < ApplicationController
     end
   end
 
-  # Creation states re-render the entry form itself (spec §1/§7): frozen while
+  # Creation states re-render the entry form itself: frozen while
   # checking, or enabled with the hint under the active mode's input. Every
   # response in this flow swaps the same "feed-form" frame.
   def entry_form(mode: "link", url: raw_url, prompt: nil, checking: false, error: nil)
@@ -200,7 +200,7 @@ class FeedIdentificationsController < ApplicationController
     { turbo_stream: turbo_stream.replace("feed-form", FeedFormComponent.new(feed: feed, **options)) }
   end
 
-  # Edit states re-render the edit form — the engine is fixed (spec §4), so
+  # Edit states re-render the edit form — the engine is fixed, so
   # there's no AI mode to switch to, just the hint under the source field.
   def edit_form(attempted_url:, error: nil)
     expanded_form(edit_feed, attempted_url: attempted_url, source_error: error)
@@ -213,7 +213,7 @@ class FeedIdentificationsController < ApplicationController
   end
 
   # Terminal: the link was reachable but no deterministic profile reads it. In
-  # creation the AI mode is the way forward (spec §7) and the panel carries the
+  # creation the AI mode is the way forward and the panel carries the
   # link over; in edit it just invites another link.
   def no_feed_error
     if editing?
@@ -227,7 +227,7 @@ class FeedIdentificationsController < ApplicationController
   end
 
   # Transient: nothing connected. Resubmitting re-runs detection, and in
-  # creation the AI panel stays available as a secondary escape (spec §7).
+  # creation the AI panel stays available as a secondary escape.
   def unreachable_error
     if editing?
       return identification_error(error: "We couldn't reach that link. It might be a temporary hiccup — save again to retry, or keep the current source.")
@@ -246,7 +246,7 @@ class FeedIdentificationsController < ApplicationController
                         source_discovered: source_discovered)
   end
 
-  # The feed being edited (spec §4 source re-detection), or nil in the creation
+  # The feed being edited, or nil in the creation
   # flow. Scoped to the current user so a forged feed_id can't reach another's.
   def edit_feed
     return @edit_feed if defined?(@edit_feed)

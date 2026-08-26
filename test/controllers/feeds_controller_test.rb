@@ -1173,7 +1173,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
 
     # The source isn't applied until detection confirms a working candidate; the
-    # response is the §7 checking state, and the profile/params can't be forged in.
+    # response is the checking state, and the profile/params can't be forged in.
     assert_response :success
     feed.reload
     assert_equal original_url, feed.url

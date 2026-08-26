@@ -86,7 +86,7 @@ module HttpClient
     # PublicUrl.method(:safe?)). We check the initial URL and, via the redirect
     # callback below, every hop — because follow_redirects otherwise chases a
     # public URL's 302 straight to a private/loopback/metadata address, past the
-    # caller's one-time check (SSRF; spec 005 §8).
+    # caller's one-time check (SSRF).
     def ensure_public_url!(url, validate_url)
       raise BlockedUrlError, "Blocked non-public URL: #{url}" unless validate_url.call(url.to_s)
     end

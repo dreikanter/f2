@@ -35,7 +35,7 @@ class FeedPreview < ApplicationRecord
   end
 
   # Transitions to :failed only if still non-terminal. Rotating run_id makes the
-  # timeout terminal (spec §6): the still-running job holds the old run_id, so its
+  # timeout terminal: the still-running job holds the old run_id, so its
   # run_id-gated transitions now update 0 rows and can't flip the row back to
   # :ready after the user has already seen the timeout and left.
   def timeout!

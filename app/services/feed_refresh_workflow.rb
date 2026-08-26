@@ -38,7 +38,7 @@ class FeedRefreshWorkflow
   # A digest feed's period slot is consumed the moment it produces a period-keyed
   # post; refreshing again in the same period just re-runs the costly gather +
   # structure only to dedup the result away. Skip such a scheduled run before any
-  # LLM call (spec §3). A manual refresh always forces through — the user asked
+  # LLM call. A manual refresh always forces through — the user asked
   # for it — and mixed/feed-style runs never mark a period, so they never skip.
   def skip_current_digest_period(input)
     return input unless skip_scheduled_digest_run?

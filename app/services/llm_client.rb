@@ -165,7 +165,7 @@ class LlmClient
   def invoke_provider(ctx: nil, model:, prompt:, output_schema:, web:, system: nil)
     chat = credential.chat(model)
     # System prompt is the privileged instruction channel; the user prompt sent
-    # by #ask travels as a separate user-role message (spec §8).
+    # by #ask travels as a separate user-role message.
     chat.with_instructions(system) if system.present?
     chat.with_schema(adapter.schema_payload(output_schema)) if output_schema.present?
     apply_params(chat, model, schema: output_schema.present?, web: web)
