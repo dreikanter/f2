@@ -54,19 +54,32 @@ class FeedIdentification < ApplicationRecord
     candidate&.resolved_url || input
   end
 
-  # The identification behind a source URL: the row keyed by the URL when
-  # it works, else a page identification whose working candidate resolved
-  # to the URL, else the keyed row (cleanup still destroys stale rows).
-  def self.for_source(user:, url:)
+  # The settled identification a confirming save can trust for this URL:
+  # the row keyed by the URL when it works, else the page identification
+  # whose working candidate resolved to it.
+  def self.working_for_source(user:, url:)
     return nil if url.blank?
 
     direct = find_by(user: user, input: url)
     return direct if direct&.success? && direct.outcome == :working
 
+    resolved_to(user, url)
+  end
+
+  # The row cleanup destroys once a feed anchors to this URL: keyed by the
+  # URL itself, else the page identification that resolved to it.
+  def self.for_source(user:, url:)
+    return nil if url.blank?
+
+    find_by(user: user, input: url) || resolved_to(user, url)
+  end
+
+  def self.resolved_to(user, url)
     where(user: user, status: :success).detect do |identification|
       identification.working_candidates.any? { |c| c.resolved_url == url }
-    end || direct
+    end
   end
+  private_class_method :resolved_to
 
   # How the detection result should present (spec §7):
   #   :working     — at least one candidate read the source → the feed form

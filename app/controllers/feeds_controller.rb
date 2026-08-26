@@ -208,13 +208,11 @@ class FeedsController < ApplicationController
 
   # The settled working identification for the submitted URL, or nil. A source
   # change is confirmed only when one exists and the submitted profile is one of
-  # its working candidates — a candidate that actually read the source (spec §4).
-  # for_source: a discovered feed URL is backed by its page's identification.
+  # its working candidates: a candidate that actually read the source (spec §4).
   def settled_working_identification
     return @settled_working_identification if defined?(@settled_working_identification)
 
-    fi = FeedIdentification.for_source(user: current_user, url: canonical_submitted_url)
-    @settled_working_identification = (fi&.success? && fi.outcome == :working) ? fi : nil
+    @settled_working_identification = FeedIdentification.working_for_source(user: current_user, url: canonical_submitted_url)
   end
 
   def source_change_confirmed?
