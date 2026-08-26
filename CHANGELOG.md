@@ -4,9 +4,11 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-25
 
+- The "Invite a user" button is now blue, matching the other primary actions.
 - Paste a blog or site link when adding a feed and we'll find its feed for you. No more hunting for the RSS URL.
 - Links in Telegram posts now keep their full address, instead of breaking on a stray `&amp;`.
 - Bluesky posts that are just a shared link now come through with the link and its title, instead of only a link back to Bluesky.
+- Empty pages now share one tidy look, with a short note and the next action right under the page title. The feeds and posts pages explain how to get a feed going, the status page picks up where a draft feed left off, and the token and credential pages say what each key is for.
 - Feed previews now show attached pictures as small thumbnails instead of a list of links.
 - Hover any number in the stats row to see the full name of what it counts.
 - Feed entry pages now link to the original post, when the entry says where it came from.

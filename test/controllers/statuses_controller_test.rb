@@ -10,11 +10,12 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "#show should render status when authenticated with no feeds" do
+  test "#show should guide users without an active token to add one" do
     sign_in_as user
     get status_path
     assert_response :success
-    assert_select "h1", "Welcome to Feeder"
+    assert_select "h1", "Status"
+    assert_select "a[href=?]", new_access_token_path, text: "Add FreeFeed token"
   end
 
   test "#show should guide users with a token but no feeds to add one" do
@@ -23,7 +24,40 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     get status_path
     assert_response :success
     assert_select "h1", "Status"
-    assert_select "a[href=?]", new_feed_path, text: "Add your first feed"
+    assert_select "a[href=?]", new_feed_path, text: "Add a feed"
+  end
+
+  test "#show should guide users whose only feed is a draft to continue setup" do
+    sign_in_as user
+    create(:access_token, :active, user: user)
+    draft = create(:feed, :draft, user: user)
+
+    get status_path
+    assert_response :success
+    assert_select "h1", "Status"
+    assert_select "a[href=?]", edit_feed_path(draft), text: "Continue setup"
+  end
+
+  test "#show should point users with several draft feeds to the feeds list" do
+    sign_in_as user
+    create(:access_token, :active, user: user)
+    create(:feed, :draft, user: user)
+    create(:feed, :draft, user: user)
+
+    get status_path
+    assert_response :success
+    assert_select "a[href=?]", feeds_path, text: "Continue setup"
+  end
+
+  test "#show should render the dashboard when a non-draft feed exists alongside drafts" do
+    sign_in_as user
+    create(:feed, :draft, user: user)
+    create(:feed, :disabled, user: user)
+
+    get status_path
+    assert_response :success
+    assert_select "a", text: "Continue setup", count: 0
+    assert_not_nil css_select('[data-key="stats.total_feeds"]').first
   end
 
   test "#show should render status when authenticated with feeds" do

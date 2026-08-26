@@ -39,7 +39,10 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get ai_credentials_url
     assert_response :success
-    assert_select "[data-key='empty-state']", text: /No AI credentials yet/
+    assert_select "p", text: /No AI credentials yet/
+    assert_select "p", text: /regular feeds work without it/
+    assert_select "[data-key='ai_credentials.empty.new-credential'][href=?]", new_ai_credential_path, text: "New Credential"
+    assert_select "[data-key='ai_credentials.new-button']", count: 0
   end
 
   test "#new should render the form" do

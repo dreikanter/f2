@@ -2,6 +2,10 @@
 
 <% suggest_to_add_tokens = @user.access_tokens.active.none? %>
 <% suggest_adding_feeds = @user.total_feeds_count.zero? %>
+<%# The window between "has a token" and "first feed enabled": every feed is
+    still a draft, so the dashboard would render empty with no hint why. %>
+<% draft_feeds = suggest_to_add_tokens || suggest_adding_feeds ? [] : @user.feeds.draft.order(created_at: :desc).limit(2).to_a %>
+<% suggest_finishing_drafts = draft_feeds.any? && @user.feeds.where.not(state: :draft).none? %>
 
 <div class="space-y-8">
   <% if @user.email_deactivated? %>
@@ -19,9 +23,9 @@
   <% end %>
 
   <% if suggest_to_add_tokens %>
-    <%= render PageHeaderComponent.new(title: "Welcome to Feeder") do |header| %>
-      <% header.with_context_paragraph "Feeder helps you automatically share content from your favorite sources to FreeFeed." %>
-      <% header.with_context_paragraph "Two quick steps: add a FreeFeed token, then create your first feed." %>
+    <%= render PageHeaderComponent.new(title: "Status") do |header| %>
+      <% header.with_context_paragraph "This is your dashboard. Once your feeds start importing, your activity and stats show up here." %>
+      <% header.with_context_paragraph "Feeder needs a FreeFeed access token to post on your behalf, and there's no active token right now. Add one to get things moving." %>
     <% end %>
     <div>
       <%= link_to "Add FreeFeed token", new_access_token_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
@@ -29,10 +33,22 @@
   <% elsif suggest_adding_feeds %>
     <%= render PageHeaderComponent.new(title: "Status") do |header| %>
       <% header.with_context_paragraph "This is your dashboard. Once your feeds start importing, your activity and stats show up here." %>
-      <% header.with_context_paragraph "You've got a token set up — now add your first feed and Feeder will start reposting new content to FreeFeed." %>
+      <% header.with_context_paragraph "You've got a token set up. Now add a feed and Feeder will start reposting new content to FreeFeed." %>
     <% end %>
     <div>
-      <%= link_to "Add your first feed", new_feed_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+      <%= link_to "Add a feed", new_feed_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+    </div>
+  <% elsif suggest_finishing_drafts %>
+    <%= render PageHeaderComponent.new(title: "Status") do |header| %>
+      <% header.with_context_paragraph "This is your dashboard. Once your feeds start importing, your activity and stats show up here." %>
+      <% if draft_feeds.one? %>
+        <% header.with_context_paragraph "You're almost there. Your feed is saved as a draft: finish setting it up and enable it to start reposting." %>
+      <% else %>
+        <% header.with_context_paragraph "You're almost there. Your feeds are saved as drafts: finish setting one up and enable it to start reposting." %>
+      <% end %>
+    <% end %>
+    <div>
+      <%= link_to "Continue setup", draft_feeds.one? ? edit_feed_path(draft_feeds.first) : feeds_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
     </div>
   <% else %>
     <%= render PageHeaderComponent.new(title: "Status") %>
