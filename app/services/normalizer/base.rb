@@ -5,13 +5,14 @@ module Normalizer
   class Base
     include HtmlTextUtils
 
+    # @param feed_entry [FeedEntry]
     def initialize(feed_entry)
       @feed_entry = feed_entry
     end
 
     # Raises if the subclass produced a Post missing dedup or ordering
     # invariants; those are programming errors.
-    # 
+    #
     # @return [Post] post with status set based on validation
     def normalize
       post = build_post

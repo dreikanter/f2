@@ -183,14 +183,17 @@ class Feed < ApplicationRecord
     feed_profile_key.present? && FeedProfile.exists?(feed_profile_key)
   end
 
+  # @return [Class]
   def loader_class
     FeedProfile.loader_class_for(feed_profile_key)
   end
 
+  # @return [Class]
   def processor_class
     FeedProfile.processor_class_for(feed_profile_key)
   end
 
+  # @return [Class]
   def normalizer_class
     FeedProfile.normalizer_class_for(feed_profile_key)
   end
@@ -283,32 +286,42 @@ class Feed < ApplicationRecord
     )
   end
 
+  # @param options [Hash] e.g. a shared :http_client
+  # @return [Loader::Base]
   def loader_instance(options = {})
     loader_class.new(self, options)
   end
 
+  # @param raw_data [String] raw payload from the loader
+  # @return [Processor::Base]
   def processor_instance(raw_data)
     processor_class.new(self, raw_data)
   end
 
+  # @param feed_entry [FeedEntry]
+  # @return [Normalizer::Base]
   def normalizer_instance(feed_entry)
     normalizer_class.new(feed_entry)
   end
 
+  # @return [Time, nil]
   def last_refreshed_at
     feed_entries.maximum(:created_at)
   end
 
+  # @return [Time, nil]
   def most_recent_post_date
     posts.maximum(:published_at)
   end
 
   # Time of the most recent repost to FreeFeed, regardless of the source
   # publication date.
+  # @return [Time, nil]
   def most_recent_repost_at
     posts.published.maximum(:reposted_at)
   end
 
+  # @return [Integer] posts published in the last week, by source date
   def posts_published_last_week_count
     posts.where(published_at: 1.week.ago.beginning_of_day..Time.current.end_of_day).count
   end
@@ -332,6 +345,7 @@ class Feed < ApplicationRecord
 
   # Creates the schedule pointed at the next cron slot, without triggering
   # an immediate run. Only called when a feed gains its schedule on enable.
+  # @return [FeedSchedule]
   def defer_schedule!
     schedule = build_feed_schedule(last_run_at: Time.current)
     schedule.next_run_at = schedule.calculate_next_run_at

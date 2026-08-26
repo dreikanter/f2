@@ -1,8 +1,10 @@
 class FeedRefreshJob < ApplicationJob
   queue_as :default
 
-  # A manual (user-initiated) refresh forces through the digest cadence
-  # skip; scheduled runs may skip a redundant same-period digest.
+  # @param feed_id [Integer]
+  # @param manual [Boolean] a user-initiated refresh forces through the
+  #   digest cadence skip; scheduled runs may skip a redundant same-period
+  #   digest.
   def perform(feed_id, manual: false)
     feed = Feed.find_by(id: feed_id)
     return unless feed

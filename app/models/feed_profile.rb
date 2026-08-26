@@ -406,40 +406,55 @@ class FeedProfile
   }.freeze
 
   class << self
+    # @return [Array<String>] all profile keys
     def all
       PROFILES.keys
     end
 
+    # @param key [String] the profile key
+    # @return [Boolean]
     def exists?(key)
       PROFILES.key?(key)
     end
 
+    # @param key [String] the profile key
+    # @return [Hash, nil] the registry entry
     def [](key)
       PROFILES[key]
     end
 
     # In registration order. The AI profile registers no matcher, so it can
     # never be detected.
+    # @return [Array<Class>]
     def matchers
       PROFILES.filter_map { |_key, entry| entry[:matcher].presence&.constantize }
     end
 
+    # @param key [String] the profile key
+    # @return [Boolean] true if any stage calls an LLM
     def depends_on_ai?(key)
       !!PROFILES.dig(key, :depends_on_ai)
     end
 
+    # @param key [String] the profile key
+    # @return [Boolean] true if the profile uses periodic scheduling
     def scheduled?(key)
       !!PROFILES.dig(key, :scheduled)
     end
 
+    # @param key [String] the profile key
+    # @return [Hash] attributes enforced after user-submitted attributes
     def defaults_for(key)
       PROFILES.dig(key, :defaults) || {}
     end
 
+    # @return [Array<String>] keys of the AI-backed profiles
     def ai_profile_keys
       PROFILES.keys.select { |key| depends_on_ai?(key) }
     end
 
+    # @param key [String] the profile key
+    # @return [Hash, nil]
     def parameter_schema_for(key)
       PROFILES.dig(key, :parameter_schema)
     end
@@ -447,6 +462,8 @@ class FeedProfile
     # The params key holding the source input ("url", "prompt"), derived
     # from the profile's single required param. Unknown profiles fall back
     # to "url"; an input-less profile returns nil.
+    # @param key [String] the profile key
+    # @return [String, nil]
     def source_key_for(key)
       return nil if PROFILES.dig(key, :input_shape) == :none
 
@@ -454,10 +471,16 @@ class FeedProfile
     end
 
     # The user-facing source value in a params hash.
+    # @param key [String] the profile key
+    # @param params [Hash, nil]
+    # @return [String, nil]
     def source_input_for(key, params)
       (params || {})[source_key_for(key)]
     end
 
+    # @param key [String] the profile key
+    # @param stage [Symbol] :loader, :processor, or :normalizer
+    # @return [Hash] the stage's config (frozen empty hash if none)
     def config_for(key, stage)
       raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)
 
@@ -470,28 +493,41 @@ class FeedProfile
       end
     end
 
+    # @param key [String] the profile key
+    # @return [Class]
     def loader_class_for(key)
       class_for(key, :loader)
     end
 
+    # @param key [String] the profile key
+    # @return [Class]
     def processor_class_for(key)
       class_for(key, :processor)
     end
 
+    # @param key [String] the profile key
+    # @return [Class]
     def normalizer_class_for(key)
       class_for(key, :normalizer)
     end
 
+    # @param key [String] the profile key
+    # @return [Class]
     def title_extractor_class_for(key)
       class_for(key, :title_extractor)
     end
 
+    # @param key [String] the profile key
+    # @return [String]
     def display_name_for(key)
       PROFILES.dig(key, :display_name) || key.to_s.titleize
     end
 
     private
 
+    # @param key [String] the profile key
+    # @param stage [Symbol] :loader, :processor, :normalizer, or :title_extractor
+    # @return [Class]
     def class_for(key, stage)
       raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)
 
