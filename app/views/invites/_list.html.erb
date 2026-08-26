@@ -1,12 +1,14 @@
-<%# locals: (invites:, new_invite_id: nil) %>
+<%# locals: (invites:, can_create:, new_invite_id: nil) %>
 <% if invites.any? %>
   <div class="space-y-3">
     <% invites.each do |invite| %>
       <%= render "invite", invite: invite, new_invite_id: new_invite_id %>
     <% end %>
   </div>
-<% else %>
+<% elsif can_create %>
   <%# Plain note instead of a boxed empty state: the list is turbo-updated in
-      place, so the note has to live inside this frame to stay accurate. %>
-  <p class="text-body" data-key="invites.empty-note">You haven't created any invites — they'll show up here with a link you can share.</p>
+      place, so the note has to live inside this frame to stay accurate. With no
+      invites available the summary already says so, and this note would only
+      repeat it. %>
+  <p class="text-body" data-key="invites.empty-note">You haven't created any invites. When you do, they'll show up here with a link you can share.</p>
 <% end %>

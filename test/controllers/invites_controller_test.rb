@@ -29,6 +29,20 @@ class InvitesControllerTest < ActionDispatch::IntegrationTest
     assert_select "nav[aria-label='Breadcrumb'] a[href=?]", settings_path, text: "Settings"
   end
 
+  test "index should show the empty note when invites are available" do
+    sign_in_as user
+    get invites_url
+    assert_response :success
+    assert_select "[data-key='invites.empty-note']", count: 1
+  end
+
+  test "index should skip the empty note when no invites are available" do
+    sign_in_as create(:user, available_invites: 0)
+    get invites_url
+    assert_response :success
+    assert_select "[data-key='invites.empty-note']", count: 0
+  end
+
   test "should show anonymized invited email for a used invite" do
     invited = create(:user, email_address: "invitee@example.com")
     create(:invite, created_by_user: user, invited_user: invited)
