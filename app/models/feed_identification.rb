@@ -30,7 +30,7 @@ class FeedIdentification < ApplicationRecord
     working_candidates.first
   end
 
-  # Candidates that can fetch the source (spec §7): the count of these drives how
+  # Candidates that can fetch the source: the count of these drives how
   # the result is presented. A candidate counts unless it's known-broken — tested
   # and failed, or unreachable — so in practice this is the passed set (detection
   # always records a verdict). Memoized: read a few times per request.
@@ -41,7 +41,7 @@ class FeedIdentification < ApplicationRecord
   end
 
   # Profile keys of the working candidates, in rank order. An edit's confirming
-  # save (spec §4) only applies a source when the submitted profile is one of
+  # save only applies a source when the submitted profile is one of
   # these — a settled, source-reading candidate.
   def working_candidate_profile_keys
     working_candidates.map(&:profile_key)
@@ -81,7 +81,7 @@ class FeedIdentification < ApplicationRecord
   end
   private_class_method :resolved_to
 
-  # How the detection result should present (spec §7):
+  # How the detection result should present:
   #   :working     — at least one candidate read the source → the feed form
   #   :unreachable — nothing connected (couldn't-reach) → the transient retry state
   #   :no_feed     — reachable, but no candidate yields a feed → the terminal
