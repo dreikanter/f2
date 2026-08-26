@@ -17,8 +17,8 @@ class FeedIdentificationFetcher
   end
 
   def identify
-    body = fetch_body_for_input
-    candidates = identify_candidates(body)
+    response = fetch_response_for_input
+    candidates = identify_candidates(response)
 
     if candidates.any?
       feed_identification.update!(status: :success, candidates: candidates, error: nil)
@@ -45,7 +45,7 @@ class FeedIdentificationFetcher
 
   private
 
-  # Fetch the source URL body for inspection by the URL matchers. The input is
+  # Fetch the source URL for inspection by the URL matchers. The input is
   # always a canonical URL here (Mode A), so we always fetch. Translates the HTTP
   # layer's failures into FetchError subclasses, keeping the original error as the
   # message (and as #cause) for diagnosis.
@@ -54,15 +54,13 @@ class FeedIdentificationFetcher
   # scheme-fix now lets a bare `169.254.169.254` reach this fetch, so a private,
   # loopback, or metadata address must not be dialed. Redirects that hop into a
   # private range are a separate fetch-layer gap tracked in #920.
-  def fetch_body_for_input
+  def fetch_response_for_input
     raise FetchError, "blocked non-public URL" unless PublicUrl.safe?(@input)
 
     response = http_client.get(@input)
     raise ResponseStatusError, "HTTP #{response.status}" unless response.success?
 
-    # The base for resolving discovered relative feed links.
-    @fetched_url = response.url.presence || @input
-    response.body
+    response
   rescue HttpClient::TooManyRedirectsError => e
     raise RedirectLimitError, e.message
   rescue HttpClient::Error => e
@@ -72,21 +70,25 @@ class FeedIdentificationFetcher
   # Falls back to the advertised feeds unless a direct candidate actually
   # reads the source; a matcher can trip on page markup that no profile can
   # parse.
-  def identify_candidates(body)
-    direct = tested_candidates(FeedProfileDetector.call(input: @input, fetched_body: body).candidates, input: @input)
+  def identify_candidates(response)
+    direct = tested_candidates(FeedProfileDetector.call(input: @input, fetched_body: response.body).candidates, input: @input)
     return direct if direct.any? { |candidate| working?(candidate) }
 
-    direct + discovered_candidates(body)
+    direct + discovered_candidates(response)
   end
 
   # Runs regular identification against each advertised feed URL, tagging
   # candidates with the URL they were verified against. Stops at the first
   # URL with a working candidate: the chooser, the preview, and the edit
   # confirmation all expect one source URL per identification.
-  def discovered_candidates(body)
+  #
+  # Relative feed links resolve against the URL the fetch landed on, not
+  # necessarily the typed one (redirects).
+  def discovered_candidates(response)
     candidates = []
+    base_url = response.url.presence || @input
 
-    FeedLinkDiscovery.call(body, base_url: @fetched_url).each do |feed_url|
+    FeedLinkDiscovery.call(response.body, base_url: base_url).each do |feed_url|
       feed_body = fetch_discovered_body(feed_url)
       next if feed_body.nil?
 
