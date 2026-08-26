@@ -153,6 +153,10 @@ class FeedIdentificationsController < ApplicationController
     suggested = feed_identification.suggested_candidate
     profile_key = suggested&.profile_key
     source_key = FeedProfile.source_key_for(profile_key)
+    # The form carries the URL the feed will actually read; for a page URL
+    # that's the discovered feed, and a note explains the swap.
+    source_url = feed_identification.source_url_for(profile_key)
+    discovered = source_url != feed_identification.input
 
     if editing?
       # Re-render the feed being edited with the proposed source + profile
@@ -162,20 +166,22 @@ class FeedIdentificationsController < ApplicationController
       profile_changed = edit_feed.feed_profile_key != profile_key
       feed = edit_feed.tap do |f|
         f.feed_profile_key = profile_key
-        f.params = (f.params || {}).merge(source_key => feed_identification.input)
+        f.params = (f.params || {}).merge(source_key => source_url)
       end
 
       # A source (and possibly profile) change is pending confirmation, so the
       # form surfaces the matching duplicate-risk warning (spec §4).
       render(identification_success(feed, candidates: feed_identification.working_candidates,
-                                          source_changed: true, profile_changed: profile_changed))
+                                          source_changed: true, profile_changed: profile_changed,
+                                          source_discovered: discovered))
     else
       feed = Current.user.feeds.build(
-        params: { source_key => feed_identification.input },
+        params: { source_key => source_url },
         feed_profile_key: profile_key,
         name: suggested&.title&.truncate(Feed::NAME_MAX_LENGTH, omission: "…")
       )
-      render(identification_success(feed, candidates: feed_identification.working_candidates))
+      render(identification_success(feed, candidates: feed_identification.working_candidates,
+                                          source_discovered: discovered))
     end
   end
 
@@ -233,9 +239,11 @@ class FeedIdentificationsController < ApplicationController
     )
   end
 
-  def identification_success(feed, candidates: [], source_changed: false, profile_changed: false)
+  def identification_success(feed, candidates: [], source_changed: false, profile_changed: false,
+                             source_discovered: false)
     expanded_form(feed, candidates: candidates,
-                        source_changed: source_changed, profile_changed: profile_changed)
+                        source_changed: source_changed, profile_changed: profile_changed,
+                        source_discovered: source_discovered)
   end
 
   # The feed being edited (spec §4 source re-detection), or nil in the creation

@@ -49,7 +49,9 @@ module HttpClient
       Response.new(
         status: response.status,
         body: response.body,
-        headers: response.headers.to_hash
+        headers: response.headers.to_hash,
+        # env.url is the final hop after redirects.
+        url: response.env.url.to_s
       )
     rescue Faraday::TimeoutError, Timeout::Error => e
       raise TimeoutError, "Request timed out: #{e.message}"

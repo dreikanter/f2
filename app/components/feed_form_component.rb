@@ -9,7 +9,7 @@ class FeedFormComponent < ViewComponent::Base
   POLLING_STOP_CONDITION = "[data-identification-state='complete'], [data-identification-state='error']"
 
   def initialize(feed:, candidates: [], source_changed: false, profile_changed: false,
-                 checking: false, source_error: nil, attempted_url: nil)
+                 checking: false, source_error: nil, attempted_url: nil, source_discovered: false)
     @feed = feed
     @candidates = candidates
     @source_changed = source_changed
@@ -17,6 +17,7 @@ class FeedFormComponent < ViewComponent::Base
     @checking = checking
     @source_error = source_error
     @attempted_url = attempted_url
+    @source_discovered = source_discovered
   end
 
   attr_reader :feed, :candidates, :source_error, :attempted_url
@@ -24,6 +25,10 @@ class FeedFormComponent < ViewComponent::Base
   def checking? = @checking
   def source_changed? = @source_changed
   def profile_changed? = @profile_changed
+
+  # The source URL was discovered on the submitted page; a note under the
+  # source field explains the swap.
+  def source_discovered? = @source_discovered
 
   # Editing an existing feed vs. creating one. Every caller passes a persisted
   # feed only from the edit flow (creation always builds a fresh record), so

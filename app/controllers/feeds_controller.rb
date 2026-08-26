@@ -21,7 +21,7 @@ class FeedsController < ApplicationController
     images_only
   ].freeze
 
-  # Source-side fields, editable only while a feed is a draft (FR-007/008);
+  # Source-side fields, editable only while a feed is a draft;
   # once it first leaves :draft they lock in for good.
   DRAFT_ONLY_PERMITTED_PARAMS = [
     :feed_profile_key,
@@ -81,14 +81,14 @@ class FeedsController < ApplicationController
   # Operational fields (name, target_group, schedule, access_token) edit freely.
   # A live deterministic feed's source can be re-pointed, but only through
   # detection: a changed source URL re-runs identification and the confirming
-  # save applies it only once a working candidate is verified (spec §4). The
+  # save applies it only once a working candidate is verified. The
   # engine stays fixed — deterministic ↔ AI is a new feed.
   def update
     @feed = load_feed
     authorize @feed
 
     # A changed deterministic source that isn't yet backed by a verified working
-    # candidate hands off to the async detector and paints the §7 states; a
+    # candidate hands off to the async detector and paints the identification states; a
     # confirmed one falls through to the normal save below (with the source
     # applied), so enable/pause/schedule bookkeeping stays in one place. Capture
     # the decision before assign_attributes moves source_input onto the new URL.
@@ -97,7 +97,7 @@ class FeedsController < ApplicationController
 
     @feed.assign_attributes(update_feed_params)
     # Overwrite the raw submitted URL with the canonical, verified source and its
-    # detected profile (the confirm path — spec §4).
+    # detected profile (the confirm path).
     apply_confirmed_source if source_change
     @feed.assign_attributes(FeedProfile.defaults_for(@feed.feed_profile_key))
 
@@ -209,12 +209,11 @@ class FeedsController < ApplicationController
 
   # The settled working identification for the submitted URL, or nil. A source
   # change is confirmed only when one exists and the submitted profile is one of
-  # its working candidates — a candidate that actually read the source (spec §4).
+  # its working candidates: a candidate that actually read the source.
   def settled_working_identification
     return @settled_working_identification if defined?(@settled_working_identification)
 
-    fi = canonical_submitted_url && FeedIdentification.find_by(user: current_user, input: canonical_submitted_url)
-    @settled_working_identification = (fi&.success? && fi.outcome == :working) ? fi : nil
+    @settled_working_identification = FeedIdentification.working_for_source(user: current_user, url: canonical_submitted_url)
   end
 
   def source_change_confirmed?
@@ -229,14 +228,14 @@ class FeedsController < ApplicationController
   end
 
   # Persist the operational edits so they survive the async detection gap, then
-  # kick detection and freeze the form while it polls (spec §7). The source
+  # kick detection and freeze the form while it polls. The source
   # itself waits for a confirmed working candidate; no state transition happens
   # here, so a live feed keeps refreshing its verified source until the new one
   # is confirmed.
   def propose_source_redetection
     return render :edit, status: :unprocessable_entity unless @feed.update(operational_update_params)
 
-    # A non-link never reaches detection; the engine is fixed in edit (spec §4),
+    # A non-link never reaches detection; the engine is fixed in edit,
     # so there's no AI mode to bridge to — just ask for a link.
     if canonical_submitted_url.nil?
       return render_identification_state(
@@ -302,13 +301,13 @@ class FeedsController < ApplicationController
     if @feed.draft?
       ALWAYS_PERMITTED_PARAMS + DRAFT_ONLY_PERMITTED_PARAMS
     elsif FeedProfile.depends_on_ai?(@feed.feed_profile_key)
-      # A live AI feed's prompt stays editable (spec §4): the uid scheme is
+      # A live AI feed's prompt stays editable: the uid scheme is
       # unchanged, so a prompt edit carries no duplicate risk (just possible
       # backfill). The url isn't accepted here — an AI feed's source is its prompt.
       ALWAYS_PERMITTED_PARAMS + [{ params: [:prompt] }]
     else
-      # A live deterministic feed can move its source, but only through detection
-      # (spec §4). The URL rides operational params; the re-detected profile is
+      # A live deterministic feed can move its source, but only through
+      # detection. The URL rides operational params; the re-detected profile is
       # applied explicitly by the confirm path (from a verified chooser pick), so
       # feed_profile_key stays out of the mass-assignable set here — an unverified
       # profile switch can't leak in.
@@ -317,14 +316,11 @@ class FeedsController < ApplicationController
   end
 
   def cleanup_feed_identification(input)
-    return if input.blank?
-
-    FeedIdentification.find_by(user: current_user, input: input)&.destroy
+    FeedIdentification.cleanup_for_source(user: current_user, url: input)
   end
 
   # Minted with the feed so the URL is pasteable immediately, destroyed when
-  # a draft moves off the webhook profile so the old URL stops resolving
-  # (spec 006 §2).
+  # a draft moves off the webhook profile so the old URL stops resolving.
   def sync_webhook_endpoint(feed)
     return unless feed.saved_change_to_feed_profile_key?
 
