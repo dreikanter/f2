@@ -30,7 +30,7 @@ class FeedIdentification < ApplicationRecord
     working_candidates.first
   end
 
-  # Candidates that can fetch the source (spec §7): the count of these drives how
+  # Candidates that can fetch the source: the count of these drives how
   # the result is presented. A candidate counts unless it's known-broken — tested
   # and failed, or unreachable — so in practice this is the passed set (detection
   # always records a verdict). Memoized: read a few times per request.
@@ -41,7 +41,7 @@ class FeedIdentification < ApplicationRecord
   end
 
   # Profile keys of the working candidates, in rank order. An edit's confirming
-  # save (spec §4) only applies a source when the submitted profile is one of
+  # save only applies a source when the submitted profile is one of
   # these — a settled, source-reading candidate.
   def working_candidate_profile_keys
     working_candidates.map(&:profile_key)
@@ -54,21 +54,35 @@ class FeedIdentification < ApplicationRecord
     candidate&.resolved_url || input
   end
 
-  # The identification behind a source URL: the row keyed by the URL when
-  # it works, else a page identification whose working candidate resolved
-  # to the URL, else the keyed row (cleanup still destroys stale rows).
-  def self.for_source(user:, url:)
+  # The settled identification a confirming save can trust for this URL:
+  # the row keyed by the URL when it works, else the page identification
+  # whose working candidate resolved to it.
+  def self.working_for_source(user:, url:)
     return nil if url.blank?
 
     direct = find_by(user: user, input: url)
     return direct if direct&.success? && direct.outcome == :working
 
-    where(user: user, status: :success).detect do |identification|
-      identification.working_candidates.any? { |c| c.resolved_url == url }
-    end || direct
+    resolved_to(user, url)
   end
 
-  # How the detection result should present (spec §7):
+  # Retire the rows behind a created feed's source: the row keyed by the
+  # URL and the page identification that resolved to it. Either could
+  # confirm a later edit, so neither may outlive its use.
+  def self.cleanup_for_source(user:, url:)
+    return if url.blank?
+
+    [find_by(user: user, input: url), resolved_to(user, url)].compact.each(&:destroy)
+  end
+
+  def self.resolved_to(user, url)
+    where(user: user, status: :success).detect do |identification|
+      identification.working_candidates.any? { |c| c.resolved_url == url }
+    end
+  end
+  private_class_method :resolved_to
+
+  # How the detection result should present:
   #   :working     — at least one candidate read the source → the feed form
   #   :unreachable — nothing connected (couldn't-reach) → the transient retry state
   #   :no_feed     — reachable, but no candidate yields a feed → the terminal
