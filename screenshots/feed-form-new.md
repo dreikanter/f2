@@ -1,5 +1,5 @@
 # feed-form-new.png
 
 URL: `/feeds/new` (desktop, 1280px, full page)
-State: signed-in user with an access token, creating a webhook-only feed (no source URL); form is blank
-Shows: source note explaining the webhook endpoint, feed name field, access token and target group selects, and the "Enable feed" checkbox unchecked
+State: user has an access token; form is blank
+Shows: the new feed form in its default state
