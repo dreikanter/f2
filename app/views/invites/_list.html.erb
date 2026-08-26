@@ -6,9 +6,6 @@
     <% end %>
   </div>
 <% elsif can_create %>
-  <%# Plain note instead of a boxed empty state: the list is turbo-updated in
-      place, so the note has to live inside this frame to stay accurate. With no
-      invites available the summary already says so, and this note would only
-      repeat it. %>
+  <%# Skipped when no invites are available: the summary already says so. %>
   <p class="text-body" data-key="invites.empty-note">You haven't created any invites. When you do, they'll show up here with a link you can share.</p>
 <% end %>
