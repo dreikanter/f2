@@ -1,9 +1,7 @@
 class FeedIdentificationFetcher
-  # A fetch that yielded no usable response. UnreachableError (couldn't connect)
-  # persists as "unreachable" and reads as a transient retry; every other
-  # FetchError (bad status, redirect loop, a blocked non-public host) persists as
-  # "unreadable" and reads as a terminal "no feed here" (spec §7). The class and
-  # its message exist only for the logs.
+  # A fetch that yielded no usable response. UnreachableError persists as
+  # "unreachable" (transient, retryable); every other FetchError persists
+  # as "unreadable" (terminal "no feed here"). The messages are for logs.
   class FetchError < StandardError; end
   class UnreachableError < FetchError; end    # no answer: DNS, refused, or timeout
   class RedirectLimitError < FetchError; end  # followed too many redirects
@@ -26,13 +24,11 @@ class FeedIdentificationFetcher
       feed_identification.update!(status: :failed, candidates: [], error: "unidentifiable")
     end
   rescue UnreachableError => e
-    # Couldn't connect (DNS, refused, timeout): genuinely transient, so the UI
-    # offers a retry. Expected, so log without reporting it as a bug.
+    # Transient: the UI offers a retry. Expected, so not reported as a bug.
     @logger.info("Feed identification couldn't reach #{sanitize_input_for_logging(@input)}: #{e.class} (#{e.message})")
     feed_identification.update!(status: :failed, candidates: [], error: "unreachable")
   rescue FetchError => e
-    # Reached the source but it's unusable (bad status, redirect loop): retrying
-    # won't help, so this reads as a terminal "no feed here".
+    # Reachable but unusable: retrying won't help, terminal "no feed here".
     @logger.info("Feed identification fetch failed for #{sanitize_input_for_logging(@input)}: #{e.class} (#{e.message})")
     feed_identification.update!(status: :failed, candidates: [], error: "unreadable")
   rescue StandardError => e
@@ -45,15 +41,9 @@ class FeedIdentificationFetcher
 
   private
 
-  # Fetch the source URL for inspection by the URL matchers. The input is
-  # always a canonical URL here (Mode A), so we always fetch. Translates the HTTP
-  # layer's failures into FetchError subclasses, keeping the original error as the
-  # message (and as #cause) for diagnosis.
-  #
-  # Refuse a non-public target before the GET (SSRF, spec §8): the silent
-  # scheme-fix now lets a bare `169.254.169.254` reach this fetch, so a private,
-  # loopback, or metadata address must not be dialed. Redirects that hop into a
-  # private range are a separate fetch-layer gap tracked in #920.
+  # The input may be a raw address (the entry form's silent scheme-fix), so
+  # refuse non-public targets before the GET (SSRF). Redirect hops are not
+  # validated on this fetch.
   def fetch_response_for_input
     raise FetchError, "blocked non-public URL" unless PublicUrl.safe?(@input)
 
@@ -67,9 +57,8 @@ class FeedIdentificationFetcher
     raise UnreachableError, e.message
   end
 
-  # Falls back to the advertised feeds unless a direct candidate actually
-  # reads the source; a matcher can trip on page markup that no profile can
-  # parse.
+  # Fall back to advertised feeds unless a direct candidate actually reads
+  # the source; a matcher can trip on markup no profile parses.
   def identify_candidates(response)
     direct = tested_candidates(FeedProfileDetector.call(input: @input, fetched_body: response.body).candidates, input: @input)
     return direct if direct.any? { |candidate| working?(candidate) }
@@ -77,13 +66,10 @@ class FeedIdentificationFetcher
     direct + discovered_candidates(response)
   end
 
-  # Runs regular identification against each advertised feed URL, tagging
-  # candidates with the URL they were verified against. Stops at the first
-  # URL with a working candidate: the chooser, the preview, and the edit
-  # confirmation all expect one source URL per identification.
-  #
-  # Relative feed links resolve against the URL the fetch landed on, not
-  # necessarily the typed one (redirects).
+  # Stops at the first URL with a working candidate: the chooser, the
+  # preview, and the edit confirmation expect one source URL per
+  # identification. Relative links resolve against where the fetch landed,
+  # not the typed URL.
   def discovered_candidates(response)
     candidates = []
     base_url = response.url.presence || @input
@@ -139,10 +125,9 @@ class FeedIdentificationFetcher
     end
   end
 
-  # Serialize each candidate with its self-test verdict from running the
-  # real pipeline against input (the typed URL or a discovered feed URL).
-  # Only deterministic profiles appear here; the AI profile registers no
-  # matcher, so detection stays LLM-free.
+  # Self-test each candidate by running the real pipeline against input
+  # (the typed URL or a discovered feed URL). Only deterministic profiles
+  # appear here: the AI profile registers no matcher.
   def tested_candidates(candidates, input:)
     candidates.map { |candidate| candidate.as_json.merge(test_result(candidate, input: input)) }
   end
@@ -161,9 +146,7 @@ class FeedIdentificationFetcher
     }
   end
 
-  # A per-run cache so matching and per-candidate testing fetch each URL once.
-  # Scoped to this fetcher instance (one identification run); scheduled refreshes
-  # build their own loaders and are unaffected.
+  # Per-run cache: matching and candidate testing fetch each URL once.
   def http_client
     @http_client ||= HttpClient.build(
       adapter: HttpClient::CachingAdapter, timeout: 15, max_redirects: 5
