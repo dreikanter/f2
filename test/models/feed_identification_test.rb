@@ -54,6 +54,15 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     assert_nil identification.error
   end
 
+  test "#restart_detection should clear working candidates already read on the same instance" do
+    identification = create(:feed_identification, :success, user: user)
+    assert_equal ["rss"], identification.working_candidates.map(&:profile_key)
+
+    assert identification.restart_detection
+
+    assert_equal [], identification.working_candidates
+  end
+
   test "#restart_detection should return false after losing the insert race" do
     winner = create(:feed_identification, user: user, started_at: Time.current).reload
     # The loser's stale lookup result: it missed the winner's row, so its
