@@ -1,10 +1,6 @@
-# The expanded feed form: the full editor a feed lands on once its source is
-# known (or when it needs none) — source identity, name, AI settings, preview,
-# reposting settings, advanced options, and the enable checkbox.
-#
-# Also paints the identification states of an edit's source re-detection:
-# frozen and polling while a check runs, or re-enabled with the
-# failure hint under the source field.
+# The expanded feed form. Also paints the identification states of an
+# edit's source re-detection: frozen and polling while a check runs, or
+# re-enabled with the failure hint under the source field.
 class FeedFormComponent < ViewComponent::Base
   POLLING_STOP_CONDITION = "[data-identification-state='complete'], [data-identification-state='error']"
 
@@ -30,19 +26,15 @@ class FeedFormComponent < ViewComponent::Base
   # source field explains the swap.
   def source_discovered? = @source_discovered
 
-  # Editing an existing feed vs. creating one. Every caller passes a persisted
-  # feed only from the edit flow (creation always builds a fresh record), so
-  # the flag needn't travel as a separate parameter.
+  # Creation always builds a fresh record, so persistence tells the flows
+  # apart.
   def edit_mode?
     feed.persisted?
   end
 
-  # preview-button is mounted on the whole form so it can read the selected
-  # feed_profile_key (radios or hidden field) and react to candidate changes;
-  # the button and the modal's frame are nested targets within it. While an
-  # edit's source re-detection runs, the same wrapper freezes the
-  # form and polls for the outcome; a failure re-renders it enabled with the
-  # hint under the source field.
+  # preview-button mounts on the whole form so it can read the selected
+  # feed_profile_key and react to candidate changes. While a re-detection
+  # runs, the same wrapper freezes the form and polls for the outcome.
   def wrapper_data
     data = {
       identification_state: identification_state,
@@ -57,9 +49,8 @@ class FeedFormComponent < ViewComponent::Base
     data
   end
 
-  # Profile-key → source-param-key map the preview button reads to build
-  # preview requests: every offered candidate while the chooser is live,
-  # otherwise just the feed's own profile.
+  # Profile-key to source-param-key map the preview button reads: offered
+  # candidates while the chooser is live, else the feed's own profile.
   def preview_source_keys
     if show_chooser?
       candidates.to_h { |candidate| [candidate.profile_key, FeedProfile.source_key_for(candidate.profile_key)] }
@@ -89,10 +80,7 @@ class FeedFormComponent < ViewComponent::Base
     }
   end
 
-  # The chooser is a real choice only with two or more working candidates; one
-  # working candidate is shown as a read-only annotation. In edit
-  # mode it appears only after a source re-detection resolves to multiple
-  # candidates.
+  # A single working candidate renders as a read-only annotation instead.
   def show_chooser?
     candidates.size >= 2
   end
@@ -101,15 +89,13 @@ class FeedFormComponent < ViewComponent::Base
     feed.source_input_url? ? "Source URL" : "Source prompt"
   end
 
-  # For an AI feed the prompt *is* the source: it stays an editable textarea
-  # throughout, including edits to a live feed — the uid scheme is unchanged,
-  # so there's no duplicate risk, at most some older posts backfilled.
+  # An AI feed's prompt is its source and stays editable even on a live
+  # feed; the uid scheme is unchanged, so no duplicate risk.
   def ai_prompt_editable?
     FeedProfile.depends_on_ai?(feed.feed_profile_key)
   end
 
-  # A deterministic feed's URL is editable when editing an existing feed — a
-  # change re-runs detection before saving.
+  # A changed URL re-runs detection before saving.
   def source_editable?
     edit_mode? && !ai_prompt_editable?
   end
@@ -146,9 +132,8 @@ class FeedFormComponent < ViewComponent::Base
     @active_tokens ||= feed.user.access_tokens.active.order(:host)
   end
 
-  # A token that went inactive isn't offered in the select, so the feed's own
-  # choice can't be kept — preselect a working token and say so below, instead
-  # of letting the browser swap silently.
+  # An inactive token isn't offered, so preselect a working one and say so
+  # instead of letting the browser swap silently.
   def token_swap?
     feed.access_token.present? && !feed.access_token.active?
   end
@@ -167,9 +152,8 @@ class FeedFormComponent < ViewComponent::Base
     feed.schedule_interval || Feed::DEFAULT_SCHEDULE_INTERVAL
   end
 
-  # A profile change reworks how posts are identified, so it defaults the
-  # skip-older-posts threshold on; checkbox and panel visibility
-  # must agree.
+  # A profile change reworks post identity, so it defaults the skip-older
+  # threshold on; checkbox and panel visibility must agree.
   def import_after_on?
     feed.import_after_enabled || profile_changed?
   end
@@ -190,11 +174,9 @@ class FeedFormComponent < ViewComponent::Base
     @ai_settings ||= FeedAiSettingsComponent.new(feed: feed, form: form)
   end
 
-  # When a setup gate replaced the token or credential fields, enabling can
-  # only fail — and the failure's errors would render inside the missing
-  # fields, i.e. nowhere. The checkbox locks off and says what's missing
-  # instead. A (legacy) still-enabled feed keeps an interactive checkbox so
-  # unchecking-to-pause stays available.
+  # With required credentials missing, enabling can only fail and the
+  # errors would render nowhere; the checkbox locks off and says what's
+  # missing. A still-enabled feed keeps its checkbox so pausing works.
   def enable_blocked?(form)
     enable_missing(form).any? && !feed.enabled?
   end

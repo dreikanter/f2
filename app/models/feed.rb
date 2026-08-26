@@ -105,13 +105,10 @@ class Feed < ApplicationRecord
     self.cron_expression = SCHEDULE_INTERVALS.dig(key, :cron)
   end
 
-  # Form-facing accessors splitting import_after into a checkbox plus
-  # separate date and time inputs. The checkbox drives everything: when it's
-  # off, import_after resets to nil no matter what the date and time fields
-  # contain. The setters only record their part; import_after itself is
-  # composed once in before_validation — composing on every part-write let
-  # earlier parts read fallbacks from a half-updated import_after, making the
-  # result depend on assignment order.
+  # Form-facing accessors splitting import_after into checkbox, date, and
+  # time inputs. The checkbox drives everything: off resets import_after to
+  # nil. Setters only record their part; the value is composed once in
+  # before_validation so the result cannot depend on assignment order.
   def import_after_enabled
     return @import_after_enabled unless @import_after_enabled.nil?
 
@@ -186,20 +183,14 @@ class Feed < ApplicationRecord
     feed_profile_key.present? && FeedProfile.exists?(feed_profile_key)
   end
 
-  # Resolves and returns the loader class for this feed
-  # @return [Class] the loader class
   def loader_class
     FeedProfile.loader_class_for(feed_profile_key)
   end
 
-  # Resolves and returns the processor class for this feed
-  # @return [Class] the processor class
   def processor_class
     FeedProfile.processor_class_for(feed_profile_key)
   end
 
-  # Resolves and returns the normalizer class for this feed
-  # @return [Class] the normalizer class
   def normalizer_class
     FeedProfile.normalizer_class_for(feed_profile_key)
   end
@@ -292,48 +283,32 @@ class Feed < ApplicationRecord
     )
   end
 
-  # Creates and returns a loader instance for this feed
-  # @param options [Hash] loader options (e.g. a shared :http_client)
-  # @return [Loader::Base] loader instance
   def loader_instance(options = {})
     loader_class.new(self, options)
   end
 
-  # Creates and returns a processor instance for this feed
-  # @param raw_data [String] raw feed data to process
-  # @return [Processor::Base] processor instance
   def processor_instance(raw_data)
     processor_class.new(self, raw_data)
   end
 
-  # Creates and returns a normalizer instance for the given feed entry
-  # @param feed_entry [FeedEntry] the feed entry to normalize
-  # @return [Normalizer::Base]
   def normalizer_instance(feed_entry)
     normalizer_class.new(feed_entry)
   end
 
-  # Returns the date when the feed was last refreshed
-  # @return [Time, nil] last refresh time or nil if never refreshed
   def last_refreshed_at
     feed_entries.maximum(:created_at)
   end
 
-  # Returns the date of the most recent imported post
-  # @return [Time, nil] most recent post date or nil if no posts
   def most_recent_post_date
     posts.maximum(:published_at)
   end
 
-  # Returns the time of the most recent repost (publication to FreeFeed),
-  # regardless of the original source publication date.
-  # @return [Time, nil] most recent repost time or nil if no published posts
+  # Time of the most recent repost to FreeFeed, regardless of the source
+  # publication date.
   def most_recent_repost_at
     posts.published.maximum(:reposted_at)
   end
 
-  # Returns the count of posts published in the last week (by source date)
-  # @return [Integer] number of posts published in the last week
   def posts_published_last_week_count
     posts.where(published_at: 1.week.ago.beginning_of_day..Time.current.end_of_day).count
   end
@@ -355,10 +330,8 @@ class Feed < ApplicationRecord
     feed_schedule&.update!(next_run_at: Time.current)
   end
 
-  # Creates the schedule pointed at the next cron slot, without triggering an
-  # immediate run. Only called when a feed gains its schedule on enable
-  # (create_schedule_on_enable guards the already-scheduled case).
-  # @return [FeedSchedule]
+  # Creates the schedule pointed at the next cron slot, without triggering
+  # an immediate run. Only called when a feed gains its schedule on enable.
   def defer_schedule!
     schedule = build_feed_schedule(last_run_at: Time.current)
     schedule.next_run_at = schedule.calculate_next_run_at
@@ -456,10 +429,9 @@ class Feed < ApplicationRecord
     errors.add(:cron_expression, "is not a valid cron expression") unless parsed_cron
   end
 
-  # Structural sanity check: in normal use the form is generated from the
-  # same parameter_schema, so this can only fire on a forged POST or a code
-  # bug. The "<pointer> <message>" output is machine-only; the future
-  # per-field form renderer translates it; nothing surfaces raw to users.
+  # Can only fire on a forged POST or a code bug: the form is generated
+  # from the same parameter_schema. The "<pointer> <message>" output is
+  # machine-only.
   def params_against_profile_schema
     return unless feed_profile_present?
 
@@ -484,8 +456,9 @@ class Feed < ApplicationRecord
     end
   end
 
-  # The engine (deterministic vs AI) is fixed at creation: an existing feed never
-  # switches across the AI boundary in edit — you create a new feed instead. A deterministic → deterministic profile change is fine.
+  # The engine (deterministic vs AI) is fixed at creation; crossing the AI
+  # boundary means a new feed. A deterministic to deterministic profile
+  # change is fine.
   def engine_fixed_on_edit
     return unless persisted? && feed_profile_key_changed?
     return unless FeedProfile.exists?(feed_profile_key) && FeedProfile.exists?(feed_profile_key_was)

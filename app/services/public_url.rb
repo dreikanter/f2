@@ -1,17 +1,13 @@
 require "ipaddr"
 require "socket"
 
-# Guards model-supplied URLs the app would fetch server-side — attachment
-# uploads at publish time and the client-side web-fetch tool. A URL is safe
-# only if it is an absolute http(s) URL to a public host; non-http schemes,
-# embedded credentials, localhost, and any address literal in a private,
-# loopback, or link-local range are rejected (server-side request forgery).
-#
-# Address literals are canonicalized the way the HTTP client's resolver reads
-# them, so encoded forms (decimal/hex/octal, e.g. http://2130706433 → 127.0.0.1)
-# can't smuggle a private target past a plain string check. DNS names are not
-# resolved here, so a name pointing at a private address is a residual gap best
-# closed at the fetch layer (resolve-and-pin).
+# Guards URLs the app would fetch server-side (SSRF). Safe means an
+# absolute http(s) URL to a public host; non-http schemes, embedded
+# credentials, localhost, and private/loopback/link-local literals are
+# rejected. Literals are canonicalized the way resolvers read them, so
+# encoded forms (http://2130706433 = 127.0.0.1) can't sneak through. DNS
+# names are not resolved here; a name pointing at a private address must
+# be caught at the fetch layer.
 module PublicUrl
   # Addresses IPAddr's loopback?/private?/link_local? predicates don't cover:
   # "this host" (v4 0.0.0.0/8 and the v6 unspecified ::) and carrier-grade NAT.
