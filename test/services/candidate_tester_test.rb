@@ -46,6 +46,17 @@ class CandidateTesterTest < ActiveSupport::TestCase
     CandidateTester.new(user: user, input: url, profile_key: profile_key).call
   end
 
+  test "#call should fail when the pipeline raises unexpectedly" do
+    url = "https://example.com/feed.xml"
+    stub_request(:get, url).to_return(status: 200, body: rss_feed(rss_item))
+
+    Processor::RssProcessor.stub(:new, ->(*) { raise "boom" }) do
+      result = result_for(url)
+      assert_equal FeedIdentification::Candidate::FAILED, result.status
+      assert_equal 0, result.posts_found
+    end
+  end
+
   test "#call should pass and count posts for a source that yields valid posts" do
     url = "https://example.com/feed.xml"
     stub_request(:get, url).to_return(status: 200, body: rss_feed(rss_item))
