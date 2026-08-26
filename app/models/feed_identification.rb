@@ -33,9 +33,9 @@ class FeedIdentification < ApplicationRecord
   # Candidates that can fetch the source: the count of these drives how
   # the result is presented. A candidate counts unless it's known-broken — tested
   # and failed, or unreachable — so in practice this is the passed set (detection
-  # always records a verdict). Memoized: read a few times per request.
+  # always records a verdict).
   def working_candidates
-    @working_candidates ||= candidates.map { Candidate.new(_1) }.reject do |candidate|
+    candidates.map { Candidate.new(_1) }.reject do |candidate|
       candidate.failed? || candidate.unreachable?
     end
   end
