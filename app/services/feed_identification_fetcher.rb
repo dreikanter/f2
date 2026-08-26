@@ -89,7 +89,7 @@ class FeedIdentificationFetcher
   end
 
   def working?(candidate_attributes)
-    candidate_attributes["test_status"] == "passed"
+    FeedIdentification::Candidate.new(candidate_attributes).passed?
   end
 
   # A broken advertised feed is skipped; another may still work. The hrefs
@@ -141,7 +141,7 @@ class FeedIdentificationFetcher
     ).call
 
     {
-      "test_status" => result.status.to_s,
+      "test_status" => result.status,
       "posts_found" => result.posts_found
     }
   end

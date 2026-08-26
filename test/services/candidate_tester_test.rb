@@ -51,7 +51,7 @@ class CandidateTesterTest < ActiveSupport::TestCase
     stub_request(:get, url).to_return(status: 200, body: rss_feed(rss_item))
 
     result = result_for(url)
-    assert_equal :passed, result.status
+    assert_equal FeedIdentification::Candidate::PASSED, result.status
     assert_equal 1, result.posts_found
   end
 
@@ -60,7 +60,7 @@ class CandidateTesterTest < ActiveSupport::TestCase
     stub_request(:get, url).to_return(status: 200, body: rss_feed(""))
 
     result = result_for(url)
-    assert_equal :passed, result.status
+    assert_equal FeedIdentification::Candidate::PASSED, result.status
     assert_equal 0, result.posts_found
   end
 
@@ -71,7 +71,7 @@ class CandidateTesterTest < ActiveSupport::TestCase
     stub_request(:get, url).to_return(status: 200, body: rss_feed(rss_item(uid: false) + rss_item))
 
     result = result_for(url)
-    assert_equal :passed, result.status
+    assert_equal FeedIdentification::Candidate::PASSED, result.status
     assert_equal 1, result.posts_found
   end
 
@@ -79,7 +79,7 @@ class CandidateTesterTest < ActiveSupport::TestCase
     url = "https://example.com/broken.xml"
     stub_request(:get, url).to_return(status: 200, body: rss_feed(rss_item(uid: false)))
 
-    assert_equal :failed, result_for(url).status
+    assert_equal FeedIdentification::Candidate::FAILED, result_for(url).status
   end
 
   test "#call should fail when entries normalize only into rejected posts" do
@@ -89,7 +89,7 @@ class CandidateTesterTest < ActiveSupport::TestCase
     stub_request(:get, url).to_return(status: 200, body: rss_feed(rss_item_rejected))
 
     result = result_for(url)
-    assert_equal :failed, result.status
+    assert_equal FeedIdentification::Candidate::FAILED, result.status
     assert_equal 0, result.posts_found
   end
 
@@ -97,14 +97,14 @@ class CandidateTesterTest < ActiveSupport::TestCase
     url = "https://example.com/down.xml"
     stub_request(:get, url).to_return(status: 503, body: "boom")
 
-    assert_equal :failed, result_for(url).status
+    assert_equal FeedIdentification::Candidate::FAILED, result_for(url).status
   end
 
   test "#call should be unreachable on a transport timeout" do
     url = "https://example.com/slow.xml"
     stub_request(:get, url).to_raise(HttpClient::TimeoutError.new("timed out"))
 
-    assert_equal :unreachable, result_for(url).status
+    assert_equal FeedIdentification::Candidate::UNREACHABLE, result_for(url).status
   end
 
   test "#call should fail an RSS page that matched textually but isn't a feed" do
@@ -114,7 +114,7 @@ class CandidateTesterTest < ActiveSupport::TestCase
     stub_request(:get, url).to_return(status: 200, body: '<rss version="2.0"><channel></channel></rss>')
 
     result = result_for(url)
-    assert_equal :failed, result.status
+    assert_equal FeedIdentification::Candidate::FAILED, result.status
     assert_equal 0, result.posts_found
   end
 
@@ -124,7 +124,7 @@ class CandidateTesterTest < ActiveSupport::TestCase
     url = "https://syndication.twitter.com/srv/timeline-profile/screen-name/ghost"
     stub_request(:get, url).to_return(status: 200, body: "<html><body>nothing here</body></html>")
 
-    assert_equal :failed, result_for("ghost", profile_key: "twitter").status
+    assert_equal FeedIdentification::Candidate::FAILED, result_for("ghost", profile_key: "twitter").status
   end
 
   test "#call should fail when the source is reachable but exposes no feed" do
@@ -133,7 +133,7 @@ class CandidateTesterTest < ActiveSupport::TestCase
     url = "https://www.youtube.com/@handle"
     stub_request(:get, url).to_return(status: 200, body: "<html><head></head><body>no feed</body></html>")
 
-    assert_equal :failed, result_for(url, profile_key: "youtube").status
+    assert_equal FeedIdentification::Candidate::FAILED, result_for(url, profile_key: "youtube").status
   end
 
   test "#call should reuse a warm http client instead of fetching again" do

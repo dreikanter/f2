@@ -1,22 +1,16 @@
-# Proves a detected non-AI candidate can actually read a source by running the
-# real loader → processor → normalizer pipeline (the same Feed stage instances
-# FeedPreviewWorkflow uses) and discarding the posts. Returns a Result:
+# Proves a detected non-AI candidate can read a source by running the real
+# loader, processor, and normalizer, then discarding the posts. Returns a
+# Result whose status is a FeedIdentification::Candidate verdict: PASSED
+# (readable, or empty but recognized), FAILED (fetched but not readable as
+# this profile), UNREACHABLE (couldn't fetch). posts_found counts sampled
+# entries that normalized.
 #
-#   status:
-#     :passed      — readable: at least one sampled entry produced a valid post,
-#                    or the processor recognized an empty-but-valid source
-#     :failed      — fetched fine but nothing normalized, or the payload was
-#                    unreadable (the processor didn't recognize it)
-#     :unreachable — couldn't fetch the source (timeout / connection)
-#   posts_found: number of sampled entries that normalized (0 = "no posts yet")
-#
-# The verdict is gated on parse/normalize failure, not fetch failure: a fetch
-# problem says nothing about whether the profile fits the source.
-#
-# AI candidates are never tested here — detection is deliberately LLM-free, and
-# an AI profile matches anything — so callers mark those :not_tested without
-# invoking this.
+# The verdict gates on parse failure, not fetch failure: a fetch problem
+# says nothing about whether the profile fits. AI candidates never come
+# here; detection is LLM-free.
 class CandidateTester
+  Candidate = FeedIdentification::Candidate
+
   # Normalize at most this many entries: enough to prove the profile reads the
   # source's shape without paying to normalize a whole backlog.
   SAMPLE_SIZE = 10
@@ -35,12 +29,11 @@ class CandidateTester
     posts_found = result.entries.first(SAMPLE_SIZE).count { |entry| normalized?(entry) }
     Result.new(status: verdict(result, posts_found), posts_found: posts_found)
   rescue Loader::Error => e
-    # Loaders wrap transport errors (timeout/connection), so a transient failure
-    # shows up as the cause → unreachable. Any other Loader::Error means we
-    # fetched but couldn't read the source (bad status, no feed link) → failure.
-    Result.new(status: e.cause.is_a?(HttpClient::Error) ? :unreachable : :failed, posts_found: 0)
+    # Loaders wrap transport errors, so a transient failure shows up as the
+    # cause. Any other Loader::Error means we fetched but couldn't read.
+    Result.new(status: e.cause.is_a?(HttpClient::Error) ? Candidate::UNREACHABLE : Candidate::FAILED, posts_found: 0)
   rescue StandardError
-    Result.new(status: :failed, posts_found: 0)
+    Result.new(status: Candidate::FAILED, posts_found: 0)
   end
 
   private
@@ -54,10 +47,10 @@ class CandidateTester
   # An empty result passes only if the processor recognized the payload —
   # otherwise the page was unreadable, not empty-but-valid.
   def verdict(result, posts_found)
-    return :passed if posts_found.positive?
-    return :passed if result.entries.empty? && result.recognized?
+    return Candidate::PASSED if posts_found.positive?
+    return Candidate::PASSED if result.entries.empty? && result.recognized?
 
-    :failed
+    Candidate::FAILED
   end
 
   # Whether one entry yields a publishable post. The normalizer raises on a

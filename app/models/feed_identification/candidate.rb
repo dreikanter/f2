@@ -2,6 +2,12 @@ class FeedIdentification
   # Wraps a persisted detection candidate (a JSONB hash) so callers read intent
   # (failed?/unreachable?/…) instead of indexing raw string keys.
   class Candidate
+    # Self-test verdicts, as persisted under "test_status". CandidateTester
+    # mints them.
+    PASSED = "passed"
+    FAILED = "failed"
+    UNREACHABLE = "unreachable"
+
     def initialize(attributes)
       @attributes = attributes
     end
@@ -24,12 +30,16 @@ class FeedIdentification
       @attributes["posts_found"].to_i
     end
 
+    def passed?
+      test_status == PASSED
+    end
+
     def failed?
-      test_status == "failed"
+      test_status == FAILED
     end
 
     def unreachable?
-      test_status == "unreachable"
+      test_status == UNREACHABLE
     end
 
     private
