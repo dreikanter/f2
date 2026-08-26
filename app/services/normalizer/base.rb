@@ -11,6 +11,8 @@ module Normalizer
 
     # Raises if the subclass produced a Post missing dedup or ordering
     # invariants; those are programming errors.
+    # 
+    # @return [Post] post with status set based on validation
     def normalize
       post = build_post
       raise MissingUidError, "#{self.class.name} produced a Post with no uid" if post.uid.blank?
