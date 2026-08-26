@@ -315,7 +315,7 @@ class FeedsController < ApplicationController
   end
 
   def cleanup_feed_identification(input)
-    FeedIdentification.for_source(user: current_user, url: input)&.destroy
+    FeedIdentification.cleanup_for_source(user: current_user, url: input)
   end
 
   # Minted with the feed so the URL is pasteable immediately, destroyed when

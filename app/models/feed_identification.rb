@@ -66,12 +66,13 @@ class FeedIdentification < ApplicationRecord
     resolved_to(user, url)
   end
 
-  # The row cleanup destroys once a feed anchors to this URL: keyed by the
-  # URL itself, else the page identification that resolved to it.
-  def self.for_source(user:, url:)
-    return nil if url.blank?
+  # Retire the rows behind a created feed's source: the row keyed by the
+  # URL and the page identification that resolved to it. Either could
+  # confirm a later edit, so neither may outlive its use.
+  def self.cleanup_for_source(user:, url:)
+    return if url.blank?
 
-    find_by(user: user, input: url) || resolved_to(user, url)
+    [find_by(user: user, input: url), resolved_to(user, url)].compact.each(&:destroy)
   end
 
   def self.resolved_to(user, url)

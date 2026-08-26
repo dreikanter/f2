@@ -212,13 +212,15 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     assert_equal "https://example.com/feed.xml", identification.source_url_for("json_feed")
   end
 
-  test ".for_source should find the identification keyed by the URL itself" do
+  test ".cleanup_for_source should destroy the row keyed by the URL" do
     identification = create(:feed_identification, user: user, input: "https://example.com/feed.xml")
 
-    assert_equal identification, FeedIdentification.for_source(user: user, url: "https://example.com/feed.xml")
+    FeedIdentification.cleanup_for_source(user: user, url: "https://example.com/feed.xml")
+
+    assert_not FeedIdentification.exists?(identification.id)
   end
 
-  test ".for_source should find the identification whose candidate resolved to the URL" do
+  test ".cleanup_for_source should destroy the page row that resolved to the URL" do
     identification = create(
       :feed_identification,
       user: user,
@@ -229,7 +231,9 @@ class FeedIdentificationTest < ActiveSupport::TestCase
       ]
     )
 
-    assert_equal identification, FeedIdentification.for_source(user: user, url: "https://example.com/feed.xml")
+    FeedIdentification.cleanup_for_source(user: user, url: "https://example.com/feed.xml")
+
+    assert_not FeedIdentification.exists?(identification.id)
   end
 
   test ".working_for_source should prefer a working page identification over a stale keyed row" do
@@ -246,8 +250,25 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     )
 
     assert_equal page, FeedIdentification.working_for_source(user: user, url: "https://example.com/feed.xml")
-    assert_equal stale, FeedIdentification.for_source(user: user, url: "https://example.com/feed.xml"),
-                 "cleanup should target the row keyed by the URL"
+  end
+
+  test ".cleanup_for_source should destroy both the keyed row and the resolving page row" do
+    stale = create(:feed_identification, user: user, input: "https://example.com/feed.xml",
+                                         status: :failed, error: "unreachable")
+    page = create(
+      :feed_identification,
+      user: user,
+      input: "https://example.com/blog",
+      status: :success,
+      candidates: [
+        { "profile_key" => "rss", "test_status" => "passed", "resolved_url" => "https://example.com/feed.xml" }
+      ]
+    )
+
+    FeedIdentification.cleanup_for_source(user: user, url: "https://example.com/feed.xml")
+
+    assert_not FeedIdentification.exists?(stale.id)
+    assert_not FeedIdentification.exists?(page.id)
   end
 
   test ".working_for_source should return nothing when no identification works" do
@@ -258,7 +279,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     assert_nil FeedIdentification.working_for_source(user: user, url: nil)
   end
 
-  test ".for_source should scope discovered lookups to the user and working candidates" do
+  test ".cleanup_for_source should spare other users' rows and non-working candidates" do
     create(
       :feed_identification,
       user: create(:user),
@@ -278,7 +299,9 @@ class FeedIdentificationTest < ActiveSupport::TestCase
       ]
     )
 
-    assert_nil FeedIdentification.for_source(user: user, url: "https://example.com/feed.xml")
-    assert_nil FeedIdentification.for_source(user: user, url: nil)
+    assert_no_difference("FeedIdentification.count") do
+      FeedIdentification.cleanup_for_source(user: user, url: "https://example.com/feed.xml")
+      FeedIdentification.cleanup_for_source(user: user, url: nil)
+    end
   end
 end
