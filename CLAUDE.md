@@ -66,7 +66,8 @@ Comments:
 - Don't describe behavior implemented elsewhere; nothing protects such a
   comment from drifting.
 - Keep YARD tags (`@param`/`@return`): intentional public API annotation.
-  Trim bloated descriptions, but don't delete the tags.
+  Trim bloated descriptions, but don't delete the tags. Every tag gets a
+  short description, even one that repeats the method name.
 - No emdashes. Never the word "caveat".
 
 Colors:
