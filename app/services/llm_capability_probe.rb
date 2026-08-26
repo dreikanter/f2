@@ -281,7 +281,7 @@ module LlmCapabilityProbe
         { status: "FAIL", note: "schema-valid but the items are a refusal", evidence: evidence }
       elsif expect_null_source_url && items.none? { |item| item["source_url"].nil? }
         # Accepting the union in the schema is not the same as emitting it, and
-        # a digest feed depends on the null branch (spec 005 §3).
+        # a digest feed depends on the null branch.
         { status: "FAIL", note: "schema-valid but no item emitted a null source_url", evidence: evidence }
       else
         { status: "PASS", note: "#{items.size} items, schema-valid", evidence: evidence }

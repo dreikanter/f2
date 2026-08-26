@@ -1,12 +1,12 @@
 <%# locals: (url: nil, prompt: nil, mode: "link", checking: false, error: nil) %>
-<%# The creation modes (spec 005 §1, webhook per spec 006 §7) as a radio group:
+<%# The creation modes as a radio group:
     the radios carry the mechanism choice, each panel keeps its own form, and
     switching is pure disclosure — nothing is shared between the modes' fields.
     The action row sits below the whole radio group; each mode's buttons
     associate with their form through the `form` attribute and swap with the
     mode like the panels.
 
-    One partial, three states (spec §7): the idle entry form; checking, which
+    One partial, three states: the idle entry form; checking, which
     freezes the controls and polls for the detection outcome; and an error
     re-render with the hint under the active mode's input. A non-link error
     arrives with the AI panel pre-filled, so switching the mode radio is the

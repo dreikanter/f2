@@ -2,7 +2,7 @@ require "test_helper"
 
 # Edit semantics: operational fields edit freely; a deterministic feed's source
 # re-runs detection before saving. An AI feed's prompt is its source and the uid
-# scheme never changes, so it stays editable throughout — draft or live (spec §4).
+# scheme never changes, so it stays editable throughout — draft or live.
 class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 

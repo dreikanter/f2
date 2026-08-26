@@ -1,15 +1,8 @@
-# Decides whether a Mode A input counts as a source URL and returns the URL to
-# fetch, applying the silent scheme-fix from spec 005 §1:
-#
-# - An explicit `http(s)://` input is honored as typed — `http://` is never
-#   forced to `https://`, since some feeds are http-only.
-# - A bare, host-shaped input gets an `https://` scheme (`example.com` →
-#   `https://example.com`). "Host-shaped" means the fix yields a dotted host, so
-#   `r/x` never becomes `https://r/x` (host `r`) — a non-URL like that routes to
-#   the AI bridge instead of dead-ending in the couldn't-reach state.
-#
-# Anything else (a handle, a few words, a non-http scheme like `mailto:`) is not
-# a URL and returns nil, which the entry flow reads as "offer Mode B".
+# Decides whether an input counts as a source URL and returns the URL to
+# fetch. Explicit http(s) inputs pass as typed; http is never forced to
+# https since some feeds are http-only. A bare dotted host gets https
+# prepended. Anything else (a handle, free text, a non-http scheme)
+# returns nil, which the entry flow reads as "offer the AI mode".
 class SourceLink
   def self.canonical(input)
     new(input).canonical
@@ -43,16 +36,15 @@ class SourceLink
     nil
   end
 
-  # A real non-http scheme (`mailto:`, `ftp:`, `javascript:`) has a dotless
-  # scheme. A dotted "scheme" is actually a bare `host:port` (`example.com:8080`
-  # parses as scheme `example.com`), which we still want to scheme-fix.
+  # A real non-http scheme (mailto:, ftp:) is dotless. A dotted "scheme" is
+  # a bare host:port (`example.com:8080` parses as scheme `example.com`),
+  # which we still scheme-fix.
   def non_http_scheme?(uri)
     uri.scheme.present? && !uri.scheme.include?(".")
   end
 
-  # No usable scheme: prepend https:// and accept only if it yields a host with an
-  # interior dot — so `example.com` works but `r/x` (host `r`) and malformed
-  # `.example` / `example.` don't.
+  # Prepend https:// and accept only a host with an interior dot, so
+  # `example.com` works but `r/x` and `.example` don't.
   def scheme_fixed_url
     fixed = "https://#{@input}"
     uri = safe_parse(fixed)

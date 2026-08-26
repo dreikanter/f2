@@ -72,7 +72,7 @@ export default class extends Controller {
 
   // What's still missing before a preview can run, phrased for the user, or null
   // when it's ready. Mirrors the enable checks so the hint never disagrees with
-  // the button (spec §4 nicety).
+  // the button.
   _unavailableReason() {
     const profileKey = selectedProfileKey(this.element)
     if (!profileKey) return "Pick a feed type to preview."

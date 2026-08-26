@@ -59,7 +59,16 @@ Comments:
 - Comment only when the code can't speak for itself; never restate the obvious.
 - Explain the why (intent, trade-offs, non-obvious constraints), not the what.
 - Don't describe what the code doesn't do.
-- Keep comments compact and focused.
+- Keep comments compact: short sentences, plain language, cut hard.
+- Drop anything irrelevant after merge: rejected approaches, revision history,
+  references to specs, issues, or discussions. Specs are historical records,
+  not a source of truth.
+- Don't describe behavior implemented elsewhere; nothing protects such a
+  comment from drifting.
+- Keep YARD tags (`@param`/`@return`): intentional public API annotation.
+  Trim bloated descriptions, but don't delete the tags. Every tag gets a
+  short description, even one that repeats the method name.
+- No emdashes. Never the word "caveat".
 
 Colors:
 

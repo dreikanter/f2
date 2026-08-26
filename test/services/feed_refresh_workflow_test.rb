@@ -1020,7 +1020,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     end
   end
 
-  # --- Digest cadence skip (spec §3) ---
+  # --- Digest cadence skip ---
 
   def digest_feed_with_schedule(last_digest_period: nil)
     user = create(:user)

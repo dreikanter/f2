@@ -49,7 +49,7 @@ class Feed < ApplicationRecord
   }, default: :draft
 
   # Set true by the edit controller only after a settled detection confirmed the
-  # new source (spec §4). Lets `source_change_reverified` reject a Mode A source
+  # new source. Lets `source_change_reverified` reject a Mode A source
   # move that never passed through identification.
   attr_accessor :source_verified
 
@@ -105,13 +105,10 @@ class Feed < ApplicationRecord
     self.cron_expression = SCHEDULE_INTERVALS.dig(key, :cron)
   end
 
-  # Form-facing accessors splitting import_after into a checkbox plus
-  # separate date and time inputs. The checkbox drives everything: when it's
-  # off, import_after resets to nil no matter what the date and time fields
-  # contain. The setters only record their part; import_after itself is
-  # composed once in before_validation — composing on every part-write let
-  # earlier parts read fallbacks from a half-updated import_after, making the
-  # result depend on assignment order.
+  # Form-facing accessors splitting import_after into checkbox, date, and
+  # time inputs. The checkbox drives everything: off resets import_after to
+  # nil. Setters only record their part; the value is composed once in
+  # before_validation so the result cannot depend on assignment order.
   def import_after_enabled
     return @import_after_enabled unless @import_after_enabled.nil?
 
@@ -186,20 +183,17 @@ class Feed < ApplicationRecord
     feed_profile_key.present? && FeedProfile.exists?(feed_profile_key)
   end
 
-  # Resolves and returns the loader class for this feed
-  # @return [Class] the loader class
+  # @return [Class] the profile's loader class
   def loader_class
     FeedProfile.loader_class_for(feed_profile_key)
   end
 
-  # Resolves and returns the processor class for this feed
-  # @return [Class] the processor class
+  # @return [Class] the profile's processor class
   def processor_class
     FeedProfile.processor_class_for(feed_profile_key)
   end
 
-  # Resolves and returns the normalizer class for this feed
-  # @return [Class] the normalizer class
+  # @return [Class] the profile's normalizer class
   def normalizer_class
     FeedProfile.normalizer_class_for(feed_profile_key)
   end
@@ -239,7 +233,7 @@ class Feed < ApplicationRecord
 
     # A dropped model no longer blocks preview — a run resolves to the
     # credential's default supported model, so preview only needs some verified
-    # model to exist (spec §5).
+    # model to exist.
     ai_credential.supported_models.any?
   end
 
@@ -252,7 +246,7 @@ class Feed < ApplicationRecord
   # The model an AI run/preview actually uses with `credential`: the chosen one
   # when still supported, otherwise the credential's default supported model.
   # Never hard-fails on a dropped model — the caller records the fallback so the
-  # feed page can prompt a re-pick (spec §5).
+  # feed page can prompt a re-pick.
   def effective_ai_model(credential = ai_credential)
     return ai_model if credential.nil?
     return ai_model if credential.supports_model?(ai_model)
@@ -278,7 +272,7 @@ class Feed < ApplicationRecord
   end
 
   # Records that an AI gather came back empty, so the structure call was skipped
-  # and the run produced nothing (spec §6/§8). Debug level keeps this routine,
+  # and the run produced nothing. Debug level keeps this routine,
   # expected outcome out of the user event feed while leaving it visible to
   # operators. No-op for an unpersisted (preview) feed.
   def note_ai_gather_empty!
@@ -292,48 +286,42 @@ class Feed < ApplicationRecord
     )
   end
 
-  # Creates and returns a loader instance for this feed
-  # @param options [Hash] loader options (e.g. a shared :http_client)
-  # @return [Loader::Base] loader instance
+  # @param options [Hash] e.g. a shared :http_client
+  # @return [Loader::Base] the feed's loader
   def loader_instance(options = {})
     loader_class.new(self, options)
   end
 
-  # Creates and returns a processor instance for this feed
-  # @param raw_data [String] raw feed data to process
-  # @return [Processor::Base] processor instance
+  # @param raw_data [String] raw payload from the loader
+  # @return [Processor::Base] the feed's processor
   def processor_instance(raw_data)
     processor_class.new(self, raw_data)
   end
 
-  # Creates and returns a normalizer instance for the given feed entry
-  # @param feed_entry [FeedEntry] the feed entry to normalize
-  # @return [Normalizer::Base]
+  # @param feed_entry [FeedEntry] the entry to normalize
+  # @return [Normalizer::Base] the entry's normalizer
   def normalizer_instance(feed_entry)
     normalizer_class.new(feed_entry)
   end
 
-  # Returns the date when the feed was last refreshed
   # @return [Time, nil] last refresh time or nil if never refreshed
   def last_refreshed_at
     feed_entries.maximum(:created_at)
   end
 
-  # Returns the date of the most recent imported post
   # @return [Time, nil] most recent post date or nil if no posts
   def most_recent_post_date
     posts.maximum(:published_at)
   end
 
-  # Returns the time of the most recent repost (publication to FreeFeed),
-  # regardless of the original source publication date.
+  # Time of the most recent repost to FreeFeed, regardless of the source
+  # publication date.
   # @return [Time, nil] most recent repost time or nil if no published posts
   def most_recent_repost_at
     posts.published.maximum(:reposted_at)
   end
 
-  # Returns the count of posts published in the last week (by source date)
-  # @return [Integer] number of posts published in the last week
+  # @return [Integer] posts published in the last week, by source date
   def posts_published_last_week_count
     posts.where(published_at: 1.week.ago.beginning_of_day..Time.current.end_of_day).count
   end
@@ -355,10 +343,9 @@ class Feed < ApplicationRecord
     feed_schedule&.update!(next_run_at: Time.current)
   end
 
-  # Creates the schedule pointed at the next cron slot, without triggering an
-  # immediate run. Only called when a feed gains its schedule on enable
-  # (create_schedule_on_enable guards the already-scheduled case).
-  # @return [FeedSchedule]
+  # Creates the schedule pointed at the next cron slot, without triggering
+  # an immediate run. Only called when a feed gains its schedule on enable.
+  # @return [FeedSchedule] the created schedule
   def defer_schedule!
     schedule = build_feed_schedule(last_run_at: Time.current)
     schedule.next_run_at = schedule.calculate_next_run_at
@@ -456,10 +443,9 @@ class Feed < ApplicationRecord
     errors.add(:cron_expression, "is not a valid cron expression") unless parsed_cron
   end
 
-  # Structural sanity check: in normal use the form is generated from the
-  # same parameter_schema, so this can only fire on a forged POST or a code
-  # bug. The "<pointer> <message>" output is machine-only; the future
-  # per-field form renderer translates it; nothing surfaces raw to users.
+  # Can only fire on a forged POST or a code bug: the form is generated
+  # from the same parameter_schema. The "<pointer> <message>" output is
+  # machine-only.
   def params_against_profile_schema
     return unless feed_profile_present?
 
@@ -484,9 +470,9 @@ class Feed < ApplicationRecord
     end
   end
 
-  # The engine (deterministic vs AI) is fixed at creation: an existing feed never
-  # switches across the AI boundary in edit — you create a new feed instead (spec
-  # §4). A deterministic → deterministic profile change is fine.
+  # The engine (deterministic vs AI) is fixed at creation; crossing the AI
+  # boundary means a new feed. A deterministic to deterministic profile
+  # change is fine.
   def engine_fixed_on_edit
     return unless persisted? && feed_profile_key_changed?
     return unless FeedProfile.exists?(feed_profile_key) && FeedProfile.exists?(feed_profile_key_was)
@@ -495,7 +481,7 @@ class Feed < ApplicationRecord
     errors.add(:feed_profile_key, "can't switch between AI and non-AI feeds — start a new feed instead")
   end
 
-  # A deterministic feed's source can only move through identification (spec §4):
+  # A deterministic feed's source can only move through identification:
   # the edit controller re-runs detection and sets `source_verified` once a
   # working candidate confirms the new source. This blocks a forged direct edit
   # from silently pointing a live feed at an unverified, possibly-broken source.

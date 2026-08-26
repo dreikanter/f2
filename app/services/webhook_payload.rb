@@ -1,4 +1,4 @@
-# One reader for a webhook delivery payload (spec 006 §3). Both the ingress
+# One reader for a webhook delivery payload. Both the ingress
 # service, which answers a 422 synchronously, and the normalizer, which builds
 # the Post later from the stored copy, go through it — so there is no second
 # reading of a field to keep in sync with the first.

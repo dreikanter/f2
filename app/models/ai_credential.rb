@@ -16,7 +16,7 @@ class AiCredential < ApplicationRecord
   end
 
   # Models this credential can actually back a feed with: the dev-verified
-  # capability matrix intersected with the provider's live snapshot (spec §5).
+  # capability matrix intersected with the provider's live snapshot.
   # Membership is qualification — a snapshot model absent from the matrix (or a
   # provider with no matrix rows) yields nothing, so nothing unverified leaks
   # into the picker or a run.

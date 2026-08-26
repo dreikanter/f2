@@ -6,7 +6,7 @@ module Normalizer
   class LlmNormalizer < Base
     private
 
-    # A digest item carries source_url = null end-to-end (spec §3): keep it nil
+    # A digest item carries source_url = null end-to-end: keep it nil
     # (not "") so the nullable column stores NULL and Post's conditional
     # validation lets it publish. A feed-style item keeps its string permalink.
     def normalize_source_url
@@ -23,7 +23,7 @@ module Normalizer
       truncate_text(raw_data["body"].to_s)
     end
 
-    # Base#attachment_urls filters non-public URLs at the choke point (§8).
+    # Base#attachment_urls filters non-public URLs at the choke point.
     def normalize_attachment_urls
       Array(raw_data["images"]).map(&:to_s)
     end

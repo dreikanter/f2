@@ -106,7 +106,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
   end
 
   test "#identify should fail as unidentifiable when no structured profile matches" do
-    # The AI profile registers no matcher (spec §7), so a reachable page with no
+    # The AI profile registers no matcher, so a reachable page with no
     # standard feed yields no candidates — the entry flow offers the AI bridge.
     url = "http://example.com/unknown.txt"
 

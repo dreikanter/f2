@@ -1,7 +1,6 @@
 require "test_helper"
 
-# The creation-mode entry on the new-feed page (spec 005 §1, webhook mode per
-# spec 006 §7): radios carry the mechanism, all panels render server-side, and
+# The creation-mode entry on the new-feed page: radios carry the mechanism, all panels render server-side, and
 # only the selected mode's panel is visible.
 class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
   def user

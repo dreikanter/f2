@@ -1,5 +1,5 @@
 # Test-only helper: validates entries from FeedProfile::PROFILES against
-# the registry contract (specs/001-smart-feed-creation/contracts/profile_registry.md).
+# the registry contract.
 # Lives under test/support because nothing in production needs it — the
 # constant is frozen at load time, so we only need to assert its shape during CI.
 module FeedProfileValidator
@@ -59,9 +59,9 @@ module FeedProfileValidator
         failures << "FeedProfile #{key.inspect}: loader.config.output_schema is required when depends_on_ai is true"
       end
 
-      # The webhook profile has nothing to fetch (spec 006 §1), so it alone
+      # The webhook profile has nothing to fetch, so it alone
       # omits matcher, loader, and processor. Every other profile declares a
-      # loader/processor, and a matcher unless it's AI-backed (spec 005 §7).
+      # loader/processor, and a matcher unless it's AI-backed.
       if key == "webhook"
         %i[matcher loader processor].each do |stage|
           failures << "FeedProfile #{key.inspect}: #{stage} must be absent for the webhook profile" if entry[stage]
@@ -69,7 +69,7 @@ module FeedProfileValidator
       else
         failures << "FeedProfile #{key.inspect}: loader is required" if entry[:loader].nil?
         failures << "FeedProfile #{key.inspect}: processor is required" if entry[:processor].nil?
-        # AI profiles are excluded from detection (spec 005 §7), so they must
+        # AI profiles are excluded from detection, so they must
         # not register a matcher; every other non-webhook profile requires one.
         if entry[:depends_on_ai]
           failures << "FeedProfile #{key.inspect}: matcher must be absent for AI profiles" if entry[:matcher]

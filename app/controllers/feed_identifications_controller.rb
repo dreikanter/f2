@@ -15,21 +15,18 @@ class FeedIdentificationsController < ApplicationController
 
     return render(blank_input_error) if raw_url.blank?
 
-    # Mode A input that isn't a link can't be detected: the entry form re-renders
-    # with the AI panel carrying the text, so switching the mode radio is the
-    # bridge (spec §1) — the user stays in the mode they chose.
+    # A non-link input re-renders the form with the AI panel carrying the
+    # text, so switching the mode radio is the bridge.
     return render(not_a_link_error) if source_url.nil?
 
-    # A settled result — a working feed, or a reachable link with no feed — is
-    # shown as-is. Everything else kicks off a fresh detection, so resubmitting
-    # after a couldn't-reach result actually re-checks it.
+    # A settled result is shown as-is; everything else re-runs detection,
+    # so resubmitting after a couldn't-reach result re-checks it.
     return present_outcome if settled_identification?
 
     if feed_identification.new_record? || feed_identification.failed? || retryable_unreachable?
       restarted = feed_identification.restart_detection!
-      # A losing concurrent submit skips the enqueue: the winner that just
-      # created the row owns the in-flight detection, and both requests render
-      # the same checking state.
+      # A losing concurrent submit skips the enqueue; the winner owns the
+      # in-flight detection.
       FeedIdentificationJob.perform_later(Current.user.id, source_url) if restarted
     end
 
@@ -75,16 +72,14 @@ class FeedIdentificationsController < ApplicationController
     end
   end
 
-  # Build a draft webhook feed straight away — there is no source input at all;
-  # the secret posting URL is minted when the draft is saved (spec 006 §7).
+  # No source input; the posting URL is minted when the draft is saved.
   def handle_webhook_submission
     feed = Current.user.feeds.build(feed_profile_key: "webhook")
     render(identification_success(feed, candidates: []))
   end
 
-  # Build a draft AI feed straight from the prompt — no detection, the AI
-  # profile is the destination and the prompt is the source. AI feeds default
-  # to a daily cadence (spec §1).
+  # No detection: the prompt is the source. AI feeds default to a daily
+  # cadence.
   def handle_prompt_submission
     if raw_prompt.blank?
       return render(entry_form(mode: "ai", error: "Tell AI what to follow — a link or a few words about it."))
@@ -115,8 +110,8 @@ class FeedIdentificationsController < ApplicationController
       return render(identification_error(error: "Error identifying feed. Oh no."))
     end
 
-    # Past the deadline: drop the row and re-enable the form with the message,
-    # so the checking state stops with an explanation instead of freezing.
+    # Past the deadline: drop the row so the checking state stops with an
+    # explanation instead of freezing.
     if feed_identification.started_at < polling_timeout.ago
       feed_identification.destroy
       return render(identification_error(error: "This check is taking longer than expected — the link may not be responding. Please try again."))
@@ -125,22 +120,19 @@ class FeedIdentificationsController < ApplicationController
     head :no_content
   end
 
-  # A finished identification worth showing without re-detecting: a working feed
-  # or a reachable-but-featureless link. A couldn't-reach result is deliberately
-  # excluded so resubmitting re-runs detection rather than re-rendering itself.
+  # Worth showing without re-detecting: a working feed or a reachable link
+  # with no feed. Couldn't-reach is excluded so resubmitting re-detects.
   def settled_identification?
     feed_identification.success? && feed_identification.outcome != :unreachable
   end
 
-  # A prior success whose candidates were all unreachable — retrying should
-  # re-detect rather than re-render the same couldn't-reach state.
+  # All candidates were unreachable; retrying should re-detect.
   def retryable_unreachable?
     feed_identification.success? && feed_identification.outcome == :unreachable
   end
 
-  # Present the finished identification by how many candidates actually work
-  # (spec §7): the feed form when at least one does, otherwise the form re-renders
-  # with the transient couldn't-reach hint or the terminal no-feed one.
+  # The feed form when a candidate works, otherwise the couldn't-reach or
+  # no-feed hint.
   def present_outcome
     case feed_identification.outcome
     when :working then handle_success_status
@@ -159,10 +151,9 @@ class FeedIdentificationsController < ApplicationController
     discovered = source_url != feed_identification.input
 
     if editing?
-      # Re-render the feed being edited with the proposed source + profile
-      # applied in memory only; the confirming PATCH persists it after the
-      # source-verified guard clears (spec §4). Operational edits were saved
-      # on the propose PATCH, so the reloaded record already carries them.
+      # The proposed source and profile apply in memory only; the
+      # confirming PATCH persists them. Operational edits were saved on
+      # the propose PATCH.
       profile_changed = edit_feed.feed_profile_key != profile_key
       feed = edit_feed.tap do |f|
         f.feed_profile_key = profile_key
@@ -170,7 +161,7 @@ class FeedIdentificationsController < ApplicationController
       end
 
       # A source (and possibly profile) change is pending confirmation, so the
-      # form surfaces the matching duplicate-risk warning (spec §4).
+      # form surfaces the matching duplicate-risk warning.
       render(identification_success(feed, candidates: feed_identification.working_candidates,
                                           source_changed: true, profile_changed: profile_changed,
                                           source_discovered: discovered))
@@ -185,9 +176,8 @@ class FeedIdentificationsController < ApplicationController
     end
   end
 
-  # Creation states re-render the entry form itself (spec §1/§7): frozen while
-  # checking, or enabled with the hint under the active mode's input. Every
-  # response in this flow swaps the same "feed-form" frame.
+  # Creation states re-render the entry form: frozen while checking, or
+  # enabled with the hint. Every response swaps the same "feed-form" frame.
   def entry_form(mode: "link", url: raw_url, prompt: nil, checking: false, error: nil)
     { turbo_stream: turbo_stream.replace(
       "feed-form",
@@ -200,8 +190,8 @@ class FeedIdentificationsController < ApplicationController
     { turbo_stream: turbo_stream.replace("feed-form", FeedFormComponent.new(feed: feed, **options)) }
   end
 
-  # Edit states re-render the edit form — the engine is fixed (spec §4), so
-  # there's no AI mode to switch to, just the hint under the source field.
+  # The engine is fixed in edit, so there is no AI mode to switch to, just
+  # the hint under the source field.
   def edit_form(attempted_url:, error: nil)
     expanded_form(edit_feed, attempted_url: attempted_url, source_error: error)
   end
@@ -212,9 +202,8 @@ class FeedIdentificationsController < ApplicationController
     entry_form(url: url, prompt: prompt, error: error)
   end
 
-  # Terminal: the link was reachable but no deterministic profile reads it. In
-  # creation the AI mode is the way forward (spec §7) and the panel carries the
-  # link over; in edit it just invites another link.
+  # Terminal: reachable, but no profile reads it. Creation offers the AI
+  # bridge; edit just invites another link.
   def no_feed_error
     if editing?
       return identification_error(error: "We couldn't pull any posts from that link. Try a different one — your current source is untouched.")
@@ -227,7 +216,7 @@ class FeedIdentificationsController < ApplicationController
   end
 
   # Transient: nothing connected. Resubmitting re-runs detection, and in
-  # creation the AI panel stays available as a secondary escape (spec §7).
+  # creation the AI panel stays available as a secondary escape.
   def unreachable_error
     if editing?
       return identification_error(error: "We couldn't reach that link. It might be a temporary hiccup — save again to retry, or keep the current source.")
@@ -246,7 +235,7 @@ class FeedIdentificationsController < ApplicationController
                         source_discovered: source_discovered)
   end
 
-  # The feed being edited (spec §4 source re-detection), or nil in the creation
+  # The feed being edited, or nil in the creation
   # flow. Scoped to the current user so a forged feed_id can't reach another's.
   def edit_feed
     return @edit_feed if defined?(@edit_feed)

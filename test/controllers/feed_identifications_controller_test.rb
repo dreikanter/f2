@@ -209,7 +209,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, 'data-identification-state="error"'
     assert_includes response.body, "look like a link"
-    # The user stays in the mode they chose (spec §1); the AI panel carries the
+    # The user stays in the mode they chose; the AI panel carries the
     # text so switching the radio is the bridge.
     assert_select "[data-key='entry.mode-link'] input[type=radio][checked]"
     assert_select "[data-key='entry.error']", text: /look like a link/
@@ -253,7 +253,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
                                     headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    # The prompt is the source, so it stays editable while creating (spec §1);
+    # The prompt is the source, so it stays editable while creating;
     # exactly one prompt field, and the profile key still submits.
     assert_select "textarea[name='feed[params][prompt]']", { count: 1, text: "follow the A24 blog" }
     assert_select "input[type=text][name='feed[params][url]']", count: 0
@@ -367,7 +367,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    # No structured profile matches and detection can't select AI (spec §7), so
+    # No structured profile matches and detection can't select AI, so
     # the form re-renders with the no-feed hint pointing at the AI mode.
     assert_includes response.body, 'data-identification-state="error"'
     assert_select "[data-key='entry.error']", text: /pull any posts/
@@ -848,7 +848,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    # The engine is fixed in edit (spec §4): the edit form comes back with the
+    # The engine is fixed in edit: the edit form comes back with the
     # attempted URL and the hint, and no AI mode is on offer.
     assert_select "form[action=?]", feed_path(feed)
     assert_select "input[data-key='form.source-edit'][value=?]", new_url

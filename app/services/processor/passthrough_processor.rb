@@ -13,7 +13,7 @@ module Processor
           feed: feed,
           # A digest item (source_url: null) gets a period uid; a feed-style
           # permalink a normalized uid; an unusable permalink resolves to nil and
-          # is dropped-and-counted by the workflow (spec §3), so we no longer
+          # is dropped-and-counted by the workflow, so we no longer
           # swallow it here.
           uid: Uid::Resolver.call(item, clock: Time.current),
           # AI-extracted items rarely come with a reliable published_at;

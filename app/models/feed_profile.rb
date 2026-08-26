@@ -12,17 +12,16 @@ class FeedProfile
         "items" => {
           "type" => "object",
           "properties" => {
-            # The model never mints the uid — the processor derives it from
-            # source_url (spec §3). `uid` stays an accepted-but-optional property
-            # only so a stray field from a non-strict provider doesn't fail the
-            # schema; it's ignored downstream.
+            # The processor derives the uid from source_url. `uid` is
+            # accepted only so a stray field from a non-strict provider
+            # doesn't fail the schema; it's ignored downstream.
             "uid" => { "type" => "string" },
             "title" => { "type" => "string" },
             "body" => { "type" => "string" },
             "supplementary" => { "type" => "array", "items" => { "type" => "string" } },
             "images" => { "type" => "array", "items" => { "type" => "string" } },
             # An explicit null signals the digest/standing-query regime; a real
-            # permalink signals feed-style (spec §3). The key is always required —
+            # permalink signals feed-style. The key is always required —
             # a missing key is malformed, not a digest.
             "source_url" => { "type" => ["string", "null"] },
             "published_at" => { "type" => "string" }
@@ -298,7 +297,7 @@ class FeedProfile
       # Accepts anything (a link, several links, or a description); the prompt
       # is the source. The params key is `prompt`, not derived from input_shape.
       # Registers NO matcher: the AI profile is structurally excluded from
-      # detection (spec §7) — Mode B selects it directly, detection never can.
+      # detection — Mode B selects it directly, detection never can.
       input_shape: :any,
       depends_on_ai: true,
       scheduled: true,
@@ -313,12 +312,10 @@ class FeedProfile
       loader: {
         class: "Loader::LlmLoader",
         config: {
-          # The user message: the task, output contract, and safeguards live in
-          # the system prompt (Loader::LlmPrompts). The user's own prompt is a
-          # legitimate instruction — it says what to follow and how to transform
-          # it (spec §2/§8) — so it travels as the user message, distinct from
-          # the untrusted web content the model later fetches. Web access is
-          # provided per-provider by the adapter.
+          # The task, output contract, and safeguards live in the system
+          # prompt (Loader::LlmPrompts). The user's own prompt is a
+          # legitimate instruction, so it travels as the user message,
+          # distinct from the untrusted web content the model fetches.
           prompt_template: <<~PROMPT,
             Feed request — what to follow and how to present it:
 
@@ -386,7 +383,7 @@ class FeedProfile
     "webhook" => {
       display_name: "Webhook",
       description: "Posts sent in from your own scripts through a secret URL",
-      # Push-ingested (spec 006): content arrives over HTTP, so there is
+      # Push-ingested: content arrives over HTTP, so there is
       # nothing to fetch and nothing to detect — no loader/processor, no
       # matcher, no schedule.
       input_shape: :none,
@@ -409,36 +406,32 @@ class FeedProfile
   }.freeze
 
   class << self
-    # Returns all available profile keys
-    # @return [Array<String>] list of profile keys
+    # @return [Array<String>] all profile keys
     def all
       PROFILES.keys
     end
 
-    # Checks if a profile key exists
-    # @param key [String] the profile key to check
+    # @param key [String] the profile key
     # @return [Boolean] true if the profile exists
     def exists?(key)
       PROFILES.key?(key)
     end
 
-    # Bracket access to the full registry entry for a profile key
     # @param key [String] the profile key
-    # @return [Hash, nil] the registry entry hash or nil if not found
+    # @return [Hash, nil] the registry entry
     def [](key)
       PROFILES[key]
     end
 
-    # Matcher classes for every profile that registers one, in registration
-    # order. The AI profile deliberately registers none (spec 005 §7), so it
-    # can never be detected.
+    # In registration order. The AI profile registers no matcher, so it can
+    # never be detected.
     # @return [Array<Class>] matcher classes
     def matchers
       PROFILES.filter_map { |_key, entry| entry[:matcher].presence&.constantize }
     end
 
     # @param key [String] the profile key
-    # @return [Boolean] true if any of the profile's stages calls an LLM
+    # @return [Boolean] true if any stage calls an LLM
     def depends_on_ai?(key)
       !!PROFILES.dig(key, :depends_on_ai)
     end
@@ -460,19 +453,15 @@ class FeedProfile
       PROFILES.keys.select { |key| depends_on_ai?(key) }
     end
 
-    # Returns the JSON Schema describing the feed's params hash
     # @param key [String] the profile key
-    # @return [Hash, nil] the parameter schema (nil if profile not found)
+    # @return [Hash, nil] the params JSON Schema, nil for an unknown profile
     def parameter_schema_for(key)
       PROFILES.dig(key, :parameter_schema)
     end
 
-    # The params key holding the feed's source input (e.g. "url", "prompt").
-    # Derived from the profile's single required param, so the storage key is
-    # independent of input_shape (which an `:any` profile can't double as).
-    # Unknown profiles fall back to "url". An input-less (:none) profile
-    # returns nil, which keeps source_input nil even if a stray key lands in
-    # the params jsonb.
+    # The params key holding the source input ("url", "prompt"), derived
+    # from the profile's single required param. Unknown profiles fall back
+    # to "url"; an input-less profile returns nil.
     # @param key [String] the profile key
     # @return [String, nil] the source params key
     def source_key_for(key)
@@ -481,18 +470,17 @@ class FeedProfile
       PROFILES.dig(key, :parameter_schema, "required")&.first || "url"
     end
 
-    # The user-facing source value stored in a params hash, read by the
-    # profile's source key.
+    # The user-facing source value in a params hash.
     # @param key [String] the profile key
-    # @param params [Hash, nil] a feed/preview params hash
+    # @param params [Hash, nil] a feed or preview params hash
     # @return [String, nil] the source value
     def source_input_for(key, params)
       (params || {})[source_key_for(key)]
     end
 
     # @param key [String] the profile key
-    # @param stage [Symbol] the stage (:loader, :processor, :normalizer)
-    # @return [Hash] the stage's config hash (frozen empty hash if none)
+    # @param stage [Symbol] :loader, :processor, or :normalizer
+    # @return [Hash] the stage's config (frozen empty hash if none)
     def config_for(key, stage)
       raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)
 
@@ -505,46 +493,40 @@ class FeedProfile
       end
     end
 
-    # Resolves and returns the loader class for a given profile key
     # @param key [String] the profile key
     # @return [Class] the loader class
     def loader_class_for(key)
       class_for(key, :loader)
     end
 
-    # Resolves and returns the processor class for a given profile key
     # @param key [String] the profile key
     # @return [Class] the processor class
     def processor_class_for(key)
       class_for(key, :processor)
     end
 
-    # Resolves and returns the normalizer class for a given profile key
     # @param key [String] the profile key
     # @return [Class] the normalizer class
     def normalizer_class_for(key)
       class_for(key, :normalizer)
     end
 
-    # Resolves and returns the title extractor class for a given profile key
     # @param key [String] the profile key
     # @return [Class] the title extractor class
     def title_extractor_class_for(key)
       class_for(key, :title_extractor)
     end
 
-    # Returns a human-readable display name for a profile key
     # @param key [String] the profile key
-    # @return [String] the display name
+    # @return [String] the human-readable display name
     def display_name_for(key)
       PROFILES.dig(key, :display_name) || key.to_s.titleize
     end
 
     private
 
-    # Resolves a stage class for a given profile key and stage type.
     # @param key [String] the profile key
-    # @param stage [Symbol] the stage (:loader, :processor, :normalizer, :title_extractor)
+    # @param stage [Symbol] :loader, :processor, :normalizer, or :title_extractor
     # @return [Class] the stage class
     def class_for(key, stage)
       raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)

@@ -44,7 +44,7 @@ class FeedAiSettingsComponent < ViewComponent::Base
   # Each selectable credential's models, keyed by id and embedded so the Stimulus
   # controller can swap the model list on provider change. Gated to the capability
   # matrix ∩ the credential's live snapshot, so only dev-verified web+schema models
-  # are offered (spec §5); credentials left with no models are dropped entirely.
+  # are offered; credentials left with no models are dropped entirely.
   def models_by_credential
     @models_by_credential ||= active_credentials.to_h do |credential|
       models = credential.supported_models

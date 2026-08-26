@@ -1,6 +1,6 @@
 require "test_helper"
 
-# FR-012 + FR-013 state gating: the controller uses a save-then-promote flow:
+# State gating: the controller uses a save-then-promote flow:
 # the initial save persists the feed as a draft (new records default to :draft),
 # then `Feed#enable` attempts the promotion under the `:enable` validation context.
 # Previewing is optional — a feed can be enabled with or without a recent preview.

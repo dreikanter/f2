@@ -2,7 +2,7 @@ class CandidateOptionComponent < ViewComponent::Base
   # Renders one working detection candidate as a radio option in the "How should
   # we fetch posts?" chooser: its name, description, post-count verdict, and a
   # "Suggested" flag on the preselected default. Only candidates that can fetch
-  # the source reach the chooser (spec §7), so every option is selectable.
+  # the source reach the chooser, so every option is selectable.
   def initialize(candidate:, input:, selected:)
     @candidate = candidate
     @input = input

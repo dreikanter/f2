@@ -48,7 +48,7 @@ module Loader
 
     # A blank/whitespace gather yields zero items and skips the structure call:
     # feeding emptiness (or a model refusal) into structuring invites fabricated
-    # items, exactly what the grounding safeguard forbids (spec §6/§8). Recorded
+    # items, exactly what the grounding safeguard forbids. Recorded
     # so a persistently empty AI feed is visible to operators.
     def empty_gather_result
       feed.note_ai_gather_empty!
@@ -79,7 +79,7 @@ module Loader
 
     # The chosen model when the credential still supports it, otherwise its
     # default supported model — a dropped model degrades gracefully instead of
-    # failing the run (spec §5). The provider default is the last resort when the
+    # failing the run. The provider default is the last resort when the
     # credential exposes no verified models at all. A persisted feed records the
     # fallback once, keyed on the model actually used, so the page prompts a
     # re-pick even when the whole snapshot dropped out.

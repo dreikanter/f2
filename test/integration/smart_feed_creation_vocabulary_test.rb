@@ -1,6 +1,6 @@
 require "test_helper"
 
-# FR-022 + SC-005 vocabulary firewall: no implementation jargon in any
+# Vocabulary firewall: no implementation jargon in any
 # user-visible string on the feed-creation surface or the AI-credentials
 # pages. "AI", "AI credentials", and provider brand names are allowed.
 class SmartFeedCreationVocabularyTest < ActionDispatch::IntegrationTest

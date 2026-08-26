@@ -47,7 +47,7 @@ class PostTest < ActiveSupport::TestCase
   end
 
   test "should allow a null source_url for a digest post but reject a blank string" do
-    assert build(:post, source_url: nil).valid?, "a digest post carries source_url = null (spec §3)"
+    assert build(:post, source_url: nil).valid?, "a digest post carries source_url = null"
 
     blank = build(:post, source_url: "")
     assert_not blank.valid?

@@ -1,10 +1,6 @@
-# Base class for feed entry normalizers
-#
-# Normalizer should normalize the feed entry content to make it compatible with
-# publication on FreeFeed. If normalization is not possible, normalizer should
-# reject the post with a list of validation errors. The Post record can always
-# be persisted regardless of whether normalization is performed.
-#
+# Normalizers shape feed entry content for publication on FreeFeed, or
+# reject the post with validation errors. The Post record persists either
+# way.
 module Normalizer
   class Base
     include HtmlTextUtils
@@ -14,9 +10,8 @@ module Normalizer
       @feed_entry = feed_entry
     end
 
-    # Normalizes feed entry into a Post with validation. Raises if the
-    # subclass produced a Post missing dedup or ordering invariants —
-    # those are programming errors, covered by per-profile tests.
+    # Raises if the subclass produced a Post missing dedup or ordering
+    # invariants; those are programming errors.
     #
     # @return [Post] post with status set based on validation
     def normalize
@@ -66,7 +61,7 @@ module Normalizer
       @content ||= normalize_content
     end
 
-    # §8: every attachment URL must be an absolute public http(s) URL or be
+    # Every attachment URL must be an absolute public http(s) URL or be
     # dropped (the attachment, not the post). Filtering here — the choke point
     # every normalizer flows through — keeps a relative or local-path value (e.g.
     # a feed's `<img src="/etc/passwd">`) from reaching FileBuffer at publish,

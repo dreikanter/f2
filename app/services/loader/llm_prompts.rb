@@ -1,5 +1,5 @@
 module Loader
-  # System prompts for the AI extraction stages (spec 005 §2, §6, §8).
+  # System prompts for the AI extraction stages.
   #
   # These are the *privileged* instruction channel: they travel as a system-role
   # message, while the user's feed prompt travels separately as a user-role
