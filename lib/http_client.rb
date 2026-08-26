@@ -13,8 +13,8 @@ module HttpClient
   class Response
     attr_reader :status, :body, :headers, :url
 
-    # Final URL after redirects, for resolving relative references in the
-    # body. nil when the adapter doesn't track it.
+    # The URL this response came from: the requested URL, or the final hop
+    # when redirects were followed. nil when the adapter doesn't track it.
     def initialize(status:, body:, headers: {}, url: nil)
       @status = status
       @body = body
