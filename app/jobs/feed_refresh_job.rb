@@ -1,7 +1,7 @@
 class FeedRefreshJob < ApplicationJob
   queue_as :default
 
-  # @param feed_id [Integer]
+  # @param feed_id [Integer] ID of the feed to refresh
   # @param manual [Boolean] a user-initiated refresh forces through the
   #   digest cadence skip; scheduled runs may skip a redundant same-period
   #   digest.

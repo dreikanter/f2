@@ -412,7 +412,7 @@ class FeedProfile
     end
 
     # @param key [String] the profile key
-    # @return [Boolean]
+    # @return [Boolean] true if the profile exists
     def exists?(key)
       PROFILES.key?(key)
     end
@@ -425,7 +425,7 @@ class FeedProfile
 
     # In registration order. The AI profile registers no matcher, so it can
     # never be detected.
-    # @return [Array<Class>]
+    # @return [Array<Class>] matcher classes
     def matchers
       PROFILES.filter_map { |_key, entry| entry[:matcher].presence&.constantize }
     end
@@ -454,7 +454,7 @@ class FeedProfile
     end
 
     # @param key [String] the profile key
-    # @return [Hash, nil]
+    # @return [Hash, nil] the params JSON Schema, nil for an unknown profile
     def parameter_schema_for(key)
       PROFILES.dig(key, :parameter_schema)
     end
@@ -463,7 +463,7 @@ class FeedProfile
     # from the profile's single required param. Unknown profiles fall back
     # to "url"; an input-less profile returns nil.
     # @param key [String] the profile key
-    # @return [String, nil]
+    # @return [String, nil] the source params key
     def source_key_for(key)
       return nil if PROFILES.dig(key, :input_shape) == :none
 
@@ -472,8 +472,8 @@ class FeedProfile
 
     # The user-facing source value in a params hash.
     # @param key [String] the profile key
-    # @param params [Hash, nil]
-    # @return [String, nil]
+    # @param params [Hash, nil] a feed or preview params hash
+    # @return [String, nil] the source value
     def source_input_for(key, params)
       (params || {})[source_key_for(key)]
     end
@@ -494,31 +494,31 @@ class FeedProfile
     end
 
     # @param key [String] the profile key
-    # @return [Class]
+    # @return [Class] the loader class
     def loader_class_for(key)
       class_for(key, :loader)
     end
 
     # @param key [String] the profile key
-    # @return [Class]
+    # @return [Class] the processor class
     def processor_class_for(key)
       class_for(key, :processor)
     end
 
     # @param key [String] the profile key
-    # @return [Class]
+    # @return [Class] the normalizer class
     def normalizer_class_for(key)
       class_for(key, :normalizer)
     end
 
     # @param key [String] the profile key
-    # @return [Class]
+    # @return [Class] the title extractor class
     def title_extractor_class_for(key)
       class_for(key, :title_extractor)
     end
 
     # @param key [String] the profile key
-    # @return [String]
+    # @return [String] the human-readable display name
     def display_name_for(key)
       PROFILES.dig(key, :display_name) || key.to_s.titleize
     end
@@ -527,7 +527,7 @@ class FeedProfile
 
     # @param key [String] the profile key
     # @param stage [Symbol] :loader, :processor, :normalizer, or :title_extractor
-    # @return [Class]
+    # @return [Class] the stage class
     def class_for(key, stage)
       raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)
 

@@ -5,7 +5,7 @@ module Normalizer
   class Base
     include HtmlTextUtils
 
-    # @param feed_entry [FeedEntry]
+    # @param feed_entry [FeedEntry] the feed entry to normalize
     def initialize(feed_entry)
       @feed_entry = feed_entry
     end

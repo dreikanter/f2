@@ -183,17 +183,17 @@ class Feed < ApplicationRecord
     feed_profile_key.present? && FeedProfile.exists?(feed_profile_key)
   end
 
-  # @return [Class]
+  # @return [Class] the profile's loader class
   def loader_class
     FeedProfile.loader_class_for(feed_profile_key)
   end
 
-  # @return [Class]
+  # @return [Class] the profile's processor class
   def processor_class
     FeedProfile.processor_class_for(feed_profile_key)
   end
 
-  # @return [Class]
+  # @return [Class] the profile's normalizer class
   def normalizer_class
     FeedProfile.normalizer_class_for(feed_profile_key)
   end
@@ -287,36 +287,36 @@ class Feed < ApplicationRecord
   end
 
   # @param options [Hash] e.g. a shared :http_client
-  # @return [Loader::Base]
+  # @return [Loader::Base] the feed's loader
   def loader_instance(options = {})
     loader_class.new(self, options)
   end
 
   # @param raw_data [String] raw payload from the loader
-  # @return [Processor::Base]
+  # @return [Processor::Base] the feed's processor
   def processor_instance(raw_data)
     processor_class.new(self, raw_data)
   end
 
-  # @param feed_entry [FeedEntry]
-  # @return [Normalizer::Base]
+  # @param feed_entry [FeedEntry] the entry to normalize
+  # @return [Normalizer::Base] the entry's normalizer
   def normalizer_instance(feed_entry)
     normalizer_class.new(feed_entry)
   end
 
-  # @return [Time, nil]
+  # @return [Time, nil] last refresh time or nil if never refreshed
   def last_refreshed_at
     feed_entries.maximum(:created_at)
   end
 
-  # @return [Time, nil]
+  # @return [Time, nil] most recent post date or nil if no posts
   def most_recent_post_date
     posts.maximum(:published_at)
   end
 
   # Time of the most recent repost to FreeFeed, regardless of the source
   # publication date.
-  # @return [Time, nil]
+  # @return [Time, nil] most recent repost time or nil if no published posts
   def most_recent_repost_at
     posts.published.maximum(:reposted_at)
   end
@@ -345,7 +345,7 @@ class Feed < ApplicationRecord
 
   # Creates the schedule pointed at the next cron slot, without triggering
   # an immediate run. Only called when a feed gains its schedule on enable.
-  # @return [FeedSchedule]
+  # @return [FeedSchedule] the created schedule
   def defer_schedule!
     schedule = build_feed_schedule(last_run_at: Time.current)
     schedule.next_run_at = schedule.calculate_next_run_at
