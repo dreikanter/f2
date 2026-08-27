@@ -4,6 +4,7 @@ class User < ApplicationRecord
   EMAIL_CHANGE_COOLDOWN = 10.minutes
   PASSWORD_MIN_LENGTH = 10
   PASSWORD_MAX_LENGTH = 72
+  NAME_MAX_LENGTH = 50
 
   has_secure_password
 
@@ -29,10 +30,12 @@ class User < ApplicationRecord
   validates :email_address, presence: true
   validates :password, length: { minimum: PASSWORD_MIN_LENGTH, maximum: PASSWORD_MAX_LENGTH }, allow_nil: true
   validates :available_invites, numericality: { greater_than_or_equal_to: 0 }
+  validates :name, length: { maximum: NAME_MAX_LENGTH }
   validate :both_emails_are_globally_unique
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
   normalizes :unconfirmed_email, with: ->(e) { e&.strip&.downcase }
+  normalizes :name, with: ->(n) { n.strip }
 
   before_save :set_password_updated_at, if: :will_save_change_to_password_digest?
 

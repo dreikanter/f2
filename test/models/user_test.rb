@@ -23,6 +23,22 @@ class UserTest < ActiveSupport::TestCase
     assert_includes user.errors[:base], "email is already taken"
   end
 
+  test "should allow a blank name" do
+    user = build(:user, name: "")
+    assert user.valid?
+  end
+
+  test "should reject a name longer than the limit" do
+    user = build(:user, name: "a" * (User::NAME_MAX_LENGTH + 1))
+    assert_not user.valid?
+    assert user.errors.of_kind?(:name, :too_long)
+  end
+
+  test "should strip surrounding whitespace from the name" do
+    user = build(:user, name: "  Alex  ")
+    assert_equal "Alex", user.name
+  end
+
   test "#anonymized_email should keep first and last local characters with full domain" do
     user = build(:user, email_address: "username@gmail.com")
     assert_equal "u...e@gmail.com", user.anonymized_email
