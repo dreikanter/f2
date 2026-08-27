@@ -11,6 +11,20 @@ module FeedHelper
     end
   end
 
+  # The group name outlives its access token: deleting a token clears the
+  # feed's token but keeps the group. Without a token there is no host to
+  # build a link from, so the label falls back to the bare group name.
+  def feed_target_group_link(feed)
+    return if feed.target_group.blank?
+
+    url = feed.target_group_url
+    return feed.target_group unless url
+
+    link_to "#{feed.access_token.host_domain}/#{feed.target_group}", url,
+            class: "text-brand underline underline-offset-4 transition hover:text-brand-hover",
+            target: "_blank", rel: "noopener"
+  end
+
   def feed_missing_enablement_parts(feed)
     missing_parts = []
     missing_parts << "source" unless feed.sourceless? || feed.source_input.present?

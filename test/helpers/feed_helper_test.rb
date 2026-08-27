@@ -3,6 +3,29 @@ require "test_helper"
 class FeedHelperTest < ActionView::TestCase
   include ApplicationHelper
 
+  test "#feed_target_group_link should link to the group on the token's instance" do
+    access_token = create(:access_token, :active, host: "https://freefeed.net")
+    feed = build(:feed, access_token: access_token, target_group: "testgroup")
+
+    result = feed_target_group_link(feed)
+
+    assert_includes result, %(href="https://freefeed.net/testgroup")
+    assert_includes result, "freefeed.net/testgroup"
+  end
+
+  test "#feed_target_group_link should fall back to the bare group name without an access token" do
+    feed = build(:feed, :without_access_token, target_group: "testgroup")
+
+    assert_equal "testgroup", feed_target_group_link(feed)
+  end
+
+  test "#feed_target_group_link should return nil when the feed has no target group" do
+    access_token = create(:access_token, :active)
+    feed = build(:feed, access_token: access_token, target_group: nil)
+
+    assert_nil feed_target_group_link(feed)
+  end
+
   test "#feed_missing_enablement_parts should return both missing parts" do
     feed = build(:feed, :without_access_token)
     result = feed_missing_enablement_parts(feed)

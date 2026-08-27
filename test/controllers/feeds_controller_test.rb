@@ -651,6 +651,19 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href$='/testgroup']", count: 0
   end
 
+  test "#show should still name the target group after its access token is deleted" do
+    sign_in_as(user)
+    orphaned = create(:feed, :disabled, user: user, access_token: access_token, target_group: "testgroup")
+    access_token.destroy
+    orphaned.reload
+
+    get feed_url(orphaned)
+
+    assert_response :success
+    assert_select "a[href$='/testgroup']", count: 0
+    assert_select "p", text: /Target group:\s+testgroup/
+  end
+
   test "#show should offer an enable toggle for a ready draft feed" do
     sign_in_as(user)
     draft = create(:feed, :draft, user: user)
