@@ -106,6 +106,25 @@ class FeedHelperTest < ActionView::TestCase
     assert_equal [], result
   end
 
+  test "#feed_enable_hint should list what the feed is missing" do
+    feed = build(:feed, :without_access_token, target_group: "testgroup")
+
+    assert_equal "To enable this feed, add: active access token.", feed_enable_hint(feed)
+  end
+
+  test "#feed_enable_hint should join several missing parts" do
+    feed = build(:feed, :without_access_token, name: "")
+
+    assert_equal "To enable this feed, add: name, active access token, and target group.", feed_enable_hint(feed)
+  end
+
+  test "#feed_enable_hint should fall back to a generic prompt when nothing is missing" do
+    access_token = create(:access_token, :active)
+    feed = build(:feed, access_token: access_token, target_group: "testgroup")
+
+    assert_equal "Complete setup to enable this feed", feed_enable_hint(feed)
+  end
+
   test "#feed_status_icon should render enabled icon" do
     feed = build(:feed, :enabled)
 

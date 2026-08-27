@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-27
 
+- A feed that can't be enabled yet now says why on the page itself, instead of tucking the reason into the greyed-out Enable button.
 - A feed page keeps showing its target group after the access token behind it is deleted, instead of hiding the group entirely.
 - Settings now has a name you can set, so people you invite see who invited them instead of "Somebody".
 - Trimmed the wording on the sign-up, password reset, and confirmation pages.

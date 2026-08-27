@@ -40,6 +40,15 @@ module FeedHelper
     missing_parts
   end
 
+  # Names what's actually missing: "Complete setup" misleads when setup was
+  # finished and a piece (like the access token) stopped working later.
+  def feed_enable_hint(feed)
+    missing_parts = feed_missing_enablement_parts(feed)
+    return "Complete setup to enable this feed" if missing_parts.empty?
+
+    "To enable this feed, add: #{missing_parts.to_sentence}."
+  end
+
   def feed_status_icon(feed)
     if feed.enabled?
       icon("circle-play", css_class: "size-4 text-success",

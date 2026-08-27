@@ -684,6 +684,38 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action='#{feed_status_path(draft)}']", count: 0
   end
 
+  test "#show should explain why a feed with a deleted access token can't be enabled" do
+    sign_in_as(user)
+    orphaned = create(:feed, :disabled, user: user, access_token: access_token, target_group: "testgroup")
+    access_token.destroy
+    orphaned.reload
+
+    get feed_url(orphaned)
+
+    assert_response :success
+    assert_select "[data-key='feed.enable_hint']", text: /To enable this feed, add: active access token\./
+  end
+
+  test "#show should not explain enabling for a feed that is ready to enable" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, user: user)
+
+    get feed_url(draft)
+
+    assert_response :success
+    assert_select "[data-key='feed.enable_hint']", count: 0
+  end
+
+  test "#show should not explain enabling for an already enabled feed" do
+    sign_in_as(user)
+    enabled = create(:feed, :enabled, user: user, access_token: access_token, target_group: "testgroup")
+
+    get feed_url(enabled)
+
+    assert_response :success
+    assert_select "[data-key='feed.enable_hint']", count: 0
+  end
+
   test "#show should not render a preview button" do
     sign_in_as(user)
     get feed_url(feed)
