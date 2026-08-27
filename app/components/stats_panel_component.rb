@@ -4,8 +4,8 @@
 # Subclasses supply #layout_items — one hash per figure with :key, :label,
 # :label_short, :value, and an optional :muted — and override #key_prefix when
 # their data-key hooks live under a different namespace. The bar shows
-# :label_short and reveals :label on hover. A figure with no value yet is left
-# blank and renders as StatItemComponent's muted dash.
+# :label_short and reveals :label on hover. A figure with nothing behind it yet
+# is left blank.
 class StatsPanelComponent < ViewComponent::Base
   def call
     tag.div { safe_join([mobile_layout, desktop_layout]) }
