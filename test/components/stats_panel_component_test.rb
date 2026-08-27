@@ -9,7 +9,8 @@ class StatsPanelComponentTest < ViewComponent::TestCase
       [
         { key: "plain", label: "Plain figure", label_short: "Plain", value: "1" },
         { key: "dimmed", label: "Dimmed figure", label_short: "Dimmed", value: "0", muted: true },
-        { key: "same", label: "Same", label_short: "Same", value: "2" }
+        { key: "same", label: "Same", label_short: "Same", value: "2" },
+        { key: "blank", label: "Blank figure", label_short: "Blank", value: nil }
       ]
     end
   end
@@ -35,6 +36,23 @@ class StatsPanelComponentTest < ViewComponent::TestCase
 
     assert_includes result.css('.md\\:hidden [data-key="stats.dimmed.value"]').first["class"], "text-muted"
     assert_not_includes result.css('.md\\:hidden [data-key="stats.plain.value"]').first["class"], "text-muted"
+  end
+
+  test "#render should show a muted dash for a figure with no value" do
+    result = render_inline(SampleStatsComponent.new)
+
+    result.css('[data-key="stats.blank.value"]').each do |value|
+      assert_equal StatItemComponent::BLANK_VALUE, value.text
+      assert_includes value["class"], "text-muted"
+    end
+  end
+
+  test "#render should style the bar value the same whether or not it is blank" do
+    result = render_inline(SampleStatsComponent.new)
+
+    blank = result.css('.hidden.md\\:flex [data-key="stats.blank.value"]').first["class"]
+    assert_includes blank, "text-2xl font-semibold whitespace-nowrap"
+    assert_includes blank, "text-muted"
   end
 
   test "#render should namespace data keys with the subclass key_prefix" do

@@ -1,5 +1,9 @@
 # Abstract base class — subclasses must define DEFAULT_ITEM_CLASS, LABEL_CLASSES, and VALUE_CLASSES.
 class StatItemComponent < ViewComponent::Base
+  # A figure with nothing behind it yet. Callers pass a blank value and every
+  # stat cell renders the same muted dash, rather than each inventing its own.
+  BLANK_VALUE = "–".freeze
+
   def initialize(label:, value:, key: nil, muted: false, truncate: false, tooltip: nil)
     @label = label
     @value = value
@@ -22,7 +26,12 @@ class StatItemComponent < ViewComponent::Base
   end
 
   def value_element
-    content_tag(:dd, value_content, class: class_names(self.class::VALUE_CLASSES, @muted ? "text-muted" : "text-heading", "min-w-0" => @truncate), data: value_data)
+    content_tag(:dd, value_content, class: class_names(self.class::VALUE_CLASSES, muted? ? "text-muted" : "text-heading", "min-w-0" => @truncate), data: value_data)
+  end
+
+  # A blank figure is always muted; :muted also de-emphasizes a real zero.
+  def muted?
+    @muted || @value.blank?
   end
 
   # Cropping a long value needs two cooperating pieces: min-w-0 so the flex
@@ -30,9 +39,10 @@ class StatItemComponent < ViewComponent::Base
   # the overflow with an ellipsis. Bundling them behind one option keeps the
   # contract in one place instead of split across callers.
   def value_content
-    return @value unless @truncate
+    value = @value.presence || BLANK_VALUE
+    return value unless @truncate
 
-    content_tag(:div, @value, class: "truncate")
+    content_tag(:div, value, class: "truncate")
   end
 
   def label_data

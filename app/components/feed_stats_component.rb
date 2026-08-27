@@ -32,25 +32,23 @@ class FeedStatsComponent < StatsPanelComponent
         key: "last_refresh",
         label: @feed.scheduled? ? "Last refresh" : "Last post received",
         label_short: @feed.scheduled? ? "Refreshed" : "Received",
-        value: last_refresh_value,
-        muted: last_refreshed_at.nil?
+        value: last_refresh_value
       },
       {
         key: "most_recent_repost",
         label: "Most recent repost",
         label_short: "Recent",
-        value: most_recent_repost_value,
-        muted: most_recent_repost_at.nil?
+        value: most_recent_repost_value
       }
     ]
   end
 
   def last_refresh_value
-    last_refreshed_at ? helpers.short_time_ago_tag(last_refreshed_at) : "–"
+    helpers.short_time_ago_tag(last_refreshed_at) if last_refreshed_at
   end
 
   def most_recent_repost_value
-    most_recent_repost_at ? helpers.short_time_ago_tag(most_recent_repost_at) : "–"
+    helpers.short_time_ago_tag(most_recent_repost_at) if most_recent_repost_at
   end
 
   def last_refreshed_at

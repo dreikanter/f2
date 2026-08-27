@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-27
 
+- Stats with nothing to show now read the same everywhere: one muted dash, instead of a different mark and colour per page.
 - Tightened up the wording on the feeds and posts pages.
 - The events page no longer wraps the filtered record's id in square brackets.
 - Any feed can now be deleted straight from the feeds list, not just paused ones, with the action set off below a divider.
