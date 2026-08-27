@@ -1,7 +1,12 @@
 class FeedIdentification < ApplicationRecord
   belongs_to :user
 
-  enum :status, { processing: 0, success: 1, failed: 2 }
+  # The detection lifecycle: processing is in-flight; the rest are settled
+  # results written by FeedIdentificationFetcher.
+  #   working     — at least one candidate read the source → the feed form
+  #   unreachable — nothing connected (transient) → the retry state
+  #   no_feed     — reachable, but nothing usable (terminal) → the AI bridge
+  enum :status, { processing: 0, working: 1, unreachable: 2, no_feed: 3 }
 
   validates :input, presence: true
 
@@ -10,7 +15,7 @@ class FeedIdentification < ApplicationRecord
   end
 
   # Reset the row to a fresh in-flight detection. Shared by the creation entry
-  # and the edit-source re-detection so both clear stale candidates/errors the
+  # and the edit-source re-detection so both clear stale candidates the
   # same way; the caller enqueues FeedIdentificationJob.
   #
   # Two concurrent submits can both look the row up before either inserts; the
@@ -18,7 +23,7 @@ class FeedIdentification < ApplicationRecord
   # case — the winner's detection is already in flight, so the stale copy
   # should be discarded — and true when this call (re)started detection.
   def restart_detection!
-    update!(status: :processing, started_at: Time.current, candidates: [], error: nil)
+    update!(status: :processing, started_at: Time.current, candidates: [])
     true
   rescue ActiveRecord::RecordNotUnique
     false
@@ -30,10 +35,10 @@ class FeedIdentification < ApplicationRecord
     working_candidates.first
   end
 
-  # Candidates that can fetch the source: the count of these drives how
-  # the result is presented. A candidate counts unless it's known-broken — tested
-  # and failed, or unreachable — so in practice this is the passed set (detection
-  # always records a verdict). Memoized: read a few times per request.
+  # Candidates that can fetch the source. A candidate counts unless it's
+  # known-broken — tested and failed, or unreachable — so in practice this is
+  # the passed set (detection always records a verdict). Memoized: read a few
+  # times per request.
   def working_candidates
     @working_candidates ||= candidates.map { Candidate.new(_1) }.reject do |candidate|
       candidate.failed? || candidate.unreachable?
@@ -61,7 +66,7 @@ class FeedIdentification < ApplicationRecord
     return nil if url.blank?
 
     direct = find_by(user: user, input: url)
-    return direct if direct&.success? && direct.outcome == :working
+    return direct if direct&.working?
 
     resolved_to(user, url)
   end
@@ -76,31 +81,9 @@ class FeedIdentification < ApplicationRecord
   end
 
   def self.resolved_to(user, url)
-    where(user: user, status: :success).detect do |identification|
+    where(user: user, status: :working).detect do |identification|
       identification.working_candidates.any? { |c| c.resolved_url == url }
     end
   end
   private_class_method :resolved_to
-
-  # How the detection result should present:
-  #   :working     — at least one candidate read the source → the feed form
-  #   :unreachable — nothing connected (couldn't-reach) → the transient retry state
-  #   :no_feed     — reachable, but no candidate yields a feed → the terminal
-  #                  error that offers the AI bridge
-  def outcome
-    return :working if working_candidates.any?
-    return :unreachable if unreachable_only?
-
-    :no_feed
-  end
-
-  private
-
-  # Nothing was reachable to judge: the initial fetch never connected, or every
-  # detected candidate failed on the network.
-  def unreachable_only?
-    return true if error == "unreachable"
-
-    candidates.present? && candidates.all? { |attributes| Candidate.new(attributes).unreachable? }
-  end
 end

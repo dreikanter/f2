@@ -199,7 +199,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     access_token
     create(:feed_identification, user: user, input: "https://example.com/blog",
-                                 status: :success, started_at: Time.current,
+                                 status: :working, started_at: Time.current,
                                  candidates: [{ "profile_key" => "rss", "test_status" => "passed",
                                                 "resolved_url" => "http://example.com/feed.xml" }])
 
@@ -1284,7 +1284,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     disabled = create(:feed, :disabled, user: user,
                       params: { "url" => "https://original.com/feed.xml" })
     create(:feed_identification, user: user, input: "https://example.com/blog",
-                                 status: :success, started_at: Time.current,
+                                 status: :working, started_at: Time.current,
                                  candidates: [{ "profile_key" => "rss", "test_status" => "passed",
                                                 "resolved_url" => "https://example.com/feed.xml" }])
 

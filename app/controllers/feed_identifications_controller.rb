@@ -19,11 +19,11 @@ class FeedIdentificationsController < ApplicationController
     # text, so switching the mode radio is the bridge.
     return render(not_a_link_error) if source_url.nil?
 
-    # A settled result is shown as-is; everything else re-runs detection,
-    # so resubmitting after a couldn't-reach result re-checks it.
-    return present_outcome if settled_identification?
+    # A working result is shown as-is and an in-flight check keeps polling;
+    # any settled failure re-runs detection, so resubmitting re-checks it.
+    return present_result if feed_identification.working?
 
-    if feed_identification.new_record? || feed_identification.failed? || retryable_unreachable?
+    unless feed_identification.persisted? && feed_identification.processing?
       restarted = feed_identification.restart_detection!
       # A losing concurrent submit skips the enqueue; the winner owns the
       # in-flight detection.
@@ -40,7 +40,7 @@ class FeedIdentificationsController < ApplicationController
 
     return handle_processing_status if feed_identification.processing?
 
-    present_outcome
+    present_result
   end
 
   def destroy
@@ -120,28 +120,16 @@ class FeedIdentificationsController < ApplicationController
     head :no_content
   end
 
-  # Worth showing without re-detecting: a working feed or a reachable link
-  # with no feed. Couldn't-reach is excluded so resubmitting re-detects.
-  def settled_identification?
-    feed_identification.success? && feed_identification.outcome != :unreachable
-  end
-
-  # All candidates were unreachable; retrying should re-detect.
-  def retryable_unreachable?
-    feed_identification.success? && feed_identification.outcome == :unreachable
-  end
-
   # The feed form when a candidate works, otherwise the couldn't-reach or
   # no-feed hint.
-  def present_outcome
-    case feed_identification.outcome
-    when :working then handle_success_status
-    when :unreachable then render(unreachable_error)
-    else render(no_feed_error)
-    end
+  def present_result
+    return present_working if feed_identification.working?
+    return render(unreachable_error) if feed_identification.unreachable?
+
+    render(no_feed_error)
   end
 
-  def handle_success_status
+  def present_working
     suggested = feed_identification.suggested_candidate
     profile_key = suggested&.profile_key
     source_key = FeedProfile.source_key_for(profile_key)

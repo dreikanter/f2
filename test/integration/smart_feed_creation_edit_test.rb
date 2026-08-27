@@ -101,7 +101,7 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
   test "#patch should apply a re-detected source once a working candidate confirms it" do
     sign_in_as(user)
     new_url = "http://example.com/other.xml"
-    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
+    create(:feed_identification, user: user, input: new_url, status: :working, started_at: Time.current,
            candidates: [{ "profile_key" => "rss", "test_status" => "passed", "title" => "Other" }])
 
     patch feed_url(feed), params: { feed: { params: { url: new_url }, feed_profile_key: "rss" }, enable_feed: "1" }
@@ -118,7 +118,7 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
                              target_group: "testgroup", feed_profile_key: "rss",
                              params: { "url" => "http://example.com/feed.xml" })
     new_url = "http://example.com/other.xml"
-    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
+    create(:feed_identification, user: user, input: new_url, status: :working, started_at: Time.current,
            candidates: [{ "profile_key" => "rss", "test_status" => "passed", "title" => "Other" }])
 
     patch feed_url(disabled), params: { feed: { params: { url: new_url }, feed_profile_key: "rss" }, enable_feed: "1" }
@@ -132,7 +132,7 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
   test "#patch should re-detect rather than confirm a profile that isn't a working candidate" do
     sign_in_as(user)
     new_url = "http://example.com/other.xml"
-    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
+    create(:feed_identification, user: user, input: new_url, status: :working, started_at: Time.current,
            candidates: [{ "profile_key" => "rss", "test_status" => "passed", "title" => "Other" }])
 
     assert_enqueued_with(job: FeedIdentificationJob) do

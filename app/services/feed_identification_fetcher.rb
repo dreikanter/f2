@@ -1,7 +1,7 @@
 class FeedIdentificationFetcher
-  # A fetch that yielded no usable response. UnreachableError persists as
-  # "unreachable" (transient, retryable); every other FetchError persists
-  # as "unreadable" (terminal "no feed here"). The messages are for logs.
+  # A fetch that yielded no usable response. UnreachableError settles the row
+  # as unreachable (transient, retryable); every other FetchError settles it
+  # as no_feed (terminal "no feed here"). The messages are for logs.
   class FetchError < StandardError; end
   class UnreachableError < FetchError; end    # no answer: DNS, refused, or timeout
   class RedirectLimitError < FetchError; end  # followed too many redirects
@@ -17,26 +17,20 @@ class FeedIdentificationFetcher
   def identify
     response = fetch_response_for_input
     candidates = identify_candidates(response)
-
-    if candidates.any?
-      feed_identification.update!(status: :success, candidates: candidates, error: nil)
-    else
-      feed_identification.update!(status: :failed, candidates: [], error: "unidentifiable")
-    end
+    feed_identification.update!(status: settled_status(candidates), candidates: candidates)
   rescue UnreachableError => e
     # Transient: the UI offers a retry. Expected, so not reported as a bug.
     @logger.info("Feed identification couldn't reach #{sanitize_input_for_logging(@input)}: #{e.class} (#{e.message})")
-    feed_identification.update!(status: :failed, candidates: [], error: "unreachable")
+    feed_identification.update!(status: :unreachable, candidates: [])
   rescue FetchError => e
-    # Reachable but unusable: retrying won't help, terminal "no feed here".
     @logger.info("Feed identification fetch failed for #{sanitize_input_for_logging(@input)}: #{e.class} (#{e.message})")
-    feed_identification.update!(status: :failed, candidates: [], error: "unreadable")
+    feed_identification.update!(status: :no_feed, candidates: [])
   rescue StandardError => e
-    # Unexpected: report it as a bug, then surface a neutral code.
+    # Unexpected: report it as a bug, then settle on the terminal state.
     sanitized = sanitize_input_for_logging(@input)
     @logger.error("Feed identification failed for #{sanitized}: #{e.class} - #{e.message}")
     Rails.error.report(e, context: { input: sanitized })
-    feed_identification.update!(status: :failed, candidates: [], error: "internal_error")
+    feed_identification.update!(status: :no_feed, candidates: [])
   end
 
   private
@@ -90,6 +84,17 @@ class FeedIdentificationFetcher
 
   def working?(candidate_attributes)
     FeedIdentification::Candidate.new(candidate_attributes).passed?
+  end
+
+  # The settled result of a finished run: a candidate that read the source
+  # makes it working; candidates that all died on the network make it
+  # unreachable; anything else — no candidates, or none parsed — is no_feed.
+  def settled_status(candidates)
+    verdicts = candidates.map { |attributes| FeedIdentification::Candidate.new(attributes) }
+    return :working if verdicts.any?(&:passed?)
+    return :unreachable if verdicts.any? && verdicts.all?(&:unreachable?)
+
+    :no_feed
   end
 
   # A broken advertised feed is skipped; another may still work. The hrefs
