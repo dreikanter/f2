@@ -56,7 +56,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     create(:feed, :enabled, user: user)
     get posts_url
     assert_response :success
-    assert_select "p", text: /No posts yet\. They'll show up here as your feeds import new content/
+    assert_select "p", text: /Nothing imported yet/
     assert_select "[data-key='posts.empty.new-feed']", count: 0
   end
 

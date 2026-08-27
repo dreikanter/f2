@@ -31,6 +31,14 @@ class StatBarItemComponentTest < ViewComponent::TestCase
     assert_not_includes result.at_css("dd")["class"], "text-heading"
   end
 
+  test "#render should show a muted dash for a blank value" do
+    result = render_inline(StatBarItemComponent.new(label: "Recent", value: nil))
+
+    assert_equal StatItemComponent::BLANK_VALUE, result.at_css("dd").text
+    assert_includes result.at_css("dd")["class"], "text-2xl font-semibold whitespace-nowrap"
+    assert_includes result.at_css("dd")["class"], "text-muted"
+  end
+
   test "#render should expose the tooltip as tippy content" do
     result = render_inline(StatBarItemComponent.new(label: "Active", value: "38", tooltip: "Active feeds"))
 

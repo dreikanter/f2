@@ -37,7 +37,7 @@ class TokenDetailsComponent < ViewComponent::Base
   end
 
   def freefeed_user
-    @access_token.owner.presence || "–"
+    @access_token.owner
   end
 
   def freefeed_instance

@@ -30,11 +30,9 @@
       <div class="space-y-4">
         <h2 class="text-2xl font-semibold mb-3 text-heading">Publisher</h2>
         <p class="text-body mb-4">
-          Posts created with this token appear on FreeFeed on behalf of the user who created it.
+          FreeFeed posts will appear on behalf of the token owner.
         </p>
-        <div class="w-fit min-w-[240px] rounded-xl border border-border bg-surface p-4">
-          <%= render FreefeedUserComponent.new(user: @access_token.access_token_detail.freefeed_user_info) %>
-        </div>
+        <%= render FreefeedUserComponent.new(user: @access_token.access_token_detail.freefeed_user_info) %>
       </div>
 
       <div class="space-y-4">

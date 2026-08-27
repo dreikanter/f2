@@ -37,7 +37,7 @@ class GlobalStatsComponent < StatsPanelComponent
         key: "most_recent_repost",
         label: "Most recent repost",
         label_short: "Recent",
-        value: most_recent_repost_at.present? ? helpers.short_time_ago(most_recent_repost_at) : "—"
+        value: (helpers.short_time_ago(most_recent_repost_at) if most_recent_repost_at)
       }
     ]
   end

@@ -228,7 +228,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get events_path, params: { filter: { subject_type: "Feed", subject_id: feed.id } }
 
     assert_response :success
-    assert_select '[data-key="events.filter-summary"]', text: /Filtering by Feed \[#{feed.id.to_s.last(5)}\]\./
+    assert_select '[data-key="events.filter-summary"]', text: /Filtering by Feed #{feed.id.to_s.last(5)}\./
     assert_select '[data-key="events.filter-summary"] a[href=?]', feed_path(feed), text: feed.id.to_s.last(5)
   end
 

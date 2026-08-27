@@ -161,14 +161,34 @@ class FeedListItemComponentTest < ViewComponent::TestCase
     end
   end
 
-  test "#render should not show Delete action for enabled feeds" do
+  test "#render should show Delete action and confirmation modal for enabled feeds" do
     enabled_feed = create(:feed, :enabled, user: user)
 
     with_request_url("/feeds") do
       result = render_inline FeedListItemComponent.new(feed: enabled_feed)
 
-      assert_empty result.css("[data-key='feed.#{enabled_feed.id}.delete']")
-      assert_empty result.css("#delete-feed-modal-#{enabled_feed.id}")
+      assert_not_empty result.css("[data-key='feed.#{enabled_feed.id}.delete']")
+      assert_not_empty result.css("#delete-feed-modal-#{enabled_feed.id}")
+    end
+  end
+
+  test "#render should separate Delete from the rest of the menu" do
+    enabled_feed = create(:feed, :enabled, user: user)
+
+    with_request_url("/feeds") do
+      result = render_inline FeedListItemComponent.new(feed: enabled_feed)
+
+      assert_separator_above result, "feed.#{enabled_feed.id}.delete"
+    end
+  end
+
+  test "#render should separate Discard from the rest of the menu for draft feeds" do
+    draft_feed = create(:feed, :draft, user: user)
+
+    with_request_url("/feeds") do
+      result = render_inline FeedListItemComponent.new(feed: draft_feed)
+
+      assert_separator_above result, "feed.#{draft_feed.id}.discard"
     end
   end
 
@@ -290,5 +310,17 @@ class FeedListItemComponentTest < ViewComponent::TestCase
       assert_empty result.css("[data-key='feed.#{enabled_feed.id}.disable']")
       assert_not_empty result.css("[data-key='feed.#{enabled_feed.id}.details']")
     end
+  end
+
+  private
+
+  # The menu renders separators as sibling <li role="separator"> rows, so an
+  # item is "separated" when the entry right above it is one.
+  def assert_separator_above(result, data_key)
+    entries = result.css("ul > li")
+    index = entries.index { |entry| entry.at_css("[data-key='#{data_key}']") }
+
+    assert_not_nil index, "expected a menu item with data-key #{data_key}"
+    assert_equal "separator", entries[index - 1]["role"]
   end
 end

@@ -10,7 +10,7 @@ class EventsHelperTest < ActionView::TestCase
     fragment = Nokogiri::HTML.fragment(result)
     link = fragment.at_css("strong a")
 
-    assert_equal "Feed [#{subject_id.last(5)}]", fragment.text
+    assert_equal "Feed #{subject_id.last(5)}", fragment.text
     assert_equal admin_feed_path(subject_id), link["href"]
     assert_equal subject_id, link["title"]
   end
@@ -31,7 +31,7 @@ class EventsHelperTest < ActionView::TestCase
     fragment = Nokogiri::HTML.fragment(result)
     label = fragment.at_css("strong span")
 
-    assert_equal "Job run [#{subject_id.last(5)}]", fragment.text
+    assert_equal "Job run #{subject_id.last(5)}", fragment.text
     assert_equal subject_id, label["title"]
     assert_nil fragment.at_css("a")
   end
@@ -43,7 +43,7 @@ class EventsHelperTest < ActionView::TestCase
     fragment = Nokogiri::HTML.fragment(result)
     link = fragment.at_css("strong a")
 
-    assert_equal "User [#{user_id.last(5)}]", fragment.text
+    assert_equal "User #{user_id.last(5)}", fragment.text
     assert_equal admin_user_path(user_id), link["href"]
   end
 
@@ -56,7 +56,7 @@ class EventsHelperTest < ActionView::TestCase
     )
     fragment = Nokogiri::HTML.fragment(result)
 
-    assert_equal "Feed [#{subject_id.last(5)}] • level: error • type: feed_refresh, feed_auto_disabled", fragment.text
+    assert_equal "Feed #{subject_id.last(5)} • level: error • type: feed_refresh, feed_auto_disabled", fragment.text
   end
 
   test "#event_filter_summary should render a type-only filter as a bare label" do
@@ -73,7 +73,7 @@ class EventsHelperTest < ActionView::TestCase
     result = event_filter_summary({ subject_id: subject_id }, entity_paths: EventEntityPaths.new)
     fragment = Nokogiri::HTML.fragment(result)
 
-    assert_equal "Subject [#{subject_id.last(5)}]", fragment.text
+    assert_equal "Subject #{subject_id.last(5)}", fragment.text
     assert_nil fragment.at_css("a")
   end
 
