@@ -30,7 +30,9 @@ class User < ApplicationRecord
   validates :email_address, presence: true
   validates :password, length: { minimum: PASSWORD_MIN_LENGTH, maximum: PASSWORD_MAX_LENGTH }, allow_nil: true
   validates :available_invites, numericality: { greater_than_or_equal_to: 0 }
-  validates :name, length: { maximum: NAME_MAX_LENGTH }
+  # Only on a name edit: existing accounts predate the limit, and an over-long
+  # legacy value must not block unrelated updates like a password reset.
+  validates :name, length: { maximum: NAME_MAX_LENGTH }, if: :name_changed?
   validate :both_emails_are_globally_unique
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }

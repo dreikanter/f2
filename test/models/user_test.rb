@@ -39,6 +39,20 @@ class UserTest < ActiveSupport::TestCase
     assert_equal "Alex", user.name
   end
 
+  test "should let an account with a legacy over-long name update other attributes" do
+    user = create(:user)
+    user.update_column(:name, "a" * (User::NAME_MAX_LENGTH + 1))
+
+    assert user.reload.update(password: "brandnewpassword")
+  end
+
+  test "should still reject shortening a legacy name to another over-long value" do
+    user = create(:user)
+    user.update_column(:name, "a" * (User::NAME_MAX_LENGTH + 10))
+
+    assert_not user.reload.update(name: "b" * (User::NAME_MAX_LENGTH + 1))
+  end
+
   test "#anonymized_email should keep first and last local characters with full domain" do
     user = build(:user, email_address: "username@gmail.com")
     assert_equal "u...e@gmail.com", user.anonymized_email
