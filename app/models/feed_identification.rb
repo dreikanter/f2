@@ -3,9 +3,9 @@ class FeedIdentification < ApplicationRecord
 
   # The detection lifecycle: processing is in-flight; the rest are settled
   # results written by FeedIdentificationFetcher.
-  #   working     — at least one candidate read the source → the feed form
-  #   unreachable — nothing connected (transient) → the retry state
-  #   no_feed     — reachable, but nothing usable (terminal) → the AI bridge
+  #   working: at least one candidate read the source (the feed form)
+  #   unreachable: nothing connected, transient (the retry state)
+  #   no_feed: reachable but nothing usable, terminal (the AI bridge)
   enum :status, { processing: 0, working: 1, unreachable: 2, no_feed: 3 }
 
   validates :input, presence: true
@@ -36,8 +36,8 @@ class FeedIdentification < ApplicationRecord
   end
 
   # Candidates that can fetch the source. A candidate counts unless it's
-  # known-broken — tested and failed, or unreachable — so in practice this is
-  # the passed set (detection always records a verdict).
+  # known-broken (tested and failed, or unreachable), so in practice this is
+  # the passed set: detection always records a verdict.
   def working_candidates
     candidates.map { Candidate.new(_1) }.reject do |candidate|
       candidate.failed? || candidate.unreachable?

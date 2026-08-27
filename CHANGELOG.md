@@ -2,7 +2,7 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
-## 2026-08-26
+## 2026-08-27
 
 - Checking a link again after a "no feed here" result now re-runs the check, so a source that gained a feed is picked up.
 

@@ -88,7 +88,7 @@ class FeedIdentificationFetcher
 
   # The settled result of a finished run: a candidate that read the source
   # makes it working; candidates that all died on the network make it
-  # unreachable; anything else — no candidates, or none parsed — is no_feed.
+  # unreachable; anything else (no candidates, or none parsed) is no_feed.
   def settled_status(candidates)
     verdicts = candidates.map { |attributes| FeedIdentification::Candidate.new(attributes) }
     return :working if verdicts.any?(&:passed?)
