@@ -11,7 +11,7 @@ module EventsHelper
     end
   end
 
-  # Describes the active events filter as entity references — "Feed [ce23f]",
+  # Describes the active events filter as entity references — "Feed ce23f",
   # with the id linked when `entity_paths` resolves a page for the entity —
   # plus plain `key: value` parts for the remaining filter keys.
   def event_filter_summary(filter, entity_paths:)
@@ -70,7 +70,7 @@ module EventsHelper
 
   private
 
-  # "Feed [ce23f]" — a humanized entity type with a short linked id. Either
+  # "Feed ce23f" — a humanized entity type with a short linked id. Either
   # half may be missing: a type-only filter renders just the label, an id
   # without a type gets a generic label and stays unlinked.
   def event_entity_reference(type, id, entity_paths)
@@ -89,6 +89,6 @@ module EventsHelper
       tag.span(short_ref(id), title: id, class: "font-mono")
     end
 
-    tag.strong(safe_join([label, " [", ref, "]"]))
+    tag.strong(safe_join([label, " ", ref]))
   end
 end

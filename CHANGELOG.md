@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-27
 
+- The events page no longer wraps the filtered record's id in square brackets.
 - Any feed can now be deleted straight from the feeds list, not just paused ones, with the action set off below a divider.
 - Purge and Delete now sit below a divider in the feed page menu, clear of the everyday actions.
 - Checking a link again after a "no feed here" result now re-runs the check, so a source that gained a feed is picked up.
