@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-27
 
+- Settings now has a name you can set, so people you invite see who invited them instead of "Somebody".
 - Checking a link again after a "no feed here" result now re-runs the check, so a source that gained a feed is picked up.
 
 ## 2026-08-25

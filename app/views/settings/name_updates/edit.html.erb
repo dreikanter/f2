@@ -1,0 +1,20 @@
+<% content_for :title, "Your Name" %>
+
+<div class="space-y-8">
+  <%= render PageHeaderComponent.new(title: "Your Name") %>
+
+  <div class="max-w-2xl">
+    <%= form_with model: @user, url: settings_name_update_path, method: :patch, local: true do |form| %>
+      <div class="space-y-2">
+        <%= form.label :name, "Name", class: "block font-semibold text-heading" %>
+        <%= form.text_field :name, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", placeholder: "Enter your name", maxlength: User::NAME_MAX_LENGTH, autofocus: true, autocomplete: "name" %>
+        <p class="text-sm text-muted" data-key="name_update.hint">Optional. Use your real name or a nickname, so people you invite can see who invited them. Leave it blank and they'll just see "Somebody".</p>
+      </div>
+
+      <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
+        <%= form.submit "Save Name", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+        <%= link_to "Cancel", settings_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1") %>
+      </div>
+    <% end %>
+  </div>
+</div>
