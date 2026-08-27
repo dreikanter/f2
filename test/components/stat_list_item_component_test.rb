@@ -39,6 +39,19 @@ class StatListItemComponentTest < ViewComponent::TestCase
     assert_not_includes result.at_css("dd")["class"], "text-muted"
   end
 
+  test "#render should show a muted dash for a blank value" do
+    result = render_inline(StatListItemComponent.new(label: "Owner", value: nil))
+
+    assert_equal StatItemComponent::BLANK_VALUE, result.at_css("dd").text
+    assert_includes result.at_css("dd")["class"], "text-muted"
+  end
+
+  test "#render should keep a zero value rather than treating it as blank" do
+    result = render_inline(StatListItemComponent.new(label: "Posts", value: "0"))
+
+    assert_equal "0", result.at_css("dd").text
+  end
+
   test "#render should use list item CSS classes" do
     result = render_inline(StatListItemComponent.new(label: "Posts", value: "42"))
 

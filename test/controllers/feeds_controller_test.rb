@@ -571,6 +571,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#feed-header-menu-#{enabled.id} a[data-key='feed.#{enabled.id}.edit'][href='#{edit_feed_path(enabled)}']", text: "Edit"
     assert_select "#feed-header-menu-#{enabled.id} a[data-key='feed.#{enabled.id}.purge']", text: "Purge feed…"
     assert_select "#feed-header-menu-#{enabled.id} a[data-key='feed.#{enabled.id}.delete']", text: "Delete feed…"
+    assert_select "#feed-header-menu-#{enabled.id} li[role='separator']", 2
   end
 
   test "#show should render the webhook API panel for a webhook feed" do

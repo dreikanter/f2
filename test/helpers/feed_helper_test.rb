@@ -180,7 +180,7 @@ class FeedHelperTest < ActionView::TestCase
   test "#feed_actions_menu_items should list refresh, edit, purge, and delete for an enabled feed" do
     feed = create(:feed, :enabled, target_group: "testgroup")
 
-    labels = feed_actions_menu_items(feed).map { |item| item[:label] }
+    labels = menu_labels(feed)
 
     assert_equal ["Refresh", "Edit", "Purge feed…", "Delete feed…"], labels
   end
@@ -188,7 +188,7 @@ class FeedHelperTest < ActionView::TestCase
   test "#feed_actions_menu_items should omit refresh for a feed that is not enabled" do
     feed = create(:feed, :disabled, target_group: "testgroup")
 
-    labels = feed_actions_menu_items(feed).map { |item| item[:label] }
+    labels = menu_labels(feed)
 
     assert_equal ["Edit", "Purge feed…", "Delete feed…"], labels
   end
@@ -197,15 +197,34 @@ class FeedHelperTest < ActionView::TestCase
     feed = create(:feed, :enabled, target_group: "testgroup")
     feed.target_group = nil
 
-    labels = feed_actions_menu_items(feed).map { |item| item[:label] }
+    labels = menu_labels(feed)
 
     assert_equal ["Refresh", "Edit", "Delete feed…"], labels
+  end
+
+  test "#feed_actions_menu_items should separate purge and delete from the actions above them" do
+    feed = create(:feed, :enabled, target_group: "testgroup")
+
+    items = feed_actions_menu_items(feed)
+    separators = items.each_index.select { |index| items[index][:separator] }
+
+    assert_equal ["Purge feed…", "Delete feed…"], separators.map { |index| items[index + 1][:label] }
+  end
+
+  test "#feed_actions_menu_items should keep the delete separator when purge is unavailable" do
+    feed = create(:feed, :enabled, target_group: "testgroup")
+    feed.target_group = nil
+
+    items = feed_actions_menu_items(feed)
+
+    assert items[-2][:separator]
+    assert_equal "Delete feed…", items[-1][:label]
   end
 
   test "#feed_actions_menu_items should wire refresh to a POST and danger actions to their modals" do
     feed = create(:feed, :enabled, target_group: "testgroup")
 
-    items = feed_actions_menu_items(feed).index_by { |item| item[:label] }
+    items = feed_actions_menu_items(feed).reject { |item| item[:separator] }.index_by { |item| item[:label] }
 
     assert_equal :post, items["Refresh"][:method]
     assert_equal feed_refresh_path(feed), items["Refresh"][:href]
@@ -252,5 +271,11 @@ class FeedHelperTest < ActionView::TestCase
   test "#candidate_summary should personalize the AI profile with a handle input" do
     assert_equal "Follow with AI: \"@alice\"",
                  candidate_summary("llm", "@alice")
+  end
+
+  private
+
+  def menu_labels(feed)
+    feed_actions_menu_items(feed).reject { |item| item[:separator] }.map { |item| item[:label] }
   end
 end

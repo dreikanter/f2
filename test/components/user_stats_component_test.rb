@@ -45,12 +45,14 @@ class UserStatsComponentTest < ViewComponent::TestCase
     assert_equal "Published", result.css(".hidden.md\\:flex [data-key=\"stats.total_published_posts.label\"]").first.text
   end
 
-  test "#render should display fallback value when no published posts" do
+  test "#render should display a muted fallback value when no published posts" do
     user_without_posts = create(:user)
 
     result = render_inline(UserStatsComponent.new(user: user_without_posts))
 
-    recent_value = result.css('[data-key="stats.most_recent_repost.value"]').first.text
-    assert_equal "—", recent_value
+    result.css('[data-key="stats.most_recent_repost.value"]').each do |value|
+      assert_equal StatItemComponent::BLANK_VALUE, value.text
+      assert_includes value["class"], "text-muted"
+    end
   end
 end
