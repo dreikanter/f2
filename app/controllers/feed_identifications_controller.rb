@@ -24,7 +24,7 @@ class FeedIdentificationsController < ApplicationController
     return present_result if feed_identification.working?
 
     unless feed_identification.persisted? && feed_identification.processing?
-      restarted = feed_identification.restart_detection!
+      restarted = feed_identification.restart_detection
       # A losing concurrent submit skips the enqueue; the winner owns the
       # in-flight detection.
       FeedIdentificationJob.perform_later(Current.user.id, source_url) if restarted

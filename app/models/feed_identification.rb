@@ -22,7 +22,7 @@ class FeedIdentification < ApplicationRecord
   # loser's insert then hits the user+input unique index. Returns false in that
   # case — the winner's detection is already in flight, so the stale copy
   # should be discarded — and true when this call (re)started detection.
-  def restart_detection!
+  def restart_detection
     update!(status: :processing, started_at: Time.current, candidates: [])
     true
   rescue ActiveRecord::RecordNotUnique
@@ -37,10 +37,9 @@ class FeedIdentification < ApplicationRecord
 
   # Candidates that can fetch the source. A candidate counts unless it's
   # known-broken — tested and failed, or unreachable — so in practice this is
-  # the passed set (detection always records a verdict). Memoized: read a few
-  # times per request.
+  # the passed set (detection always records a verdict).
   def working_candidates
-    @working_candidates ||= candidates.map { Candidate.new(_1) }.reject do |candidate|
+    candidates.map { Candidate.new(_1) }.reject do |candidate|
       candidate.failed? || candidate.unreachable?
     end
   end

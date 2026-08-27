@@ -130,7 +130,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     url = "http://example.com/feed.xml"
     winner = create(:feed_identification, user: user, input: url, started_at: Time.current).reload
     # The loser's stale lookup result: it missed the winner's row, so its
-    # insert inside restart_detection! collides with the user+input unique index.
+    # insert inside restart_detection collides with the user+input unique index.
     loser = FeedIdentification.new(user: user, input: url)
 
     FeedIdentification.stub(:find_or_initialize_by, loser) do
