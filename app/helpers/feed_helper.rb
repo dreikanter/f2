@@ -51,17 +51,20 @@ module FeedHelper
 
   # Action menu items for the feed page header. Refresh applies only to an
   # enabled feed that actually pulls from a source; the destructive actions
-  # open the confirmation modals rendered alongside the feed page.
+  # open the confirmation modals rendered alongside the feed page, each behind
+  # a separator so a stray click doesn't land on one.
   def feed_actions_menu_items(feed)
     items = []
     items << { label: "Refresh", href: feed_refresh_path(feed), method: :post, data: { key: "feed.#{feed.id}.refresh" } } if feed.enabled? && feed.scheduled?
     items << { label: "Edit", href: edit_feed_path(feed), data: { key: "feed.#{feed.id}.edit" } }
 
     if feed.target_group.present?
+      items << { separator: true }
       items << { label: "Purge feed…", href: "#",
                  data: { key: "feed.#{feed.id}.purge", controller: "modal-trigger",
                          modal_trigger_modal_id_value: "purge-modal-#{feed.id}", action: "click->modal-trigger#open" } }
     end
+    items << { separator: true }
     items << { label: "Delete feed…", href: "#",
                data: { key: "feed.#{feed.id}.delete", controller: "modal-trigger",
                        modal_trigger_modal_id_value: "delete-feed-modal-#{feed.id}", action: "click->modal-trigger#open" } }

@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-27
 
+- Purge and Delete now sit below a divider in the feed page menu, clear of the everyday actions.
 - Checking a link again after a "no feed here" result now re-runs the check, so a source that gained a feed is picked up.
 
 ## 2026-08-25
