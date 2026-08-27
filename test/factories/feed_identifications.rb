@@ -5,8 +5,8 @@ FactoryBot.define do
     status { :processing }
     candidates { [] }
 
-    trait :success do
-      status { :success }
+    trait :working do
+      status { :working }
       candidates do
         [
           { "profile_key" => "rss", "title" => "Sample Feed" }
@@ -14,9 +14,8 @@ FactoryBot.define do
       end
     end
 
-    trait :failed do
-      status { :failed }
-      error { "Could not detect feed profile" }
+    trait :no_feed do
+      status { :no_feed }
     end
   end
 end

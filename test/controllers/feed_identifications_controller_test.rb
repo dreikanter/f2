@@ -392,12 +392,11 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "textarea#entry-ai-input", text: url
   end
 
-  test "#create should re-run detection when retrying a couldn't-reach success" do
+  test "#create should re-run detection when retrying a couldn't-reach result" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
-    # A success whose only candidate was unreachable: Retry must re-detect rather
-    # than re-render the same couldn't-reach state.
-    create(:feed_identification, user: user, input: url, started_at: Time.current, status: :success,
+    # Retry must re-detect rather than re-render the same couldn't-reach state.
+    create(:feed_identification, user: user, input: url, started_at: Time.current, status: :unreachable,
                                  candidates: [{ "profile_key" => "youtube", "test_status" => "unreachable" }])
 
     assert_enqueued_with(job: FeedIdentificationJob) do
@@ -411,7 +410,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
   test "#show should show the terminal no-feed error when a reachable link has no working feed" do
     sign_in_as(user)
     url = "http://example.com/page.html"
-    create(:feed_identification, user: user, input: url, started_at: Time.current, status: :success,
+    create(:feed_identification, user: user, input: url, started_at: Time.current, status: :no_feed,
                                  candidates: [{ "profile_key" => "rss", "test_status" => "failed" }])
 
     get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
@@ -496,7 +495,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       user: user,
       input: url,
       started_at: Time.current,
-      status: :success,
+      status: :working,
       candidates: [{ "profile_key" => "rss", "title" => "Example", "test_status" => "passed" }]
     )
 
@@ -514,7 +513,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     FeedIdentification.create!(
       user: user,
       input: url,
-      status: :success,
+      status: :working,
       candidates: [
         { "profile_key" => "rss", "title" => "Example" }
       ]
@@ -537,7 +536,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     FeedIdentification.create!(
       user: user,
       input: url,
-      status: :success,
+      status: :working,
       candidates: [
         { "profile_key" => "rss", "title" => "Example" }
       ]
@@ -558,7 +557,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     FeedIdentification.create!(
       user: user,
       input: url,
-      status: :success,
+      status: :working,
       candidates: [
         { "profile_key" => "rss", "title" => "Example" }
       ]
@@ -583,7 +582,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     FeedIdentification.create!(
       user: user,
       input: url,
-      status: :success,
+      status: :working,
       candidates: [
         { "profile_key" => "rss", "title" => "Example" }
       ]
@@ -605,7 +604,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       user: user,
       input: handle,
       started_at: Time.current,
-      status: :success,
+      status: :working,
       candidates: [
         { "profile_key" => "llm", "title" => nil }
       ]
@@ -626,7 +625,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       user: user,
       input: query,
       started_at: Time.current,
-      status: :success,
+      status: :working,
       candidates: [
         { "profile_key" => "llm", "title" => nil }
       ]
@@ -683,7 +682,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       user: user,
       input: url,
       started_at: Time.current,
-      status: :success,
+      status: :working,
       candidates: [
         { "profile_key" => "rss", "title" => "Example", "test_status" => "passed", "posts_found" => 2 },
         { "profile_key" => "json_feed", "title" => "Example", "test_status" => "passed", "posts_found" => 3 }
@@ -701,8 +700,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "label", text: "How should we fetch posts?"
   end
 
-  def success_identification(url, candidates)
-    create(:feed_identification, user: user, input: url, started_at: Time.current, status: :success, candidates: candidates)
+  def working_identification(url, candidates)
+    create(:feed_identification, user: user, input: url, started_at: Time.current, status: :working, candidates: candidates)
   end
 
   def show_chooser(url)
@@ -712,7 +711,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
   test "#show should show a single working candidate as an annotation, not a chooser" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
-    success_identification(url, [
+    working_identification(url, [
       { "profile_key" => "rss", "title" => "Example", "test_status" => "passed", "posts_found" => 3 }
     ])
 
@@ -727,7 +726,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
   test "#show should render the chooser and preselect the suggested candidate for two working candidates" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
-    success_identification(url, [
+    working_identification(url, [
       { "profile_key" => "xkcd", "title" => "Example", "test_status" => "passed", "posts_found" => 5 },
       { "profile_key" => "rss", "title" => "Example", "test_status" => "passed", "posts_found" => 3 }
     ])
@@ -744,7 +743,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
   test "#show should note when a working candidate has no posts yet" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
-    success_identification(url, [
+    working_identification(url, [
       { "profile_key" => "rss", "title" => "Example", "test_status" => "passed", "posts_found" => 0 },
       { "profile_key" => "json_feed", "title" => "Example", "test_status" => "passed", "posts_found" => 2 }
     ])
@@ -758,7 +757,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
   test "#show should drop non-working candidates from the presentation" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
-    success_identification(url, [
+    working_identification(url, [
       { "profile_key" => "rss", "title" => "Example", "test_status" => "passed", "posts_found" => 2 },
       { "profile_key" => "xkcd", "title" => "Example", "test_status" => "unreachable" }
     ])
@@ -779,7 +778,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     FeedIdentification.create!(
       user: user,
       input: url,
-      status: :success,
+      status: :working,
       candidates: [
         { "profile_key" => "rss", "title" => long_title }
       ]
@@ -795,7 +794,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
     new_url = "http://example.com/new.xml"
-    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
+    create(:feed_identification, user: user, input: new_url, status: :working, started_at: Time.current,
            candidates: [{ "profile_key" => "rss", "test_status" => "passed", "title" => "New" }])
 
     get feed_identifications_path, params: { url: new_url, feed_id: feed.id },
@@ -811,7 +810,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
     new_url = "http://example.com/new.xml"
-    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
+    create(:feed_identification, user: user, input: new_url, status: :working, started_at: Time.current,
            candidates: [{ "profile_key" => "rss", "test_status" => "passed", "title" => "New" }])
 
     get feed_identifications_path, params: { url: new_url, feed_id: feed.id },
@@ -826,7 +825,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
     new_url = "https://xkcd.com/rss.xml"
-    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
+    create(:feed_identification, user: user, input: new_url, status: :working, started_at: Time.current,
            candidates: [{ "profile_key" => "xkcd", "test_status" => "passed", "title" => "xkcd" }])
 
     get feed_identifications_path, params: { url: new_url, feed_id: feed.id },
@@ -841,7 +840,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
     new_url = "http://example.com/none.xml"
-    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
+    create(:feed_identification, user: user, input: new_url, status: :no_feed, started_at: Time.current,
            candidates: [{ "profile_key" => "rss", "test_status" => "failed" }])
 
     get feed_identifications_path, params: { url: new_url, feed_id: feed.id },
@@ -860,8 +859,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
     new_url = "http://example.com/down.xml"
-    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
-           error: "unreachable", candidates: [])
+    create(:feed_identification, user: user, input: new_url, status: :unreachable, started_at: Time.current,
+           candidates: [])
 
     get feed_identifications_path, params: { url: new_url, feed_id: feed.id },
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
