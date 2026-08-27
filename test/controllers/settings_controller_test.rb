@@ -13,6 +13,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     sign_in_user
     get settings_url
     assert_response :success
+    assert_select "h2", text: "Your Name"
     assert_select "h2", text: "Change Email"
     assert_select "h2", text: "Change Password"
     assert_select "h2", text: "FreeFeed Application Tokens", count: 0
@@ -27,10 +28,27 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='settings.password']", text: /Last changed .+ ago/
   end
 
+  test "should show the current name in the account card" do
+    @user = create(:user, name: "Alex")
+    sign_in_user
+    get settings_url
+    assert_response :success
+    assert_select "[data-key='settings.name']", text: /People you invite will see Alex/
+  end
+
+  test "should explain the fallback when no name is set" do
+    @user = create(:user, name: "")
+    sign_in_user
+    get settings_url
+    assert_response :success
+    assert_select "[data-key='settings.name']", text: /Somebody/
+  end
+
   test "should link to settings sections" do
     sign_in_user
     get settings_url
     assert_response :success
+    assert_select "a[href=?]", edit_settings_name_update_path
     assert_select "a[href=?]", edit_settings_email_update_path
     assert_select "a[href=?]", edit_settings_password_update_path
     assert_select "a[href=?]", access_tokens_path

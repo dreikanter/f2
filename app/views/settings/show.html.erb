@@ -11,6 +11,22 @@
   <% end %>
 
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <%= render LinkedCardComponent.new(href: edit_settings_name_update_path) do %>
+      <div class="space-y-4">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
+          <%= icon("user", css_class: "size-5") %>
+          <span>Your Name</span>
+        </h2>
+        <p class="text-body" data-key="settings.name">
+          <% if @user.name.present? %>
+            People you invite will see <%= @user.name %>
+          <% else %>
+            Not set, so people you invite will just see "Somebody"
+          <% end %>
+        </p>
+      </div>
+    <% end %>
+
     <%= render LinkedCardComponent.new(href: edit_settings_email_update_path) do %>
       <div class="space-y-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
