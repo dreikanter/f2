@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-27
 
+- Trimmed the wording on the sign-up, password reset, and confirmation pages.
 - The publisher on a token page is now shown plainly, without the box around it.
 - Stats with nothing to show now read the same everywhere: one muted dash, instead of a different mark and colour per page.
 - Tightened up the wording on the feeds and posts pages.
