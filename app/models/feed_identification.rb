@@ -6,6 +6,9 @@ class FeedIdentification < ApplicationRecord
   #   working: at least one candidate read the source (the feed form)
   #   unreachable: nothing connected, transient (the retry state)
   #   no_feed: reachable but nothing usable, terminal (the AI bridge)
+  #
+  # The integers are persisted, so a new state appends; reordering these
+  # would silently reinterpret every existing row.
   enum :status, { processing: 0, working: 1, unreachable: 2, no_feed: 3 }
 
   validates :input, presence: true
