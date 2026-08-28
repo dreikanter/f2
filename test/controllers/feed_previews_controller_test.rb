@@ -325,6 +325,24 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     refute_equal was, preview.reload.run_id
   end
 
+  test "#update should clear rather than run when the AI credential went inactive" do
+    sign_in_as(user)
+    credential = create(:ai_credential, :active, user: user)
+    search = create(:search_credential, :active, user: user)
+    preview = create(:feed_preview, :completed, user: user, feed_profile_key: "llm",
+                                                params: { "prompt" => "ruby news" },
+                                                ai_credential: credential, ai_model: "gpt-4o-mini")
+    credential.update!(state: :inactive)
+    search
+
+    assert_no_enqueued_jobs do
+      patch feed_preview_url(preview), headers: TURBO_STREAM
+    end
+
+    assert_response :success
+    assert preview.reload.ready?, "the stale selection must not start a run"
+  end
+
   test "#update should not reach another user's preview" do
     sign_in_as(user)
     stranger = create(:feed_preview, :completed, user: create(:user), feed_profile_key: "rss",

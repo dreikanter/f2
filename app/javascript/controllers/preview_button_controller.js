@@ -34,8 +34,17 @@ export default class extends Controller {
   }
 
   disconnect() {
+    this._abortInFlight()
     this._modal?.removeEventListener("modal:hide", this._onHide)
     this.element.removeEventListener("change", this._onFormChange)
+  }
+
+  // A request whose answer nobody wants any more: the modal closed, or a newer
+  // open superseded it. Left running, its response would mount a poller into a
+  // closed frame, or a slow earlier one would overwrite a newer preview.
+  _abortInFlight() {
+    this._inFlight?.abort()
+    this._inFlight = null
   }
 
   async open(event) {
@@ -51,16 +60,24 @@ export default class extends Controller {
     if (this._loadingHTML != null) this.frameTarget.innerHTML = this._loadingHTML
     this._modal?.dispatchEvent(new CustomEvent("modal:show"))
 
+    this._abortInFlight()
+    const request = new AbortController()
+    this._inFlight = request
+
     try {
       const response = await fetch(this.endpointValue, {
         method: "POST",
         headers: { "Accept": "text/vnd.turbo-stream.html", "X-CSRF-Token": csrfToken() },
         body: this._requestBody(profileKey, sourceKey),
-        credentials: "same-origin"
+        credentials: "same-origin",
+        signal: request.signal
       })
       if (response.ok) Turbo.renderStreamMessage(await response.text())
     } catch {
-      // Network failure: the spinner stays until the next attempt.
+      // Aborted, or a network failure: either way nothing renders, and the
+      // spinner stays until the next attempt.
+    } finally {
+      if (this._inFlight === request) this._inFlight = null
     }
   }
 
@@ -134,6 +151,7 @@ export default class extends Controller {
     // Removing src alone won't clear the frame's children, so the inner polling
     // host would keep running. Emptying innerHTML removes it from the DOM, which
     // fires its disconnect() and stops polling. Reopening re-sets src and reloads.
+    this._abortInFlight()
     this.frameTarget.removeAttribute("src")
     this.frameTarget.innerHTML = ""
   }

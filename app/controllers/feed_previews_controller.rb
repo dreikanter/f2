@@ -2,7 +2,8 @@ class FeedPreviewsController < ApplicationController
   include StatePolling
   include PreviewSearchCredential
 
-  before_action :guard_preview, only: :create
+  before_action :load_preview, only: %i[show update]
+  before_action :guard_preview, only: %i[create update]
 
   # Maps each FeedPreview status to the pane partial that renders it. `fetch`
   # makes an unexpected status fail loudly rather than silently fall through.
@@ -18,29 +19,27 @@ class FeedPreviewsController < ApplicationController
   # mid-run. ~4 minutes at the shared 2.5s poll interval.
   AI_PREVIEW_MAX_POLLS = 98
 
-  # GET /feed_previews/:id — polling and frame reloads. The row carries its own
-  # source and selections, so nothing about the preview travels in the URL.
+  # GET /feed_previews/:id, for polling and frame reloads. The row carries its
+  # own source and selections, so nothing about the preview travels in the URL.
   def show
-    preview = previews.find(params[:id])
     preview.timeout! if timed_out?(preview)
     render_state(preview, inert_while_running: true)
   end
 
-  # POST /feed_previews — the form asks for a preview of what it currently holds.
+  # POST /feed_previews, asking for a preview of what the form currently holds.
   # Finds or creates the row for (user, profile_key, params_digest), starts a run
   # when it has no fresh result, and replaces the frame with its current state.
   def create
-    preview = locate_preview
-    preview = start_run(preview) if needs_run?(preview)
-    preview.timeout! if timed_out?(preview)
-    render_frame(preview)
+    found = locate_preview
+    found = start_run(found) if needs_run?(found)
+    found.timeout! if timed_out?(found)
+    render_frame(found)
   end
 
-  # PATCH /feed_previews/:id — the explicit refresh. The row already holds the
+  # PATCH /feed_previews/:id, the explicit refresh. The row already holds the
   # source and selections, so a re-run needs nothing but its id.
   def update
-    preview = previews.find(params[:id])
-    preview.restart!(search_credential_id: resolve_search_credential(preview.feed_profile_key)&.id)
+    preview.restart!(search_credential_id: search_credential&.id)
     render_frame(preview)
   end
 
@@ -74,6 +73,12 @@ class FeedPreviewsController < ApplicationController
     Current.user.feed_previews
   end
 
+  def load_preview
+    @preview = previews.find(params[:id])
+  end
+
+  attr_reader :preview
+
   def digest
     @digest ||= FeedPreview.digest_for(
       profile_key,
@@ -89,7 +94,8 @@ class FeedPreviewsController < ApplicationController
   def ai_credential
     return @ai_credential if defined?(@ai_credential)
 
-    @ai_credential = Current.user.ai_credentials.active.find_by(id: params[:ai_credential_id])
+    requested = params[:ai_credential_id].presence || preview&.ai_credential_id
+    @ai_credential = Current.user.ai_credentials.active.find_by(id: requested)
   end
 
   def search_credential
@@ -99,7 +105,7 @@ class FeedPreviewsController < ApplicationController
   end
 
   def ai_model
-    @ai_model ||= params[:ai_model].to_s.presence
+    @ai_model ||= params[:ai_model].presence || preview&.ai_model
   end
 
   def locate_preview
@@ -132,15 +138,17 @@ class FeedPreviewsController < ApplicationController
       preview.updated_at < polling_timeout(preview_max_polls(preview)).ago
   end
 
+  # A create is described by the request; an update by the row it names. The
+  # fallbacks let one guard cover both.
   def profile_key
-    @profile_key ||= params[:profile_key].to_s
+    @profile_key ||= params[:profile_key].presence || preview&.feed_profile_key.to_s
   end
 
   def preview_params
     @preview_params ||= begin
       raw = params[:params]
-      hash = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : (raw || {})
-      hash.deep_stringify_keys
+      hash = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : raw
+      hash ? hash.deep_stringify_keys : (preview&.params || {})
     end
   end
 
