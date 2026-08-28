@@ -582,6 +582,8 @@ class FeedProfile
       end
     end
 
+    # @param key [String] the profile key
+    # @param stage [Symbol] :loader, :processor, :normalizer, or :title_extractor
     # @return [Class] the stage class
     def class_for(key, stage)
       raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)
