@@ -11,9 +11,8 @@ module FeedHelper
     end
   end
 
-  # The group name outlives its access token: deleting a token clears the
-  # feed's token but keeps the group. Without a token there is no host to
-  # build a link from, so the label falls back to the bare group name.
+  # A feed can hold a target group with no access token, and then there is no
+  # host to build a link from, so the label falls back to the bare group name.
   def feed_target_group_link(feed)
     return if feed.target_group.blank?
 
