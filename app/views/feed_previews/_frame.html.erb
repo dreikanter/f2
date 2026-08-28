@@ -1,0 +1,35 @@
+<%# locals: (preview:) %>
+<%= turbo_frame_tag "feed-preview" do %>
+  <%# Stable polling host: polls the preview by id and swaps only the inner
+      body, so the controller element is never torn down mid-poll. Polling stops
+      once a terminal (ready/failed) body marks itself done. %>
+  <%= tag.div(data: {
+        controller: "polling",
+        polling_endpoint_value: feed_preview_path(preview, format: :turbo_stream),
+        polling_stop_condition_value: "[data-preview-done]",
+        polling_interval_value: polling_interval_ms,
+        polling_max_polls_value: preview_max_polls
+      }) do %>
+    <div id="feed-preview-body" data-polling-target="content">
+      <%= render(**state_partial(preview)) %>
+    </div>
+    <div data-polling-target="timeoutMessage" hidden>
+      <div class="rounded-lg border border-danger-subtle bg-danger-subtle px-4 py-3 text-danger-strong space-y-3"
+           role="alert"
+           data-key="preview.timeout"
+           data-controller="preview"
+           data-preview-refresh-url-value="<%= feed_preview_refresh_path(preview) %>">
+        <div class="space-y-1">
+          <p class="font-semibold text-heading">This is taking longer than expected.</p>
+          <p class="text-body">The source may be slow or unavailable. Give it another go when you're ready.</p>
+        </div>
+        <button type="button"
+                class="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-heading shadow-sm transition hover:bg-surface-muted"
+                data-action="click->preview#refresh"
+                data-key="preview.try-again">
+          Try again
+        </button>
+      </div>
+    </div>
+  <% end %>
+<% end %>

@@ -64,7 +64,7 @@ class SmartFeedCreationJsonFeedTest < ActionDispatch::IntegrationTest
       assert_includes response.body, 'data-identification-state="complete"'
       assert_includes response.body, "JSON Feed"
 
-      post feed_preview_path(profile_key: "json_feed", "params" => { "url" => feed_url })
+      post feed_previews_path, params: { profile_key: "json_feed", "params" => { "url" => feed_url } }
       assert_response :success
 
       perform_enqueued_jobs

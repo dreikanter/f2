@@ -1,7 +1,8 @@
 class FeedPreviewsController < ApplicationController
   include StatePolling
+  include PreviewSearchCredential
 
-  before_action :guard_preview, only: %i[show create]
+  before_action :guard_preview, only: :create
 
   # Maps each FeedPreview status to the pane partial that renders it. `fetch`
   # makes an unexpected status fail loudly rather than silently fall through.
@@ -17,21 +18,22 @@ class FeedPreviewsController < ApplicationController
   # mid-run. ~4 minutes at the shared 2.5s poll interval.
   AI_PREVIEW_MAX_POLLS = 98
 
-  # GET /feed_preview?profile_key=…&params[…]=…
-  # Workhorse for the lazy turbo-frame and polling: find or create the row for
-  # (user, profile_key, params_digest), start a run when it has no fresh result,
-  # and render the current state.
+  # GET /feed_previews/:id — polling and frame reloads. The row carries its own
+  # source and selections, so nothing about the preview travels in the URL.
   def show
-    preview = locate_preview
-    preview = start_run(preview) if needs_run?(preview)
-    preview.timeout! if (preview.pending? || preview.processing?) && preview.updated_at < polling_timeout(preview_max_polls).ago
+    preview = previews.find(params[:id])
+    preview.timeout! if timed_out?(preview)
     render_state(preview, inert_while_running: true)
   end
 
-  # POST /feed_preview — explicit refresh: always start a fresh run. Renders the
-  # processing pane (never inert) so the refresh shows the spinner restarting.
+  # POST /feed_previews — the form asks for a preview of what it currently holds.
+  # Finds or creates the row for (user, profile_key, params_digest), starts a run
+  # when it has no fresh result, and replaces the frame with its current state.
   def create
-    render_state(start_run(locate_preview))
+    preview = locate_preview
+    preview = start_run(preview) if needs_run?(preview)
+    preview.timeout! if timed_out?(preview)
+    render_frame(preview)
   end
 
   helper_method :preview_max_polls, :state_partial
@@ -84,15 +86,8 @@ class FeedPreviewsController < ApplicationController
 
   def search_credential
     return @search_credential if defined?(@search_credential)
-    return unless FeedProfile.exists?(profile_key) && FeedProfile.depends_on_ai?(profile_key)
 
-    credentials = Current.user.search_credentials.active
-    @search_credential =
-      if params[:search_credential_id].present?
-        credentials.find_by(id: params[:search_credential_id])
-      else
-        credentials.find_by(id: Current.user.default_search_credential_id) || credentials.first
-      end
+    @search_credential = resolve_search_credential(profile_key, params[:search_credential_id])
   end
 
   def ai_model
@@ -114,20 +109,19 @@ class FeedPreviewsController < ApplicationController
   # rather than enqueuing a duplicate job.
   def start_run(preview)
     preview.search_credential_id_for_digest = search_credential&.id
-    preview.update!(
+    preview.assign_attributes(
       params: preview_params,
       ai_credential_id: ai_credential&.id,
-      ai_model: ai_model,
-      status: :pending,
-      data: nil,
-      ready_at: nil,
-      run_id: SecureRandom.uuid
+      ai_model: ai_model
     )
-
-    FeedPreviewJob.perform_later(preview.id, preview.run_id, search_credential&.id)
-    preview
+    preview.restart!(search_credential_id: search_credential&.id)
   rescue ActiveRecord::RecordNotUnique
     previews.find_by!(feed_profile_key: profile_key, params_digest: digest)
+  end
+
+  def timed_out?(preview)
+    (preview.pending? || preview.processing?) &&
+      preview.updated_at < polling_timeout(preview_max_polls).ago
   end
 
   def profile_key
@@ -163,6 +157,16 @@ class FeedPreviewsController < ApplicationController
 
   def missing_search_credentials?
     !Current.user.search_credentials.active.exists?
+  end
+
+  # The create response carries the whole frame, so the polling host mounts and
+  # takes over from there.
+  def render_frame(preview)
+    render turbo_stream: turbo_stream.replace(
+      "feed-preview",
+      partial: "feed_previews/frame",
+      locals: { preview: preview }
+    )
   end
 
   def render_state(preview, inert_while_running: false)

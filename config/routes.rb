@@ -41,7 +41,9 @@ Rails.application.routes.draw do
   resources :posts, only: [:index, :show, :destroy]
   resources :events, only: [:index, :show]
   resources :feed_entries, only: :show
-  resource :feed_preview, only: [:show, :create]
+  resources :feed_previews, only: [:show, :create] do
+    resource :refresh, only: :create, controller: "feed_previews/refreshes"
+  end
   resource :admin, only: :show
 
   resource :feed_identifications, only: [:create, :show, :destroy]

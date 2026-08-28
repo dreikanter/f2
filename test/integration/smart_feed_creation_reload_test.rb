@@ -60,17 +60,17 @@ class SmartFeedCreationReloadTest < ActionDispatch::IntegrationTest
            params: { "url" => feed_url }, ready_at: Time.current)
 
     assert_no_enqueued_jobs do
-      get feed_preview_path(profile_key: "rss", "params" => { "url" => feed_url })
+      post feed_previews_path, params: { profile_key: "rss", "params" => { "url" => feed_url } }
     end
   end
 
-  test "#create should re-enqueue the preview job to refresh" do
+  test "#create on the refresh endpoint should re-enqueue the preview job" do
     sign_in_as(user)
-    create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
-           params: { "url" => feed_url }, ready_at: Time.current)
+    preview = create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
+                                                params: { "url" => feed_url }, ready_at: Time.current)
 
     assert_enqueued_with(job: FeedPreviewJob) do
-      post feed_preview_path(profile_key: "rss", "params" => { "url" => feed_url })
+      post feed_preview_refresh_path(preview)
     end
   end
 end

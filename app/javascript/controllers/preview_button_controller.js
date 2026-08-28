@@ -37,7 +37,7 @@ export default class extends Controller {
     this.element.removeEventListener("change", this._onFormChange)
   }
 
-  open(event) {
+  async open(event) {
     event?.preventDefault()
     const profileKey = selectedProfileKey(this.element)
     if (!profileKey || !this._currentSource().trim() || !this.hasFrameTarget) return
@@ -45,22 +45,42 @@ export default class extends Controller {
     const sourceKey = this.sourceKeysValue[profileKey]
     if (!sourceKey) return
 
-    const url = new URL(this.endpointValue, window.location.origin)
-    url.searchParams.set("profile_key", profileKey)
-    url.searchParams.set(`params[${sourceKey}]`, this._currentSource())
+    // Paint the spinner before kicking off the request so the modal never opens
+    // empty while the first response is in flight.
+    if (this._loadingHTML != null) this.frameTarget.innerHTML = this._loadingHTML
+    this._modal?.dispatchEvent(new CustomEvent("modal:show"))
+
+    try {
+      const response = await fetch(this.endpointValue, {
+        method: "POST",
+        headers: {
+          "Accept": "text/vnd.turbo-stream.html",
+          "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content || ""
+        },
+        body: this._requestBody(profileKey, sourceKey),
+        credentials: "same-origin"
+      })
+      if (response.ok) Turbo.renderStreamMessage(await response.text())
+    } catch {
+      // Network failure: the spinner stays until the next attempt.
+    }
+  }
+
+  // The preview reads what the form holds, and the form holds more than a URL,
+  // so it travels in the body rather than the query string.
+  _requestBody(profileKey, sourceKey) {
+    const body = new URLSearchParams()
+    body.set("profile_key", profileKey)
+    body.set(`params[${sourceKey}]`, this._currentSource())
+
     if (this._isAiProfile(profileKey)) {
       const credential = this._aiCredentialValue()
       const model = this._aiModelValue()
-      if (credential) url.searchParams.set("ai_credential_id", credential)
-      if (model) url.searchParams.set("ai_model", model)
+      if (credential) body.set("ai_credential_id", credential)
+      if (model) body.set("ai_model", model)
     }
 
-    // Paint the spinner before kicking off the fetch so the modal never opens
-    // empty while the first response is in flight.
-    if (this._loadingHTML != null) this.frameTarget.innerHTML = this._loadingHTML
-    this.frameTarget.setAttribute("src", url.toString())
-
-    this._modal?.dispatchEvent(new CustomEvent("modal:show"))
+    return body
   }
 
   refreshAvailability() {
