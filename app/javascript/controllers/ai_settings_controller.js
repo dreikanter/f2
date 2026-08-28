@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { selectedProfileKey } from "controllers/helpers/selected_profile_key"
+import { observeProfileChange } from "controllers/helpers/observe_profile_change"
 
 // Shows the AI Settings section only for AI-backed profiles (disabling its
 // selects while hidden so a non-AI feed submits no provider/model), and
@@ -14,17 +15,12 @@ export default class extends Controller {
 
   connect() {
     this.form = this.element.closest("form")
-    this.onFormChange = this._handleFormChange.bind(this)
-    this.form?.addEventListener("change", this.onFormChange)
+    this.stopObserving = observeProfileChange(this.form, () => this.refreshVisibility())
     this.refreshVisibility()
   }
 
   disconnect() {
-    this.form?.removeEventListener("change", this.onFormChange)
-  }
-
-  _handleFormChange(event) {
-    if (event.target.name === "feed[feed_profile_key]") this.refreshVisibility()
+    this.stopObserving?.()
   }
 
   refreshVisibility() {
