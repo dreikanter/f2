@@ -22,11 +22,9 @@ class FeedsController < ApplicationController
   ].freeze
 
   # Source-side fields, editable only while a feed is a draft;
-  # once it first leaves :draft they lock in for good.
-  DRAFT_ONLY_PERMITTED_PARAMS = [
-    :feed_profile_key,
-    { params: %i[url prompt] }
-  ].freeze
+  # once it first leaves :draft they lock in for good. The nested params keys
+  # ride alongside, derived per request from the profile's schema.
+  DRAFT_ONLY_PERMITTED_PARAMS = [:feed_profile_key].freeze
 
   def index
     authorize Feed
@@ -290,7 +288,7 @@ class FeedsController < ApplicationController
 
   # A new feed is a draft, so creation accepts the draft-editable set.
   def create_feed_params
-    params.require(:feed).permit(*ALWAYS_PERMITTED_PARAMS, *DRAFT_ONLY_PERMITTED_PARAMS)
+    params.require(:feed).permit(*ALWAYS_PERMITTED_PARAMS, *DRAFT_ONLY_PERMITTED_PARAMS, *params_entry_for(submitted_profile_key))
   end
 
   def update_feed_params
@@ -299,20 +297,30 @@ class FeedsController < ApplicationController
 
   def permitted_keys
     if @feed.draft?
-      ALWAYS_PERMITTED_PARAMS + DRAFT_ONLY_PERMITTED_PARAMS
-    elsif FeedProfile.depends_on_ai?(@feed.feed_profile_key)
-      # A live AI feed's prompt stays editable: the uid scheme is
-      # unchanged, so a prompt edit carries no duplicate risk (just possible
-      # backfill). The url isn't accepted here — an AI feed's source is its prompt.
-      ALWAYS_PERMITTED_PARAMS + [{ params: [:prompt] }]
+      # A draft may still be switching profiles, so the submitted key decides
+      # the params shape.
+      ALWAYS_PERMITTED_PARAMS + DRAFT_ONLY_PERMITTED_PARAMS +
+        params_entry_for(submitted_profile_key.presence || @feed.feed_profile_key)
     else
-      # A live deterministic feed can move its source, but only through
-      # detection. The URL rides operational params; the re-detected profile is
-      # applied explicitly by the confirm path (from a verified chooser pick), so
-      # feed_profile_key stays out of the mass-assignable set here — an unverified
-      # profile switch can't leak in.
-      ALWAYS_PERMITTED_PARAMS + [{ params: [:url] }]
+      # A live feed's profile is fixed, so its own schema settles what's
+      # assignable: an AI feed offers its prompt (the uid scheme is unchanged,
+      # so an edit carries no duplicate risk, just possible backfill) and a
+      # deterministic one its url, which still moves only through detection.
+      # feed_profile_key stays out of the mass-assignable set — the confirm path
+      # applies a re-detected profile explicitly, so an unverified switch can't
+      # leak in, and the stored profile is what decides here.
+      ALWAYS_PERMITTED_PARAMS + params_entry_for(@feed.feed_profile_key)
     end
+  end
+
+  # Nested params keys the profile declares, as a `permit` argument. Driven by
+  # the profile schema so a profile-specific option isn't filtered out before it
+  # reaches the model. A profile declaring none permits no params at all.
+  # @param profile_key [String, nil] the profile deciding the params shape
+  # @return [Array<Hash>] zero or one permit entry
+  def params_entry_for(profile_key)
+    keys = FeedProfile.parameter_keys_for(profile_key)
+    keys.blank? ? [] : [{ params: keys }]
   end
 
   def cleanup_feed_identification(input)
