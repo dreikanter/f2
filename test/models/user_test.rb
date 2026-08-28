@@ -282,18 +282,30 @@ class UserTest < ActiveSupport::TestCase
     assert_nil user.most_recent_repost_at
   end
 
-  test "#posts_published_last_week_count should return count of posts from the last 7 days" do
+  test "#posts_published_last_week_count should return count of published posts from the last 7 days" do
     user = create(:user)
     feed = create(:feed, user: user)
     entry1 = create(:feed_entry, feed: feed)
     entry2 = create(:feed_entry, feed: feed)
     entry3 = create(:feed_entry, feed: feed)
 
-    create(:post, feed: feed, feed_entry: entry1, published_at: 2.days.ago)
-    create(:post, feed: feed, feed_entry: entry2, published_at: 1.day.ago)
-    create(:post, feed: feed, feed_entry: entry3, published_at: 10.days.ago)
+    create(:post, :published, feed: feed, feed_entry: entry1, published_at: 2.days.ago)
+    create(:post, :published, feed: feed, feed_entry: entry2, published_at: 1.day.ago)
+    create(:post, :published, feed: feed, feed_entry: entry3, published_at: 10.days.ago)
 
     assert_equal 2, user.posts_published_last_week_count
+  end
+
+  test "#posts_published_last_week_count should ignore posts that are not published" do
+    user = create(:user)
+    feed = create(:feed, user: user)
+    entry1 = create(:feed_entry, feed: feed)
+    entry2 = create(:feed_entry, feed: feed)
+
+    create(:post, feed: feed, feed_entry: entry1, published_at: 1.day.ago)
+    create(:post, :published, feed: feed, feed_entry: entry2, published_at: 1.day.ago)
+
+    assert_equal 1, user.posts_published_last_week_count
   end
 
   test "#posts_published_last_week_count should return 0 when no posts" do

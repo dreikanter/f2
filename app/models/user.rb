@@ -149,7 +149,7 @@ class User < ApplicationRecord
   end
 
   def posts_published_last_week_count
-    imported_posts.where(published_at: 1.week.ago.beginning_of_day..Time.current.end_of_day).count
+    published_posts.where(published_at: 6.days.ago.beginning_of_day..Time.current.end_of_day).count
   end
 
   def update_password!(new_password)

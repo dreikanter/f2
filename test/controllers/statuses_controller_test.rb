@@ -129,13 +129,13 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert css_select('[data-key="stats.most_recent_repost"]').empty?
   end
 
-  test "#show should display posts published last week" do
+  test "#show should display posts published in the last 7 days" do
     sign_in_as user
     feed = create(:feed, user: user)
     entry1 = create(:feed_entry, feed: feed)
     entry2 = create(:feed_entry, feed: feed)
-    create(:post, feed: feed, feed_entry: entry1, published_at: 2.days.ago)
-    create(:post, feed: feed, feed_entry: entry2, published_at: 1.day.ago)
+    create(:post, :published, feed: feed, feed_entry: entry1, published_at: 2.days.ago)
+    create(:post, :published, feed: feed, feed_entry: entry2, published_at: 1.day.ago)
 
     get status_path
     assert_response :success

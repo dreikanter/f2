@@ -1069,13 +1069,33 @@ class FeedTest < ActiveSupport::TestCase
     assert_nil feed.most_recent_repost_at
   end
 
-  test "#posts_published_last_week_count should count posts published within the last week" do
+  test "#posts_published_last_week_count should count published posts from the last 7 days" do
     feed = create(:feed)
-    create(:post, feed: feed, published_at: 2.days.ago)
-    create(:post, feed: feed, published_at: 6.days.ago)
-    create(:post, feed: feed, published_at: 10.days.ago)
+    create(:post, :published, feed: feed, published_at: 2.days.ago)
+    create(:post, :published, feed: feed, published_at: 6.days.ago)
+    create(:post, :published, feed: feed, published_at: 10.days.ago)
 
     assert_equal 2, feed.posts_published_last_week_count
+  end
+
+  test "#posts_published_last_week_count should exclude posts dated before the window" do
+    feed = create(:feed)
+
+    freeze_time do
+      create(:post, :published, feed: feed, published_at: 6.days.ago.beginning_of_day)
+      create(:post, :published, feed: feed, published_at: 7.days.ago.end_of_day)
+
+      assert_equal 1, feed.posts_published_last_week_count
+    end
+  end
+
+  test "#posts_published_last_week_count should ignore posts that are not published" do
+    feed = create(:feed)
+    create(:post, feed: feed, published_at: 1.day.ago)
+    create(:post, :rejected, feed: feed, published_at: 1.day.ago)
+    create(:post, :published, feed: feed, published_at: 1.day.ago)
+
+    assert_equal 1, feed.posts_published_last_week_count
   end
 
   test "#import_after_enabled should default to false when import_after is blank" do

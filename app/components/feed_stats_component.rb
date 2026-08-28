@@ -23,8 +23,8 @@ class FeedStatsComponent < StatsPanelComponent
       },
       {
         key: "posts_last_week",
-        label: "Posts published last week",
-        label_short: "Last week",
+        label: "Posts published in the last 7 days",
+        label_short: "Last 7 days",
         value: helpers.number_with_delimiter(posts_last_week_count),
         muted: posts_last_week_count.zero?
       },

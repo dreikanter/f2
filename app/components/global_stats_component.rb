@@ -29,8 +29,8 @@ class GlobalStatsComponent < StatsPanelComponent
       },
       {
         key: "posts_last_week",
-        label: "Posts published last week",
-        label_short: "Last week",
+        label: "Posts published in the last 7 days",
+        label_short: "Last 7 days",
         value: number_with_delimiter(posts_published_last_week_count)
       },
       {
@@ -59,7 +59,7 @@ class GlobalStatsComponent < StatsPanelComponent
   end
 
   def posts_published_last_week_count
-    Post.where(published_at: 1.week.ago.beginning_of_day..Time.current.end_of_day).count
+    Post.published.where(published_at: 6.days.ago.beginning_of_day..Time.current.end_of_day).count
   end
 
   def most_recent_repost_at
