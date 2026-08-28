@@ -38,6 +38,16 @@ class FeedFormComponentTest < ViewComponent::TestCase
     assert_empty subject.hidden_source_field
   end
 
+  test "#option_profile_keys should offer every candidate while the chooser is live" do
+    subject = component(feed, candidates: [candidate("rss"), candidate("youtube")])
+
+    assert_equal %w[rss youtube], subject.option_profile_keys
+  end
+
+  test "#option_profile_keys should be the feed's own profile otherwise" do
+    assert_equal ["rss"], component(feed).option_profile_keys
+  end
+
   test "#edit_mode? should follow feed persistence" do
     assert_not component(feed).edit_mode?
     assert component(create(:feed, user: user)).edit_mode?

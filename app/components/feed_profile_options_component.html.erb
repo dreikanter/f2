@@ -1,39 +1,49 @@
-<% options.each do |option| %>
-  <%= render PanelComponent.new(class: "mt-6", data: { key: "form.profile-option.#{option.name}" }) do %>
-    <% if option.boolean? %>
-      <div class="flex items-start">
-        <div class="flex h-6 items-center">
-          <%= hidden_field_tag option.field_name, "0", id: nil %>
-          <%= check_box_tag option.field_name, "1", checked?(option),
-                            id: option.field_id,
-                            data: { key: "form.profile-option-input.#{option.name}" } %>
-        </div>
-        <div class="ml-3">
-          <%= label_tag option.field_id, option.title, class: "block font-semibold text-heading mb-0" %>
-          <% if option.description %>
-            <p class="text-sm text-muted"><%= option.description %></p>
+<div data-controller="profile-options">
+  <% groups.each do |profile_key, options| %>
+    <%= tag.div data: { profile_options_target: "group", profile_key: profile_key },
+                hidden: !selected?(profile_key) do %>
+      <% options.each do |option| %>
+        <%= render PanelComponent.new(class: "mt-6", data: { key: "form.profile-option.#{option.name}" }) do %>
+          <% if option.boolean? %>
+            <div class="flex items-start">
+              <div class="flex h-6 items-center">
+                <%= hidden_field_tag option.field_name, "0", id: nil, disabled: !selected?(profile_key) %>
+                <%= check_box_tag option.field_name, "1", checked?(option),
+                                  id: option.field_id,
+                                  disabled: !selected?(profile_key),
+                                  data: { key: "form.profile-option-input.#{option.name}" } %>
+              </div>
+              <div class="ml-3">
+                <%= label_tag option.field_id, option.title, class: "block font-semibold text-heading mb-0" %>
+                <% if option.description %>
+                  <p class="text-sm text-muted"><%= option.description %></p>
+                <% end %>
+              </div>
+            </div>
+          <% else %>
+            <div class="space-y-2">
+              <%= label_tag option.field_id, option.title, class: "block font-semibold text-heading" %>
+              <% if option.choices? %>
+                <%= select_tag option.field_name,
+                               options_for_select(choices_for(option), value_for(option)),
+                               id: option.field_id,
+                               disabled: !selected?(profile_key),
+                               class: helpers.input_field_classes,
+                               data: { key: "form.profile-option-input.#{option.name}" } %>
+              <% else %>
+                <%= text_field_tag option.field_name, value_for(option),
+                                   id: option.field_id,
+                                   disabled: !selected?(profile_key),
+                                   class: helpers.input_field_classes,
+                                   data: { key: "form.profile-option-input.#{option.name}" } %>
+              <% end %>
+              <% if option.description %>
+                <p class="text-sm text-muted"><%= option.description %></p>
+              <% end %>
+            </div>
           <% end %>
-        </div>
-      </div>
-    <% else %>
-      <div class="space-y-2">
-        <%= label_tag option.field_id, option.title, class: "block font-semibold text-heading" %>
-        <% if option.choices? %>
-          <%= select_tag option.field_name,
-                         options_for_select(choices_for(option), value_for(option)),
-                         id: option.field_id,
-                         class: helpers.input_field_classes,
-                         data: { key: "form.profile-option-input.#{option.name}" } %>
-        <% else %>
-          <%= text_field_tag option.field_name, value_for(option),
-                             id: option.field_id,
-                             class: helpers.input_field_classes,
-                             data: { key: "form.profile-option-input.#{option.name}" } %>
         <% end %>
-        <% if option.description %>
-          <p class="text-sm text-muted"><%= option.description %></p>
-        <% end %>
-      </div>
+      <% end %>
     <% end %>
   <% end %>
-<% end %>
+</div>
