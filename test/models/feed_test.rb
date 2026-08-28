@@ -116,6 +116,51 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.errors[:params].any?, "expected a schema error, got: #{feed.errors.full_messages.inspect}"
   end
 
+  BOOLEAN_OPTION_SCHEMA = {
+    "type" => "object",
+    "properties" => {
+      "url" => { "type" => "string", "format" => "uri" },
+      "fancy" => { "type" => "boolean" }
+    },
+    "required" => ["url"],
+    "additionalProperties" => false
+  }.freeze
+
+  def with_boolean_option(&block)
+    FeedProfile.stub(:parameter_schema_for, ->(_key) { BOOLEAN_OPTION_SCHEMA }, &block)
+  end
+
+  test "#save should cast a boolean param submitted as a checkbox value" do
+    feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "fancy" => "1" })
+
+    with_boolean_option { assert feed.valid?, feed.errors.full_messages.inspect }
+
+    assert_equal true, feed.params["fancy"]
+  end
+
+  test "#save should cast an unchecked boolean param to false" do
+    feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "fancy" => "0" })
+
+    with_boolean_option { assert feed.valid?, feed.errors.full_messages.inspect }
+
+    assert_equal false, feed.params["fancy"]
+  end
+
+  test "#save should drop a boolean param that won't cast" do
+    feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "fancy" => "" })
+
+    with_boolean_option { assert feed.valid?, feed.errors.full_messages.inspect }
+
+    assert_not feed.params.key?("fancy")
+  end
+
+  test "#save should leave a string param as submitted" do
+    feed = build(:feed, feed_profile_key: "rss", params: { "url" => "https://example.com/feed.xml" })
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+    assert_equal "https://example.com/feed.xml", feed.params["url"]
+  end
+
   test "should reject params missing required keys per profile schema" do
     feed = build(:feed, feed_profile_key: "rss", params: {})
     assert_not feed.valid?

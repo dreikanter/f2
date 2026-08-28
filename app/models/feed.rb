@@ -56,6 +56,7 @@ class Feed < ApplicationRecord
   after_update :create_schedule_on_enable
   before_validation :compose_import_after_from_parts
   before_validation :drop_params_foreign_to_profile
+  before_validation :cast_params_to_declared_types
 
   validates :name, uniqueness: { scope: :user_id }, length: { maximum: NAME_MAX_LENGTH }
   validates :name, presence: true, if: :enabled?
@@ -431,6 +432,31 @@ class Feed < ApplicationRecord
     return if declared.nil?
 
     self.params = (params || {}).slice(*declared)
+  end
+
+  # Form values arrive as strings, so the declared type has to be applied
+  # before the schema sees them. A value that won't cast drops out and fails
+  # validation as a missing key rather than a type mismatch.
+  def cast_params_to_declared_types
+    properties = FeedProfile.parameter_schema_for(feed_profile_key)&.dig("properties")
+    return if properties.blank?
+
+    self.params = (params || {}).each_with_object({}) do |(key, value), result|
+      cast = cast_param(properties.dig(key, "type"), value)
+      result[key] = cast unless cast.nil?
+    end
+  end
+
+  # @param type [String, nil] the declared JSON Schema type
+  # @param value [Object] the submitted value
+  # @return [Object] the value as its declared type
+  def cast_param(type, value)
+    case type
+    when "boolean" then ActiveModel::Type::Boolean.new.cast(value)
+    when "integer" then ActiveModel::Type::Integer.new.cast(value)
+    when "number" then ActiveModel::Type::Float.new.cast(value)
+    else value
+    end
   end
 
   def compose_import_after_from_parts
