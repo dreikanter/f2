@@ -48,6 +48,9 @@ export default class extends Controller {
     const url = new URL(this.endpointValue, window.location.origin)
     url.searchParams.set("profile_key", profileKey)
     url.searchParams.set(`params[${sourceKey}]`, this._currentSource())
+    this._optionParams(sourceKey).forEach((value, key) => {
+      url.searchParams.set(`params[${key}]`, value)
+    })
     if (this._isAiProfile(profileKey)) {
       const credential = this._aiCredentialValue()
       const model = this._aiModelValue()
@@ -90,6 +93,23 @@ export default class extends Controller {
     if (!this.hasHintTarget) return
     this.hintTarget.textContent = reason || ""
     this.hintTarget.hidden = reason == null
+  }
+
+  // Profile options the form is currently offering, so a preview reads what the
+  // saved feed would. Disabled fields belong to another candidate's panel; an
+  // unchecked box leaves its hidden companion's value standing, as in a submit.
+  _optionParams(sourceKey) {
+    const values = new Map()
+
+    this.element.querySelectorAll("[name^='feed[params]']:not([disabled])").forEach((field) => {
+      const key = field.name.match(/^feed\[params\]\[(.+)\]$/)?.[1]
+      if (!key || key === sourceKey) return
+      if (field.type === "checkbox" && !field.checked) return
+
+      values.set(key, field.value)
+    })
+
+    return values
   }
 
   // The source is the static value from detection, unless an editable field (an
