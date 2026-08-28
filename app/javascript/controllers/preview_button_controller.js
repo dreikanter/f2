@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { selectedProfileKey } from "controllers/helpers/selected_profile_key"
+import { csrfToken } from "controllers/helpers/csrf_token"
 
 // Drives the manual feed preview:
 // - keeps the button enabled only when a profile is selected and a source is
@@ -53,10 +54,7 @@ export default class extends Controller {
     try {
       const response = await fetch(this.endpointValue, {
         method: "POST",
-        headers: {
-          "Accept": "text/vnd.turbo-stream.html",
-          "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content || ""
-        },
+        headers: { "Accept": "text/vnd.turbo-stream.html", "X-CSRF-Token": csrfToken() },
         body: this._requestBody(profileKey, sourceKey),
         credentials: "same-origin"
       })

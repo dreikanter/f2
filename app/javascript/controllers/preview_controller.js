@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { csrfToken } from "controllers/helpers/csrf_token"
 
 // Forces a fresh preview run from inside the feed-preview frame (the "Refresh
 // preview" / "Try again" buttons). Updating the preview restarts its run and
@@ -14,10 +15,7 @@ export default class extends Controller {
     try {
       const response = await fetch(this.refreshUrlValue, {
         method: "PATCH",
-        headers: {
-          "Accept": "text/vnd.turbo-stream.html",
-          "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content || ""
-        },
+        headers: { "Accept": "text/vnd.turbo-stream.html", "X-CSRF-Token": csrfToken() },
         credentials: "same-origin"
       })
 

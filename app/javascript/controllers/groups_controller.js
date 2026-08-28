@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { csrfToken } from "controllers/helpers/csrf_token"
 
 // Loads the target-group selector for the chosen access token: fetches the
 // groups endpoint and lets the returned turbo-stream replace the selector
@@ -48,7 +49,7 @@ export default class extends Controller {
         method: "POST",
         headers: {
           "Accept": "text/vnd.turbo-stream.html",
-          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content || ""
+          "X-CSRF-Token": csrfToken()
         },
         body
       })
