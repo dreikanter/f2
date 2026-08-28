@@ -87,6 +87,26 @@ class Loader::YoutubeLoaderTest < ActiveSupport::TestCase
     assert_equal [CHANNEL_URL, malformed], mock_client.requested_urls
   end
 
+  test "#load should explain a 404 on the long-form playlist" do
+    feed = feed_without_shorts(FEED_URL)
+    mock_client = MockHttpClient.new(responses: { LONG_FORM_FEED_URL => not_found })
+
+    loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
+
+    error = assert_raises(Loader::Error) { loader.load }
+    assert_match(/no regular uploads/, error.message)
+  end
+
+  test "#load should report a plain HTTP error when Shorts are kept" do
+    feed = create(:feed, feed_profile_key: "youtube", params: { "url" => FEED_URL })
+    mock_client = MockHttpClient.new(responses: { FEED_URL => not_found })
+
+    loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
+
+    error = assert_raises(Loader::Error) { loader.load }
+    assert_equal "HTTP 404", error.message
+  end
+
   test "#load should keep Shorts when the option is off" do
     feed = create(:feed, feed_profile_key: "youtube", params: { "url" => FEED_URL, "exclude_shorts" => false })
     mock_client = MockHttpClient.new(responses: { FEED_URL => ok(FEED_BODY) })
@@ -228,6 +248,10 @@ class Loader::YoutubeLoaderTest < ActiveSupport::TestCase
 
   def ok(body)
     HttpClient::Response.new(status: 200, body: body, headers: {})
+  end
+
+  def not_found
+    HttpClient::Response.new(status: 404, body: "", headers: {})
   end
 
   def error_response(status)

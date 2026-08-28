@@ -12,8 +12,14 @@ module Loader
     # serves it by playlist id.
     LONG_FORM_PLAYLIST_PREFIX = "UULF"
 
+    # A channel with nothing but Shorts has no long-form playlist, so YouTube
+    # answers 404. Left as a bare HTTP error it reads as a broken feed and
+    # retries until the feed auto-disables.
+    NO_LONG_FORM_MESSAGE = "This channel has no regular uploads to follow. Turn off Skip Shorts to include its Shorts.".freeze
+
     def load
       response = http_client.get(feed_url)
+      raise Loader::Error, NO_LONG_FORM_MESSAGE if response.status == 404 && long_form_playlist?
       raise Loader::Error, "HTTP #{response.status}" unless response.success?
       response.body
     rescue HttpClient::Error => e
@@ -50,6 +56,10 @@ module Loader
 
     def exclude_shorts?
       feed.params&.dig("exclude_shorts")
+    end
+
+    def long_form_playlist?
+      exclude_shorts? && feed_url.include?("playlist_id=#{LONG_FORM_PLAYLIST_PREFIX}")
     end
 
     def feed_url_from_url_pattern(url)
