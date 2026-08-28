@@ -335,7 +335,19 @@ class FeedProfile
       depends_on_ai: false,
       scheduled: true,
       matcher: "ProfileMatcher::YoutubeProfileMatcher",
-      parameter_schema: URL_PARAMETER_SCHEMA,
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" },
+          "exclude_shorts" => {
+            "type" => "boolean",
+            "title" => "Skip Shorts",
+            "description" => "Follow the channel's regular uploads only. Works for channels, not playlists."
+          }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      }.freeze,
       loader: { class: "Loader::YoutubeLoader", config: {} },
       processor: { class: "Processor::YoutubeProcessor", config: {} },
       normalizer: { class: "Normalizer::YoutubeNormalizer", config: {} },

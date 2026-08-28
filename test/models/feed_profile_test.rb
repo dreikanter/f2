@@ -235,6 +235,14 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_equal "Fancy mode", options.first.title
   end
 
+  test "youtube profile declares the Shorts option" do
+    options = FeedProfile.options_for("youtube")
+
+    assert_equal ["exclude_shorts"], options.map(&:name)
+    assert_predicate options.first, :boolean?
+    assert_equal "Skip Shorts", options.first.title
+  end
+
   test ".options_for returns nothing for a profile declaring only its source" do
     assert_empty FeedProfile.options_for("rss")
     assert_empty FeedProfile.options_for("llm")

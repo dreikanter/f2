@@ -21,6 +21,67 @@ class Loader::YoutubeLoaderTest < ActiveSupport::TestCase
     create(:feed, url: url)
   end
 
+  LONG_FORM_FEED_URL = "https://www.youtube.com/feeds/videos.xml?playlist_id=UULF123"
+  PLAYLIST_FEED_URL = "https://www.youtube.com/feeds/videos.xml?playlist_id=PL123"
+  USER_FEED_URL = "https://www.youtube.com/feeds/videos.xml?user=someone"
+
+  def feed_without_shorts(url)
+    create(:feed, feed_profile_key: "youtube", params: { "url" => url, "exclude_shorts" => true })
+  end
+
+  test "#load should swap a channel feed for its long-form playlist when Shorts are excluded" do
+    feed = feed_without_shorts(FEED_URL)
+    mock_client = MockHttpClient.new(responses: { LONG_FORM_FEED_URL => ok(FEED_BODY) })
+
+    loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
+
+    assert_equal FEED_BODY, loader.load
+    assert_equal [LONG_FORM_FEED_URL], mock_client.requested_urls
+  end
+
+  test "#load should swap a channel resolved from HTML when Shorts are excluded" do
+    feed = feed_without_shorts(CHANNEL_URL)
+    mock_client = MockHttpClient.new(responses: {
+      CHANNEL_URL => ok(CHANNEL_PAGE_WITH_RSS),
+      LONG_FORM_FEED_URL => ok(FEED_BODY)
+    })
+
+    loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
+
+    assert_equal FEED_BODY, loader.load
+    assert_equal [CHANNEL_URL, LONG_FORM_FEED_URL], mock_client.requested_urls
+  end
+
+  test "#load should leave a playlist feed alone when Shorts are excluded" do
+    feed = feed_without_shorts(PLAYLIST_FEED_URL)
+    mock_client = MockHttpClient.new(responses: { PLAYLIST_FEED_URL => ok(FEED_BODY) })
+
+    loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
+
+    assert_equal FEED_BODY, loader.load
+    assert_equal [PLAYLIST_FEED_URL], mock_client.requested_urls
+  end
+
+  test "#load should leave a legacy user feed alone when Shorts are excluded" do
+    feed = feed_without_shorts(USER_FEED_URL)
+    mock_client = MockHttpClient.new(responses: { USER_FEED_URL => ok(FEED_BODY) })
+
+    loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
+
+    assert_equal FEED_BODY, loader.load
+    assert_equal [USER_FEED_URL], mock_client.requested_urls
+  end
+
+  test "#load should keep Shorts when the option is off" do
+    feed = create(:feed, feed_profile_key: "youtube", params: { "url" => FEED_URL, "exclude_shorts" => false })
+    mock_client = MockHttpClient.new(responses: { FEED_URL => ok(FEED_BODY) })
+
+    loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
+
+    assert_equal FEED_BODY, loader.load
+    assert_equal [FEED_URL], mock_client.requested_urls
+  end
+
   test "#load should fetch feed URL directly when URL is already a feed URL" do
     feed = feed_with_url(FEED_URL)
     mock_client = MockHttpClient.new(responses: { FEED_URL => ok(FEED_BODY) })

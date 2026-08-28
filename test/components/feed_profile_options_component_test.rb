@@ -84,6 +84,15 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
     assert_no_selector "input[name='feed[params][url]']", visible: :all
   end
 
+  test "#render should render the Shorts option for a youtube feed" do
+    subject = feed(feed_profile_key: "youtube", "url" => "https://www.youtube.com/@chan")
+
+    render_inline(FeedProfileOptionsComponent.new(feed: subject))
+
+    assert_selector "input[type=checkbox][name='feed[params][exclude_shorts]']"
+    assert_selector "label", text: "Skip Shorts"
+  end
+
   test "#render? should be false for a profile declaring no options" do
     subject = FeedProfileOptionsComponent.new(feed: feed)
 

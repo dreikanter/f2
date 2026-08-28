@@ -5,6 +5,13 @@ module Loader
     YOUTUBE_DOMAINS = %w[youtube.com www.youtube.com].freeze
     DEFAULT_MAX_REDIRECTS = 3
 
+    CHANNEL_ID_PREFIX = "UC"
+
+    # YouTube derives per-channel auto-playlists from the channel id. The UULF
+    # one holds regular uploads with Shorts left out, and the keyless feed
+    # serves it by playlist id.
+    LONG_FORM_PLAYLIST_PREFIX = "UULF"
+
     def load
       response = http_client.get(feed_url)
       raise Loader::Error, "HTTP #{response.status}" unless response.success?
@@ -20,9 +27,29 @@ module Loader
     end
 
     def resolve_feed_url(url)
-      return url if youtube_feed_url?(url)
+      resolved = if youtube_feed_url?(url)
+        url
+      else
+        feed_url_from_url_pattern(url) || fetch_feed_url_from_html(url)
+      end
 
-      feed_url_from_url_pattern(url) || fetch_feed_url_from_html(url)
+      exclude_shorts? ? long_form_feed_url(resolved) : resolved
+    end
+
+    # Only a channel feed can be swapped for its long-form playlist; a feed
+    # already pointing at a playlist or a legacy user is left as it is.
+    def long_form_feed_url(url)
+      channel_id = URI.decode_www_form(URI.parse(url).query.to_s).to_h["channel_id"]
+      return url unless channel_id&.start_with?(CHANNEL_ID_PREFIX)
+
+      playlist_id = channel_id.sub(CHANNEL_ID_PREFIX, LONG_FORM_PLAYLIST_PREFIX)
+      "#{FEED_BASE_URL}?playlist_id=#{playlist_id}"
+    rescue URI::InvalidURIError
+      url
+    end
+
+    def exclude_shorts?
+      feed.params&.dig("exclude_shorts")
     end
 
     def feed_url_from_url_pattern(url)
