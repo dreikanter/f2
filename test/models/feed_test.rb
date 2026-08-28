@@ -93,6 +93,29 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "value", feed.params["extra"]
   end
 
+  test "#save should drop params the new profile doesn't declare" do
+    feed = create(:feed, feed_profile_key: "rss")
+    feed.update_column(:params, feed.params.merge("legacy_option" => true))
+
+    assert feed.reload.update(feed_profile_key: "telegram"), feed.errors.full_messages.inspect
+    assert_equal ["url"], feed.reload.params.keys
+  end
+
+  test "#save should keep params the new profile declares" do
+    feed = create(:feed, feed_profile_key: "rss", params: { "url" => "https://example.com/feed.xml" })
+
+    feed.update!(feed_profile_key: "telegram")
+
+    assert_equal "https://example.com/feed.xml", feed.reload.url
+  end
+
+  test "should reject undeclared params on create instead of dropping them" do
+    feed = build(:feed, feed_profile_key: "rss", params: { "url" => "https://example.com/feed.xml", "legacy_option" => true })
+
+    assert_not feed.valid?
+    assert feed.errors[:params].any?, "expected a schema error, got: #{feed.errors.full_messages.inspect}"
+  end
+
   test "should reject params missing required keys per profile schema" do
     feed = build(:feed, feed_profile_key: "rss", params: {})
     assert_not feed.valid?

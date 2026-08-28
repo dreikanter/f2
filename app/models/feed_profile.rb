@@ -459,6 +459,14 @@ class FeedProfile
       PROFILES.dig(key, :parameter_schema)
     end
 
+    # Every schema closes over an explicit property list, so the declared keys
+    # are the complete set a profile accepts.
+    # @param key [String] the profile key
+    # @return [Array<String>, nil] declared params keys, nil for an unknown profile
+    def parameter_keys_for(key)
+      parameter_schema_for(key)&.dig("properties")&.keys
+    end
+
     # The params key holding the source input ("url", "prompt"), derived
     # from the profile's single required param. Unknown profiles fall back
     # to "url"; an input-less profile returns nil.

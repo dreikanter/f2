@@ -209,6 +209,16 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_nil FeedProfile.parameter_schema_for("nope")
   end
 
+  test ".parameter_keys_for returns the keys a profile declares" do
+    assert_equal ["url"], FeedProfile.parameter_keys_for("rss")
+    assert_equal ["prompt"], FeedProfile.parameter_keys_for("llm")
+    assert_equal [], FeedProfile.parameter_keys_for("webhook")
+  end
+
+  test ".parameter_keys_for returns nil for unknown profiles" do
+    assert_nil FeedProfile.parameter_keys_for("nope")
+  end
+
   test "#display_name_for should return RSS Feed for rss profile" do
     assert_equal "RSS Feed", FeedProfile.display_name_for("rss")
   end
