@@ -8,11 +8,12 @@ or anything that already has the content in hand.
 ## Setting up the feed
 
 On **New Feed**, pick **Post via webhook** and continue. There's no source to
-enter and nothing to detect, so you land straight on the feed form as a draft,
-with the endpoint and its token already minted.
+enter and nothing to detect, so you go straight to the full feed form.
 
-Give the feed a name, pick an access token and a target group, then enable it.
-There's no schedule to set — nothing is being polled.
+Give the feed a name, pick an access token and a target group, and save it. The
+endpoint and its token are minted on that first save, and from then on they live
+on the feed's page. Enable the feed when you're ready; there's no schedule to
+set, since nothing is being polled.
 
 The endpoint answers `409` until the feed is enabled, and disabling the feed
 pauses it again. A paused feed makes the caller's script fail loudly instead of
@@ -68,17 +69,23 @@ curl --request POST https://feeder.example/v1/posts \
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `content` | string | The post body. Required unless `images` is non-empty. |
+| `content` | string | The post body. Effectively required — see the note under the table. |
 | `source_url` | string | Absolute `http(s)` URL, up to 2048 characters. Appended to the body (see below) and used as the uid seed. |
 | `images` | array of strings | Up to 8. Each must be an absolute, public `http(s)` URL; Feeder downloads them and re-uploads them to FreeFeed at publish time. |
 | `comments` | array of strings | Up to 8, published as comments under the post. Each is clamped to 3000 characters. |
 | `uid` | string | 1–255 characters. Your idempotency key — see [Retries and duplicates](#retries-and-duplicates). |
 | `published_at` | string | ISO 8601. Defaults to now; a future timestamp is clamped to now. Controls publish order. |
 
-Every field is optional on its own, but a payload with neither `content` nor
-`images` is a `422`. Unknown fields are rejected rather than ignored, so a typo
-like `imges` comes back as a `422` instead of quietly publishing a post with no
-images.
+Every field is optional on its own, but the post still needs a body. A payload
+with neither `content` nor `images` is a `422` at ingress, and publishing asks
+for more than that: the body is `content` when you send it, and the bare
+`source_url` when you don't. **A payload carrying only `images` gets its `201`
+and then fails at publish** — it lands on the feed as a failed post rather than
+coming back as an error you can act on. Send `content`, or at least a
+`source_url`, alongside your images.
+
+Unknown fields are rejected rather than ignored, so a typo like `imges` comes
+back as a `422` instead of quietly publishing a post with no images.
 
 Two things about `content` that aren't guessable from the field names:
 
@@ -106,9 +113,15 @@ Every response is JSON except `413`, so a script can branch on `status`.
 | `429` | `{"status": "throttled"}` | Ingress rate limit. Carries `Retry-After` in seconds. |
 
 A `201` means **enqueued, not published**. Publishing happens asynchronously
-behind the FreeFeed rate limiter, so anything that goes wrong after this point —
-a dead access token, a group you've lost access to — shows up in the feed's
-**Recent Activity**, not in the response you already got.
+behind the FreeFeed rate limiter, so nothing that goes wrong afterwards can reach
+the response you already have.
+
+Where those failures surface depends on what failed. A dead access token, a
+target group you've lost access to, and comments that couldn't be delivered each
+write an entry to the feed's **Recent Activity**. Everything else — an image URL
+that 404s, an unexpected fault — only marks the post failed, with nothing in the
+activity log. Check the feed's posts as well as its activity when a delivery you
+got a `201` for never shows up.
 
 ## Retries and duplicates
 
