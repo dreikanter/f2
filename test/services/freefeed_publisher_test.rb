@@ -68,13 +68,19 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_equal "Post feed target group is required", error.message
   end
 
-  test "#initialize should raise when post lacks content" do
+  test "#initialize should raise when post lacks content and attachments" do
     post = post_with_content("")
 
     error = assert_raises(FreefeedPublisher::ValidationError) do
       FreefeedPublisher.new(post)
     end
     assert_equal "Post content is required", error.message
+  end
+
+  test "#initialize should accept an attachment-only post" do
+    post = post_with_content("", attachment_urls: ["https://example.com/pic.jpg"])
+
+    assert_equal post, FreefeedPublisher.new(post).post
   end
 
   test "#initialize should raise when access token inactive" do
@@ -646,6 +652,21 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_equal "freefeed_post_123", FreefeedPublisher.new(post).publish
     assert_requested post_stub
     assert_predicate post.reload, :published?
+  end
+
+  test "#publish should raise SourceContentError when a bodyless post loses every attachment" do
+    huge_url = "https://example.com/huge.png"
+    post = post_with_content("", attachment_urls: [huge_url])
+
+    stub_request(:get, huge_url)
+      .to_return(status: 200, body: "huge_image_data", headers: { "Content-Type" => "image/png" })
+    stub_request(:post, "#{access_token.host}/v1/attachments")
+      .to_return(status: 413, body: { err: "This 'image' file is too large" }.to_json)
+
+    post_stub = stub_request(:post, "#{access_token.host}/v4/posts")
+
+    assert_raises(FreefeedPublisher::SourceContentError) { FreefeedPublisher.new(post).publish }
+    assert_not_requested post_stub
   end
 
   test "#publish should raise SourceContentError when an attachment cannot be downloaded" do

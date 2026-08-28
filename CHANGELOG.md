@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-28
 
+- Posts that are just images now publish. Before, a post with pictures and no text was accepted and then quietly failed.
 - The name page in settings now says up front what a name is for.
 - The weekly post count now covers a true 7 days and counts only posts that made it to FreeFeed. It was spanning eight days and including drafts.
 - That stat is now labelled "Last 7 days" instead of "Last week", which is what it actually measures.

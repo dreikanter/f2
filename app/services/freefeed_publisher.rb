@@ -65,6 +65,14 @@ class FreefeedPublisher
 
     unless already_published?
       attachment_ids = upload_pending_attachments
+
+      # An attachment-only post whose uploads were all skipped (oversized) would
+      # go out with no body and nothing attached, which FreeFeed rejects. The
+      # source is at fault, not the app, so fail it without paging.
+      if post.content.blank? && attachment_ids.empty?
+        raise SourceContentError, "No attachment survived upload for a post with no content"
+      end
+
       freefeed_post = create_freefeed_post(attachment_ids)
       update_post_with_freefeed_id(freefeed_post[:id])
     end
@@ -86,7 +94,7 @@ class FreefeedPublisher
     raise ValidationError, "Post feed access token is required" unless post.feed.access_token
     raise ValidationError, "Post feed access token is inactive" unless post.feed.access_token.active?
     raise ValidationError, "Post feed target group is required" unless post.feed.target_group
-    raise ValidationError, "Post content is required" unless post.content.present?
+    raise ValidationError, "Post content is required" unless post.content.present? || post.attachment_urls.any?
   end
 
   def client
