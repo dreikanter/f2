@@ -100,22 +100,12 @@ class FeedFormComponent < ViewComponent::Base
     edit_mode? && !ai_prompt_editable?
   end
 
-  # A submitted params hash replaces the stored one wholesale, so a param with
-  # no visible input needs a hidden one or the save drops it.
-  # @return [Hash] params the form renders no input for
-  def carried_params
-    (feed.params || {}).except(FeedProfile.source_key_for(feed.feed_profile_key))
-  end
-
-  # @return [Hash] the feed's params
-  def all_params
-    feed.params || {}
-  end
-
-  # @param params_hash [Hash] the params to carry through the submit
+  # A disabled source field submits nothing, so the params need hidden inputs
+  # to survive the round trip.
   # @return [String] a hidden input per param
-  def hidden_params_fields(params_hash)
-    safe_join(params_hash.map { |key, value| hidden_field_tag("feed[params][#{key}]", value) })
+  def hidden_params_fields
+    fields = (feed.params || {}).map { |key, value| hidden_field_tag("feed[params][#{key}]", value) }
+    safe_join(fields)
   end
 
   def source_url_value

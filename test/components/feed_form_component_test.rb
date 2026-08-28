@@ -24,29 +24,12 @@ class FeedFormComponentTest < ViewComponent::TestCase
     FeedIdentification::Candidate.new({ "profile_key" => profile_key, "test_status" => "passed", "posts_found" => 1 })
   end
 
-  test "#carried_params should exclude the param the form renders as the source" do
-    subject = component(feed(params: { "url" => "https://example.com/feed.xml", "legacy_option" => true }))
-
-    assert_equal({ "legacy_option" => true }, subject.carried_params)
-  end
-
-  test "#carried_params should exclude an AI profile's prompt" do
-    subject = component(ai_feed)
-
-    assert_empty subject.carried_params
-  end
-
-  test "#carried_params should keep every param for a sourceless profile" do
-    subject = component(feed(feed_profile_key: "webhook", params: { "legacy_option" => true }))
-
-    assert_equal({ "legacy_option" => true }, subject.carried_params)
-  end
-
   test "#hidden_params_fields should render an input per param" do
-    subject = component(feed)
-    markup = subject.hidden_params_fields({ "legacy_option" => "kept" })
+    subject = component(feed(params: { "url" => "https://example.com/feed.xml", "extra_option" => "kept" }))
+    markup = subject.hidden_params_fields
 
-    assert_includes markup, %(name="feed[params][legacy_option]")
+    assert_includes markup, %(name="feed[params][url]")
+    assert_includes markup, %(name="feed[params][extra_option]")
     assert_includes markup, %(value="kept")
   end
 
