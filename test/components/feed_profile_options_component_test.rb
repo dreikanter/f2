@@ -101,6 +101,13 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
     assert_equal ids.uniq, ids, "two panels declaring one option must not share a DOM id"
   end
 
+  test "#render should name the param each control submits" do
+    result = render_typed
+
+    named = result.css("[data-param-name]").map { |field| field["data-param-name"] }
+    assert_equal %w[fancy flavour quality], named.sort
+  end
+
   test "#render should render a panel per submittable profile" do
     result = render_inline(FeedProfileOptionsComponent.new(
       feed: feed(feed_profile_key: "youtube", "url" => "https://www.youtube.com/@chan"),

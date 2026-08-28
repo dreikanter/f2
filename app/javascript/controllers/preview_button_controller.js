@@ -48,7 +48,7 @@ export default class extends Controller {
     const url = new URL(this.endpointValue, window.location.origin)
     url.searchParams.set("profile_key", profileKey)
     url.searchParams.set(`params[${sourceKey}]`, this._currentSource())
-    this._optionParams(sourceKey).forEach((value, key) => {
+    this._optionParams().forEach((value, key) => {
       url.searchParams.set(`params[${key}]`, value)
     })
     if (this._isAiProfile(profileKey)) {
@@ -96,17 +96,17 @@ export default class extends Controller {
   }
 
   // Profile options the form is currently offering, so a preview reads what the
-  // saved feed would. Disabled fields belong to another candidate's panel; an
-  // unchecked box leaves its hidden companion's value standing, as in a submit.
-  _optionParams(sourceKey) {
+  // saved feed would. FormData is the browser building the form's entry list,
+  // so disabled panels, unchecked boxes and select semantics come for free; the
+  // last entry for a name wins, as it would in a submit. Each control names its
+  // own param, so the form owns that mapping rather than this parser.
+  _optionParams() {
+    const submitted = new FormData(this.element)
     const values = new Map()
 
-    this.element.querySelectorAll("[name^='feed[params]']:not([disabled])").forEach((field) => {
-      const key = field.name.match(/^feed\[params\]\[(.+)\]$/)?.[1]
-      if (!key || key === sourceKey) return
-      if (field.type === "checkbox" && !field.checked) return
-
-      values.set(key, field.value)
+    this.element.querySelectorAll("[data-param-name]").forEach((field) => {
+      const entries = submitted.getAll(field.name)
+      if (entries.length) values.set(field.dataset.paramName, entries.at(-1))
     })
 
     return values
