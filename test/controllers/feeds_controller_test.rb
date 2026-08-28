@@ -64,6 +64,41 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "keep me", feed.reload.params["note"]
   end
 
+  test "#update should keep an option while a changed source waits for detection" do
+    sign_in_as(user)
+    yt = create(:feed, user: user, feed_profile_key: "youtube",
+                       params: { "url" => "https://www.youtube.com/@one" })
+
+    patch feed_path(yt), params: {
+      feed: { params: { url: "https://www.youtube.com/@two", exclude_shorts: "1" } },
+      enable_feed: "0"
+    }
+
+    yt.reload
+    assert_equal "https://www.youtube.com/@one", yt.url, "the source waits for a confirmed candidate"
+    assert_equal true, yt.params["exclude_shorts"]
+  end
+
+  test "#update should keep an option declared by a confirmed new profile" do
+    sign_in_as(user)
+    rss_feed = create(:feed, user: user, params: { "url" => "https://example.com/feed.xml" })
+    channel_url = "https://www.youtube.com/@chan"
+    create(:feed_identification, user: user, input: channel_url, status: :working,
+                                 candidates: [{ "profile_key" => "youtube", "title" => "Chan" }])
+
+    patch feed_path(rss_feed), params: {
+      feed: {
+        feed_profile_key: "youtube",
+        params: { url: channel_url, exclude_shorts: "1" }
+      },
+      enable_feed: "0"
+    }
+
+    rss_feed.reload
+    assert_equal "youtube", rss_feed.feed_profile_key
+    assert_equal true, rss_feed.params["exclude_shorts"]
+  end
+
   test "#update should strip a param the profile doesn't declare" do
     sign_in_as(user)
 

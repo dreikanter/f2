@@ -335,7 +335,19 @@ class FeedProfile
       depends_on_ai: false,
       scheduled: true,
       matcher: "ProfileMatcher::YoutubeProfileMatcher",
-      parameter_schema: URL_PARAMETER_SCHEMA,
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" },
+          "exclude_shorts" => {
+            "type" => "boolean",
+            "title" => "Skip Shorts",
+            "description" => "Follow the channel's regular uploads only. Works for channels, not playlists."
+          }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      }.freeze,
       loader: { class: "Loader::YoutubeLoader", config: {} },
       processor: { class: "Processor::YoutubeProcessor", config: {} },
       normalizer: { class: "Normalizer::YoutubeNormalizer", config: {} },
@@ -457,6 +469,14 @@ class FeedProfile
     # @return [Hash, nil] the params JSON Schema, nil for an unknown profile
     def parameter_schema_for(key)
       PROFILES.dig(key, :parameter_schema)
+    end
+
+    # Params a profile declares beyond its source, in declaration order.
+    # @param key [String] the profile key
+    # @return [Array<ParamOption>] the profile's options
+    def options_for(key)
+      properties = parameter_schema_for(key)&.dig("properties") || {}
+      properties.except(source_key_for(key)).map { |name, schema| ParamOption.new(name, schema) }
     end
 
     # Every schema lists its properties explicitly, so these are the complete

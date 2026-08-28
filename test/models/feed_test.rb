@@ -109,11 +109,90 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "https://example.com/feed.xml", feed.reload.url
   end
 
+  test "#save should cast an integer param" do
+    feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "batch" => "25" })
+
+    with_typed_options { assert feed.valid?, feed.errors.full_messages.inspect }
+
+    assert_equal 25, feed.params["batch"]
+  end
+
+  test "#save should cast a number param" do
+    feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "ratio" => "0.5" })
+
+    with_typed_options { assert feed.valid?, feed.errors.full_messages.inspect }
+
+    assert_in_delta 0.5, feed.params["ratio"]
+  end
+
+  test "#save should drop an integer param that isn't a number" do
+    feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "batch" => "abc" })
+
+    with_typed_options { assert feed.valid?, feed.errors.full_messages.inspect }
+
+    assert_not feed.params.key?("batch")
+  end
+
+  test "#save should drop a number param that isn't a number" do
+    feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "ratio" => "abc" })
+
+    with_typed_options { assert feed.valid?, feed.errors.full_messages.inspect }
+
+    assert_not feed.params.key?("ratio")
+  end
+
   test "should reject undeclared params on create instead of dropping them" do
     feed = build(:feed, feed_profile_key: "rss", params: { "url" => "https://example.com/feed.xml", "legacy_option" => true })
 
     assert_not feed.valid?
     assert feed.errors[:params].any?, "expected a schema error, got: #{feed.errors.full_messages.inspect}"
+  end
+
+  TYPED_OPTION_SCHEMA = {
+    "type" => "object",
+    "properties" => {
+      "url" => { "type" => "string", "format" => "uri" },
+      "fancy" => { "type" => "boolean" },
+      "batch" => { "type" => "integer" },
+      "ratio" => { "type" => "number" }
+    },
+    "required" => ["url"],
+    "additionalProperties" => false
+  }.freeze
+
+  def with_typed_options(&block)
+    FeedProfile.stub(:parameter_schema_for, ->(_key) { TYPED_OPTION_SCHEMA }, &block)
+  end
+
+  test "#save should cast a boolean param submitted as a checkbox value" do
+    feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "fancy" => "1" })
+
+    with_typed_options { assert feed.valid?, feed.errors.full_messages.inspect }
+
+    assert_equal true, feed.params["fancy"]
+  end
+
+  test "#save should cast an unchecked boolean param to false" do
+    feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "fancy" => "0" })
+
+    with_typed_options { assert feed.valid?, feed.errors.full_messages.inspect }
+
+    assert_equal false, feed.params["fancy"]
+  end
+
+  test "#save should drop a boolean param that won't cast" do
+    feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "fancy" => "" })
+
+    with_typed_options { assert feed.valid?, feed.errors.full_messages.inspect }
+
+    assert_not feed.params.key?("fancy")
+  end
+
+  test "#save should leave a string param as submitted" do
+    feed = build(:feed, feed_profile_key: "rss", params: { "url" => "https://example.com/feed.xml" })
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+    assert_equal "https://example.com/feed.xml", feed.params["url"]
   end
 
   test "should reject params missing required keys per profile schema" do

@@ -215,6 +215,44 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_equal [], FeedProfile.parameter_keys_for("webhook")
   end
 
+  OPTION_SCHEMA = {
+    "type" => "object",
+    "properties" => {
+      "url" => { "type" => "string", "format" => "uri" },
+      "fancy" => { "type" => "boolean", "title" => "Fancy mode" }
+    },
+    "required" => ["url"],
+    "additionalProperties" => false
+  }.freeze
+
+  test ".options_for returns the params a profile declares beyond its source" do
+    options = FeedProfile.stub(:parameter_schema_for, ->(_key) { OPTION_SCHEMA }) do
+      FeedProfile.options_for("rss")
+    end
+
+    assert_equal ["fancy"], options.map(&:name)
+    assert_predicate options.first, :boolean?
+    assert_equal "Fancy mode", options.first.title
+  end
+
+  test "youtube profile declares the Shorts option" do
+    options = FeedProfile.options_for("youtube")
+
+    assert_equal ["exclude_shorts"], options.map(&:name)
+    assert_predicate options.first, :boolean?
+    assert_equal "Skip Shorts", options.first.title
+  end
+
+  test ".options_for returns nothing for a profile declaring only its source" do
+    assert_empty FeedProfile.options_for("rss")
+    assert_empty FeedProfile.options_for("llm")
+    assert_empty FeedProfile.options_for("webhook")
+  end
+
+  test ".options_for returns nothing for an unknown profile" do
+    assert_empty FeedProfile.options_for("nope")
+  end
+
   test ".parameter_keys_for returns nil for unknown profiles" do
     assert_nil FeedProfile.parameter_keys_for("nope")
   end
