@@ -35,6 +35,7 @@ module FeedHelper
     missing_parts << "schedule" if feed.scheduled? && feed.cron_expression.blank?
     if FeedProfile.depends_on_ai?(feed.feed_profile_key)
       missing_parts << "active AI credential" unless feed.ai_credential&.active?
+      missing_parts << "active search credential" unless feed.search_credential&.active?
       missing_parts << "AI model" unless feed.ai_model.present?
     end
     missing_parts
