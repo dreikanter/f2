@@ -300,10 +300,20 @@ class FeedsController < ApplicationController
       ALWAYS_PERMITTED_PARAMS + DRAFT_ONLY_PERMITTED_PARAMS +
         params_entry_for(submitted_profile_key.presence || @feed.feed_profile_key)
     else
-      # A live feed's profile is fixed, so the stored one decides. Trusting the
-      # submitted key here would let an unverified switch widen the set.
-      ALWAYS_PERMITTED_PARAMS + params_entry_for(@feed.feed_profile_key)
+      ALWAYS_PERMITTED_PARAMS + params_entry_for(live_params_profile_key)
     end
+  end
+
+  # A confirmed re-detection applies the submitted profile in this same request,
+  # so that profile's schema decides what's assignable. Everywhere else the
+  # stored one does, keeping an unverified switch from widening the set.
+  # @return [String, nil] the profile deciding a live feed's params shape
+  def live_params_profile_key
+    confirmed_source_change? ? submitted_profile_key : @feed.feed_profile_key
+  end
+
+  def confirmed_source_change?
+    mode_a_source_change? && source_change_confirmed?
   end
 
   # Schema-driven so a profile-specific option isn't filtered out before it
