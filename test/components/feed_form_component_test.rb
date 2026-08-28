@@ -24,13 +24,18 @@ class FeedFormComponentTest < ViewComponent::TestCase
     FeedIdentification::Candidate.new({ "profile_key" => profile_key, "test_status" => "passed", "posts_found" => 1 })
   end
 
-  test "#hidden_params_fields should render an input per param" do
+  test "#hidden_source_field should carry the source and nothing else" do
     subject = component(feed(params: { "url" => "https://example.com/feed.xml", "extra_option" => "kept" }))
-    markup = subject.hidden_params_fields
+    markup = subject.hidden_source_field
 
     assert_includes markup, %(name="feed[params][url]")
-    assert_includes markup, %(name="feed[params][extra_option]")
-    assert_includes markup, %(value="kept")
+    assert_not_includes markup, %(name="feed[params][extra_option]")
+  end
+
+  test "#hidden_source_field should render nothing for a sourceless profile" do
+    subject = component(feed(feed_profile_key: "webhook", params: {}))
+
+    assert_empty subject.hidden_source_field
   end
 
   test "#edit_mode? should follow feed persistence" do
