@@ -69,23 +69,17 @@ curl --request POST https://feeder.example/v1/posts \
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `content` | string | The post body. Effectively required — see the note under the table. |
+| `content` | string | The post body. Required unless `images` is non-empty. |
 | `source_url` | string | Absolute `http(s)` URL, up to 2048 characters. Appended to the body (see below) and used as the uid seed. |
-| `images` | array of strings | Up to 8. Each must be an absolute, public `http(s)` URL; Feeder downloads them and re-uploads them to FreeFeed at publish time. |
+| `images` | array of strings | Up to 8. Each must be an absolute, public `http(s)` URL; Feeder downloads them and re-uploads them to FreeFeed at publish time. Images alone are a complete post. |
 | `comments` | array of strings | Up to 8, published as comments under the post. Each is clamped to 3000 characters. |
 | `uid` | string | 1–255 characters. Your idempotency key — see [Retries and duplicates](#retries-and-duplicates). |
 | `published_at` | string | ISO 8601. Defaults to now; a future timestamp is clamped to now. Controls publish order. |
 
-Every field is optional on its own, but the post still needs a body. A payload
-with neither `content` nor `images` is a `422` at ingress, and publishing asks
-for more than that: the body is `content` when you send it, and the bare
-`source_url` when you don't. **A payload carrying only `images` gets its `201`
-and then fails at publish** — it lands on the feed as a failed post rather than
-coming back as an error you can act on. Send `content`, or at least a
-`source_url`, alongside your images.
-
-Unknown fields are rejected rather than ignored, so a typo like `imges` comes
-back as a `422` instead of quietly publishing a post with no images.
+Every field is optional on its own, but a payload with neither `content` nor
+`images` is a `422`. Unknown fields are rejected rather than ignored, so a typo
+like `imges` comes back as a `422` instead of quietly publishing a post with no
+images.
 
 Two things about `content` that aren't guessable from the field names:
 
