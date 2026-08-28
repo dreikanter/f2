@@ -296,6 +296,45 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/data-preview-done/, response.body)
   end
 
+  test "#update should restart the run and clear the last result" do
+    sign_in_as(user)
+    preview = create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
+                                                params: { "url" => "http://example.com/feed.xml" })
+
+    assert_no_difference("FeedPreview.count") do
+      assert_enqueued_with(job: FeedPreviewJob) do
+        patch feed_preview_url(preview), headers: TURBO_STREAM
+      end
+    end
+
+    assert_response :success
+    assert_match(/data-key="preview.processing"/, response.body)
+    preview.reload
+    assert preview.pending?
+    assert_nil preview.data
+  end
+
+  test "#update should rotate the run id so the previous job can't write back" do
+    sign_in_as(user)
+    preview = create(:feed_preview, :processing, user: user, feed_profile_key: "rss",
+                                                 params: { "url" => "http://example.com/feed.xml" })
+    was = preview.run_id
+
+    patch feed_preview_url(preview), headers: TURBO_STREAM
+
+    refute_equal was, preview.reload.run_id
+  end
+
+  test "#update should not reach another user's preview" do
+    sign_in_as(user)
+    stranger = create(:feed_preview, :completed, user: create(:user), feed_profile_key: "rss",
+                                                 params: { "url" => "http://example.com/feed.xml" })
+
+    patch feed_preview_url(stranger)
+
+    assert_response :not_found
+  end
+
   test "#create should reuse a fresh result rather than running again" do
     sign_in_as(user)
     preview = create(:feed_preview, :completed, user: user, feed_profile_key: "rss",

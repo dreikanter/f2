@@ -36,6 +36,14 @@ class FeedPreviewsController < ApplicationController
     render_frame(preview)
   end
 
+  # PATCH /feed_previews/:id — the explicit refresh. The row already holds the
+  # source and selections, so a re-run needs nothing but its id.
+  def update
+    preview = previews.find(params[:id])
+    preview.restart!(search_credential_id: resolve_search_credential(preview.feed_profile_key)&.id)
+    render_frame(preview)
+  end
+
   helper_method :preview_max_polls, :state_partial
 
   private
@@ -43,8 +51,8 @@ class FeedPreviewsController < ApplicationController
   # Poll cap for the current preview's profile: the longer AI budget for a
   # web-browsing run, the shared default otherwise. Drives both the client
   # poller (view) and the server-side timeout.
-  def preview_max_polls
-    FeedProfile.depends_on_ai?(profile_key) ? AI_PREVIEW_MAX_POLLS : polling_max_polls
+  def preview_max_polls(preview)
+    FeedProfile.depends_on_ai?(preview.feed_profile_key) ? AI_PREVIEW_MAX_POLLS : polling_max_polls
   end
 
   def guard_preview
@@ -121,7 +129,7 @@ class FeedPreviewsController < ApplicationController
 
   def timed_out?(preview)
     (preview.pending? || preview.processing?) &&
-      preview.updated_at < polling_timeout(preview_max_polls).ago
+      preview.updated_at < polling_timeout(preview_max_polls(preview)).ago
   end
 
   def profile_key

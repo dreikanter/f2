@@ -8,7 +8,7 @@
         polling_endpoint_value: feed_preview_path(preview, format: :turbo_stream),
         polling_stop_condition_value: "[data-preview-done]",
         polling_interval_value: polling_interval_ms,
-        polling_max_polls_value: preview_max_polls
+        polling_max_polls_value: preview_max_polls(preview)
       }) do %>
     <div id="feed-preview-body" data-polling-target="content">
       <%= render(**state_partial(preview)) %>
@@ -18,7 +18,7 @@
            role="alert"
            data-key="preview.timeout"
            data-controller="preview"
-           data-preview-refresh-url-value="<%= feed_preview_refresh_path(preview) %>">
+           data-preview-refresh-url-value="<%= feed_preview_path(preview) %>">
         <div class="space-y-1">
           <p class="font-semibold text-heading">This is taking longer than expected.</p>
           <p class="text-body">The source may be slow or unavailable. Give it another go when you're ready.</p>

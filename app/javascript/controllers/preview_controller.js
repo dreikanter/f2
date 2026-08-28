@@ -1,9 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
 
 // Forces a fresh preview run from inside the feed-preview frame (the "Refresh
-// preview" / "Try again" buttons). POSTs to the preview's own refresh endpoint,
-// which restarts the run and streams the processing pane back, so the polling
-// host already on the page picks the run up from there.
+// preview" / "Try again" buttons). Updating the preview restarts its run and
+// streams the whole frame back, so the polling host mounts fresh and follows
+// the new run to completion.
 export default class extends Controller {
   static values = { refreshUrl: String }
 
@@ -13,7 +13,7 @@ export default class extends Controller {
 
     try {
       const response = await fetch(this.refreshUrlValue, {
-        method: "POST",
+        method: "PATCH",
         headers: {
           "Accept": "text/vnd.turbo-stream.html",
           "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content || ""
