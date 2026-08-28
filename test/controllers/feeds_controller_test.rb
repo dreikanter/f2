@@ -17,6 +17,64 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     @other_feed ||= create(:feed, user: create(:user))
   end
 
+  # No shipped profile declares a param beyond its source yet, so these
+  # exercise a stand-in.
+  RSS_SCHEMA_WITH_OPTION = {
+    "type" => "object",
+    "properties" => {
+      "url" => { "type" => "string", "format" => "uri" },
+      "note" => { "type" => "string" }
+    },
+    "required" => ["url"],
+    "additionalProperties" => false
+  }.freeze
+
+  def with_option_declaring_rss(&block)
+    schema = ->(key) { key == "rss" ? RSS_SCHEMA_WITH_OPTION : FeedProfile::PROFILES.dig(key, :parameter_schema) }
+    FeedProfile.stub(:parameter_schema_for, schema, &block)
+  end
+
+  test "#create should keep a param the profile declares beyond its source" do
+    sign_in_as(user)
+
+    with_option_declaring_rss do
+      post feeds_path, params: {
+        feed: {
+          feed_profile_key: "rss",
+          access_token_id: access_token.id,
+          params: { url: "https://example.com/feed.xml", note: "keep me" }
+        },
+        enable_feed: "0"
+      }
+    end
+
+    assert_equal "keep me", user.feeds.sole.params["note"]
+  end
+
+  test "#update should keep a param the profile declares beyond its source" do
+    sign_in_as(user)
+
+    with_option_declaring_rss do
+      patch feed_path(feed), params: {
+        feed: { params: { url: feed.url, note: "keep me" } },
+        enable_feed: "0"
+      }
+    end
+
+    assert_equal "keep me", feed.reload.params["note"]
+  end
+
+  test "#update should strip a param the profile doesn't declare" do
+    sign_in_as(user)
+
+    patch feed_path(feed), params: {
+      feed: { params: { url: feed.url, smuggled: "nope" } },
+      enable_feed: "0"
+    }
+
+    assert_not feed.reload.params.key?("smuggled")
+  end
+
   test "#index should redirect to login when not authenticated" do
     get feeds_url
     assert_redirected_to new_session_path

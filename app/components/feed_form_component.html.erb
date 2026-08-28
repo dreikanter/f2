@@ -64,9 +64,7 @@
                                class: helpers.input_field_classes(disabled: true),
                                aria: { label: "#{source_label} (cannot be changed)" },
                                data: { key: "form.source-display" } %>
-              <% feed.params&.each do |key, value| %>
-                <%= hidden_field_tag "feed[params][#{key}]", value %>
-              <% end %>
+              <%= hidden_params_fields %>
               <% if source_discovered? %>
                 <p class="text-sm text-muted" data-key="form.source-discovered-note">That link goes to a page, not a feed. We found the page's feed, so that's what we'll follow.</p>
               <% end %>

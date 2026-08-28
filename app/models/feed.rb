@@ -55,6 +55,7 @@ class Feed < ApplicationRecord
 
   after_update :create_schedule_on_enable
   before_validation :compose_import_after_from_parts
+  before_validation :drop_params_foreign_to_profile
 
   validates :name, uniqueness: { scope: :user_id }, length: { maximum: NAME_MAX_LENGTH }
   validates :name, presence: true, if: :enabled?
@@ -421,6 +422,17 @@ class Feed < ApplicationRecord
 
   # Only touches import_after when the form parts were assigned, so saves that
   # never saw the checkbox (state flips, background updates) leave it alone.
+  # Profile schemas are closed, so params left over from the previous profile
+  # would fail validation and strand the feed.
+  def drop_params_foreign_to_profile
+    return unless persisted? && feed_profile_key_changed?
+
+    declared = FeedProfile.parameter_keys_for(feed_profile_key)
+    return if declared.nil?
+
+    self.params = (params || {}).slice(*declared)
+  end
+
   def compose_import_after_from_parts
     return unless @import_after_parts_assigned
 

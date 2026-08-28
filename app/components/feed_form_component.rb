@@ -100,6 +100,14 @@ class FeedFormComponent < ViewComponent::Base
     edit_mode? && !ai_prompt_editable?
   end
 
+  # A disabled source field submits nothing, so the params need hidden inputs
+  # to survive the round trip.
+  # @return [String] a hidden input per param
+  def hidden_params_fields
+    fields = (feed.params || {}).map { |key, value| hidden_field_tag("feed[params][#{key}]", value) }
+    safe_join(fields)
+  end
+
   def source_url_value
     attempted_url || feed.source_input
   end
