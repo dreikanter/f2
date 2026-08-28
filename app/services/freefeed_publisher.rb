@@ -86,7 +86,9 @@ class FreefeedPublisher
     raise ValidationError, "Post feed access token is required" unless post.feed.access_token
     raise ValidationError, "Post feed access token is inactive" unless post.feed.access_token.active?
     raise ValidationError, "Post feed target group is required" unless post.feed.target_group
-    raise ValidationError, "Post content is required" unless post.content.present?
+    # Attachments carry a post on their own; FreeFeed accepts an empty body when
+    # something is attached, and the normalizers already allow that shape.
+    raise ValidationError, "Post content is required" unless post.content.present? || post.attachment_urls.any?
   end
 
   def client

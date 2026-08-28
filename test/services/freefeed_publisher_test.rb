@@ -68,13 +68,19 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_equal "Post feed target group is required", error.message
   end
 
-  test "#initialize should raise when post lacks content" do
+  test "#initialize should raise when post lacks content and attachments" do
     post = post_with_content("")
 
     error = assert_raises(FreefeedPublisher::ValidationError) do
       FreefeedPublisher.new(post)
     end
     assert_equal "Post content is required", error.message
+  end
+
+  test "#initialize should accept an attachment-only post" do
+    post = post_with_content("", attachment_urls: ["https://example.com/pic.jpg"])
+
+    assert_equal post, FreefeedPublisher.new(post).post
   end
 
   test "#initialize should raise when access token inactive" do
