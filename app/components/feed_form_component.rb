@@ -112,6 +112,15 @@ class FeedFormComponent < ViewComponent::Base
     hidden_field_tag("feed[params][#{key}]", value)
   end
 
+  # While the chooser is live any candidate can be submitted, so every
+  # candidate's options are rendered and the selected one is kept enabled.
+  # @return [Array<String>] profiles whose options the form should carry
+  def option_profile_keys
+    return candidates.map(&:profile_key) if show_chooser?
+
+    [feed.feed_profile_key].compact
+  end
+
   def source_url_value
     attempted_url || feed.source_input
   end

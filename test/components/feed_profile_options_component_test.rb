@@ -26,9 +26,9 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
     build(:feed, **attrs)
   end
 
-  def render_typed(subject_feed = feed)
+  def render_typed(subject_feed = feed, profile_keys: [])
     FeedProfile.stub(:parameter_schema_for, ->(_key) { TYPED_SCHEMA }) do
-      render_inline(FeedProfileOptionsComponent.new(feed: subject_feed))
+      render_inline(FeedProfileOptionsComponent.new(feed: subject_feed, profile_keys: profile_keys))
     end
   end
 
@@ -39,7 +39,7 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
   test "#render should render a checkbox for a boolean option" do
     result = render_typed
 
-    assert_not_nil result.css('[data-key="form.profile-option.fancy"]').first
+    assert_not_nil result.css('[data-key="form.profile-option.rss.fancy"]').first
     assert_not_nil result.css('input[type="checkbox"][name="feed[params][fancy]"]').first
     assert_includes labels(result), "Fancy mode"
     assert_includes result.to_html, "Makes it fancy."
@@ -91,6 +91,43 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
 
     assert_not_nil result.css('input[type="checkbox"][name="feed[params][exclude_shorts]"]').first
     assert_includes labels(result), "Skip Shorts"
+  end
+
+  test "#render should scope option ids by profile" do
+    result = render_typed(feed(feed_profile_key: "rss"), profile_keys: %w[rss youtube])
+
+    ids = result.css("input[type=checkbox]").map { |input| input["id"] }
+    assert_equal %w[feed_params_rss_fancy feed_params_youtube_fancy], ids
+    assert_equal ids.uniq, ids, "two panels declaring one option must not share a DOM id"
+  end
+
+  test "#render should render a panel per submittable profile" do
+    result = render_inline(FeedProfileOptionsComponent.new(
+      feed: feed(feed_profile_key: "youtube", "url" => "https://www.youtube.com/@chan"),
+      profile_keys: %w[youtube rss]
+    ))
+
+    assert_equal 1, result.css('[data-profile-key="youtube"]').size, "rss declares no options"
+    assert_not result.css('[data-profile-key="youtube"]').first.attributes.key?("hidden")
+  end
+
+  test "#render should hide and disable a profile the form hasn't selected" do
+    result = render_inline(FeedProfileOptionsComponent.new(
+      feed: feed(feed_profile_key: "rss"),
+      profile_keys: %w[rss youtube]
+    ))
+
+    group = result.css('[data-profile-key="youtube"]').first
+    assert group.attributes.key?("hidden"), "the unselected panel starts hidden"
+    assert_equal [], group.css("input:not([disabled])").to_a, "its inputs can't submit"
+  end
+
+  test "#render should fall back to the feed's own profile" do
+    result = render_inline(FeedProfileOptionsComponent.new(
+      feed: feed(feed_profile_key: "youtube", "url" => "https://www.youtube.com/@chan")
+    ))
+
+    assert_not_nil result.css('[data-profile-key="youtube"]').first
   end
 
   test "#render? should be false for a profile declaring no options" do

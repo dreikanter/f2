@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-28
 
+- When we offer more than one feed type for a link, picking one now shows its own settings, so a choice like Skip Shorts sticks.
 - YouTube feeds can skip Shorts. Switch on "Skip Shorts" under Advanced options to follow a channel's regular uploads only.
 - Posts that are just images now publish. Before, a post with pictures and no text was accepted and then quietly failed.
 - The name page in settings now says up front what a name is for.
