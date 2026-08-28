@@ -16,13 +16,10 @@ class FeedPreview < ApplicationRecord
 
   before_validation :assign_params_digest, if: :preview_identity_changed?
 
-  # A preview's identity is the user-provided source input (the value behind the
-  # profile's source key) — NOT the whole params hash. User input for a new feed
-  # is intentionally minimal (one field today); params derived later during
-  # processing must not change identity. Hashing that single value also sidesteps
-  # hash key-ordering (and jsonb read-ordering) entirely. When user-supplied input
-  # grows beyond one field, extend this to cover the new user fields (still not
-  # the derived ones).
+  # A preview's identity is what the user supplied: the source input behind the
+  # profile's source key, plus the profile options they set. Params derived
+  # later during processing must not change identity, so only declared option
+  # keys join it, sorted to survive hash key-ordering (and jsonb read-ordering).
   #
   # For AI profiles the chosen credentials + model join the identity, so changing
   # either provider selection doesn't reuse a cached result.
@@ -31,7 +28,18 @@ class FeedPreview < ApplicationRecord
   # otherwise ["ab", "c"] and ["a", "bc"] would hash alike.
   def self.digest_for(feed_profile_key, params, ai_credential_id = nil, ai_model = nil, search_credential_id = nil)
     parts = [FeedProfile.source_input_for(feed_profile_key, params), ai_credential_id, ai_model, search_credential_id]
+    # Appended only when set, so profiles without options keep their digests.
+    options = option_parts_for(feed_profile_key, params)
+    parts << options if options.any?
     Digest::SHA256.hexdigest(parts.to_json)
+  end
+
+  # @param feed_profile_key [String] the profile key
+  # @param params [Hash, nil] the preview params
+  # @return [Array<Array>] declared option name/value pairs, sorted by name
+  def self.option_parts_for(feed_profile_key, params)
+    names = FeedProfile.options_for(feed_profile_key).map(&:name)
+    (params || {}).slice(*names).sort.to_a
   end
 
   # Transitions to :failed only if still non-terminal. Rotating run_id makes the

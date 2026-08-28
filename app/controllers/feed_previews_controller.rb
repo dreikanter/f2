@@ -134,11 +134,15 @@ class FeedPreviewsController < ApplicationController
     @profile_key ||= params[:profile_key].to_s
   end
 
+  # Narrowed to the profile's declared keys and cast to their declared types, so
+  # a preview reads the same values a saved feed would and its identity doesn't
+  # split on "1" versus true.
   def preview_params
     @preview_params ||= begin
       raw = params[:params]
       hash = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : (raw || {})
-      hash.deep_stringify_keys
+      declared = FeedProfile.parameter_keys_for(profile_key) || []
+      FeedProfile.cast_params(profile_key, hash.deep_stringify_keys.slice(*declared))
     end
   end
 
