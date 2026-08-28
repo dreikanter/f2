@@ -41,12 +41,16 @@ module FeedHelper
   end
 
   # Names what's actually missing: "Complete setup" misleads when setup was
-  # finished and a piece (like the access token) stopped working later.
+  # finished and a piece (like the access token) stopped working later. Only
+  # several parts earn the list; a lone one reads as a sentence.
   def feed_enable_hint(feed)
     missing_parts = feed_missing_enablement_parts(feed)
     return "Complete setup to enable this feed" if missing_parts.empty?
+    return "To enable this feed, add: #{missing_parts.to_sentence}." if missing_parts.many?
 
-    "To enable this feed, add: #{missing_parts.to_sentence}."
+    # The parts are plain noun phrases, so a leading vowel picks the article.
+    part = missing_parts.first
+    "To enable this feed, add #{part.start_with?(/[aeiou]/i) ? 'an' : 'a'} #{part}."
   end
 
   def feed_status_icon(feed)

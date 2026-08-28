@@ -693,7 +693,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     get feed_url(orphaned)
 
     assert_response :success
-    assert_select "[data-key='feed.enable_hint']", text: /To enable this feed, add: active access token\./
+    assert_select "[data-key='feed.enable_hint']", text: /To enable this feed, add an active access token\./
   end
 
   test "#show should not explain enabling for a feed that is ready to enable" do
@@ -1014,7 +1014,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     get feed_url(pinned)
 
     assert_response :success
-    assert_select "button[disabled][title=?]", "To enable this feed, add: active access token."
+    assert_select "button[disabled][title=?]", "To enable this feed, add an active access token."
   end
 
   test "#update should update feed with valid params" do

@@ -130,7 +130,14 @@ class FeedHelperTest < ActionView::TestCase
   test "#feed_enable_hint should list what the feed is missing" do
     feed = build(:feed, :without_access_token, target_group: "testgroup")
 
-    assert_equal "To enable this feed, add: active access token.", feed_enable_hint(feed)
+    assert_equal "To enable this feed, add an active access token.", feed_enable_hint(feed)
+  end
+
+  test "#feed_enable_hint should pick the article for a consonant part" do
+    access_token = create(:access_token, :active)
+    feed = build(:feed, access_token: access_token, target_group: nil)
+
+    assert_equal "To enable this feed, add a target group.", feed_enable_hint(feed)
   end
 
   test "#feed_enable_hint should join several missing parts" do
@@ -145,7 +152,7 @@ class FeedHelperTest < ActionView::TestCase
                         params: { "prompt" => "ruby news" }, ai_credential: credential,
                         ai_model: "claude-sonnet-4-6", search_credential: nil)
 
-    assert_equal "To enable this feed, add: active search credential.", feed_enable_hint(feed)
+    assert_equal "To enable this feed, add an active search credential.", feed_enable_hint(feed)
   end
 
   test "#feed_enable_hint should fall back to a generic prompt when nothing is missing" do
