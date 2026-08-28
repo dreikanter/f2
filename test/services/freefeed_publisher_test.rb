@@ -654,6 +654,21 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_predicate post.reload, :published?
   end
 
+  test "#publish should raise SourceContentError when a bodyless post loses every attachment" do
+    huge_url = "https://example.com/huge.png"
+    post = post_with_content("", attachment_urls: [huge_url])
+
+    stub_request(:get, huge_url)
+      .to_return(status: 200, body: "huge_image_data", headers: { "Content-Type" => "image/png" })
+    stub_request(:post, "#{access_token.host}/v1/attachments")
+      .to_return(status: 413, body: { err: "This 'image' file is too large" }.to_json)
+
+    post_stub = stub_request(:post, "#{access_token.host}/v4/posts")
+
+    assert_raises(FreefeedPublisher::SourceContentError) { FreefeedPublisher.new(post).publish }
+    assert_not_requested post_stub
+  end
+
   test "#publish should raise SourceContentError when an attachment cannot be downloaded" do
     image_url = "https://example.com/missing.jpg"
     post = post_with_content("Post with missing image", attachment_urls: [image_url])
