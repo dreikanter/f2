@@ -435,7 +435,7 @@ class Feed < ApplicationRecord
   end
 
   # Form values arrive as strings, so the declared type has to be applied
-  # before the schema sees them. A value that won't cast drops out and fails
+  # before the schema sees them. A value that won't cast drops out, failing
   # validation as a missing key rather than a type mismatch.
   def cast_params_to_declared_types
     properties = FeedProfile.parameter_schema_for(feed_profile_key)&.dig("properties")
@@ -453,8 +453,9 @@ class Feed < ApplicationRecord
   def cast_param(type, value)
     case type
     when "boolean" then ActiveModel::Type::Boolean.new.cast(value)
-    when "integer" then ActiveModel::Type::Integer.new.cast(value)
-    when "number" then ActiveModel::Type::Float.new.cast(value)
+    # Kernel conversions, not ActiveModel's: those read "abc" as 0.
+    when "integer" then Integer(value, exception: false)
+    when "number" then Float(value, exception: false)
     else value
     end
   end

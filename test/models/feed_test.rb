@@ -125,6 +125,22 @@ class FeedTest < ActiveSupport::TestCase
     assert_in_delta 0.5, feed.params["ratio"]
   end
 
+  test "#save should drop an integer param that isn't a number" do
+    feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "batch" => "abc" })
+
+    with_typed_options { assert feed.valid?, feed.errors.full_messages.inspect }
+
+    assert_not feed.params.key?("batch")
+  end
+
+  test "#save should drop a number param that isn't a number" do
+    feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "ratio" => "abc" })
+
+    with_typed_options { assert feed.valid?, feed.errors.full_messages.inspect }
+
+    assert_not feed.params.key?("ratio")
+  end
+
   test "should reject undeclared params on create instead of dropping them" do
     feed = build(:feed, feed_profile_key: "rss", params: { "url" => "https://example.com/feed.xml", "legacy_option" => true })
 
