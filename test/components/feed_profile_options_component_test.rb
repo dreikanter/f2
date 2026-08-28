@@ -32,65 +32,65 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
     end
   end
 
-  test "#render should render a checkbox for a boolean option" do
-    render_typed
+  def labels(result)
+    result.css("label").map { |label| label.text.strip }
+  end
 
-    assert_selector "[data-key='form.profile-option.fancy']"
-    assert_selector "input[type=checkbox][name='feed[params][fancy]']"
-    assert_selector "label", text: "Fancy mode"
-    assert_text "Makes it fancy."
+  test "#render should render a checkbox for a boolean option" do
+    result = render_typed
+
+    assert_not_nil result.css('[data-key="form.profile-option.fancy"]').first
+    assert_not_nil result.css('input[type="checkbox"][name="feed[params][fancy]"]').first
+    assert_includes labels(result), "Fancy mode"
+    assert_includes result.to_html, "Makes it fancy."
   end
 
   test "#render should pair a boolean option with an unchecked-state input" do
-    render_typed
+    result = render_typed
 
-    assert_selector "input[type=hidden][name='feed[params][fancy]'][value='0']", visible: :all
+    assert_not_nil result.css('input[type="hidden"][name="feed[params][fancy]"][value="0"]').first
   end
 
   test "#render should check a boolean option that is on" do
-    render_typed(feed("fancy" => true))
+    result = render_typed(feed("fancy" => true))
 
-    assert_selector "input[type=checkbox][name='feed[params][fancy]'][checked]"
+    assert_not_nil result.css('input[type="checkbox"][name="feed[params][fancy]"][checked]').first
   end
 
   test "#render should leave a boolean option unchecked when it is off" do
-    render_typed(feed("fancy" => false))
+    result = render_typed(feed("fancy" => false))
 
-    assert_no_selector "input[type=checkbox][name='feed[params][fancy]'][checked]"
+    assert_empty result.css('input[type="checkbox"][name="feed[params][fancy]"][checked]')
   end
 
   test "#render should render a text field for a string option" do
-    render_typed(feed("flavour" => "vanilla"))
+    result = render_typed(feed("flavour" => "vanilla"))
 
-    assert_selector "input[type=text][name='feed[params][flavour]'][value='vanilla']"
-    assert_selector "label", text: "Flavour"
+    assert_not_nil result.css('input[type="text"][name="feed[params][flavour]"][value="vanilla"]').first
+    assert_includes labels(result), "Flavour"
   end
 
   test "#render should render a select for a string option with choices" do
-    render_typed(feed("quality" => "high"))
+    result = render_typed(feed("quality" => "high"))
 
-    assert_selector "select[name='feed[params][quality]'] option[selected][value='high']"
+    assert_not_nil result.css('select[name="feed[params][quality]"] option[selected][value="high"]').first
   end
 
   test "#render should title an option from its key when the schema has none" do
-    render_typed
-
-    assert_selector "label", text: "Quality"
+    assert_includes labels(render_typed), "Quality"
   end
 
   test "#render should skip the profile's own source param" do
-    render_typed
-
-    assert_no_selector "input[name='feed[params][url]']", visible: :all
+    assert_empty render_typed.css('[name="feed[params][url]"]')
   end
 
   test "#render should render the Shorts option for a youtube feed" do
     subject = feed(feed_profile_key: "youtube", "url" => "https://www.youtube.com/@chan")
 
-    render_inline(FeedProfileOptionsComponent.new(feed: subject))
+    result = render_inline(FeedProfileOptionsComponent.new(feed: subject))
 
-    assert_selector "input[type=checkbox][name='feed[params][exclude_shorts]']"
-    assert_selector "label", text: "Skip Shorts"
+    assert_not_nil result.css('input[type="checkbox"][name="feed[params][exclude_shorts]"]').first
+    assert_includes labels(result), "Skip Shorts"
   end
 
   test "#render? should be false for a profile declaring no options" do
