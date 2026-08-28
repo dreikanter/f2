@@ -459,6 +459,14 @@ class FeedProfile
       PROFILES.dig(key, :parameter_schema)
     end
 
+    # Params a profile declares beyond its source, in declaration order.
+    # @param key [String] the profile key
+    # @return [Array<ParamOption>] the profile's options
+    def options_for(key)
+      properties = parameter_schema_for(key)&.dig("properties") || {}
+      properties.except(source_key_for(key)).map { |name, schema| ParamOption.new(name, schema) }
+    end
+
     # Every schema lists its properties explicitly, so these are the complete
     # set a profile accepts.
     # @param key [String] the profile key
