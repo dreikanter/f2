@@ -10,13 +10,10 @@
       <%= link_to feed.user.email_address, admin_user_path(feed.user), class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
     <% end %>
   <% end %>
-  <% if feed.target_group_url.present? %>
+  <% if feed.target_group.present? %>
     <% header.with_context_paragraph do %>
       Target group:
-      <%= link_to "#{feed.access_token.host_domain}/#{feed.target_group}",
-                  feed.target_group_url,
-                  class: "text-brand underline underline-offset-4 transition hover:text-brand-hover",
-                  target: "_blank", rel: "noopener" %>
+      <%= feed_target_group_link(feed) %>
     <% end %>
   <% end %>
 <% end %>

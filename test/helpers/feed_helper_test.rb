@@ -3,6 +3,29 @@ require "test_helper"
 class FeedHelperTest < ActionView::TestCase
   include ApplicationHelper
 
+  test "#feed_target_group_link should link to the group on the token's instance" do
+    access_token = create(:access_token, :active, host: "https://freefeed.net")
+    feed = build(:feed, access_token: access_token, target_group: "testgroup")
+
+    result = feed_target_group_link(feed)
+
+    assert_includes result, %(href="https://freefeed.net/testgroup")
+    assert_includes result, "freefeed.net/testgroup"
+  end
+
+  test "#feed_target_group_link should fall back to the bare group name without an access token" do
+    feed = build(:feed, :without_access_token, target_group: "testgroup")
+
+    assert_equal "testgroup", feed_target_group_link(feed)
+  end
+
+  test "#feed_target_group_link should return nil when the feed has no target group" do
+    access_token = create(:access_token, :active)
+    feed = build(:feed, access_token: access_token, target_group: nil)
+
+    assert_nil feed_target_group_link(feed)
+  end
+
   test "#feed_missing_enablement_parts should return both missing parts" do
     feed = build(:feed, :without_access_token)
     result = feed_missing_enablement_parts(feed)
@@ -74,6 +97,27 @@ class FeedHelperTest < ActionView::TestCase
     assert_equal ["active AI credential"], result
   end
 
+  test "#feed_missing_enablement_parts should report a missing search credential" do
+    credential = create(:ai_credential, :active)
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "ruby news" }, ai_credential: credential,
+                        ai_model: "claude-sonnet-4-6", search_credential: nil)
+    result = feed_missing_enablement_parts(feed)
+
+    assert_equal ["active search credential"], result
+  end
+
+  test "#feed_missing_enablement_parts should report an inactive search credential" do
+    credential = create(:ai_credential, :active)
+    search_credential = create(:search_credential, :inactive, user: credential.user)
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "ruby news" }, ai_credential: credential,
+                        ai_model: "claude-sonnet-4-6", search_credential: search_credential)
+    result = feed_missing_enablement_parts(feed)
+
+    assert_equal ["active search credential"], result
+  end
+
   test "#feed_missing_enablement_parts should be empty for a ready AI feed" do
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
@@ -81,6 +125,41 @@ class FeedHelperTest < ActionView::TestCase
     result = feed_missing_enablement_parts(feed)
 
     assert_equal [], result
+  end
+
+  test "#feed_enable_hint should list what the feed is missing" do
+    feed = build(:feed, :without_access_token, target_group: "testgroup")
+
+    assert_equal "To enable this feed, add an active access token.", feed_enable_hint(feed)
+  end
+
+  test "#feed_enable_hint should pick the article for a consonant part" do
+    access_token = create(:access_token, :active)
+    feed = build(:feed, access_token: access_token, target_group: nil)
+
+    assert_equal "To enable this feed, add a target group.", feed_enable_hint(feed)
+  end
+
+  test "#feed_enable_hint should join several missing parts" do
+    feed = build(:feed, :without_access_token, name: "")
+
+    assert_equal "To enable this feed, add: name, active access token, and target group.", feed_enable_hint(feed)
+  end
+
+  test "#feed_enable_hint should name a missing search credential" do
+    credential = create(:ai_credential, :active)
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "ruby news" }, ai_credential: credential,
+                        ai_model: "claude-sonnet-4-6", search_credential: nil)
+
+    assert_equal "To enable this feed, add an active search credential.", feed_enable_hint(feed)
+  end
+
+  test "#feed_enable_hint should fall back to a generic prompt when nothing is missing" do
+    access_token = create(:access_token, :active)
+    feed = build(:feed, access_token: access_token, target_group: "testgroup")
+
+    assert_equal "Complete setup to enable this feed", feed_enable_hint(feed)
   end
 
   test "#feed_status_icon should render enabled icon" do

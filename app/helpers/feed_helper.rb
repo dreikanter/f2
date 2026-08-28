@@ -11,6 +11,19 @@ module FeedHelper
     end
   end
 
+  # A feed can hold a target group with no access token, and then there is no
+  # host to build a link from, so the label falls back to the bare group name.
+  def feed_target_group_link(feed)
+    return if feed.target_group.blank?
+
+    url = feed.target_group_url
+    return feed.target_group unless url
+
+    link_to "#{feed.access_token.host_domain}/#{feed.target_group}", url,
+            class: "text-brand underline underline-offset-4 transition hover:text-brand-hover",
+            target: "_blank", rel: "noopener"
+  end
+
   def feed_missing_enablement_parts(feed)
     missing_parts = []
     missing_parts << "source" unless feed.sourceless? || feed.source_input.present?
@@ -21,9 +34,23 @@ module FeedHelper
     missing_parts << "schedule" if feed.scheduled? && feed.cron_expression.blank?
     if FeedProfile.depends_on_ai?(feed.feed_profile_key)
       missing_parts << "active AI credential" unless feed.ai_credential&.active?
+      missing_parts << "active search credential" unless feed.search_credential&.active?
       missing_parts << "AI model" unless feed.ai_model.present?
     end
     missing_parts
+  end
+
+  # Names what's actually missing: "Complete setup" misleads when setup was
+  # finished and a piece (like the access token) stopped working later. Only
+  # several parts earn the list; a lone one reads as a sentence.
+  def feed_enable_hint(feed)
+    missing_parts = feed_missing_enablement_parts(feed)
+    return "Complete setup to enable this feed" if missing_parts.empty?
+    return "To enable this feed, add: #{missing_parts.to_sentence}." if missing_parts.many?
+
+    # The parts are plain noun phrases, so a leading vowel picks the article.
+    part = missing_parts.first
+    "To enable this feed, add #{part.start_with?(/[aeiou]/i) ? 'an' : 'a'} #{part}."
   end
 
   def feed_status_icon(feed)
