@@ -33,8 +33,12 @@ class FeedProfile
       "feed[params][#{name}]"
     end
 
-    def field_id
-      "feed_params_#{name}"
+    # Scoped by profile: the form can render a panel per candidate, and two of
+    # them may declare the same option name.
+    # @param profile_key [String] the profile whose panel is rendering
+    # @return [String] the input's DOM id
+    def field_id(profile_key)
+      "feed_params_#{profile_key}_#{name}"
     end
   end
 end

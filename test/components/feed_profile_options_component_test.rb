@@ -39,7 +39,7 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
   test "#render should render a checkbox for a boolean option" do
     result = render_typed
 
-    assert_not_nil result.css('[data-key="form.profile-option.fancy"]').first
+    assert_not_nil result.css('[data-key="form.profile-option.rss.fancy"]').first
     assert_not_nil result.css('input[type="checkbox"][name="feed[params][fancy]"]').first
     assert_includes labels(result), "Fancy mode"
     assert_includes result.to_html, "Makes it fancy."
@@ -91,6 +91,14 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
 
     assert_not_nil result.css('input[type="checkbox"][name="feed[params][exclude_shorts]"]').first
     assert_includes labels(result), "Skip Shorts"
+  end
+
+  test "#render should scope option ids by profile" do
+    result = render_typed(feed(feed_profile_key: "rss"), profile_keys: %w[rss youtube])
+
+    ids = result.css("input[type=checkbox]").map { |input| input["id"] }
+    assert_equal %w[feed_params_rss_fancy feed_params_youtube_fancy], ids
+    assert_equal ids.uniq, ids, "two panels declaring one option must not share a DOM id"
   end
 
   test "#render should render a panel per submittable profile" do
