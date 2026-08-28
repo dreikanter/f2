@@ -22,8 +22,7 @@ class FeedsController < ApplicationController
   ].freeze
 
   # Source-side fields, editable only while a feed is a draft;
-  # once it first leaves :draft they lock in for good. The nested params keys
-  # ride alongside, derived per request from the profile's schema.
+  # once it first leaves :draft they lock in for good.
   DRAFT_ONLY_PERMITTED_PARAMS = [:feed_profile_key].freeze
 
   def index
@@ -297,25 +296,18 @@ class FeedsController < ApplicationController
 
   def permitted_keys
     if @feed.draft?
-      # A draft may still be switching profiles, so the submitted key decides
-      # the params shape.
+      # A draft may still be switching profiles, so the submitted key decides.
       ALWAYS_PERMITTED_PARAMS + DRAFT_ONLY_PERMITTED_PARAMS +
         params_entry_for(submitted_profile_key.presence || @feed.feed_profile_key)
     else
-      # A live feed's profile is fixed, so its own schema settles what's
-      # assignable: an AI feed offers its prompt (the uid scheme is unchanged,
-      # so an edit carries no duplicate risk, just possible backfill) and a
-      # deterministic one its url, which still moves only through detection.
-      # feed_profile_key stays out of the mass-assignable set — the confirm path
-      # applies a re-detected profile explicitly, so an unverified switch can't
-      # leak in, and the stored profile is what decides here.
+      # A live feed's profile is fixed, so the stored one decides. Trusting the
+      # submitted key here would let an unverified switch widen the set.
       ALWAYS_PERMITTED_PARAMS + params_entry_for(@feed.feed_profile_key)
     end
   end
 
-  # Nested params keys the profile declares, as a `permit` argument. Driven by
-  # the profile schema so a profile-specific option isn't filtered out before it
-  # reaches the model. A profile declaring none permits no params at all.
+  # Schema-driven so a profile-specific option isn't filtered out before it
+  # reaches the model.
   # @param profile_key [String, nil] the profile deciding the params shape
   # @return [Array<Hash>] zero or one permit entry
   def params_entry_for(profile_key)

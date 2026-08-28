@@ -422,9 +422,8 @@ class Feed < ApplicationRecord
 
   # Only touches import_after when the form parts were assigned, so saves that
   # never saw the checkbox (state flips, background updates) leave it alone.
-  # A profile switch leaves the previous profile's params behind, and every
-  # profile schema is closed, so the leftovers would fail validation and strand
-  # the feed. Keep only what the new profile declares.
+  # Profile schemas are closed, so params left over from the previous profile
+  # would fail validation and strand the feed.
   def drop_params_foreign_to_profile
     return unless persisted? && feed_profile_key_changed?
 

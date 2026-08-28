@@ -17,8 +17,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     @other_feed ||= create(:feed, user: create(:user))
   end
 
-  # No shipped profile declares a param beyond its source yet, so the
-  # schema-driven permitting is exercised against a stand-in.
+  # No shipped profile declares a param beyond its source yet, so these
+  # exercise a stand-in.
   RSS_SCHEMA_WITH_OPTION = {
     "type" => "object",
     "properties" => {
