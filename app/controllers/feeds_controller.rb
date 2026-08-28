@@ -259,8 +259,23 @@ class FeedsController < ApplicationController
     ), status: status
   end
 
+  # Only the source waits for a confirmed candidate. Option params submitted
+  # alongside it have nothing to do with detection, and dropping them here
+  # would revert the controls when the confirm form rebuilds from stored params.
   def operational_update_params
-    update_feed_params.except(:params, :feed_profile_key)
+    attrs = update_feed_params.except(:params, :feed_profile_key)
+    options = submitted_option_params
+    return attrs if options.blank?
+
+    attrs.merge(params: (@feed.params || {}).merge(options))
+  end
+
+  # @return [Hash] submitted params minus the profile's source key
+  def submitted_option_params
+    submitted = update_feed_params[:params]
+    return {} if submitted.blank?
+
+    submitted.to_h.except(FeedProfile.source_key_for(@feed.feed_profile_key))
   end
 
   def feeds_scope
