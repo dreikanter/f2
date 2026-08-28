@@ -36,9 +36,7 @@
               <% else %>
                 <p class="text-sm text-muted">Describe a source or topic in your own words. You can tweak this before saving.</p>
               <% end %>
-              <% carried_params.each do |key, value| %>
-                <%= hidden_field_tag "feed[params][#{key}]", value %>
-              <% end %>
+              <%= hidden_params_fields(carried_params) %>
             </div>
           <% elsif source_editable? %>
             <div class="space-y-2">
@@ -57,9 +55,7 @@
               <% else %>
                 <p class="text-sm text-muted" data-key="form.source-edit-note">Point this at a different feed and we'll re-check it before saving.</p>
               <% end %>
-              <% carried_params.each do |key, value| %>
-                <%= hidden_field_tag "feed[params][#{key}]", value %>
-              <% end %>
+              <%= hidden_params_fields(carried_params) %>
             </div>
           <% else %>
             <div class="space-y-2">
@@ -70,9 +66,7 @@
                                class: helpers.input_field_classes(disabled: true),
                                aria: { label: "#{source_label} (cannot be changed)" },
                                data: { key: "form.source-display" } %>
-              <% feed.params&.each do |key, value| %>
-                <%= hidden_field_tag "feed[params][#{key}]", value %>
-              <% end %>
+              <%= hidden_params_fields(all_params) %>
               <% if source_discovered? %>
                 <p class="text-sm text-muted" data-key="form.source-discovered-note">That link goes to a page, not a feed. We found the page's feed, so that's what we'll follow.</p>
               <% end %>

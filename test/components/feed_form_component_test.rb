@@ -42,6 +42,14 @@ class FeedFormComponentTest < ViewComponent::TestCase
     assert_equal({ "legacy_option" => true }, subject.carried_params)
   end
 
+  test "#hidden_params_fields should render an input per param" do
+    subject = component(feed)
+    markup = subject.hidden_params_fields({ "legacy_option" => "kept" })
+
+    assert_includes markup, %(name="feed[params][legacy_option]")
+    assert_includes markup, %(value="kept")
+  end
+
   test "#edit_mode? should follow feed persistence" do
     assert_not component(feed).edit_mode?
     assert component(create(:feed, user: user)).edit_mode?

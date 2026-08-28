@@ -107,6 +107,19 @@ class FeedFormComponent < ViewComponent::Base
     (feed.params || {}).except(FeedProfile.source_key_for(feed.feed_profile_key))
   end
 
+  # Every param, for the branch that shows the source in a disabled field and
+  # so submits nothing of its own.
+  # @return [Hash] the feed's params
+  def all_params
+    feed.params || {}
+  end
+
+  # @param params_hash [Hash] the params to carry through the submit
+  # @return [String] a hidden input per param
+  def hidden_params_fields(params_hash)
+    safe_join(params_hash.map { |key, value| hidden_field_tag("feed[params][#{key}]", value) })
+  end
+
   def source_url_value
     attempted_url || feed.source_input
   end
