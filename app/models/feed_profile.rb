@@ -471,6 +471,22 @@ class FeedProfile
       PROFILES.dig(key, :parameter_schema)
     end
 
+    # Form values arrive as strings, so the declared type has to be applied
+    # before anything reads them. A value that won't cast drops out, failing
+    # validation as a missing key rather than a type mismatch.
+    # @param key [String] the profile key
+    # @param params [Hash, nil] the submitted params
+    # @return [Hash] the params as their declared types
+    def cast_params(key, params)
+      properties = parameter_schema_for(key)&.dig("properties")
+      return params || {} if properties.blank?
+
+      (params || {}).each_with_object({}) do |(name, value), result|
+        cast = cast_value(properties.dig(name, "type"), value)
+        result[name] = cast unless cast.nil?
+      end
+    end
+
     # Params a profile declares beyond its source, in declaration order.
     # @param key [String] the profile key
     # @return [Array<ParamOption>] the profile's options
@@ -553,8 +569,19 @@ class FeedProfile
 
     private
 
-    # @param key [String] the profile key
-    # @param stage [Symbol] :loader, :processor, :normalizer, or :title_extractor
+    # @param type [String, nil] the declared JSON Schema type
+    # @param value [Object] the submitted value
+    # @return [Object] the value as its declared type
+    def cast_value(type, value)
+      case type
+      when "boolean" then ActiveModel::Type::Boolean.new.cast(value)
+      # Kernel conversions, not ActiveModel's: those read "abc" as 0.
+      when "integer" then Integer(value, exception: false)
+      when "number" then Float(value, exception: false)
+      else value
+      end
+    end
+
     # @return [Class] the stage class
     def class_for(key, stage)
       raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)
