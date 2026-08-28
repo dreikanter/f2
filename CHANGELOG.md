@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-08-28
 
 - The name page in settings now says up front what a name is for.
+- The weekly post count now covers a true 7 days and counts only posts that made it to FreeFeed. It was spanning eight days and including drafts.
 
 ## 2026-08-27
 

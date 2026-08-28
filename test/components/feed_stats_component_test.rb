@@ -41,7 +41,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
 
       last_week = result.css('[data-key="stats.posts_last_week"]').first
       assert_not_nil last_week
-      assert_equal "2", result.css('[data-key="stats.posts_last_week.value"]').first.text.strip
+      assert_equal "1", result.css('[data-key="stats.posts_last_week.value"]').first.text.strip
     end
   end
 

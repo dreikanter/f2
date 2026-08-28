@@ -321,9 +321,11 @@ class Feed < ApplicationRecord
     posts.published.maximum(:reposted_at)
   end
 
-  # @return [Integer] posts published in the last week, by source date
+  # Today plus the six preceding days, snapped to day boundaries so the count
+  # doesn't shift with the time of day.
+  # @return [Integer] published posts dated in the last 7 days, by source date
   def posts_published_last_week_count
-    posts.where(published_at: 1.week.ago.beginning_of_day..Time.current.end_of_day).count
+    posts.published.where(published_at: 6.days.ago.beginning_of_day..Time.current.end_of_day).count
   end
 
   # Single source of truth for the cached post counters. Post's create/destroy
