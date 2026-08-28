@@ -64,7 +64,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
     assert_equal "Recent", result.css(".hidden.md\\:flex [data-key=\"stats.most_recent_repost.label\"]").first.text
     assert_equal "Imported", result.css(".hidden.md\\:flex [data-key=\"stats.imported_posts.label\"]").first.text
     assert_equal "Published", result.css(".hidden.md\\:flex [data-key=\"stats.published_posts.label\"]").first.text
-    assert_equal "Last week", result.css(".hidden.md\\:flex [data-key=\"stats.posts_last_week.label\"]").first.text
+    assert_equal "Last 7 days", result.css(".hidden.md\\:flex [data-key=\"stats.posts_last_week.label\"]").first.text
   end
 
   test "#render should display fallback values for missing data" do
