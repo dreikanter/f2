@@ -6,9 +6,9 @@
   <div class="max-w-2xl">
     <%= form_with model: @user, url: settings_name_update_path, method: :patch, local: true do |form| %>
       <div class="space-y-2">
-        <%= form.label :name, "Name", class: "block font-semibold text-heading" %>
+        <%= form.label :name, "Your real name or a nickname", class: "block font-semibold text-heading" %>
         <%= form.text_field :name, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", placeholder: "Enter your name", maxlength: User::NAME_MAX_LENGTH, autofocus: true, autocomplete: "name" %>
-        <p class="text-sm text-muted" data-key="name_update.hint">Optional. Use your real name or a nickname, so people you invite can see who invited them. Leave it blank and they'll just see "Somebody".</p>
+        <p class="text-sm text-muted" data-key="name_update.hint">Optional. Set a name so people getting an invite can see who sent it. Leave it blank and they'll just see "Somebody".</p>
       </div>
 
       <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">

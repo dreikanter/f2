@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-28
+
+- The name page in settings now says up front what a name is for.
+
 ## 2026-08-27
 
 - Settings now has a name you can set, so people you invite see who invited them instead of "Somebody".
