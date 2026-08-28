@@ -72,6 +72,21 @@ class Loader::YoutubeLoaderTest < ActiveSupport::TestCase
     assert_equal [USER_FEED_URL], mock_client.requested_urls
   end
 
+  test "#load should leave an unparsable discovered URL alone when Shorts are excluded" do
+    malformed = "https://exa mple.com/feeds/videos.xml?channel_id=UC123"
+    feed = feed_without_shorts(CHANNEL_URL)
+    page = %(<html><head><link rel="alternate" type="application/rss+xml" href="#{malformed}"></head></html>)
+    mock_client = MockHttpClient.new(responses: {
+      CHANNEL_URL => ok(page),
+      malformed => ok(FEED_BODY)
+    })
+
+    loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
+
+    assert_equal FEED_BODY, loader.load
+    assert_equal [CHANNEL_URL, malformed], mock_client.requested_urls
+  end
+
   test "#load should keep Shorts when the option is off" do
     feed = create(:feed, feed_profile_key: "youtube", params: { "url" => FEED_URL, "exclude_shorts" => false })
     mock_client = MockHttpClient.new(responses: { FEED_URL => ok(FEED_BODY) })
