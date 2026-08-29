@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-29
 
+- Preview pictures now open full-size in a gallery, with keyboard and touch navigation.
 - The note we show after finding a feed on a page you linked now describes the address we swapped in, not the one you pasted.
 
 ## 2026-08-28
