@@ -149,6 +149,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_29_170000) do
     t.uuid "run_id"
     t.uuid "ai_credential_id"
     t.string "ai_model"
+    t.uuid "search_credential_id"
+    t.index ["search_credential_id"], name: "index_feed_previews_on_search_credential_id"
     t.index ["status"], name: "index_feed_previews_on_status"
     t.index ["updated_at"], name: "index_feed_previews_on_updated_at"
     t.index ["user_id", "feed_profile_key", "params_digest"], name: "index_feed_previews_on_owner_profile_digest", unique: true
@@ -502,6 +504,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_29_170000) do
   add_foreign_key "feed_entry_uids", "feeds", on_delete: :cascade
   add_foreign_key "feed_identifications", "users"
   add_foreign_key "feed_metrics", "feeds", on_delete: :cascade
+  add_foreign_key "feed_previews", "search_credentials", on_delete: :nullify
   add_foreign_key "feed_previews", "users"
   add_foreign_key "feed_schedules", "feeds"
   add_foreign_key "feeds", "access_tokens"

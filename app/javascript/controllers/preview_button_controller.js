@@ -2,8 +2,8 @@ import { Controller } from "@hotwired/stimulus"
 import { selectedProfileKey } from "controllers/helpers/selected_profile_key"
 import { csrfToken } from "controllers/helpers/csrf_token"
 
-// Keeps preview availability in sync with the form and POSTs the current source,
-// AI provider, and model when opening the modal. Closing it aborts the request
+// Keeps preview availability in sync with the form and POSTs the current source
+// and provider selections when opening the modal. Closing it aborts the request
 // and unmounts any active poller.
 export default class extends Controller {
   static targets = ["button", "frame", "source", "hint"]
@@ -86,8 +86,10 @@ export default class extends Controller {
 
     if (this._isAiProfile(profileKey)) {
       const credential = this._aiCredentialValue()
+      const searchCredential = this._searchCredentialValue()
       const model = this._aiModelValue()
       if (credential) body.set("ai_credential_id", credential)
+      if (searchCredential) body.set("search_credential_id", searchCredential)
       if (model) body.set("ai_model", model)
     }
 
@@ -135,6 +137,10 @@ export default class extends Controller {
 
   _aiCredentialValue() {
     return this.element.querySelector("select[name='feed[ai_credential_id]']")?.value || ""
+  }
+
+  _searchCredentialValue() {
+    return this.element.querySelector("select[name='feed[search_credential_id]']")?.value || ""
   }
 
   _aiModelValue() {

@@ -9,13 +9,12 @@ class FeedPreview < ApplicationRecord
 
   belongs_to :user
   belongs_to :ai_credential, optional: true
+  belongs_to :search_credential, optional: true
 
   enum :status, { pending: 0, processing: 1, ready: 2, failed: 3 }
 
   validates :feed_profile_key, presence: true
   validates :feed_profile_key, inclusion: { in: ->(_) { FeedProfile.all } }, if: -> { feed_profile_key.present? }
-
-  attr_accessor :search_credential_id_for_digest
 
   before_validation :assign_params_digest, if: :preview_identity_changed?
 
@@ -39,11 +38,10 @@ class FeedPreview < ApplicationRecord
 
   # Clears the last result and queues a fresh run. run_id rotates so a job still
   # in flight for the previous run can't write its result over this one.
-  # @param search_credential_id [String, nil] credential the run should use
   # @return [FeedPreview] self, persisted and pending
-  def restart!(search_credential_id: nil)
+  def restart!
     update!(status: :pending, data: nil, ready_at: nil, run_id: SecureRandom.uuid)
-    FeedPreviewJob.perform_later(id, run_id, search_credential_id)
+    FeedPreviewJob.perform_later(id, run_id)
     FeedPreviewTimeoutJob.set(wait_until: updated_at + timeout_after).perform_later(id, run_id)
     self
   end
@@ -99,7 +97,7 @@ class FeedPreview < ApplicationRecord
       will_save_change_to_params? ||
       will_save_change_to_ai_credential_id? ||
       will_save_change_to_ai_model? ||
-      search_credential_id_for_digest.present?
+      will_save_change_to_search_credential_id?
   end
 
   def assign_params_digest
@@ -108,16 +106,7 @@ class FeedPreview < ApplicationRecord
       params,
       ai_credential_id,
       ai_model,
-      resolved_search_credential_id_for_digest
+      search_credential_id
     )
-  end
-
-  def resolved_search_credential_id_for_digest
-    return search_credential_id_for_digest if search_credential_id_for_digest.present?
-    return unless new_record? && user && FeedProfile.exists?(feed_profile_key)
-    return unless FeedProfile.depends_on_ai?(feed_profile_key)
-
-    credentials = user.search_credentials.active
-    credentials.find_by(id: user.default_search_credential_id)&.id || credentials.pick(:id)
   end
 end

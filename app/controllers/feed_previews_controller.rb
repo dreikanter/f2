@@ -29,7 +29,7 @@ class FeedPreviewsController < ApplicationController
   # PATCH /feed_previews/:id, the explicit refresh. The row already holds the
   # source and selections, so a re-run needs nothing but its id.
   def update
-    preview.restart!(search_credential_id: search_credential&.id)
+    preview.restart!
     render_frame(preview)
   end
 
@@ -77,14 +77,19 @@ class FeedPreviewsController < ApplicationController
   def ai_credential
     return @ai_credential if defined?(@ai_credential)
 
-    requested = params[:ai_credential_id].presence || preview&.ai_credential_id
+    requested = preview ? preview.ai_credential_id : params[:ai_credential_id]
     @ai_credential = Current.user.ai_credentials.active.find_by(id: requested)
   end
 
   def search_credential
     return @search_credential if defined?(@search_credential)
 
-    @search_credential = resolve_search_credential(profile_key, params[:search_credential_id])
+    @search_credential =
+      if preview
+        Current.user.search_credentials.active.find_by(id: preview.search_credential_id)
+      else
+        resolve_search_credential(profile_key, params[:search_credential_id])
+      end
   end
 
   # @param profile_key [String] the preview's profile
@@ -100,13 +105,11 @@ class FeedPreviewsController < ApplicationController
   end
 
   def ai_model
-    @ai_model ||= params[:ai_model].presence || preview&.ai_model
+    @ai_model ||= preview ? preview.ai_model : params[:ai_model].presence
   end
 
   def locate_preview
-    preview = previews.find_or_initialize_by(feed_profile_key: profile_key, params_digest: digest)
-    preview.search_credential_id_for_digest = search_credential&.id
-    preview
+    previews.find_or_initialize_by(feed_profile_key: profile_key, params_digest: digest)
   end
 
   def needs_run?(preview)
@@ -117,29 +120,30 @@ class FeedPreviewsController < ApplicationController
   # already inserted this (user, profile, source) row, adopt the winner's row
   # rather than enqueuing a duplicate job.
   def start_run(preview)
-    preview.search_credential_id_for_digest = search_credential&.id
     preview.assign_attributes(
       params: preview_params,
       ai_credential_id: ai_credential&.id,
-      ai_model: ai_model
+      ai_model: ai_model,
+      search_credential_id: search_credential&.id
     )
-    preview.restart!(search_credential_id: search_credential&.id)
+    preview.restart!
   rescue ActiveRecord::RecordNotUnique
     previews.find_by!(feed_profile_key: profile_key, params_digest: digest)
   end
 
-  # A create is described by the request; an update by the row it names. The
-  # fallbacks let one guard cover both.
   def profile_key
-    @profile_key ||= params[:profile_key].presence || preview&.feed_profile_key.to_s
+    @profile_key ||= preview ? preview.feed_profile_key : params[:profile_key].to_s
   end
 
   def preview_params
-    @preview_params ||= begin
-      raw = params[:params]
-      hash = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : raw
-      hash ? hash.deep_stringify_keys : (preview&.params || {})
-    end
+    @preview_params ||=
+      if preview
+        preview.params
+      else
+        raw = params[:params]
+        hash = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : raw
+        hash ? hash.deep_stringify_keys : {}
+      end
   end
 
   def stale_ready?(preview)

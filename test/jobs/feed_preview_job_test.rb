@@ -17,6 +17,30 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     workflow.verify
   end
 
+  test "#perform should use the persisted credential and ignore the legacy argument" do
+    user = create(:user)
+    search_credential = create(:search_credential, :active, user: user)
+    preview = create(:feed_preview, user: user, feed_profile_key: "llm",
+                                    params: { "prompt" => "ruby news" },
+                                    search_credential: search_credential, run_id: RUN_ID)
+
+    workflow = Minitest::Mock.new
+    workflow.expect(:execute, nil)
+
+    factory = lambda do |record, run_id:, search_credential:|
+      assert_equal preview, record
+      assert_equal RUN_ID, run_id
+      assert_equal preview.search_credential, search_credential
+      workflow
+    end
+
+    FeedPreviewWorkflow.stub(:new, factory) do
+      FeedPreviewJob.perform_now(preview.id, RUN_ID, SecureRandom.uuid)
+    end
+
+    workflow.verify
+  end
+
   test "#perform should no-op for a missing preview" do
     assert_nothing_raised { FeedPreviewJob.perform_now("00000000-0000-0000-0000-000000000000", RUN_ID) }
   end

@@ -21,6 +21,13 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert_equal user, feed_preview.user
   end
 
+  test "should optionally belong to a search credential" do
+    credential = create(:search_credential, :active, user: user)
+    preview = create(:feed_preview, user: user, search_credential: credential)
+
+    assert_equal credential, preview.search_credential
+  end
+
   test "should have feed_profile_key" do
     assert_equal "rss", feed_preview.feed_profile_key
   end
@@ -215,6 +222,12 @@ class FeedPreviewTest < ActiveSupport::TestCase
     params = { "prompt" => "rust async" }
     refute_equal FeedPreview.digest_for("llm", params, 1, "model-a"),
                  FeedPreview.digest_for("llm", params, 2, "model-a")
+  end
+
+  test ".digest_for should differ for different search credentials on the same source" do
+    params = { "prompt" => "rust async" }
+    refute_equal FeedPreview.digest_for("llm", params, 1, "model-a", 2),
+                 FeedPreview.digest_for("llm", params, 1, "model-a", 3)
   end
 
   test ".digest_for should match the no-selection default when credential and model are nil" do
