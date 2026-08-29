@@ -1,6 +1,10 @@
 require "test_helper"
 
 class FeedPreviewTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
+  setup { clear_enqueued_jobs }
+
   def user
     @user ||= create(:user)
   end
@@ -113,21 +117,21 @@ class FeedPreviewTest < ActiveSupport::TestCase
   end
 
   test "#timeout! should transition a processing preview to failed" do
-    preview = create(:feed_preview, :processing, user: user)
-    preview.timeout!
+    preview = create(:feed_preview, :processing, user: user, run_id: "run-1")
+    preview.timeout!(run_id: "run-1")
     assert preview.failed?
   end
 
   test "#timeout! should be a no-op for a ready preview" do
-    preview = create(:feed_preview, :completed, user: user)
-    preview.timeout!
+    preview = create(:feed_preview, :completed, user: user, run_id: "run-1")
+    preview.timeout!(run_id: "run-1")
     assert preview.ready?
   end
 
   test "#timeout! should rotate run_id so a stale run can't revive the preview" do
     preview = create(:feed_preview, :processing, user: user, run_id: "run-1")
 
-    preview.timeout!
+    preview.timeout!(run_id: "run-1")
 
     assert preview.failed?
     assert_not_equal "run-1", preview.run_id
@@ -136,6 +140,42 @@ class FeedPreviewTest < ActiveSupport::TestCase
     revived = FeedPreview.where(id: preview.id, run_id: "run-1").update_all(status: FeedPreview.statuses[:ready])
     assert_equal 0, revived
     assert preview.reload.failed?
+  end
+
+  test "#restart! should schedule the deterministic timeout for the new run" do
+    preview = create(:feed_preview, :completed, user: user)
+
+    freeze_time do
+      SecureRandom.stub(:uuid, "run-2") do
+        assert_enqueued_with(job: FeedPreviewTimeoutJob, args: [preview.id, "run-2"],
+                             at: preview.timeout_after.from_now) do
+          preview.restart!
+        end
+      end
+    end
+  end
+
+  test "#timeout_after should preserve the deterministic timeout budget" do
+    preview = build(:feed_preview, feed_profile_key: "rss")
+
+    assert_equal 85.seconds, preview.timeout_after
+    assert_equal 36, preview.polling_max_polls
+  end
+
+  test "#restart! should schedule the longer AI timeout budget" do
+    preview = create(:feed_preview, :completed, feed_profile_key: "llm")
+
+    assert_equal 4.minutes, preview.timeout_after
+    assert_equal 98, preview.polling_max_polls
+
+    freeze_time do
+      SecureRandom.stub(:uuid, "run-ai") do
+        assert_enqueued_with(job: FeedPreviewTimeoutJob, args: [preview.id, "run-ai"],
+                             at: 4.minutes.from_now) do
+          preview.restart!
+        end
+      end
+    end
   end
 
   test ".digest_for should depend only on the profile's source input" do

@@ -1,5 +1,8 @@
 class FeedPreview < ApplicationRecord
   PREVIEW_POSTS_LIMIT = 10
+  POLLING_INTERVAL_MS = 2500
+  TIMEOUT_AFTER = 85.seconds
+  AI_TIMEOUT_AFTER = 4.minutes
 
   # How long a ready preview is reused before a fresh run is forced.
   PREVIEW_FRESHNESS_WINDOW = 60.minutes
@@ -41,19 +44,32 @@ class FeedPreview < ApplicationRecord
   def restart!(search_credential_id: nil)
     update!(status: :pending, data: nil, ready_at: nil, run_id: SecureRandom.uuid)
     FeedPreviewJob.perform_later(id, run_id, search_credential_id)
+    FeedPreviewTimeoutJob.set(wait_until: updated_at + timeout_after).perform_later(id, run_id)
     self
   end
 
-  # Transitions to :failed only if still non-terminal. Rotating run_id makes the
-  # timeout terminal: the still-running job holds the old run_id, so its
-  # run_id-gated transitions now update 0 rows and can't flip the row back to
-  # :ready after the user has already seen the timeout and left.
-  def timeout!
+  # Matching run_id makes a superseded run's timeout harmless. Rotating it keeps
+  # the matching worker from writing results after the timeout.
+  # @param run_id [String] the run token captured when the timeout was scheduled
+  # @return [FeedPreview] self
+  def timeout!(run_id:)
     updated = self.class
                   .where(id: self.id)
+                  .where(run_id: run_id)
                   .where(status: [:pending, :processing])
                   .update_all(status: :failed, run_id: SecureRandom.uuid, updated_at: Time.current)
     reload if updated.positive?
+    self
+  end
+
+  def timeout_after
+    FeedProfile.depends_on_ai?(feed_profile_key) ? AI_TIMEOUT_AFTER : TIMEOUT_AFTER
+  end
+
+  # The first poll is immediate. Two extra polls leave one interval for Solid
+  # Queue to dispatch a due timeout and let the final poll render its result.
+  def polling_max_polls
+    timeout_after.in_milliseconds.div(POLLING_INTERVAL_MS) + 2
   end
 
   def posts_data

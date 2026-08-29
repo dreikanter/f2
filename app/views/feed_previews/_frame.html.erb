@@ -7,8 +7,8 @@
         controller: "polling",
         polling_endpoint_value: feed_preview_path(preview, format: :turbo_stream),
         polling_stop_condition_value: "[data-preview-done]",
-        polling_interval_value: polling_interval_ms,
-        polling_max_polls_value: preview_max_polls(preview)
+        polling_interval_value: FeedPreview::POLLING_INTERVAL_MS,
+        polling_max_polls_value: preview.polling_max_polls
       }) do %>
     <div id="feed-preview-body" data-polling-target="content">
       <%= render(**state_partial(preview)) %>

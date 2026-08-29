@@ -37,4 +37,17 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     assert_nothing_raised { FeedPreviewJob.perform_now(preview.id, "run-1") }
     assert preview.reload.failed?
   end
+
+  test "#perform should not write results after timeout rotates run_id" do
+    preview = create(:feed_preview, :processing, feed_profile_key: "rss",
+                                                params: { "url" => "https://example.com/feed.xml" },
+                                                run_id: "run-1")
+    stub_request(:get, "https://example.com/feed.xml").to_return(status: 200, body: "unused")
+    FeedPreviewTimeoutJob.perform_now(preview.id, "run-1")
+
+    FeedPreviewJob.perform_now(preview.id, "run-1")
+
+    assert_not_requested :get, "https://example.com/feed.xml"
+    assert preview.reload.failed?
+  end
 end
