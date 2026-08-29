@@ -1,11 +1,11 @@
 # Removes stale preview rows. Ready previews are only reused within
-# FeedPreview::PREVIEW_FRESHNESS_WINDOW, so anything older than RETENTION is safe to drop.
+# FeedPreview::PREVIEW_FRESHNESS_WINDOW, so anything not updated within RETENTION is safe to drop.
 class PruneFeedPreviewsJob < ApplicationJob
   queue_as :default
 
   RETENTION = 7.days
 
   def perform
-    FeedPreview.where(created_at: ..RETENTION.ago).in_batches(of: 500).delete_all
+    FeedPreview.where(updated_at: ..RETENTION.ago).in_batches(of: 500).delete_all
   end
 end

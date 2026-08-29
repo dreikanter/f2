@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_08_26_120000) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_29_133000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -148,8 +148,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_26_120000) do
     t.string "run_id"
     t.uuid "ai_credential_id"
     t.string "ai_model"
-    t.index ["created_at"], name: "index_feed_previews_on_created_at"
     t.index ["status"], name: "index_feed_previews_on_status"
+    t.index ["updated_at"], name: "index_feed_previews_on_updated_at"
     t.index ["user_id", "feed_profile_key", "params_digest"], name: "index_feed_previews_on_owner_profile_digest", unique: true
   end
 
