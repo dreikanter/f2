@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-29
+
+- The note we show after finding a feed on a page you linked now describes the address we swapped in, not the one you pasted.
+
 ## 2026-08-28
 
 - When we offer more than one feed type for a link, picking one now shows its own settings, so a choice like Skip Shorts sticks.
