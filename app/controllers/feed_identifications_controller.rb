@@ -1,6 +1,4 @@
 class FeedIdentificationsController < ApplicationController
-  include StatePolling
-
   rate_limit to: 10, within: 1.minute, by: -> { Current.user.id }, only: :create, with: -> {
     message = "Too many attempts in a row. Give it a minute, then try again."
     render throttled_entry_form(message).merge(status: :too_many_requests)
@@ -23,12 +21,7 @@ class FeedIdentificationsController < ApplicationController
     # any settled failure re-runs detection, so resubmitting re-checks it.
     return present_result if feed_identification.working?
 
-    unless feed_identification.persisted? && feed_identification.processing?
-      restarted = feed_identification.restart_detection
-      # A losing concurrent submit skips the enqueue; the winner owns the
-      # in-flight detection.
-      FeedIdentificationJob.perform_later(Current.user.id, source_url) if restarted
-    end
+    feed_identification.restart_detection unless active_detection?
 
     render(entry_form(url: source_url, checking: true))
   end
@@ -39,6 +32,7 @@ class FeedIdentificationsController < ApplicationController
     end
 
     return handle_processing_status if feed_identification.processing?
+    return render(timeout_error) if feed_identification.timed_out?
 
     present_result
   end
@@ -106,18 +100,20 @@ class FeedIdentificationsController < ApplicationController
 
   def handle_processing_status
     if feed_identification.invalid_processing?
-      feed_identification.destroy
       return render(identification_error(error: "Error identifying feed. Oh no."))
     end
 
-    # Past the deadline: drop the row so the checking state stops with an
-    # explanation instead of freezing.
-    if feed_identification.started_at < polling_timeout.ago
-      feed_identification.destroy
-      return render(identification_error(error: "This check is taking longer than expected — the link may not be responding. Please try again."))
-    end
-
     head :no_content
+  end
+
+  def active_detection?
+    feed_identification.persisted? && feed_identification.processing? && !feed_identification.invalid_processing?
+  end
+
+  def timeout_error
+    identification_error(
+      error: "This check is taking longer than expected — the link may not be responding. Please try again."
+    )
   end
 
   # The feed form when a candidate works, otherwise the couldn't-reach or
