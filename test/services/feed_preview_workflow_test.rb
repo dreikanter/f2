@@ -1,6 +1,11 @@
 require "test_helper"
 
 class FeedPreviewWorkflowTest < ActiveSupport::TestCase
+  RUN_ID = "11111111-1111-4111-8111-111111111111"
+  NEXT_RUN_ID = "22222222-2222-4222-8222-222222222222"
+  EXPLICIT_RUN_ID = "33333333-3333-4333-8333-333333333333"
+  AI_RUN_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+
   def user
     @user ||= create(:user)
   end
@@ -8,11 +13,11 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   def feed_preview
     @feed_preview ||= create(:feed_preview, user: user, feed_profile_key: "rss",
                              params: { "url" => "https://example.com/feed.xml" },
-                             status: :pending, run_id: "run-1")
+                             status: :pending, run_id: RUN_ID)
   end
 
   def workflow
-    @workflow ||= FeedPreviewWorkflow.new(feed_preview, run_id: "run-1")
+    @workflow ||= FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID)
   end
 
   def rss_body
@@ -46,8 +51,8 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#initialize should prefer the given run_id over the feed_preview's" do
-    wf = FeedPreviewWorkflow.new(feed_preview, run_id: "explicit-run")
-    assert_equal "explicit-run", wf.send(:run_id)
+    wf = FeedPreviewWorkflow.new(feed_preview, run_id: EXPLICIT_RUN_ID)
+    assert_equal EXPLICIT_RUN_ID, wf.send(:run_id)
   end
 
   test "#initialize should fall back to feed_preview.run_id when run_id is omitted" do
@@ -81,19 +86,19 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#execute should support error handling helpers" do
-    wf = FeedPreviewWorkflow.new(feed_preview, run_id: "run-1")
+    wf = FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID)
     assert_respond_to wf, :execute
     assert_equal feed_preview, wf.feed_preview
   end
 
   test "#record_stats should merge stats correctly" do
-    wf = FeedPreviewWorkflow.new(feed_preview, run_id: "run-1")
+    wf = FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID)
     assert_empty wf.stats
     assert_respond_to wf, :stats
   end
 
   test "#record_stats should store provided values" do
-    wf = FeedPreviewWorkflow.new(feed_preview, run_id: "run-1")
+    wf = FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID)
     assert_empty wf.stats
 
     wf.define_singleton_method(:test_record_stats) do
@@ -107,10 +112,10 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
 
   test "#execute should mark the preview ready with normalized posts and ready_at" do
     preview = create(:feed_preview, feed_profile_key: "rss",
-                     params: { "url" => "https://example.com/feed.xml" }, run_id: "run-1")
+                     params: { "url" => "https://example.com/feed.xml" }, run_id: RUN_ID)
     stub_rss_loader_returning_one_item
 
-    FeedPreviewWorkflow.new(preview, run_id: "run-1").execute
+    FeedPreviewWorkflow.new(preview, run_id: RUN_ID).execute
 
     preview.reload
     assert preview.ready?
@@ -120,10 +125,10 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
 
   test "#execute should not finalize when the run_id is stale" do
     preview = create(:feed_preview, feed_profile_key: "rss",
-                     params: { "url" => "https://example.com/feed.xml" }, run_id: "run-2")
+                     params: { "url" => "https://example.com/feed.xml" }, run_id: NEXT_RUN_ID)
     stub_rss_loader_returning_one_item
 
-    FeedPreviewWorkflow.new(preview, run_id: "run-1").execute # superseded run
+    FeedPreviewWorkflow.new(preview, run_id: RUN_ID).execute # superseded run
 
     preview.reload
     refute preview.ready?
@@ -132,11 +137,11 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   # Fix 5: superseded run halts early without calling the loader or marking failed
   test "#execute should not invoke the loader and should not mark failed when run_id is superseded" do
     preview = create(:feed_preview, feed_profile_key: "rss",
-                     params: { "url" => "https://example.com/feed.xml" }, run_id: "run-2")
+                     params: { "url" => "https://example.com/feed.xml" }, run_id: NEXT_RUN_ID)
 
     # The stub for the loader URL is intentionally absent — if the loader were
     # called it would raise a WebMock::NetConnectNotAllowedError, failing the test.
-    FeedPreviewWorkflow.new(preview, run_id: "run-1").execute
+    FeedPreviewWorkflow.new(preview, run_id: RUN_ID).execute
 
     preview.reload
     assert preview.pending?, "expected preview to remain pending (not failed), got #{preview.status}"
@@ -146,7 +151,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
     preview = create(:feed_preview, user: user, feed_profile_key: "llm",
                      params: { "prompt" => "rust async" }, ai_credential: credential,
-                     ai_model: "claude-sonnet-4-6", status: :pending, run_id: "run-ai")
+                     ai_model: "claude-sonnet-4-6", status: :pending, run_id: AI_RUN_ID)
 
     captured_feed = nil
     captured_model = nil
@@ -160,7 +165,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     end
 
     LlmClient.stub(:for, ->(feed) { captured_feed = feed; fake_client.new(credential) }) do
-      FeedPreviewWorkflow.new(preview, run_id: "run-ai").execute
+      FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
     end
 
     assert_equal credential.id, captured_feed.ai_credential_id
