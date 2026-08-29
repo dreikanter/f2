@@ -446,11 +446,27 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "#show should mark a timed-out preview as failed and render the failed partial" do
+  test "#show should not mutate an overdue preview" do
     sign_in_as(user)
-    create(:feed_preview, :processing, user: user, feed_profile_key: "rss",
-                                       params: { "url" => "http://example.com/feed.xml" },
-                                       updated_at: 10.minutes.ago)
+    preview = create(:feed_preview, :processing, user: user, feed_profile_key: "rss",
+                                                params: { "url" => "http://example.com/feed.xml" },
+                                                run_id: "run-1", updated_at: 10.minutes.ago)
+    original_attributes = preview.attributes.slice("status", "run_id", "created_at", "updated_at")
+
+    assert_no_enqueued_jobs do
+      get feed_preview_url(preview), headers: TURBO_STREAM
+    end
+
+    assert_response :no_content
+    assert_equal original_attributes, preview.reload.attributes.slice("status", "run_id", "created_at", "updated_at")
+  end
+
+  test "#create should not mutate an overdue preview" do
+    sign_in_as(user)
+    preview = create(:feed_preview, :processing, user: user, feed_profile_key: "rss",
+                                                params: { "url" => "http://example.com/feed.xml" },
+                                                run_id: "run-1", updated_at: 10.minutes.ago)
+    original_attributes = preview.attributes.slice("status", "run_id", "created_at", "updated_at")
 
     assert_no_enqueued_jobs do
       post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } },
@@ -458,42 +474,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
-    assert_match(/data-preview-done/, response.body)
-    assert user.feed_previews.last.failed?
-  end
-
-  test "#show should not time out an AI preview within its longer budget" do
-    sign_in_as(user)
-    credential = create(:ai_credential, :active, user: user, available_models: models)
-    create(:feed_preview, :processing, user: user, feed_profile_key: "llm",
-                                       params: { "prompt" => "ruby news" },
-                                       ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6",
-                                       updated_at: 90.seconds.ago)
-
-    assert_no_enqueued_jobs do
-      post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "ruby news" },
-                           ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6" },
-          headers: TURBO_STREAM
-    end
-
-    assert_response :success
-    assert_not user.feed_previews.last.failed?, "an AI preview should survive past the deterministic budget"
-  end
-
-  test "#show should time out an AI preview past its longer budget" do
-    sign_in_as(user)
-    credential = create(:ai_credential, :active, user: user, available_models: models)
-    create(:feed_preview, :processing, user: user, feed_profile_key: "llm",
-                                       params: { "prompt" => "ruby news" },
-                                       ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6",
-                                       updated_at: 5.minutes.ago)
-
-    post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "ruby news" },
-                         ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6" },
-        headers: TURBO_STREAM
-
-    assert_response :success
-    assert user.feed_previews.last.failed?
+    assert_equal original_attributes, preview.reload.attributes.slice("status", "run_id", "created_at", "updated_at")
   end
 
   test "#create should show the AI-browsing copy for an AI preview" do

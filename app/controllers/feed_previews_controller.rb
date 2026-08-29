@@ -1,6 +1,4 @@
 class FeedPreviewsController < ApplicationController
-  include StatePolling
-
   before_action :load_preview, only: %i[show update]
   before_action :guard_preview, only: %i[create update]
 
@@ -13,15 +11,9 @@ class FeedPreviewsController < ApplicationController
     "failed" => "failed"
   }.freeze
 
-  # AI previews browse the web (Sonnet gather runs 40–120s, plus structuring), so
-  # they need a far longer budget than a deterministic fetch or they'd time out
-  # mid-run. ~4 minutes at the shared 2.5s poll interval.
-  AI_PREVIEW_MAX_POLLS = 98
-
   # GET /feed_previews/:id, for polling and frame reloads. The row carries its
   # own source and selections, so nothing about the preview travels in the URL.
   def show
-    preview.timeout! if timed_out?(preview)
     render_state(preview, inert_while_running: true)
   end
 
@@ -31,7 +23,6 @@ class FeedPreviewsController < ApplicationController
   def create
     found = locate_preview
     found = start_run(found) if needs_run?(found)
-    found.timeout! if timed_out?(found)
     render_frame(found)
   end
 
@@ -42,16 +33,9 @@ class FeedPreviewsController < ApplicationController
     render_frame(preview)
   end
 
-  helper_method :preview_max_polls, :state_partial
+  helper_method :state_partial
 
   private
-
-  # Poll cap for the current preview's profile: the longer AI budget for a
-  # web-browsing run, the shared default otherwise. Drives both the client
-  # poller (view) and the server-side timeout.
-  def preview_max_polls(preview)
-    FeedProfile.depends_on_ai?(preview.feed_profile_key) ? AI_PREVIEW_MAX_POLLS : polling_max_polls
-  end
 
   def guard_preview
     return render_cleared if source_blank? || !FeedProfile.exists?(profile_key)
@@ -142,11 +126,6 @@ class FeedPreviewsController < ApplicationController
     preview.restart!(search_credential_id: search_credential&.id)
   rescue ActiveRecord::RecordNotUnique
     previews.find_by!(feed_profile_key: profile_key, params_digest: digest)
-  end
-
-  def timed_out?(preview)
-    (preview.pending? || preview.processing?) &&
-      preview.updated_at < polling_timeout(preview_max_polls(preview)).ago
   end
 
   # A create is described by the request; an update by the row it names. The
