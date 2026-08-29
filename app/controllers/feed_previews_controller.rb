@@ -1,6 +1,5 @@
 class FeedPreviewsController < ApplicationController
   include StatePolling
-  include PreviewSearchCredential
 
   before_action :load_preview, only: %i[show update]
   before_action :guard_preview, only: %i[create update]
@@ -102,6 +101,18 @@ class FeedPreviewsController < ApplicationController
     return @search_credential if defined?(@search_credential)
 
     @search_credential = resolve_search_credential(profile_key, params[:search_credential_id])
+  end
+
+  # @param profile_key [String] the preview's profile
+  # @param requested_id [String, nil] a credential chosen in the form
+  # @return [SearchCredential, nil] the credential backing the run
+  def resolve_search_credential(profile_key, requested_id = nil)
+    return unless FeedProfile.exists?(profile_key) && FeedProfile.depends_on_ai?(profile_key)
+
+    credentials = Current.user.search_credentials.active
+    return credentials.find_by(id: requested_id) if requested_id.present?
+
+    credentials.find_by(id: Current.user.default_search_credential_id) || credentials.first
   end
 
   def ai_model
