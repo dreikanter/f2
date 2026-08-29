@@ -50,7 +50,7 @@
               <% elsif source_error %>
                 <p class="text-sm text-danger" data-key="form.source-error"><%= source_error %></p>
               <% elsif source_discovered? %>
-                <p class="text-sm text-muted" data-key="form.source-discovered-note">That link goes to a page, not a feed. We found the page's feed, so that's what we'll follow.</p>
+                <p class="text-sm text-muted" data-key="form.source-discovered-note">We found the feed on the page you referenced.</p>
               <% else %>
                 <p class="text-sm text-muted" data-key="form.source-edit-note">Point this at a different feed and we'll re-check it before saving.</p>
               <% end %>
@@ -66,7 +66,7 @@
                                data: { key: "form.source-display" } %>
               <%= hidden_source_field %>
               <% if source_discovered? %>
-                <p class="text-sm text-muted" data-key="form.source-discovered-note">That link goes to a page, not a feed. We found the page's feed, so that's what we'll follow.</p>
+                <p class="text-sm text-muted" data-key="form.source-discovered-note">We found the feed on the page you referenced.</p>
               <% end %>
             </div>
           <% end %>

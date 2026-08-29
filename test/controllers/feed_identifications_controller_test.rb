@@ -483,7 +483,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "input[type=hidden][name='feed[params][url]'][value=?]", feed_url
     assert_select "input[data-key='form.source-display'][value=?]", feed_url
-    assert_select "[data-key='form.source-discovered-note']"
+    assert_select "[data-key='form.source-discovered-note']",
+                  text: /We found the feed on the page you referenced/
     assert_select "input[type=hidden][name='feed[feed_profile_key]'][value=?]", "rss"
   end
 
@@ -504,6 +505,24 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "input[type=hidden][name='feed[params][url]'][value=?]", url
     assert_select "[data-key='form.source-discovered-note']", count: 0
+  end
+
+  test "#show should note the discovered feed when an edit's link resolves to one" do
+    sign_in_as(user)
+    feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
+    page_url = "http://example.com/blog"
+    feed_url = "http://example.com/feed.xml"
+    create(:feed_identification, user: user, input: page_url, status: :working, started_at: Time.current,
+           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "title" => "New",
+                          "resolved_url" => feed_url }])
+
+    get feed_identifications_path, params: { url: page_url, feed_id: feed.id },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "input[data-key='form.source-edit'][value=?]", feed_url
+    assert_select "[data-key='form.source-discovered-note']",
+                  text: /We found the feed on the page you referenced/
   end
 
   test "#show should preselect the default schedule interval with no blank option" do
