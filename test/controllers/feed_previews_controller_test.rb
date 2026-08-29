@@ -64,6 +64,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } }
 
     assert_response :success
+    assert_select '[data-controller~="lightbox"]'
     summary = css_select('[data-key="preview.summary"]').text
     assert_match "We found 1 post in this feed", summary
     assert_no_match(/peek/, summary)

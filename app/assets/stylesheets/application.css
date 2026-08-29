@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tippy.js/dist/tippy.css";
+@import "glightbox/dist/css/glightbox.css";
 @config "../../../tailwind.config.mjs";
 
 /* Semantic color tokens. Tailwind v4 maps each --color-* entry onto the whole

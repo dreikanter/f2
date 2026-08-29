@@ -65,6 +65,11 @@ class PostPreviewComponentTest < ViewComponent::TestCase
 
     section = result.at_css('[data-key="preview.attachments"]')
     assert_not_nil section
+    links = section.css('[data-key="preview.image-attachment"]')
+    assert_equal 2, links.size
+    assert_equal "click->lightbox#open", links.first["data-action"]
+    assert_equal "item", links.first["data-lightbox-target"]
+    assert_equal "Open image attachment 1", links.first["aria-label"]
     assert_not_nil section.at_css('a[href="https://example.com/photo.png"] img')
     assert_not_nil section.at_css('a[href="https://example.com/plain.jpg"] img')
   end
