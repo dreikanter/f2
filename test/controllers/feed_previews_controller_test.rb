@@ -146,15 +146,18 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "#show should store the chosen provider and model on the preview" do
+  test "#create should store the chosen providers and model on the preview" do
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user, available_models: models)
+    search_credential = user.search_credentials.active.first
 
     post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" },
-                         ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6" }
+                         ai_credential_id: credential.id, search_credential_id: search_credential.id,
+                         ai_model: "claude-sonnet-4-6" }
 
     preview = user.feed_previews.last
     assert_equal credential.id, preview.ai_credential_id
+    assert_equal search_credential.id, preview.search_credential_id
     assert_equal "claude-sonnet-4-6", preview.ai_model
   end
 
@@ -328,12 +331,12 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   test "#update should clear rather than run when the AI credential went inactive" do
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user)
-    search = create(:search_credential, :active, user: user)
     preview = create(:feed_preview, :completed, user: user, feed_profile_key: "llm",
                                                 params: { "prompt" => "ruby news" },
-                                                ai_credential: credential, ai_model: "gpt-4o-mini")
+                                                ai_credential: credential,
+                                                search_credential: user.search_credentials.active.first,
+                                                ai_model: "gpt-4o-mini")
     credential.update!(state: :inactive)
-    search
 
     assert_no_enqueued_jobs do
       patch feed_preview_url(preview), headers: TURBO_STREAM
@@ -341,6 +344,52 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert preview.reload.ready?, "the stale selection must not start a run"
+  end
+
+  test "#update should validate the stored identity rather than request overrides" do
+    sign_in_as(user)
+    stored_credential = create(:ai_credential, :active, user: user, available_models: models)
+    replacement = create(:ai_credential, :active, user: user, available_models: models)
+    preview = create(:feed_preview, :completed, user: user, feed_profile_key: "llm",
+                                                params: { "prompt" => "ruby news" },
+                                                ai_credential: stored_credential,
+                                                search_credential: user.search_credentials.active.first,
+                                                ai_model: "claude-sonnet-4-6")
+    stored_credential.update!(state: :inactive)
+
+    assert_no_enqueued_jobs do
+      patch feed_preview_url(preview),
+            params: {
+              profile_key: "rss",
+              "params" => { "url" => "https://example.com/other.xml" },
+              ai_credential_id: replacement.id,
+              ai_model: "claude-sonnet-4-6"
+            },
+            headers: TURBO_STREAM
+    end
+
+    assert_response :success
+    assert preview.reload.ready?, "request overrides must not bypass the stored selection"
+  end
+
+  test "#update should not substitute a different active search credential" do
+    sign_in_as(user)
+    ai_credential = create(:ai_credential, :active, user: user, available_models: models)
+    selected = user.search_credentials.active.first
+    create(:search_credential, :active, :default, user: user)
+    preview = create(:feed_preview, :completed, user: user, feed_profile_key: "llm",
+                                                params: { "prompt" => "ruby news" },
+                                                ai_credential: ai_credential,
+                                                search_credential: selected,
+                                                ai_model: "claude-sonnet-4-6")
+    selected.update!(state: :inactive)
+
+    assert_no_enqueued_jobs do
+      patch feed_preview_url(preview), headers: TURBO_STREAM
+    end
+
+    assert_response :success
+    assert preview.reload.ready?, "refresh must not switch to the current default"
   end
 
   test "#update should not reach another user's preview" do
