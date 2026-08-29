@@ -12,3 +12,4 @@ pin_all_from "app/javascript/controllers", under: "controllers"
 
 pin "tippy.js", to: "https://esm.sh/tippy.js@6"
 pin "date-fns", to: "https://esm.sh/date-fns@4"
+pin "glightbox", to: "https://esm.sh/glightbox@3.3.1"

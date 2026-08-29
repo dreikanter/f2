@@ -3,6 +3,10 @@ require "test_helper"
 class FeedPreviewTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
+  RUN_ID = "11111111-1111-4111-8111-111111111111"
+  NEXT_RUN_ID = "22222222-2222-4222-8222-222222222222"
+  AI_RUN_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+
   setup { clear_enqueued_jobs }
 
   def user
@@ -47,6 +51,10 @@ class FeedPreviewTest < ActiveSupport::TestCase
 
     preview.failed!
     assert preview.failed?
+  end
+
+  test "#run_id should use the native UUID type" do
+    assert_equal :uuid, FeedPreview.type_for_attribute("run_id").type
   end
 
   test "#posts_data should return empty array when data is nil" do
@@ -124,27 +132,27 @@ class FeedPreviewTest < ActiveSupport::TestCase
   end
 
   test "#timeout! should transition a processing preview to failed" do
-    preview = create(:feed_preview, :processing, user: user, run_id: "run-1")
-    preview.timeout!(run_id: "run-1")
+    preview = create(:feed_preview, :processing, user: user, run_id: RUN_ID)
+    preview.timeout!(run_id: RUN_ID)
     assert preview.failed?
   end
 
   test "#timeout! should be a no-op for a ready preview" do
-    preview = create(:feed_preview, :completed, user: user, run_id: "run-1")
-    preview.timeout!(run_id: "run-1")
+    preview = create(:feed_preview, :completed, user: user, run_id: RUN_ID)
+    preview.timeout!(run_id: RUN_ID)
     assert preview.ready?
   end
 
   test "#timeout! should rotate run_id so a stale run can't revive the preview" do
-    preview = create(:feed_preview, :processing, user: user, run_id: "run-1")
+    preview = create(:feed_preview, :processing, user: user, run_id: RUN_ID)
 
-    preview.timeout!(run_id: "run-1")
+    preview.timeout!(run_id: RUN_ID)
 
     assert preview.failed?
-    assert_not_equal "run-1", preview.run_id
+    assert_not_equal RUN_ID, preview.run_id
     # A late completion from the timed-out run holds the old run_id, so its
     # run_id-gated transition now matches nothing and can't flip it back.
-    revived = FeedPreview.where(id: preview.id, run_id: "run-1").update_all(status: FeedPreview.statuses[:ready])
+    revived = FeedPreview.where(id: preview.id, run_id: RUN_ID).update_all(status: FeedPreview.statuses[:ready])
     assert_equal 0, revived
     assert preview.reload.failed?
   end
@@ -153,8 +161,8 @@ class FeedPreviewTest < ActiveSupport::TestCase
     preview = create(:feed_preview, :completed, user: user)
 
     freeze_time do
-      SecureRandom.stub(:uuid, "run-2") do
-        assert_enqueued_with(job: FeedPreviewTimeoutJob, args: [preview.id, "run-2"],
+      SecureRandom.stub(:uuid, NEXT_RUN_ID) do
+        assert_enqueued_with(job: FeedPreviewTimeoutJob, args: [preview.id, NEXT_RUN_ID],
                              at: preview.timeout_after.from_now) do
           preview.restart!
         end
@@ -176,8 +184,8 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert_equal 98, preview.polling_max_polls
 
     freeze_time do
-      SecureRandom.stub(:uuid, "run-ai") do
-        assert_enqueued_with(job: FeedPreviewTimeoutJob, args: [preview.id, "run-ai"],
+      SecureRandom.stub(:uuid, AI_RUN_ID) do
+        assert_enqueued_with(job: FeedPreviewTimeoutJob, args: [preview.id, AI_RUN_ID],
                              at: 4.minutes.from_now) do
           preview.restart!
         end

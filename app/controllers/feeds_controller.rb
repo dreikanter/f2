@@ -243,8 +243,7 @@ class FeedsController < ApplicationController
     end
 
     identification = FeedIdentification.find_or_initialize_by(user: current_user, input: canonical_submitted_url)
-    restarted = identification.restart_detection
-    FeedIdentificationJob.perform_later(current_user.id, canonical_submitted_url) if restarted
+    identification.restart_detection
 
     render_identification_state(attempted_url: canonical_submitted_url, checking: true)
   end

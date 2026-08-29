@@ -499,7 +499,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     preview = create(:feed_preview, :processing, user: user, feed_profile_key: "rss",
                                                 params: { "url" => "http://example.com/feed.xml" },
-                                                run_id: "run-1", updated_at: 10.minutes.ago)
+                                                run_id: SecureRandom.uuid, updated_at: 10.minutes.ago)
     original_attributes = preview.attributes.slice("status", "run_id", "created_at", "updated_at")
 
     assert_no_enqueued_jobs do
@@ -514,7 +514,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     preview = create(:feed_preview, :processing, user: user, feed_profile_key: "rss",
                                                 params: { "url" => "http://example.com/feed.xml" },
-                                                run_id: "run-1", updated_at: 10.minutes.ago)
+                                                run_id: SecureRandom.uuid, updated_at: 10.minutes.ago)
     original_attributes = preview.attributes.slice("status", "run_id", "created_at", "updated_at")
 
     assert_no_enqueued_jobs do

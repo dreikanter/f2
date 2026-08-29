@@ -90,14 +90,14 @@ export default class extends Controller {
   }
 
   handleEscape(event) {
-    if (event.key === 'Escape' && !this.element.classList.contains('hidden')) {
+    if (event.key === 'Escape' && !this.element.classList.contains('hidden') && !this.coveredByModal()) {
       this.close(event)
     }
   }
 
   handleFocusTrap(event) {
     // Only trap focus when modal is visible
-    if (this.element.classList.contains('hidden')) {
+    if (this.element.classList.contains('hidden') || this.coveredByModal()) {
       return
     }
 
@@ -124,5 +124,10 @@ export default class extends Controller {
       event.preventDefault()
       firstElement.focus()
     }
+  }
+
+  coveredByModal() {
+    const visibleModals = document.querySelectorAll('[aria-modal="true"][aria-hidden="false"]')
+    return visibleModals[visibleModals.length - 1] !== this.element
   }
 }
