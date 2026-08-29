@@ -2,13 +2,9 @@ import { Controller } from "@hotwired/stimulus"
 import { selectedProfileKey } from "controllers/helpers/selected_profile_key"
 import { csrfToken } from "controllers/helpers/csrf_token"
 
-// Drives the manual feed preview:
-// - keeps the button enabled only when a profile is selected and a source is
-//   present (and, for AI profiles, a provider and model are chosen)
-// - on click, paints the loading spinner, points the modal's feed-preview frame
-//   at the preview endpoint for the selected profile + source (plus the chosen
-//   provider + model for AI profiles), then opens the modal
-// - on modal close, clears the frame so the polling host unmounts (stops polling)
+// Keeps preview availability in sync with the form and POSTs the current source,
+// AI provider, and model when opening the modal. Closing it aborts the request
+// and unmounts any active poller.
 export default class extends Controller {
   static targets = ["button", "frame", "source", "hint"]
   static values = {
