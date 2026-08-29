@@ -1,14 +1,12 @@
 class FeedIdentificationJob < ApplicationJob
   queue_as :default
 
-  def perform(user_id, input)
-    user = User.find_by(id: user_id)
+  # @param feed_identification_id [String] UUID of the FeedIdentification
+  # @param run_id [String] run token captured when the job was enqueued
+  def perform(feed_identification_id, run_id)
+    identification = FeedIdentification.find_by(id: feed_identification_id, status: :processing, run_id: run_id)
+    return unless identification
 
-    unless user
-      Rails.logger.warn("FeedIdentificationJob skipped: User #{user_id} not found (job_id: #{job_id}, input: #{input})")
-      return
-    end
-
-    FeedIdentificationFetcher.new(user: user, input: input).identify
+    FeedIdentificationFetcher.new(feed_identification: identification, run_id: run_id).identify
   end
 end

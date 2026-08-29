@@ -16,11 +16,11 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "#create should create feed detail record and enqueue job for valid URL" do
+  test "#create should create an identification and schedule both jobs for the same run" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    assert_enqueued_with(job: FeedIdentificationJob, args: [user.id, url]) do
+    assert_enqueued_with(job: FeedIdentificationJob) do
       post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
@@ -30,6 +30,11 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal url, feed_identification.input
     assert_not_nil feed_identification.started_at
     assert_kind_of ActiveSupport::TimeWithZone, feed_identification.started_at
+    assert_not_nil feed_identification.run_id
+    assert_enqueued_with(job: FeedIdentificationJob, args: [feed_identification.id, feed_identification.run_id])
+    assert_enqueued_with(job: FeedIdentificationTimeoutJob,
+                         args: [feed_identification.id, feed_identification.run_id],
+                         at: feed_identification.started_at + FeedIdentification::TIMEOUT_AFTER)
 
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
@@ -117,7 +122,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     perform_enqueued_jobs
 
     # Second attempt - should restart identification
-    assert_enqueued_with(job: FeedIdentificationJob, args: [user.id, url]) do
+    assert_enqueued_with(job: FeedIdentificationJob) do
       post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
@@ -134,7 +139,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     loser = FeedIdentification.new(user: user, input: url)
 
     FeedIdentification.stub(:find_or_initialize_by, loser) do
-      assert_no_enqueued_jobs(only: FeedIdentificationJob) do
+      assert_no_enqueued_jobs do
         post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       end
     end
@@ -155,6 +160,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input#entry-link-input[disabled][value=?]", url
     assert_select "input[type=submit][value='Checking…'][disabled]"
     assert_select "[data-key='entry.mode-ai'] input[type=radio][disabled]"
+    assert_select "[data-polling-interval-value='2500'][data-polling-max-polls-value='36']"
     # Cancel stays live as the escape hatch: it aborts the check and re-renders
     # the form with the URL kept.
     assert_select "a[data-key='entry.cancel-check'][data-turbo-method='delete']"
@@ -281,48 +287,58 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     # Create processing feed detail via controller
     post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    identification = FeedIdentification.find_by!(user: user, input: url)
+    original_attributes = identification.attributes.slice("status", "run_id", "started_at", "created_at", "updated_at")
 
     # Check status while still processing (don't perform jobs)
     get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :no_content
     assert_empty response.body
+    assert_equal original_attributes,
+                 identification.reload.attributes.slice("status", "run_id", "started_at", "created_at", "updated_at")
+    assert FeedIdentification.exists?(identification.id)
   end
 
-  test "#show should return error when started_at is missing" do
+  test "#show should render an error without mutating processing rows missing run metadata" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
     # Create processing feed detail via controller
     post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-    # Manipulate record to remove started_at (invalid state)
+    # Simulate a legacy processing row created before run tokens existed.
     feed_identification = FeedIdentification.find_by(user: user, input: url)
-    feed_identification.update_column(:started_at, nil)
+    feed_identification.update_column(:run_id, nil)
+    original_attributes = feed_identification.reload.attributes.slice(
+      "status", "run_id", "started_at", "created_at", "updated_at"
+    )
 
     get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, "Error identifying feed"
-    assert_nil FeedIdentification.find_by(user: user, input: url), "Feed identification should be deleted when invalid"
+    assert_equal original_attributes,
+                 feed_identification.reload.attributes.slice("status", "run_id", "started_at", "created_at", "updated_at")
+    assert FeedIdentification.exists?(feed_identification.id)
   end
 
-  test "#show should return timeout error when processing exceeds threshold" do
+  test "#show should render the timeout message from the terminal timeout state without mutation" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
-
-    # Create processing feed detail via controller
-    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-    # Manipulate record to simulate a job stuck well past the timeout
-    feed_identification = FeedIdentification.find_by(user: user, input: url)
-    feed_identification.update_column(:started_at, 10.minutes.ago)
+    feed_identification = create(:feed_identification, user: user, input: url, status: :timed_out,
+                                                       started_at: 10.minutes.ago, run_id: "rotated-run")
+    original_attributes = feed_identification.attributes.slice(
+      "status", "run_id", "started_at", "created_at", "updated_at"
+    )
 
     get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, "taking longer than expected"
-    assert_nil FeedIdentification.find_by(user: user, input: url), "Feed identification should be deleted on timeout"
+    assert_equal original_attributes,
+                 feed_identification.reload.attributes.slice("status", "run_id", "started_at", "created_at", "updated_at")
+    assert FeedIdentification.exists?(feed_identification.id)
   end
 
   test "#show should return expanded form when status is success" do
