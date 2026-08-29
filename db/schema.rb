@@ -117,7 +117,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_29_160000) do
     t.datetime "updated_at", null: false
     t.string "input", null: false
     t.uuid "user_id", null: false
-    t.string "run_id"
+    t.uuid "run_id"
     t.index ["user_id", "input"], name: "index_feed_identifications_on_user_id_and_input", unique: true
   end
 

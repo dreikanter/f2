@@ -327,7 +327,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
     feed_identification = create(:feed_identification, user: user, input: url, status: :timed_out,
-                                                       started_at: 10.minutes.ago, run_id: "rotated-run")
+                                                       started_at: 10.minutes.ago, run_id: SecureRandom.uuid)
     original_attributes = feed_identification.attributes.slice(
       "status", "run_id", "started_at", "created_at", "updated_at"
     )

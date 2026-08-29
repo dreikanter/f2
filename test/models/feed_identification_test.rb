@@ -33,7 +33,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
 
   test "#invalid_processing? should be true when processing without started_at" do
     identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :processing,
-                                             started_at: nil, run_id: "run-1")
+                                             started_at: nil, run_id: SecureRandom.uuid)
     assert_predicate identification, :invalid_processing?
   end
 
@@ -45,7 +45,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
 
   test "#invalid_processing? should be false when run metadata is present" do
     identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :processing,
-                                             started_at: Time.current, run_id: "run-1")
+                                             started_at: Time.current, run_id: SecureRandom.uuid)
     refute_predicate identification, :invalid_processing?
   end
 
@@ -56,12 +56,13 @@ class FeedIdentificationTest < ActiveSupport::TestCase
 
   test "#restart_detection should reset the row to a fresh in-flight detection" do
     identification = create(:feed_identification, :no_feed, user: user)
+    run_id = SecureRandom.uuid
 
     freeze_time do
-      SecureRandom.stub(:uuid, "run-1") do
-        assert_enqueued_with(job: FeedIdentificationTimeoutJob, args: [identification.id, "run-1"],
+      SecureRandom.stub(:uuid, run_id) do
+        assert_enqueued_with(job: FeedIdentificationTimeoutJob, args: [identification.id, run_id],
                              at: FeedIdentification::TIMEOUT_AFTER.from_now) do
-          assert_enqueued_with(job: FeedIdentificationJob, args: [identification.id, "run-1"]) do
+          assert_enqueued_with(job: FeedIdentificationJob, args: [identification.id, run_id]) do
             assert identification.restart_detection
           end
         end
@@ -72,7 +73,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     assert_predicate identification, :processing?
     assert_not_nil identification.started_at
     assert_equal [], identification.candidates
-    assert_equal "run-1", identification.run_id
+    assert_equal run_id, identification.run_id
   end
 
   test "#restart_detection should clear working candidates already read on the same instance" do

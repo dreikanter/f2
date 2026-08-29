@@ -433,33 +433,35 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
   test "#identify should ignore a result after timeout rotates run_id" do
     url = "http://example.com/feed.xml"
+    run_id = SecureRandom.uuid
     identification = create(:feed_identification, user: user, input: url, status: :processing,
-                                                   started_at: Time.current, run_id: "run-1")
+                                                   started_at: Time.current, run_id: run_id)
     stale_fetcher = FeedIdentificationFetcher.new(
       feed_identification: identification,
-      run_id: "run-1",
+      run_id: run_id,
       logger: @logger
     )
     stub_request(:get, url).to_return(status: 200, body: rss_body("Late Feed"))
 
-    FeedIdentificationTimeoutJob.perform_now(identification.id, "run-1")
+    FeedIdentificationTimeoutJob.perform_now(identification.id, run_id)
     stale_fetcher.identify
 
     assert_predicate identification.reload, :timed_out?
     assert_empty identification.candidates
-    refute_equal "run-1", identification.run_id
+    refute_equal run_id, identification.run_id
   end
 
   test "#identify should ignore an error transition from a superseded run" do
     url = "http://example.com/feed.xml"
+    stale_run_id = SecureRandom.uuid
     identification = create(:feed_identification, user: user, input: url, status: :processing,
-                                                   started_at: Time.current, run_id: "run-1")
+                                                   started_at: Time.current, run_id: stale_run_id)
     stale_fetcher = FeedIdentificationFetcher.new(
       feed_identification: identification,
-      run_id: "run-1",
+      run_id: stale_run_id,
       logger: @logger
     )
-    identification.update!(run_id: "run-2")
+    identification.update!(run_id: SecureRandom.uuid)
     original_attributes = identification.attributes.slice("status", "run_id", "candidates", "updated_at")
     stub_request(:get, url).to_timeout
 
