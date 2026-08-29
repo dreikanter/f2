@@ -4,7 +4,8 @@ class FeedPreviewJob < ApplicationJob
 
   # @param feed_preview_id [String] UUID of the FeedPreview
   # @param run_id [String] the run token captured when this job was enqueued
-  def perform(feed_preview_id, run_id)
+  # @param _legacy_search_credential_id [String, nil] ignored argument from jobs queued before persistence
+  def perform(feed_preview_id, run_id, _legacy_search_credential_id = nil)
     feed_preview = FeedPreview.find_by(id: feed_preview_id)
     return unless feed_preview
 

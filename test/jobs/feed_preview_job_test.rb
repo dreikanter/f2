@@ -15,7 +15,7 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     workflow.verify
   end
 
-  test "#perform should use the preview's active search credential" do
+  test "#perform should use the persisted credential and ignore the legacy argument" do
     user = create(:user)
     search_credential = create(:search_credential, :active, user: user)
     preview = create(:feed_preview, user: user, feed_profile_key: "llm",
@@ -33,7 +33,7 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     end
 
     FeedPreviewWorkflow.stub(:new, factory) do
-      FeedPreviewJob.perform_now(preview.id, "run-1")
+      FeedPreviewJob.perform_now(preview.id, "run-1", SecureRandom.uuid)
     end
 
     workflow.verify
