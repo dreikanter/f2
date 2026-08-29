@@ -2,9 +2,15 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
-## 2026-08-28
+## 2026-08-29
 
 - Preview now reflects the feed settings you picked, so a YouTube preview with Skip Shorts on leaves them out too.
+- Refreshing an AI feed preview now keeps the search provider you selected.
+- The note we show after finding a feed on a page you linked now describes the address we swapped in, not the one you pasted.
+
+## 2026-08-28
+
+- Asking for a preview again reuses the one we just built instead of refetching. Use Refresh when you want a fresh run.
 - When we offer more than one feed type for a link, picking one now shows its own settings, so a choice like Skip Shorts sticks.
 - YouTube feeds can skip Shorts. Switch on "Skip Shorts" under Advanced options to follow a channel's regular uploads only.
 - Posts that are just images now publish. Before, a post with pictures and no text was accepted and then quietly failed.

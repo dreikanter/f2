@@ -4,14 +4,16 @@ class FeedPreviewJob < ApplicationJob
 
   # @param feed_preview_id [String] UUID of the FeedPreview
   # @param run_id [String] the run token captured when this job was enqueued
-  # @param search_credential_id [String, nil] credential selected for this run
-  def perform(feed_preview_id, run_id, search_credential_id = nil)
+  # @param _legacy_search_credential_id [String, nil] ignored argument from jobs queued before persistence
+  def perform(feed_preview_id, run_id, _legacy_search_credential_id = nil)
     feed_preview = FeedPreview.find_by(id: feed_preview_id)
     return unless feed_preview
 
     options = { run_id: run_id }
-    if search_credential_id
-      search_credential = feed_preview.user.search_credentials.active.find_by(id: search_credential_id)
+    if feed_preview.search_credential_id
+      search_credential = feed_preview.user.search_credentials.active.find_by(
+        id: feed_preview.search_credential_id
+      )
       options[:search_credential] = search_credential
     end
 

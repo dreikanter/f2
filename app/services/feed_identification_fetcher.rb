@@ -8,29 +8,31 @@ class FeedIdentificationFetcher
 
   class ResponseStatusError < FetchError; end # reachable, but answered non-2xx
 
-  def initialize(user:, input:, logger: Rails.logger)
-    @user = user
-    @input = input
+  def initialize(feed_identification:, run_id:, logger: Rails.logger)
+    @feed_identification = feed_identification
+    @run_id = run_id
+    @user = feed_identification.user
+    @input = feed_identification.input
     @logger = logger
   end
 
   def identify
     response = fetch_response_for_input
     candidates = identify_candidates(response)
-    feed_identification.update!(status: settled_status(candidates), candidates: candidates)
+    settle(status: settled_status(candidates), candidates: candidates)
   rescue UnreachableError => e
     # Transient: the UI offers a retry. Expected, so not reported as a bug.
     @logger.info("Feed identification couldn't reach #{sanitize_input_for_logging(@input)}: #{e.class} (#{e.message})")
-    feed_identification.update!(status: :unreachable, candidates: [])
+    settle(status: :unreachable, candidates: [])
   rescue FetchError => e
     @logger.info("Feed identification fetch failed for #{sanitize_input_for_logging(@input)}: #{e.class} (#{e.message})")
-    feed_identification.update!(status: :no_feed, candidates: [])
+    settle(status: :no_feed, candidates: [])
   rescue StandardError => e
     # Unexpected: report it as a bug, then settle on the terminal state.
     sanitized = sanitize_input_for_logging(@input)
     @logger.error("Feed identification failed for #{sanitized}: #{e.class} - #{e.message}")
     Rails.error.report(e, context: { input: sanitized })
-    feed_identification.update!(status: :no_feed, candidates: [])
+    settle(status: :no_feed, candidates: [])
   end
 
   private
@@ -121,13 +123,8 @@ class FeedIdentificationFetcher
     "[invalid input]"
   end
 
-  def feed_identification
-    @feed_identification ||= begin
-      FeedIdentification.find_or_create_by!(user: @user, input: @input)
-    rescue ActiveRecord::RecordNotUnique
-      # Race condition: another process created the record, retry once to get it
-      FeedIdentification.find_by!(user: @user, input: @input)
-    end
+  def settle(status:, candidates:)
+    @feed_identification.settle_detection(status: status, candidates: candidates, run_id: @run_id)
   end
 
   # Self-test each candidate by running the real pipeline against input

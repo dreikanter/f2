@@ -15,7 +15,7 @@ class CredentialGateTest < ActionDispatch::IntegrationTest
   test "credential gate renders both setup buttons when both credential types are missing" do
     sign_in_as(user)
 
-    get feed_preview_path(profile_key: "llm", "params" => { "prompt" => "https://example.com" })
+    post feed_previews_path, params: { profile_key: "llm", "params" => { "prompt" => "https://example.com" } }
 
     assert_response :success
     assert_select "[data-key='credentials.gate']" do
@@ -32,7 +32,7 @@ class CredentialGateTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     create(:ai_credential, :active, user: user)
 
-    get feed_preview_path(profile_key: "llm", "params" => { "prompt" => "https://example.com" })
+    post feed_previews_path, params: { profile_key: "llm", "params" => { "prompt" => "https://example.com" } }
 
     assert_response :success
     assert_select "button[value='save_as_draft_and_add_credentials']", count: 0
@@ -42,7 +42,7 @@ class CredentialGateTest < ActionDispatch::IntegrationTest
   test "credential gate does not include direct credential links" do
     sign_in_as(user)
 
-    get feed_preview_path(profile_key: "llm", "params" => { "prompt" => "https://example.com" })
+    post feed_previews_path, params: { profile_key: "llm", "params" => { "prompt" => "https://example.com" } }
 
     assert_response :success
     assert_select "[data-key='credentials.gate'] a[href*='/ai_credentials/new']", false

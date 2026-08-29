@@ -1,7 +1,6 @@
 class FeedPreviewsController < ApplicationController
-  include StatePolling
-
-  before_action :guard_preview, only: %i[show create]
+  before_action :load_preview, only: %i[show update]
+  before_action :guard_preview, only: %i[create update]
 
   # Maps each FeedPreview status to the pane partial that renders it. `fetch`
   # makes an unexpected status fail loudly rather than silently fall through.
@@ -12,38 +11,31 @@ class FeedPreviewsController < ApplicationController
     "failed" => "failed"
   }.freeze
 
-  # AI previews browse the web (Sonnet gather runs 40–120s, plus structuring), so
-  # they need a far longer budget than a deterministic fetch or they'd time out
-  # mid-run. ~4 minutes at the shared 2.5s poll interval.
-  AI_PREVIEW_MAX_POLLS = 98
-
-  # GET /feed_preview?profile_key=…&params[…]=…
-  # Workhorse for the lazy turbo-frame and polling: find or create the row for
-  # (user, profile_key, params_digest), start a run when it has no fresh result,
-  # and render the current state.
+  # GET /feed_previews/:id, for polling and frame reloads. The row carries its
+  # own source and selections, so nothing about the preview travels in the URL.
   def show
-    preview = locate_preview
-    preview = start_run(preview) if needs_run?(preview)
-    preview.timeout! if (preview.pending? || preview.processing?) && preview.updated_at < polling_timeout(preview_max_polls).ago
     render_state(preview, inert_while_running: true)
   end
 
-  # POST /feed_preview — explicit refresh: always start a fresh run. Renders the
-  # processing pane (never inert) so the refresh shows the spinner restarting.
+  # POST /feed_previews, asking for a preview of what the form currently holds.
+  # Finds or creates the row for (user, profile_key, params_digest), starts a run
+  # when it has no fresh result, and replaces the frame with its current state.
   def create
-    render_state(start_run(locate_preview))
+    found = locate_preview
+    found = start_run(found) if needs_run?(found)
+    render_frame(found)
   end
 
-  helper_method :preview_max_polls, :state_partial
+  # PATCH /feed_previews/:id, the explicit refresh. The row already holds the
+  # source and selections, so a re-run needs nothing but its id.
+  def update
+    preview.restart!
+    render_frame(preview)
+  end
+
+  helper_method :state_partial
 
   private
-
-  # Poll cap for the current preview's profile: the longer AI budget for a
-  # web-browsing run, the shared default otherwise. Drives both the client
-  # poller (view) and the server-side timeout.
-  def preview_max_polls
-    FeedProfile.depends_on_ai?(profile_key) ? AI_PREVIEW_MAX_POLLS : polling_max_polls
-  end
 
   def guard_preview
     return render_cleared if source_blank? || !FeedProfile.exists?(profile_key)
@@ -64,6 +56,12 @@ class FeedPreviewsController < ApplicationController
     Current.user.feed_previews
   end
 
+  def load_preview
+    @preview = previews.find(params[:id])
+  end
+
+  attr_reader :preview
+
   def digest
     @digest ||= FeedPreview.digest_for(
       profile_key,
@@ -79,30 +77,39 @@ class FeedPreviewsController < ApplicationController
   def ai_credential
     return @ai_credential if defined?(@ai_credential)
 
-    @ai_credential = Current.user.ai_credentials.active.find_by(id: params[:ai_credential_id])
+    requested = preview ? preview.ai_credential_id : params[:ai_credential_id]
+    @ai_credential = Current.user.ai_credentials.active.find_by(id: requested)
   end
 
   def search_credential
     return @search_credential if defined?(@search_credential)
-    return unless FeedProfile.exists?(profile_key) && FeedProfile.depends_on_ai?(profile_key)
 
-    credentials = Current.user.search_credentials.active
     @search_credential =
-      if params[:search_credential_id].present?
-        credentials.find_by(id: params[:search_credential_id])
+      if preview
+        Current.user.search_credentials.active.find_by(id: preview.search_credential_id)
       else
-        credentials.find_by(id: Current.user.default_search_credential_id) || credentials.first
+        resolve_search_credential(profile_key, params[:search_credential_id])
       end
   end
 
+  # @param profile_key [String] the preview's profile
+  # @param requested_id [String, nil] a credential chosen in the form
+  # @return [SearchCredential, nil] the credential backing the run
+  def resolve_search_credential(profile_key, requested_id = nil)
+    return unless FeedProfile.exists?(profile_key) && FeedProfile.depends_on_ai?(profile_key)
+
+    credentials = Current.user.search_credentials.active
+    return credentials.find_by(id: requested_id) if requested_id.present?
+
+    credentials.find_by(id: Current.user.default_search_credential_id) || credentials.first
+  end
+
   def ai_model
-    @ai_model ||= params[:ai_model].to_s.presence
+    @ai_model ||= preview ? preview.ai_model : params[:ai_model].presence
   end
 
   def locate_preview
-    preview = previews.find_or_initialize_by(feed_profile_key: profile_key, params_digest: digest)
-    preview.search_credential_id_for_digest = search_credential&.id
-    preview
+    previews.find_or_initialize_by(feed_profile_key: profile_key, params_digest: digest)
   end
 
   def needs_run?(preview)
@@ -113,37 +120,33 @@ class FeedPreviewsController < ApplicationController
   # already inserted this (user, profile, source) row, adopt the winner's row
   # rather than enqueuing a duplicate job.
   def start_run(preview)
-    preview.search_credential_id_for_digest = search_credential&.id
-    preview.update!(
+    preview.assign_attributes(
       params: preview_params,
       ai_credential_id: ai_credential&.id,
       ai_model: ai_model,
-      status: :pending,
-      data: nil,
-      ready_at: nil,
-      run_id: SecureRandom.uuid
+      search_credential_id: search_credential&.id
     )
-
-    FeedPreviewJob.perform_later(preview.id, preview.run_id, search_credential&.id)
-    preview
+    preview.restart!
   rescue ActiveRecord::RecordNotUnique
     previews.find_by!(feed_profile_key: profile_key, params_digest: digest)
   end
 
   def profile_key
-    @profile_key ||= params[:profile_key].to_s
+    @profile_key ||= preview ? preview.feed_profile_key : params[:profile_key].to_s
   end
 
-  # Narrowed to the profile's declared keys and cast to their declared types, so
-  # a preview reads the same values a saved feed would and its identity doesn't
-  # split on "1" versus true.
+  # New previews keep only the profile's declared keys and cast them to the
+  # declared types, matching the params a saved feed would use.
   def preview_params
-    @preview_params ||= begin
-      raw = params[:params]
-      hash = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : (raw || {})
-      declared = FeedProfile.parameter_keys_for(profile_key) || []
-      FeedProfile.cast_params(profile_key, hash.deep_stringify_keys.slice(*declared))
-    end
+    @preview_params ||=
+      if preview
+        preview.params
+      else
+        raw = params[:params]
+        hash = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : (raw || {})
+        declared = FeedProfile.parameter_keys_for(profile_key) || []
+        FeedProfile.cast_params(profile_key, hash.deep_stringify_keys.slice(*declared))
+      end
   end
 
   def stale_ready?(preview)
@@ -167,6 +170,16 @@ class FeedPreviewsController < ApplicationController
 
   def missing_search_credentials?
     !Current.user.search_credentials.active.exists?
+  end
+
+  # The create response carries the whole frame, so the polling host mounts and
+  # takes over from there.
+  def render_frame(preview)
+    render turbo_stream: turbo_stream.replace(
+      "feed-preview",
+      partial: "feed_previews/frame",
+      locals: { preview: preview }
+    )
   end
 
   def render_state(preview, inert_while_running: false)

@@ -471,9 +471,8 @@ class FeedProfile
       PROFILES.dig(key, :parameter_schema)
     end
 
-    # Form values arrive as strings, so the declared type has to be applied
-    # before anything reads them. A value that won't cast drops out, failing
-    # validation as a missing key rather than a type mismatch.
+    # Form values arrive as strings, so apply the declared type before reading
+    # them. Values that cannot be cast drop out and fail validation as missing.
     # @param key [String] the profile key
     # @param params [Hash, nil] the submitted params
     # @return [Hash] the params as their declared types

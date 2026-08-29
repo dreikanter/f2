@@ -4,6 +4,7 @@ FactoryBot.define do
     sequence(:input) { |n| "https://example.com/feed-#{n}.xml" }
     status { :processing }
     candidates { [] }
+    run_id { SecureRandom.uuid }
 
     trait :working do
       status { :working }

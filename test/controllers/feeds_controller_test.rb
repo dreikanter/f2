@@ -813,7 +813,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get feed_url(feed)
     assert_response :success
-    assert_select "form[action='#{feed_preview_path}']", count: 0
+    assert_select "form[action='#{feed_previews_path}']", count: 0
   end
 
   test "#show should show stats section when feed has no posts" do
@@ -1342,6 +1342,12 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal original_profile, feed.feed_profile_key
     assert_equal original_params, feed.params, "raw params jsonb must not be mass-assignable on update"
     assert_equal "Updated Name", feed.name, "operational edits still persist while detection runs"
+
+    identification = FeedIdentification.find_by!(user: user, input: "https://evil.com/feed.xml")
+    assert_enqueued_with(job: FeedIdentificationJob, args: [identification.id, identification.run_id])
+    assert_enqueued_with(job: FeedIdentificationTimeoutJob,
+                         args: [identification.id, identification.run_id],
+                         at: identification.started_at + FeedIdentification::TIMEOUT_AFTER)
   end
 
   test "#update should freeze the edit form while source re-detection runs" do
@@ -1357,6 +1363,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=submit][value='Checking…'][disabled]"
     assert_select "[data-controller*='polling']"
     assert_includes response.body, "feed_id=#{feed.id}"
+    assert_select "[data-polling-interval-value='2500'][data-polling-max-polls-value='36']"
   end
 
   test "#update should not enqueue a duplicate detection when losing the restart race" do
@@ -1368,7 +1375,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     loser = FeedIdentification.new(user: user, input: new_url)
 
     FeedIdentification.stub(:find_or_initialize_by, loser) do
-      assert_no_enqueued_jobs(only: FeedIdentificationJob) do
+      assert_no_enqueued_jobs do
         patch feed_url(feed), params: { feed: { params: { url: new_url } } }
       end
     end

@@ -1,6 +1,10 @@
 require "test_helper"
 
 class FeedIdentificationTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
+  setup { clear_enqueued_jobs }
+
   def user
     @user ||= create(:user)
   end
@@ -28,12 +32,20 @@ class FeedIdentificationTest < ActiveSupport::TestCase
   end
 
   test "#invalid_processing? should be true when processing without started_at" do
-    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :processing, started_at: nil)
+    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :processing,
+                                             started_at: nil, run_id: SecureRandom.uuid)
     assert_predicate identification, :invalid_processing?
   end
 
-  test "#invalid_processing? should be false when started_at is present" do
-    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :processing, started_at: Time.current)
+  test "#invalid_processing? should be true when run_id is missing" do
+    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :processing,
+                                             started_at: Time.current, run_id: nil)
+    assert_predicate identification, :invalid_processing?
+  end
+
+  test "#invalid_processing? should be false when run metadata is present" do
+    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :processing,
+                                             started_at: Time.current, run_id: SecureRandom.uuid)
     refute_predicate identification, :invalid_processing?
   end
 
@@ -44,13 +56,24 @@ class FeedIdentificationTest < ActiveSupport::TestCase
 
   test "#restart_detection should reset the row to a fresh in-flight detection" do
     identification = create(:feed_identification, :no_feed, user: user)
+    run_id = SecureRandom.uuid
 
-    assert identification.restart_detection
+    freeze_time do
+      SecureRandom.stub(:uuid, run_id) do
+        assert_enqueued_with(job: FeedIdentificationTimeoutJob, args: [identification.id, run_id],
+                             at: FeedIdentification::TIMEOUT_AFTER.from_now) do
+          assert_enqueued_with(job: FeedIdentificationJob, args: [identification.id, run_id]) do
+            assert identification.restart_detection
+          end
+        end
+      end
+    end
 
     identification.reload
     assert_predicate identification, :processing?
     assert_not_nil identification.started_at
     assert_equal [], identification.candidates
+    assert_equal run_id, identification.run_id
   end
 
   test "#restart_detection should clear working candidates already read on the same instance" do
@@ -68,9 +91,21 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     # insert collides with the user+input unique index.
     loser = FeedIdentification.new(user: user, input: winner.input)
 
-    assert_not loser.restart_detection
+    assert_no_enqueued_jobs do
+      assert_not loser.restart_detection
+    end
     assert_predicate loser, :new_record?
     assert_equal winner.started_at, winner.reload.started_at, "the winner's detection should not be restarted"
+  end
+
+  test ".polling_max_polls should preserve the polling interval and timeout budget" do
+    assert_equal 2500, FeedIdentification::POLLING_INTERVAL_MS
+    assert_equal 85.seconds, FeedIdentification::TIMEOUT_AFTER
+    assert_equal 36, FeedIdentification.polling_max_polls
+
+    final_poll_at = (FeedIdentification.polling_max_polls - 1) * FeedIdentification::POLLING_INTERVAL_MS
+    assert_equal FeedIdentification::POLLING_INTERVAL_MS,
+                 final_poll_at - FeedIdentification::TIMEOUT_AFTER.in_milliseconds
   end
 
 

@@ -39,7 +39,7 @@ class FeedFormComponent < ViewComponent::Base
     data = {
       identification_state: identification_state,
       controller: checking? ? "preview-button polling" : "preview-button",
-      preview_button_endpoint_value: helpers.feed_preview_path,
+      preview_button_endpoint_value: helpers.feed_previews_path,
       preview_button_source_value: feed.source_input,
       preview_button_source_keys_value: preview_source_keys.to_json,
       preview_button_ai_profiles_value: FeedProfile.ai_profile_keys.to_json,
@@ -252,8 +252,8 @@ class FeedFormComponent < ViewComponent::Base
     {
       polling_indicate_busy_value: false,
       polling_endpoint_value: helpers.feed_identifications_path(url: attempted_url, feed_id: feed.id),
-      polling_interval_value: helpers.polling_interval_ms,
-      polling_max_polls_value: helpers.polling_max_polls,
+      polling_interval_value: FeedIdentification::POLLING_INTERVAL_MS,
+      polling_max_polls_value: FeedIdentification.polling_max_polls,
       polling_stop_condition_value: POLLING_STOP_CONDITION
     }
   end

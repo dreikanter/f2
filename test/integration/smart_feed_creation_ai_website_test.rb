@@ -96,10 +96,10 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
         assert_response :success
         assert_includes response.body, "Follow with AI"
 
-        post feed_preview_path(profile_key: "llm", "params" => { "prompt" => ai_url },
+        post feed_previews_path, params: { profile_key: "llm", "params" => { "prompt" => ai_url },
                                ai_credential_id: credential.id,
                                search_credential_id: search_credential.id,
-                               ai_model: "claude-sonnet-4-6")
+                               ai_model: "claude-sonnet-4-6" }
         assert_response :success
         perform_enqueued_jobs
 
@@ -134,7 +134,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
 
     with_memory_cache do
-      post feed_preview_path(profile_key: "llm", "params" => { "prompt" => ai_url })
+      post feed_previews_path, params: { profile_key: "llm", "params" => { "prompt" => ai_url } }
 
       assert_response :success
       assert_select "[data-key='credentials.gate']"

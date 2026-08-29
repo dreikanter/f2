@@ -31,8 +31,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_return(status: 200, body: rss_content, headers: { "Content-Type" => "application/xml" })
 
-    service = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
-    service.identify
+    fetcher(url).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
@@ -60,8 +59,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_return(status: 200, body: rss_content, headers: { "Content-Type" => "application/xml" })
 
-    service = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
-    service.identify
+    fetcher(url).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
@@ -84,8 +82,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_return(status: 200, body: rss_content, headers: { "Content-Type" => "application/xml" })
 
-    service = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
-    service.identify
+    fetcher(url).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
@@ -99,7 +96,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     url = "http://127.0.0.1/feed.xml"
     stub_request(:get, url) # should never be hit
 
-    FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+    fetcher(url).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_equal "no_feed", feed_identification.status
@@ -114,8 +111,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_return(status: 200, body: "Not a valid feed format", headers: { "Content-Type" => "text/plain" })
 
-    service = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
-    service.identify
+    fetcher(url).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
@@ -128,8 +124,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_return(status: 500, body: "Internal Server Error")
 
-    service = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
-    service.identify
+    fetcher(url).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
@@ -142,8 +137,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_raise(HttpClient::TooManyRedirectsError.new("too many redirects"))
 
-    service = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
-    service.identify
+    fetcher(url).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_equal "no_feed", feed_identification.status
@@ -155,8 +149,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_raise(HttpClient::TimeoutError.new("Connection timeout"))
 
-    service = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
-    service.identify
+    fetcher(url).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
@@ -168,7 +161,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url).to_return(status: 404, body: "Not Found")
 
     log = StringIO.new
-    FeedIdentificationFetcher.new(user: user, input: url, logger: ActiveSupport::Logger.new(log)).identify
+    fetcher(url, logger: ActiveSupport::Logger.new(log)).identify
 
     assert_match(/ResponseStatusError \(HTTP 404\)/, log.string)
   end
@@ -178,7 +171,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url).to_return(status: 200, body: "<rss></rss>")
 
     FeedProfileDetector.stub(:call, proc { raise "boom" }) do
-      FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+      fetcher(url).identify
     end
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
@@ -191,7 +184,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     empty_result = Struct.new(:candidates).new([])
     FeedProfileDetector.stub(:call, empty_result) do
-      FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+      fetcher(url).identify
     end
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
@@ -212,7 +205,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     stub_request(:get, url).to_return(status: 200, body: rss_content)
 
-    FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+    fetcher(url).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_equal %w[rss], feed_identification.candidates.map { |c| c["profile_key"] }
@@ -238,7 +231,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     stub_request(:get, url).to_return(status: 200, body: rss_content)
 
-    FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+    fetcher(url).identify
 
     assert_requested :get, url, times: 1
   end
@@ -257,7 +250,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     stub_request(:get, url).to_return(status: 200, body: rss_content)
 
-    FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+    fetcher(url).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     profile_keys = feed_identification.candidates.map { |c| c["profile_key"] }
@@ -268,7 +261,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     url = "http://example.com/feed.xml"
     stub_request(:get, url).to_return(status: 200, body: rss_body("Direct Feed"))
 
-    FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+    fetcher(url).identify
 
     candidate = FeedIdentification.find_by(user: user, input: url).candidates.first
     assert_nil candidate["resolved_url"]
@@ -281,7 +274,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, page_url).to_return(status: 200, body: page_body(%(<link rel="alternate" type="application/rss+xml" href="/feed.xml">)))
     stub_request(:get, feed_url).to_return(status: 200, body: rss_body("Discovered Feed"))
 
-    FeedIdentificationFetcher.new(user: user, input: page_url, logger: @logger).identify
+    fetcher(page_url).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: page_url)
     assert_equal "working", feed_identification.status
@@ -298,7 +291,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, "http://www.example.com/blog/").to_return(status: 200, body: page_body(%(<link rel="alternate" type="application/rss+xml" href="feed.xml">)))
     stub_request(:get, "http://www.example.com/blog/feed.xml").to_return(status: 200, body: rss_body("Moved Feed"))
 
-    FeedIdentificationFetcher.new(user: user, input: "http://example.com/", logger: @logger).identify
+    fetcher("http://example.com/").identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: "http://example.com/")
     assert_equal "working", feed_identification.status
@@ -316,7 +309,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, "http://example.com/missing.xml").to_return(status: 404)
     stub_request(:get, "http://example.com/feed.xml").to_return(status: 200, body: rss_body("Second Feed"))
 
-    FeedIdentificationFetcher.new(user: user, input: page_url, logger: @logger).identify
+    fetcher(page_url).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: page_url)
     assert_equal "working", feed_identification.status
@@ -334,7 +327,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, "http://example.com/feed.xml").to_return(status: 200, body: rss_body("Main Feed"))
     stub_request(:get, "http://example.com/comments.xml").to_return(status: 200, body: rss_body("Comments Feed"))
 
-    FeedIdentificationFetcher.new(user: user, input: page_url, logger: @logger).identify
+    fetcher(page_url).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: page_url)
     assert_equal %w[http://example.com/feed.xml], feed_identification.working_candidates.map(&:resolved_url).uniq
@@ -347,7 +340,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, page_url).to_return(status: 200, body: page_body(%(<link rel="alternate" type="application/rss+xml" href="/gone.xml">)))
     stub_request(:get, "http://example.com/gone.xml").to_return(status: 404)
 
-    FeedIdentificationFetcher.new(user: user, input: page_url, logger: @logger).identify
+    fetcher(page_url).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: page_url)
     assert_equal "no_feed", feed_identification.status
@@ -362,7 +355,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     FeedProfileDetector.stub(:call, detected) do
       CandidateTester.stub(:new, ->(**) { Struct.new(:call).new(verdict) }) do
-        FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+        fetcher(url).identify
       end
     end
 
@@ -386,7 +379,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     FeedProfileDetector.stub(:call, detected) do
       CandidateTester.stub(:new, ->(**) { Struct.new(:call).new(verdicts.shift) }) do
-        FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+        fetcher(url).identify
       end
     end
 
@@ -400,7 +393,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, "http://example.com/feed.xml")
       .to_return(status: 302, headers: { "Location" => "http://127.0.0.1/feed.xml" })
 
-    FeedIdentificationFetcher.new(user: user, input: page_url, logger: @logger).identify
+    fetcher(page_url).identify
 
     assert_equal "no_feed", FeedIdentification.find_by(user: user, input: page_url).status
     assert_not_requested :get, "http://127.0.0.1/feed.xml"
@@ -420,7 +413,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, page_url).to_return(status: 200, body: html)
     stub_request(:get, "http://example.com/feed.xml").to_return(status: 200, body: rss_body("Real Feed"))
 
-    FeedIdentificationFetcher.new(user: user, input: page_url, logger: @logger).identify
+    fetcher(page_url).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: page_url)
     assert_equal "working", feed_identification.status
@@ -432,13 +425,60 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     stub_request(:get, page_url).to_return(status: 200, body: page_body(%(<link rel="alternate" type="application/rss+xml" href="http://127.0.0.1/feed.xml">)))
 
-    FeedIdentificationFetcher.new(user: user, input: page_url, logger: @logger).identify
+    fetcher(page_url).identify
 
     assert_equal "no_feed", FeedIdentification.find_by(user: user, input: page_url).status
     assert_not_requested :get, "http://127.0.0.1/feed.xml"
   end
 
+  test "#identify should ignore a result after timeout rotates run_id" do
+    url = "http://example.com/feed.xml"
+    run_id = SecureRandom.uuid
+    identification = create(:feed_identification, user: user, input: url, status: :processing,
+                                                   started_at: Time.current, run_id: run_id)
+    stale_fetcher = FeedIdentificationFetcher.new(
+      feed_identification: identification,
+      run_id: run_id,
+      logger: @logger
+    )
+    stub_request(:get, url).to_return(status: 200, body: rss_body("Late Feed"))
+
+    FeedIdentificationTimeoutJob.perform_now(identification.id, run_id)
+    stale_fetcher.identify
+
+    assert_predicate identification.reload, :timed_out?
+    assert_empty identification.candidates
+    refute_equal run_id, identification.run_id
+  end
+
+  test "#identify should ignore an error transition from a superseded run" do
+    url = "http://example.com/feed.xml"
+    stale_run_id = SecureRandom.uuid
+    identification = create(:feed_identification, user: user, input: url, status: :processing,
+                                                   started_at: Time.current, run_id: stale_run_id)
+    stale_fetcher = FeedIdentificationFetcher.new(
+      feed_identification: identification,
+      run_id: stale_run_id,
+      logger: @logger
+    )
+    identification.update!(run_id: SecureRandom.uuid)
+    original_attributes = identification.attributes.slice("status", "run_id", "candidates", "updated_at")
+    stub_request(:get, url).to_timeout
+
+    stale_fetcher.identify
+
+    assert_equal original_attributes,
+                 identification.reload.attributes.slice("status", "run_id", "candidates", "updated_at")
+  end
+
   private
+
+  def fetcher(input, logger: @logger)
+    run_id = SecureRandom.uuid
+    identification = create(:feed_identification, user: user, input: input, status: :processing,
+                                                   started_at: Time.current, run_id: run_id)
+    FeedIdentificationFetcher.new(feed_identification: identification, run_id: run_id, logger: logger)
+  end
 
   def page_body(links)
     "<html><head><title>My Blog</title>#{links}</head><body>Posts</body></html>"

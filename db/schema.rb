@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_08_26_120000) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_29_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -117,6 +117,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_26_120000) do
     t.datetime "updated_at", null: false
     t.string "input", null: false
     t.uuid "user_id", null: false
+    t.uuid "run_id"
     t.index ["user_id", "input"], name: "index_feed_identifications_on_user_id_and_input", unique: true
   end
 
@@ -145,11 +146,13 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_26_120000) do
     t.jsonb "params", default: {}, null: false
     t.string "params_digest", null: false
     t.datetime "ready_at"
-    t.string "run_id"
+    t.uuid "run_id"
     t.uuid "ai_credential_id"
     t.string "ai_model"
-    t.index ["created_at"], name: "index_feed_previews_on_created_at"
+    t.uuid "search_credential_id"
+    t.index ["search_credential_id"], name: "index_feed_previews_on_search_credential_id"
     t.index ["status"], name: "index_feed_previews_on_status"
+    t.index ["updated_at"], name: "index_feed_previews_on_updated_at"
     t.index ["user_id", "feed_profile_key", "params_digest"], name: "index_feed_previews_on_owner_profile_digest", unique: true
   end
 
@@ -501,6 +504,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_26_120000) do
   add_foreign_key "feed_entry_uids", "feeds", on_delete: :cascade
   add_foreign_key "feed_identifications", "users"
   add_foreign_key "feed_metrics", "feeds", on_delete: :cascade
+  add_foreign_key "feed_previews", "search_credentials", on_delete: :nullify
   add_foreign_key "feed_previews", "users"
   add_foreign_key "feed_schedules", "feeds"
   add_foreign_key "feeds", "access_tokens"

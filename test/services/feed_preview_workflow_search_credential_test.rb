@@ -1,6 +1,8 @@
 require "test_helper"
 
 class FeedPreviewWorkflowSearchCredentialTest < ActiveSupport::TestCase
+  AI_RUN_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+
   test "AI preview passes its explicit search credential to the temporary feed and LLM context" do
     user = create(:user)
     ai_credential = create(
@@ -18,7 +20,7 @@ class FeedPreviewWorkflowSearchCredentialTest < ActiveSupport::TestCase
       ai_credential: ai_credential,
       ai_model: "claude-sonnet-4-6",
       status: :pending,
-      run_id: "run-ai"
+      run_id: AI_RUN_ID
     )
 
     captured_feed = nil
@@ -43,7 +45,7 @@ class FeedPreviewWorkflowSearchCredentialTest < ActiveSupport::TestCase
     }) do
       FeedPreviewWorkflow.new(
         preview,
-        run_id: "run-ai",
+        run_id: AI_RUN_ID,
         search_credential: search_credential
       ).execute
     end
