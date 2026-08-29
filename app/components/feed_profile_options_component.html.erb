@@ -11,7 +11,7 @@
                 <%= check_box_tag option.field_name, "1", checked?(option),
                                   id: option.field_id(profile_key),
                                   disabled: !selected?(profile_key),
-                                  data: { key: "form.profile-option-input.#{profile_key}.#{option.name}" } %>
+                                  data: { key: "form.profile-option-input.#{profile_key}.#{option.name}", param_name: option.name } %>
               </div>
               <div class="ml-3">
                 <%= label_tag option.field_id(profile_key), option.title, class: "block font-semibold text-heading mb-0" %>
@@ -29,13 +29,13 @@
                                id: option.field_id(profile_key),
                                disabled: !selected?(profile_key),
                                class: helpers.input_field_classes,
-                               data: { key: "form.profile-option-input.#{profile_key}.#{option.name}" } %>
+                               data: { key: "form.profile-option-input.#{profile_key}.#{option.name}", param_name: option.name } %>
               <% else %>
                 <%= text_field_tag option.field_name, value_for(option),
                                    id: option.field_id(profile_key),
                                    disabled: !selected?(profile_key),
                                    class: helpers.input_field_classes,
-                                   data: { key: "form.profile-option-input.#{profile_key}.#{option.name}" } %>
+                                   data: { key: "form.profile-option-input.#{profile_key}.#{option.name}", param_name: option.name } %>
               <% end %>
               <% if option.description %>
                 <p class="text-sm text-muted"><%= option.description %></p>

@@ -83,6 +83,9 @@ export default class extends Controller {
     const body = new URLSearchParams()
     body.set("profile_key", profileKey)
     body.set(`params[${sourceKey}]`, this._currentSource())
+    this._optionParams().forEach((value, key) => {
+      body.set(`params[${key}]`, value)
+    })
 
     if (this._isAiProfile(profileKey)) {
       const credential = this._aiCredentialValue()
@@ -123,6 +126,22 @@ export default class extends Controller {
     if (!this.hasHintTarget) return
     this.hintTarget.textContent = reason || ""
     this.hintTarget.hidden = reason == null
+  }
+
+  // Profile options the form is currently offering, so a preview reads what the
+  // saved feed would. FormData builds the form's entry list, so disabled panels,
+  // unchecked boxes, and select semantics come for free. Each control names its
+  // own param, keeping that mapping in the form rather than this parser.
+  _optionParams() {
+    const submitted = new FormData(this.element)
+    const values = new Map()
+
+    this.element.querySelectorAll("[data-param-name]").forEach((field) => {
+      const entries = submitted.getAll(field.name)
+      if (entries.length) values.set(field.dataset.paramName, entries.at(-1))
+    })
+
+    return values
   }
 
   // The source is the static value from detection, unless an editable field (an

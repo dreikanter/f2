@@ -434,30 +434,8 @@ class Feed < ApplicationRecord
     self.params = (params || {}).slice(*declared)
   end
 
-  # Form values arrive as strings, so the declared type has to be applied
-  # before the schema sees them. A value that won't cast drops out, failing
-  # validation as a missing key rather than a type mismatch.
   def cast_params_to_declared_types
-    properties = FeedProfile.parameter_schema_for(feed_profile_key)&.dig("properties")
-    return if properties.blank?
-
-    self.params = (params || {}).each_with_object({}) do |(key, value), result|
-      cast = cast_param(properties.dig(key, "type"), value)
-      result[key] = cast unless cast.nil?
-    end
-  end
-
-  # @param type [String, nil] the declared JSON Schema type
-  # @param value [Object] the submitted value
-  # @return [Object] the value as its declared type
-  def cast_param(type, value)
-    case type
-    when "boolean" then ActiveModel::Type::Boolean.new.cast(value)
-    # Kernel conversions, not ActiveModel's: those read "abc" as 0.
-    when "integer" then Integer(value, exception: false)
-    when "number" then Float(value, exception: false)
-    else value
-    end
+    self.params = FeedProfile.cast_params(feed_profile_key, params)
   end
 
   def compose_import_after_from_parts

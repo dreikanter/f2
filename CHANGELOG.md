@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-29
 
+- Preview now reflects the feed settings you picked, so a YouTube preview with Skip Shorts on leaves them out too.
 - Refreshing an AI feed preview now keeps the search provider you selected.
 - The note we show after finding a feed on a page you linked now describes the address we swapped in, not the one you pasted.
 

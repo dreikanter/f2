@@ -42,6 +42,32 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "http://example.com/feed.xml", preview.params["url"]
   end
 
+  test "#create should cast a declared option to its type" do
+    sign_in_as(user)
+
+    post feed_previews_url,
+         params: {
+           profile_key: "youtube",
+           "params" => { url: "https://www.youtube.com/@chan", exclude_shorts: "1" }
+         }
+
+    assert_response :success
+    assert_equal true, user.feed_previews.last.params["exclude_shorts"]
+  end
+
+  test "#create should drop params the profile doesn't declare" do
+    sign_in_as(user)
+
+    post feed_previews_url,
+         params: {
+           profile_key: "youtube",
+           "params" => { url: "https://www.youtube.com/@chan", smuggled: "nope" }
+         }
+
+    assert_response :success
+    assert_not user.feed_previews.last.params.key?("smuggled")
+  end
+
   test "#show should not enqueue again for an already-ready preview" do
     sign_in_as(user)
     create(:feed_preview, :completed, user: user, feed_profile_key: "rss",

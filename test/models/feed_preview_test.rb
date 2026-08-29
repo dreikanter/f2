@@ -200,6 +200,36 @@ class FeedPreviewTest < ActiveSupport::TestCase
                  "non-source params must not change identity"
   end
 
+  test ".digest_for should depend on the profile's declared options" do
+    without = FeedPreview.digest_for("youtube", { "url" => "https://y.test" })
+    with_option = FeedPreview.digest_for(
+      "youtube",
+      { "url" => "https://y.test", "exclude_shorts" => true }
+    )
+    refute_equal without, with_option, "an option changes what the preview shows"
+
+    off = FeedPreview.digest_for("youtube", { "url" => "https://y.test", "exclude_shorts" => false })
+    refute_equal off, with_option
+  end
+
+  test ".digest_for should ignore option key order" do
+    assert_equal FeedPreview.digest_for(
+      "youtube",
+      { "url" => "https://y.test", "exclude_shorts" => true }
+    ), FeedPreview.digest_for(
+      "youtube",
+      { "exclude_shorts" => true, "url" => "https://y.test" }
+    )
+  end
+
+  test ".digest_for should ignore params the profile doesn't declare" do
+    assert_equal FeedPreview.digest_for("youtube", { "url" => "https://y.test" }),
+                 FeedPreview.digest_for(
+                   "youtube",
+                   { "url" => "https://y.test", "derived" => "anything" }
+                 )
+  end
+
   test ".digest_for should differ for different source input" do
     refute_equal FeedPreview.digest_for("rss", { "url" => "https://a.test" }),
                  FeedPreview.digest_for("rss", { "url" => "https://b.test" })
