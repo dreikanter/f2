@@ -1,13 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 import { selectedProfileKey } from "controllers/helpers/selected_profile_key"
+import { csrfToken } from "controllers/helpers/csrf_token"
 
-// Drives the manual feed preview:
-// - keeps the button enabled only when a profile is selected and a source is
-//   present (and, for AI profiles, a provider and model are chosen)
-// - on click, paints the loading spinner, points the modal's feed-preview frame
-//   at the preview endpoint for the selected profile + source (plus the chosen
-//   provider + model for AI profiles), then opens the modal
-// - on modal close, clears the frame so the polling host unmounts (stops polling)
+// Keeps preview availability in sync with the form and POSTs the current source,
+// AI provider, and model when opening the modal. Closing it aborts the request
+// and unmounts any active poller.
 export default class extends Controller {
   static targets = ["button", "frame", "source", "hint"]
   static values = {
@@ -33,11 +30,20 @@ export default class extends Controller {
   }
 
   disconnect() {
+    this._abortInFlight()
     this._modal?.removeEventListener("modal:hide", this._onHide)
     this.element.removeEventListener("change", this._onFormChange)
   }
 
-  open(event) {
+  // A request whose answer nobody wants any more: the modal closed, or a newer
+  // open superseded it. Left running, its response would mount a poller into a
+  // closed frame, or a slow earlier one would overwrite a newer preview.
+  _abortInFlight() {
+    this._inFlight?.abort()
+    this._inFlight = null
+  }
+
+  async open(event) {
     event?.preventDefault()
     const profileKey = selectedProfileKey(this.element)
     if (!profileKey || !this._currentSource().trim() || !this.hasFrameTarget) return
@@ -45,22 +51,47 @@ export default class extends Controller {
     const sourceKey = this.sourceKeysValue[profileKey]
     if (!sourceKey) return
 
-    const url = new URL(this.endpointValue, window.location.origin)
-    url.searchParams.set("profile_key", profileKey)
-    url.searchParams.set(`params[${sourceKey}]`, this._currentSource())
+    // Paint the spinner before kicking off the request so the modal never opens
+    // empty while the first response is in flight.
+    if (this._loadingHTML != null) this.frameTarget.innerHTML = this._loadingHTML
+    this._modal?.dispatchEvent(new CustomEvent("modal:show"))
+
+    this._abortInFlight()
+    const request = new AbortController()
+    this._inFlight = request
+
+    try {
+      const response = await fetch(this.endpointValue, {
+        method: "POST",
+        headers: { "Accept": "text/vnd.turbo-stream.html", "X-CSRF-Token": csrfToken() },
+        body: this._requestBody(profileKey, sourceKey),
+        credentials: "same-origin",
+        signal: request.signal
+      })
+      if (response.ok) Turbo.renderStreamMessage(await response.text())
+    } catch {
+      // Aborted, or a network failure: either way nothing renders, and the
+      // spinner stays until the next attempt.
+    } finally {
+      if (this._inFlight === request) this._inFlight = null
+    }
+  }
+
+  // The preview reads what the form holds, and the form holds more than a URL,
+  // so it travels in the body rather than the query string.
+  _requestBody(profileKey, sourceKey) {
+    const body = new URLSearchParams()
+    body.set("profile_key", profileKey)
+    body.set(`params[${sourceKey}]`, this._currentSource())
+
     if (this._isAiProfile(profileKey)) {
       const credential = this._aiCredentialValue()
       const model = this._aiModelValue()
-      if (credential) url.searchParams.set("ai_credential_id", credential)
-      if (model) url.searchParams.set("ai_model", model)
+      if (credential) body.set("ai_credential_id", credential)
+      if (model) body.set("ai_model", model)
     }
 
-    // Paint the spinner before kicking off the fetch so the modal never opens
-    // empty while the first response is in flight.
-    if (this._loadingHTML != null) this.frameTarget.innerHTML = this._loadingHTML
-    this.frameTarget.setAttribute("src", url.toString())
-
-    this._modal?.dispatchEvent(new CustomEvent("modal:show"))
+    return body
   }
 
   refreshAvailability() {
@@ -116,6 +147,7 @@ export default class extends Controller {
     // Removing src alone won't clear the frame's children, so the inner polling
     // host would keep running. Emptying innerHTML removes it from the DOM, which
     // fires its disconnect() and stops polling. Reopening re-sets src and reloads.
+    this._abortInFlight()
     this.frameTarget.removeAttribute("src")
     this.frameTarget.innerHTML = ""
   }

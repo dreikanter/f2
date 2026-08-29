@@ -34,6 +34,16 @@ class FeedPreview < ApplicationRecord
     Digest::SHA256.hexdigest(parts.to_json)
   end
 
+  # Clears the last result and queues a fresh run. run_id rotates so a job still
+  # in flight for the previous run can't write its result over this one.
+  # @param search_credential_id [String, nil] credential the run should use
+  # @return [FeedPreview] self, persisted and pending
+  def restart!(search_credential_id: nil)
+    update!(status: :pending, data: nil, ready_at: nil, run_id: SecureRandom.uuid)
+    FeedPreviewJob.perform_later(id, run_id, search_credential_id)
+    self
+  end
+
   # Transitions to :failed only if still non-terminal. Rotating run_id makes the
   # timeout terminal: the still-running job holds the old run_id, so its
   # run_id-gated transitions now update 0 rows and can't flip the row back to

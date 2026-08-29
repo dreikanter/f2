@@ -1,7 +1,7 @@
 <%# locals: (preview:) %>
 <div class="space-y-4"
      data-controller="preview"
-     data-preview-refresh-url-value="<%= feed_preview_path(profile_key: preview.feed_profile_key, "params" => preview.params) %>"
+     data-preview-refresh-url-value="<%= feed_preview_path(preview) %>"
      data-key="preview.success"
      data-preview-done>
   <div class="flex flex-wrap items-center justify-between gap-2">

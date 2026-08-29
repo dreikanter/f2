@@ -22,7 +22,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   TURBO_STREAM = { "Accept" => "text/vnd.turbo-stream.html" }.freeze
 
   test "#show should require authentication" do
-    get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+    post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } }
     assert_redirected_to new_session_path
   end
 
@@ -31,7 +31,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_difference("FeedPreview.count", 1) do
       assert_enqueued_with(job: FeedPreviewJob) do
-        get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+        post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } }
       end
     end
 
@@ -49,7 +49,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+        post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } }
       end
     end
 
@@ -61,7 +61,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
                                       params: { "url" => "http://example.com/feed.xml" })
 
-    get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+    post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } }
 
     assert_response :success
     summary = css_select('[data-key="preview.summary"]').text
@@ -76,7 +76,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
                           feed_profile_key: "rss", params: { "url" => "http://example.com/feed.xml" },
                           data: { "posts" => posts, "stats" => { "total_entries" => 25 } })
 
-    get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+    post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } }
 
     assert_response :success
     summary = css_select('[data-key="preview.summary"]').text
@@ -89,7 +89,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        get feed_preview_url(profile_key: "rss", "params" => { url: "" }), headers: TURBO_STREAM
+        post feed_previews_url, params: { profile_key: "rss", "params" => { url: "" } }, headers: TURBO_STREAM
       end
     end
 
@@ -102,7 +102,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" }),
+        post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" } },
             headers: TURBO_STREAM
       end
     end
@@ -120,7 +120,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" }),
+        post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" } },
             headers: TURBO_STREAM
       end
     end
@@ -138,8 +138,8 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_difference("FeedPreview.count", 1) do
       assert_enqueued_with(job: FeedPreviewJob) do
-        get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" },
-                             ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6")
+        post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" },
+                             ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6" }
       end
     end
 
@@ -150,8 +150,8 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user, available_models: models)
 
-    get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" },
-                         ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6")
+    post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" },
+                         ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6" }
 
     preview = user.feed_previews.last
     assert_equal credential.id, preview.ai_credential_id
@@ -166,10 +166,10 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     source = { prompt: "anything here" }
 
     assert_difference("FeedPreview.count", 2) do
-      get feed_preview_url(profile_key: "llm", "params" => source,
-                           ai_credential_id: anthropic.id, ai_model: "claude-sonnet-4-6")
-      get feed_preview_url(profile_key: "llm", "params" => source,
-                           ai_credential_id: moonshot.id, ai_model: "kimi-k2.6")
+      post feed_previews_url, params: { profile_key: "llm", "params" => source,
+                           ai_credential_id: anthropic.id, ai_model: "claude-sonnet-4-6" }
+      post feed_previews_url, params: { profile_key: "llm", "params" => source,
+                           ai_credential_id: moonshot.id, ai_model: "kimi-k2.6" }
     end
   end
 
@@ -179,7 +179,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" }),
+        post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" } },
             headers: TURBO_STREAM
       end
     end
@@ -191,8 +191,8 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" },
-                             ai_credential_id: credential.id, ai_model: "made-up-model"),
+        post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" },
+                             ai_credential_id: credential.id, ai_model: "made-up-model" },
             headers: TURBO_STREAM
       end
     end
@@ -204,8 +204,8 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" },
-                             ai_credential_id: credential.id, ai_model: "claude-opus-4-7"),
+        post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" },
+                             ai_credential_id: credential.id, ai_model: "claude-opus-4-7" },
             headers: TURBO_STREAM
       end
     end
@@ -218,8 +218,8 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" },
-                             ai_credential_id: stranger_credential.id, ai_model: "claude-opus-4-7"),
+        post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" },
+                             ai_credential_id: stranger_credential.id, ai_model: "claude-opus-4-7" },
             headers: TURBO_STREAM
       end
     end
@@ -230,7 +230,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_difference("FeedPreview.count", 1) do
       assert_enqueued_with(job: FeedPreviewJob) do
-        post feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+        post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } }
       end
     end
 
@@ -240,22 +240,42 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
   test "#show should return no content while the preview is still processing" do
     sign_in_as(user)
-    create(:feed_preview, :processing, user: user, feed_profile_key: "rss",
-                                       params: { "url" => "http://example.com/feed.xml" })
+    preview = create(:feed_preview, :processing, user: user, feed_profile_key: "rss",
+                                                 params: { "url" => "http://example.com/feed.xml" })
 
     assert_no_enqueued_jobs do
-      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" }),
-          headers: TURBO_STREAM
+      get feed_preview_url(preview), headers: TURBO_STREAM
     end
 
     assert_response :no_content
     assert_empty response.body
   end
 
+  test "#show should render a finished preview" do
+    sign_in_as(user)
+    preview = create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
+                                                params: { "url" => "http://example.com/feed.xml" })
+
+    get feed_preview_url(preview), headers: TURBO_STREAM
+
+    assert_response :success
+    assert_match(/data-preview-done/, response.body)
+  end
+
+  test "#show should not reach another user's preview" do
+    sign_in_as(user)
+    stranger = create(:feed_preview, :completed, user: create(:user), feed_profile_key: "rss",
+                                                 params: { "url" => "http://example.com/feed.xml" })
+
+    get feed_preview_url(stranger)
+
+    assert_response :not_found
+  end
+
   test "#create should render the processing pane even though show polls stay silent" do
     sign_in_as(user)
 
-    post feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" }),
+    post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } },
          headers: TURBO_STREAM
 
     assert_response :success
@@ -268,7 +288,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
                                    params: { "url" => "http://example.com/feed.xml" })
 
     assert_no_enqueued_jobs do
-      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" }),
+      post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } },
           headers: TURBO_STREAM
     end
 
@@ -276,35 +296,75 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/data-preview-done/, response.body)
   end
 
-  test "#create should restart a failed preview and enqueue a job" do
-    sign_in_as(user)
-    create(:feed_preview, :failed, user: user, feed_profile_key: "rss",
-                                   params: { "url" => "http://example.com/feed.xml" })
-
-    assert_no_difference("FeedPreview.count") do
-      assert_enqueued_with(job: FeedPreviewJob) do
-        post feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
-      end
-    end
-
-    assert_response :success
-    assert user.feed_previews.last.pending?
-  end
-
-  test "#create should re-enqueue and reset an existing ready preview" do
+  test "#update should restart the run and clear the last result" do
     sign_in_as(user)
     preview = create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
                                                 params: { "url" => "http://example.com/feed.xml" })
 
     assert_no_difference("FeedPreview.count") do
       assert_enqueued_with(job: FeedPreviewJob) do
-        post feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+        patch feed_preview_url(preview), headers: TURBO_STREAM
       end
     end
 
+    assert_response :success
+    assert_match(/data-key="preview.processing"/, response.body)
     preview.reload
     assert preview.pending?
     assert_nil preview.data
+  end
+
+  test "#update should rotate the run id so the previous job can't write back" do
+    sign_in_as(user)
+    preview = create(:feed_preview, :processing, user: user, feed_profile_key: "rss",
+                                                 params: { "url" => "http://example.com/feed.xml" })
+    was = preview.run_id
+
+    patch feed_preview_url(preview), headers: TURBO_STREAM
+
+    refute_equal was, preview.reload.run_id
+  end
+
+  test "#update should clear rather than run when the AI credential went inactive" do
+    sign_in_as(user)
+    credential = create(:ai_credential, :active, user: user)
+    search = create(:search_credential, :active, user: user)
+    preview = create(:feed_preview, :completed, user: user, feed_profile_key: "llm",
+                                                params: { "prompt" => "ruby news" },
+                                                ai_credential: credential, ai_model: "gpt-4o-mini")
+    credential.update!(state: :inactive)
+    search
+
+    assert_no_enqueued_jobs do
+      patch feed_preview_url(preview), headers: TURBO_STREAM
+    end
+
+    assert_response :success
+    assert preview.reload.ready?, "the stale selection must not start a run"
+  end
+
+  test "#update should not reach another user's preview" do
+    sign_in_as(user)
+    stranger = create(:feed_preview, :completed, user: create(:user), feed_profile_key: "rss",
+                                                 params: { "url" => "http://example.com/feed.xml" })
+
+    patch feed_preview_url(stranger)
+
+    assert_response :not_found
+  end
+
+  test "#create should reuse a fresh result rather than running again" do
+    sign_in_as(user)
+    preview = create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
+                                                params: { "url" => "http://example.com/feed.xml" })
+
+    assert_no_enqueued_jobs do
+      post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } },
+           headers: TURBO_STREAM
+    end
+
+    assert_response :success
+    assert preview.reload.ready?
   end
 
   # Fix 1: create-race robustness
@@ -321,7 +381,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     # show renders 2xx without creating another row or enqueueing.
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+        post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } }
       end
     end
 
@@ -340,7 +400,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
                                       ready_at: (FeedPreview::PREVIEW_FRESHNESS_WINDOW + 5.minutes).ago)
 
     assert_enqueued_with(job: FeedPreviewJob) do
-      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+      post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } }
     end
 
     assert_response :success
@@ -353,7 +413,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
                                       ready_at: 1.minute.ago)
 
     assert_no_enqueued_jobs do
-      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+      post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } }
     end
 
     assert_response :success
@@ -365,7 +425,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        get feed_preview_url(profile_key: "nope", "params" => { url: "http://example.com/feed.xml" }),
+        post feed_previews_url, params: { profile_key: "nope", "params" => { url: "http://example.com/feed.xml" } },
             headers: TURBO_STREAM
       end
     end
@@ -378,7 +438,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        post feed_preview_url(profile_key: "nope", "params" => { url: "http://example.com/feed.xml" }),
+        post feed_previews_url, params: { profile_key: "nope", "params" => { url: "http://example.com/feed.xml" } },
              headers: TURBO_STREAM
       end
     end
@@ -393,7 +453,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
                                        updated_at: 10.minutes.ago)
 
     assert_no_enqueued_jobs do
-      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" }),
+      post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } },
           headers: TURBO_STREAM
     end
 
@@ -411,8 +471,8 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
                                        updated_at: 90.seconds.ago)
 
     assert_no_enqueued_jobs do
-      get feed_preview_url(profile_key: "llm", "params" => { prompt: "ruby news" },
-                           ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6"),
+      post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "ruby news" },
+                           ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6" },
           headers: TURBO_STREAM
     end
 
@@ -428,8 +488,8 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
                                        ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6",
                                        updated_at: 5.minutes.ago)
 
-    get feed_preview_url(profile_key: "llm", "params" => { prompt: "ruby news" },
-                         ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6"),
+    post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "ruby news" },
+                         ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6" },
         headers: TURBO_STREAM
 
     assert_response :success
@@ -440,8 +500,8 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user, available_models: models)
 
-    post feed_preview_url(profile_key: "llm", "params" => { prompt: "ruby news" },
-                          ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6"),
+    post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "ruby news" },
+                          ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6" },
          headers: TURBO_STREAM
 
     assert_response :success
@@ -456,7 +516,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
 
     assert_difference("FeedPreview.count", 1) do
-      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+      post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } }
     end
 
     assert_response :success
