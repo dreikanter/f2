@@ -1,5 +1,5 @@
 class FeedPreviewTimeoutJob < ApplicationJob
-  queue_as :default
+  queue_as :timeouts
 
   # @param feed_preview_id [String] UUID of the FeedPreview
   # @param run_id [String] the run token captured when this job was enqueued

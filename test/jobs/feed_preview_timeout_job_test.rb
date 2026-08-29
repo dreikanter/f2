@@ -1,6 +1,10 @@
 require "test_helper"
 
 class FeedPreviewTimeoutJobTest < ActiveJob::TestCase
+  test "should use the dedicated timeout queue" do
+    assert_equal "timeouts", FeedPreviewTimeoutJob.queue_name
+  end
+
   test "#perform should fail the matching active run and rotate its run_id" do
     preview = create(:feed_preview, :processing, run_id: "run-1")
 
