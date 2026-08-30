@@ -54,6 +54,7 @@ class Feed < ApplicationRecord
   attr_accessor :source_verified
 
   after_update :create_schedule_on_enable
+  before_save :clear_subscribers_count_on_destination_change
   before_validation :compose_import_after_from_parts
   before_validation :drop_params_foreign_to_profile
   before_validation :cast_params_to_declared_types
@@ -568,5 +569,15 @@ class Feed < ApplicationRecord
     return if feed_schedule.present?
 
     defer_schedule!
+  end
+
+  # A saved count belongs to the previous target group or token; carrying it
+  # over would show someone else's subscriber count as this feed's own.
+  def clear_subscribers_count_on_destination_change
+    return if new_record?
+    return unless will_save_change_to_target_group? || will_save_change_to_access_token_id?
+
+    self.subscribers_count = nil
+    self.subscribers_count_updated_at = nil
   end
 end
