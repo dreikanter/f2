@@ -40,6 +40,12 @@ class AccessTokenListItemComponentTest < ViewComponent::TestCase
     assert_equal "Edit", edit_link.text.strip
   end
 
+  test "#render should separate Edit from Delete" do
+    result = render_inline(AccessTokenListItemComponent.new(access_token: access_token))
+
+    assert_not_nil result.at_css("#access-token-menu-#{access_token.id} li[role='separator']")
+  end
+
   test "#render should render the Delete menu item with modal trigger" do
     result = render_inline(AccessTokenListItemComponent.new(access_token: access_token))
     delete_link = result.css("a[data-controller='modal-trigger']").first
