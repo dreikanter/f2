@@ -29,7 +29,7 @@
     <% end %>
   <% end %>
 
-  <% if formatted_content || attachments? %>
+  <% if formatted_content || attachments? || comments? %>
     <% card.with_section(class: "p-4") do %>
       <div class="space-y-4">
         <% if formatted_content %>
@@ -55,6 +55,20 @@
             <% if other_attachments.any? %>
               <%= other_attachments_list %>
             <% end %>
+          </section>
+        <% end %>
+
+        <% if comments? %>
+          <section class="space-y-2" data-key="preview.comments">
+            <p class="text-xs font-semibold uppercase tracking-wide text-muted">Comments</p>
+            <div class="space-y-3">
+              <% comments.each do |comment| %>
+                <div class="flex items-start gap-2" data-key="preview.comment">
+                  <%= helpers.icon("message-circle", css_class: "mt-1 size-3.5 text-muted") %>
+                  <div class="min-w-0 flex-1 text-heading"><%= helpers.format_post_content(comment) %></div>
+                </div>
+              <% end %>
+            </div>
           </section>
         <% end %>
       </div>

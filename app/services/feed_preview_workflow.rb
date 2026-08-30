@@ -102,6 +102,7 @@ class FeedPreviewWorkflow
         source_url: post.source_url,
         published_at: post.published_at&.iso8601,
         attachments: post.attachment_urls || [],
+        comments: post.comments || [],
         uid: entry.uid
       }
     end
