@@ -343,6 +343,12 @@ class FeedProfile
             "type" => "boolean",
             "title" => "Skip Shorts",
             "description" => "Follow the channel's regular uploads only. Works for channels, not playlists."
+          },
+          "include_description" => {
+            "type" => "boolean",
+            "title" => "Post video descriptions",
+            "description" => "Add each video's description as the first comment.",
+            "default" => true
           }
         },
         "required" => ["url"],
