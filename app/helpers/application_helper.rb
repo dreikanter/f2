@@ -130,15 +130,15 @@ module ApplicationHelper
     content_tag(:svg, path_data.html_safe, **options)
   end
 
-  # Status icon for records sharing the pending/validating/active/inactive
+  # State icon for records sharing the pending/validating/active/inactive
   # lifecycle (access tokens, AI credentials). Mirrors feed_status_icon's role
   # as the leading glyph in a list row.
   #
   # An unsettled record reads as "unknown", not "working on it": list pages
   # don't poll, so whatever they render is a snapshot that won't move on its
   # own. A spinner glyph would promise an update that never arrives.
-  def credential_status_icon(status)
-    case status.to_s
+  def credential_state_icon(state)
+    case state.to_s
     when "active"
       icon("circle-check", css_class: "size-4 text-success", title: "Active", aria_label: "Active")
     when "inactive"

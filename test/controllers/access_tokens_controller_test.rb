@@ -40,7 +40,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     get access_tokens_path
 
     assert_response :success
-    assert_select "[data-key='settings.access_tokens.#{access_token.id}']"
+    assert_select "[data-key='access_token.#{access_token.id}']"
   end
 
   test "#index should not display other users' tokens to admins" do
@@ -49,7 +49,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     get access_tokens_path
 
     assert_response :success
-    assert_select "[data-key='settings.access_tokens.#{other_token.id}']", count: 0
+    assert_select "[data-key='access_token.#{other_token.id}']", count: 0
   end
 
   test "#index should display host when token owner is not set" do
@@ -81,7 +81,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     get access_token_path(active)
 
     assert_response :success
-    assert_select "header [data-key='access_token.status_badge'][data-status='active']", text: "Valid"
+    assert_select "header [data-key='access_token.state_badge'][data-credential-state='active']", text: "Valid"
   end
 
   test "#show should not badge a token that is still being checked" do
@@ -90,7 +90,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     get access_token_path(access_token)
 
     assert_response :success
-    assert_select "[data-key='access_token.status_badge']", count: 0
+    assert_select "[data-key='access_token.state_badge']", count: 0
   end
 
   test "#show should place the token actions in the header menu" do
@@ -152,7 +152,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
   test "#show should explain an inactive token that lacks the identity permission" do
     sign_in_as user
-    token = create(:access_token, user: user, status: :inactive, scopes: ["manage-posts"])
+    token = create(:access_token, user: user, state: :inactive, scopes: ["manage-posts"])
 
     get access_token_path(token)
 
@@ -165,19 +165,19 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
   test "#show should call an inactive token expired when it held the identity permission" do
     sign_in_as user
-    token = create(:access_token, user: user, status: :inactive, scopes: AccessToken::TOKEN_SCOPES)
+    token = create(:access_token, user: user, state: :inactive, scopes: AccessToken::TOKEN_SCOPES)
 
     get access_token_path(token)
 
     assert_response :success
     assert_select "[data-key='access_token.missing-identity-permission']", count: 0
-    assert_select "[data-key='access_token.status_badge'][data-status='inactive']", text: "Inactive"
+    assert_select "[data-key='access_token.state_badge'][data-credential-state='inactive']", text: "Inactive"
     assert_select "[data-key='access_token.inactive-hint']", text: /expired, revoked, or incorrectly copied/
   end
 
   test "#show should not blame a permission when the check never read the token's scopes" do
     sign_in_as user
-    token = create(:access_token, user: user, status: :inactive, scopes: [])
+    token = create(:access_token, user: user, state: :inactive, scopes: [])
 
     get access_token_path(token)
 
@@ -328,7 +328,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
   test "#show should not render Continue setting up your feed link when token is pending" do
     sign_in_as user
-    pending = create(:access_token, user: user, status: :pending)
+    pending = create(:access_token, user: user, state: :pending)
     draft = create(:feed, :draft, user: user)
 
     get access_token_path(pending, feed_id: draft.id)
@@ -341,7 +341,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
     draft = create(:feed, :draft, user: user)
 
-    [create(:access_token, user: user, status: :pending),
+    [create(:access_token, user: user, state: :pending),
      create(:access_token, :active, user: user),
      create(:access_token, :inactive, user: user)].each do |token|
       get access_token_path(token, feed_id: draft.id)

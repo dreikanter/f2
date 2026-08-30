@@ -15,6 +15,10 @@ class AiCredential < ApplicationRecord
     LlmProvider.find(provider)
   end
 
+  def provider_name
+    llm_provider.display_name
+  end
+
   # Models this credential can actually back a feed with: the dev-verified
   # capability matrix intersected with the provider's live snapshot.
   # Membership is qualification — a snapshot model absent from the matrix (or a

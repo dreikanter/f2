@@ -26,6 +26,6 @@ class TokenValidationJob < ApplicationJob
   def on_rate_limit_exhausted(_error)
     access_token, run_id = arguments
     AccessToken.where(id: access_token.id, validation_run_id: run_id)
-               .update_all(status: AccessToken.statuses[:pending], updated_at: Time.current)
+               .update_all(state: AccessToken.states[:pending], updated_at: Time.current)
   end
 end

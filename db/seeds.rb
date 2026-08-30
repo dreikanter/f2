@@ -32,7 +32,7 @@ if Rails.env.development?
       AccessToken.create!(
         name: "Active Token #{i + 1}",
         owner: "testuser#{i + 1}",
-        status: :active,
+        state: :active,
         user: user,
         host: "https://freefeed.net",
         token: "fake_token_#{i + 1}_#{SecureRandom.hex(16)}",
@@ -44,7 +44,7 @@ if Rails.env.development?
       AccessToken.create!(
         name: "Inactive Token #{i + 4}",
         owner: "testuser#{i + 4}",
-        status: :inactive,
+        state: :inactive,
         user: user,
         host: "https://freefeed.net",
         token: "fake_token_#{i + 4}_#{SecureRandom.hex(16)}",

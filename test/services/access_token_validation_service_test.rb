@@ -3,7 +3,7 @@ require "test_helper"
 class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   def validation_service(token = access_token)
     run_id = SecureRandom.uuid
-    token.update!(status: :validating, validation_started_at: Time.current, validation_run_id: run_id)
+    token.update!(state: :validating, validation_started_at: Time.current, validation_run_id: run_id)
     AccessTokenValidationService.new(token, run_id: run_id)
   end
 
@@ -12,7 +12,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   end
 
   def access_token
-    @access_token ||= create(:access_token, user: user, status: :validating)
+    @access_token ||= create(:access_token, user: user, state: :validating)
   end
 
   def stub_app_token_info(scopes: AccessToken::TOKEN_SCOPES)
@@ -67,7 +67,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     service = validation_service
     service.call
 
-    assert_equal "active", access_token.reload.status
+    assert_equal "active", access_token.reload.state
     assert_equal "testuser", access_token.owner
     assert_equal "user123", access_token.freefeed_user_id
     assert_equal AccessToken::TOKEN_SCOPES, access_token.scopes
@@ -276,7 +276,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
   test "#call should not write a successful result after the run is superseded" do
     stale_run_id = SecureRandom.uuid
-    access_token.update!(status: :validating, validation_started_at: 1.minute.ago,
+    access_token.update!(state: :validating, validation_started_at: 1.minute.ago,
                          validation_run_id: stale_run_id)
     service = AccessTokenValidationService.new(access_token, run_id: stale_run_id)
     current_run_id = SecureRandom.uuid
@@ -293,9 +293,9 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should report a missing identity permission as its own event" do
-    access_token.update!(status: :active)
+    access_token.update!(state: :active)
     feed = create(:feed, user: user, access_token: access_token, state: :enabled)
-    access_token.update!(status: :validating)
+    access_token.update!(state: :validating)
     stub_app_token_info(scopes: ["manage-posts"])
 
     validation_service.call
@@ -321,9 +321,9 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should disable the token when the scopes request reports it dead" do
-    access_token.update!(status: :active)
+    access_token.update!(state: :active)
     feed = create(:feed, user: user, access_token: access_token, state: :enabled)
-    access_token.update!(status: :validating)
+    access_token.update!(state: :validating)
     stub_successful_account_calls
     stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
       .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
@@ -361,7 +361,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     service = validation_service
     service.call
 
-    assert_equal "inactive", access_token.reload.status
+    assert_equal "inactive", access_token.reload.state
   end
 
   test "#call should deactivate token on forbidden error" do
@@ -372,7 +372,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     service = validation_service
     service.call
 
-    assert_equal "inactive", access_token.reload.status
+    assert_equal "inactive", access_token.reload.state
   end
 
   test "#call should not disable token on transient errors" do
@@ -392,17 +392,17 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       service.call
     end
 
-    assert_equal "validating", access_token.reload.status
+    assert_equal "validating", access_token.reload.state
   end
 
   test "#call should disable enabled feeds on invalid token error" do
     # Feeds can only become enabled while the token is active; re-validation
     # of the live token starts after that.
-    access_token.update!(status: :active)
+    access_token.update!(state: :active)
     feed1 = create(:feed, user: user, access_token: access_token, state: :enabled)
     feed2 = create(:feed, user: user, access_token: access_token, state: :enabled)
     feed3 = create(:feed, user: user, access_token: access_token, state: :disabled)
-    access_token.update!(status: :validating)
+    access_token.update!(state: :validating)
 
     stub_app_token_info
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
@@ -454,7 +454,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       service.call
     end
 
-    assert_equal "inactive", access_token.reload.status
+    assert_equal "inactive", access_token.reload.state
   end
 
   test "#call should deactivate token when managed_groups returns invalid token error" do
@@ -489,6 +489,6 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     service = validation_service
     service.call
 
-    assert_equal "inactive", access_token.reload.status
+    assert_equal "inactive", access_token.reload.state
   end
 end

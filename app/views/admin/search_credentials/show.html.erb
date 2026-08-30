@@ -5,7 +5,7 @@
     <% header.with_breadcrumb(label: "Admin Panel", url: admin_path) %>
     <% unless @search_credential.pending? || @search_credential.validating? %>
       <% header.with_context_paragraph do %>
-        <%= render credential_status_badge(@search_credential) %>
+        <%= render credential_state_badge(@search_credential) %>
       <% end %>
     <% end %>
     <% header.with_context_paragraph do %>

@@ -425,18 +425,18 @@ class UserTest < ActiveSupport::TestCase
 
   test "#active_tokens_count returns count of active access tokens" do
     user = create(:user)
-    create(:access_token, user: user, status: :active)
-    create(:access_token, user: user, status: :active)
-    create(:access_token, user: user, status: :inactive)
+    create(:access_token, user: user, state: :active)
+    create(:access_token, user: user, state: :active)
+    create(:access_token, user: user, state: :inactive)
 
     assert_equal 2, user.active_tokens_count
   end
 
   test "#inactive_tokens_count returns count of inactive access tokens" do
     user = create(:user)
-    create(:access_token, user: user, status: :active)
-    create(:access_token, user: user, status: :inactive)
-    create(:access_token, user: user, status: :inactive)
+    create(:access_token, user: user, state: :active)
+    create(:access_token, user: user, state: :inactive)
+    create(:access_token, user: user, state: :inactive)
 
     assert_equal 2, user.inactive_tokens_count
   end
