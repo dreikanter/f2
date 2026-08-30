@@ -10,9 +10,9 @@ class FeedPreviewWorkflow
 
   attr_reader :feed_preview
 
-  def initialize(feed_preview, run_id: nil, search_credential: nil)
+  def initialize(feed_preview, run_id:, search_credential: nil)
     @feed_preview = feed_preview
-    @run_id = run_id || feed_preview.run_id
+    @run_id = run_id
     @search_credential = search_credential
   end
 
