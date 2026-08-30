@@ -11,7 +11,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
 
   def feed_with_posts
     @feed_with_posts ||= begin
-      f = create(:feed).tap do |feed|
+      f = create(:feed, subscribers_count: 42).tap do |feed|
         create(:feed_entry, feed: feed, created_at: 1.hour.ago)
         create(:post, :published, feed: feed, published_at: 2.hours.ago, reposted_at: 1.hour.ago)
         create(:post, feed: feed, published_at: 3.hours.ago)
@@ -42,6 +42,10 @@ class FeedStatsComponentTest < ViewComponent::TestCase
       last_week = result.css('[data-key="stats.posts_last_week"]').first
       assert_not_nil last_week
       assert_equal "1", result.css('[data-key="stats.posts_last_week.value"]').first.text.strip
+
+      subscribers = result.css('[data-key="stats.subscribers"]').first
+      assert_not_nil subscribers
+      assert_equal "42", result.css('[data-key="stats.subscribers.value"]').first.text.strip
     end
   end
 
@@ -65,6 +69,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
     assert_equal "Imported", result.css(".hidden.md\\:flex [data-key=\"stats.imported_posts.label\"]").first.text
     assert_equal "Published", result.css(".hidden.md\\:flex [data-key=\"stats.published_posts.label\"]").first.text
     assert_equal "Last 7 days", result.css(".hidden.md\\:flex [data-key=\"stats.posts_last_week.label\"]").first.text
+    assert_equal "Subscribers", result.css(".hidden.md\\:flex [data-key=\"stats.subscribers.label\"]").first.text
   end
 
   test "#render should display fallback values for missing data" do
@@ -77,6 +82,9 @@ class FeedStatsComponentTest < ViewComponent::TestCase
 
     most_recent_value = result.css('[data-key="stats.most_recent_repost.value"]').first.text
     assert_equal StatItemComponent::BLANK_VALUE, most_recent_value
+
+    subscribers_value = result.css('[data-key="stats.subscribers.value"]').first.text
+    assert_equal StatItemComponent::BLANK_VALUE, subscribers_value
   end
 
   test "#render should mute zero counts and fallback values" do
@@ -84,7 +92,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
 
     result = render_inline(FeedStatsComponent.new(feed: feed_without_data))
 
-    %w[imported_posts published_posts posts_last_week last_refresh most_recent_repost].each do |key|
+    %w[imported_posts published_posts posts_last_week subscribers last_refresh most_recent_repost].each do |key|
       result.css(%([data-key="stats.#{key}.value"])).each do |value|
         assert_includes value["class"], "text-muted", "expected #{key} value to be muted"
       end
@@ -94,7 +102,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
   test "#render should not mute non-zero values" do
     result = render_inline(FeedStatsComponent.new(feed: feed_with_posts))
 
-    %w[imported_posts published_posts posts_last_week most_recent_repost].each do |key|
+    %w[imported_posts published_posts posts_last_week subscribers most_recent_repost].each do |key|
       result.css(%([data-key="stats.#{key}.value"])).each do |value|
         assert_not_includes value["class"], "text-muted", "expected #{key} value not to be muted"
       end

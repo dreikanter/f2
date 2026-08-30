@@ -195,6 +195,33 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "https://example.com/feed.xml", feed.params["url"]
   end
 
+  test "#save should clear subscribers_count when target_group changes" do
+    feed = create(:feed, subscribers_count: 42, subscribers_count_updated_at: Time.current)
+
+    feed.update!(target_group: "anothergroup")
+
+    assert_nil feed.subscribers_count
+    assert_nil feed.subscribers_count_updated_at
+  end
+
+  test "#save should clear subscribers_count when access_token changes" do
+    feed = create(:feed, subscribers_count: 42, subscribers_count_updated_at: Time.current)
+    other_token = create(:access_token, :active, user: feed.user)
+
+    feed.update!(access_token: other_token)
+
+    assert_nil feed.subscribers_count
+    assert_nil feed.subscribers_count_updated_at
+  end
+
+  test "#save should keep subscribers_count when unrelated attributes change" do
+    feed = create(:feed, subscribers_count: 42, subscribers_count_updated_at: Time.current)
+
+    feed.update!(description: "updated description")
+
+    assert_equal 42, feed.subscribers_count
+  end
+
   test "should reject params missing required keys per profile schema" do
     feed = build(:feed, feed_profile_key: "rss", params: {})
     assert_not feed.valid?

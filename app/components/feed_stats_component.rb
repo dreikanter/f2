@@ -29,6 +29,13 @@ class FeedStatsComponent < StatsPanelComponent
         muted: posts_last_week_count.zero?
       },
       {
+        key: "subscribers",
+        label: "Subscribers",
+        label_short: "Subscribers",
+        value: subscribers_value,
+        muted: @feed.subscribers_count.to_i.zero?
+      },
+      {
         key: "last_refresh",
         label: @feed.scheduled? ? "Last refresh" : "Last post received",
         label_short: @feed.scheduled? ? "Refreshed" : "Received",
@@ -41,6 +48,10 @@ class FeedStatsComponent < StatsPanelComponent
         value: most_recent_repost_value
       }
     ]
+  end
+
+  def subscribers_value
+    helpers.number_with_delimiter(@feed.subscribers_count) if @feed.subscribers_count
   end
 
   def last_refresh_value
