@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-30
 
+- Feed previews now load after opening instead of getting stuck on the loading screen.
 - Feed previews no longer restart unexpectedly after finishing, avoiding duplicate fetching or AI work.
 - Emails now end with a simpler sign-off, without the site link repeated at the bottom.
 - A group-list refresh that takes too long can now be retried right away.
