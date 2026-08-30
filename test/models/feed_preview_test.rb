@@ -244,25 +244,36 @@ class FeedPreviewTest < ActiveSupport::TestCase
 
   test ".digest_for should differ for different models on the same source" do
     params = { "prompt" => "rust async" }
-    refute_equal FeedPreview.digest_for("llm", params, 1, "model-a"),
-                 FeedPreview.digest_for("llm", params, 1, "model-b")
+    refute_equal FeedPreview.digest_for("llm", params, ai_credential_id: 1, ai_model: "model-a"),
+                 FeedPreview.digest_for("llm", params, ai_credential_id: 1, ai_model: "model-b")
   end
 
   test ".digest_for should differ for different credentials on the same source" do
     params = { "prompt" => "rust async" }
-    refute_equal FeedPreview.digest_for("llm", params, 1, "model-a"),
-                 FeedPreview.digest_for("llm", params, 2, "model-a")
+    refute_equal FeedPreview.digest_for("llm", params, ai_credential_id: 1, ai_model: "model-a"),
+                 FeedPreview.digest_for("llm", params, ai_credential_id: 2, ai_model: "model-a")
   end
 
   test ".digest_for should differ for different search credentials on the same source" do
     params = { "prompt" => "rust async" }
-    refute_equal FeedPreview.digest_for("llm", params, 1, "model-a", 2),
-                 FeedPreview.digest_for("llm", params, 1, "model-a", 3)
+    refute_equal FeedPreview.digest_for(
+      "llm",
+      params,
+      ai_credential_id: 1,
+      ai_model: "model-a",
+      search_credential_id: 2
+    ), FeedPreview.digest_for(
+      "llm",
+      params,
+      ai_credential_id: 1,
+      ai_model: "model-a",
+      search_credential_id: 3
+    )
   end
 
   test ".digest_for should match the no-selection default when credential and model are nil" do
     params = { "url" => "https://x.test" }
     assert_equal FeedPreview.digest_for("rss", params),
-                 FeedPreview.digest_for("rss", params, nil, nil)
+                 FeedPreview.digest_for("rss", params, ai_credential_id: nil, ai_model: nil)
   end
 end

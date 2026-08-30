@@ -66,9 +66,9 @@ class FeedPreviewsController < ApplicationController
     @digest ||= FeedPreview.digest_for(
       profile_key,
       preview_params,
-      ai_credential&.id,
-      ai_model,
-      search_credential&.id
+      ai_credential_id: ai_credential&.id,
+      ai_model: ai_model,
+      search_credential_id: search_credential&.id
     )
   end
 

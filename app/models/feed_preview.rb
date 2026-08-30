@@ -28,7 +28,13 @@ class FeedPreview < ApplicationRecord
   #
   # JSON-encode the parts before hashing so their boundaries are unambiguous:
   # otherwise ["ab", "c"] and ["a", "bc"] would hash alike.
-  def self.digest_for(feed_profile_key, params, ai_credential_id = nil, ai_model = nil, search_credential_id = nil)
+  def self.digest_for(
+    feed_profile_key,
+    params,
+    ai_credential_id: nil,
+    ai_model: nil,
+    search_credential_id: nil
+  )
     parts = [FeedProfile.source_input_for(feed_profile_key, params), ai_credential_id, ai_model, search_credential_id]
     # Append only when set, so profiles without options keep their digests.
     options = option_parts_for(feed_profile_key, params)
@@ -112,9 +118,9 @@ class FeedPreview < ApplicationRecord
     self[:params_digest] = self.class.digest_for(
       feed_profile_key,
       params,
-      ai_credential_id,
-      ai_model,
-      search_credential_id
+      ai_credential_id:,
+      ai_model:,
+      search_credential_id:
     )
   end
 end

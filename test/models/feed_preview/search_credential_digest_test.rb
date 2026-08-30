@@ -8,8 +8,20 @@ class FeedPreview::SearchCredentialDigestTest < ActiveSupport::TestCase
     first_search_credential_id = SecureRandom.uuid
     second_search_credential_id = SecureRandom.uuid
 
-    first = FeedPreview.digest_for(profile_key, params, ai_credential_id, "model", first_search_credential_id)
-    second = FeedPreview.digest_for(profile_key, params, ai_credential_id, "model", second_search_credential_id)
+    first = FeedPreview.digest_for(
+      profile_key,
+      params,
+      ai_credential_id:,
+      ai_model: "model",
+      search_credential_id: first_search_credential_id
+    )
+    second = FeedPreview.digest_for(
+      profile_key,
+      params,
+      ai_credential_id:,
+      ai_model: "model",
+      search_credential_id: second_search_credential_id
+    )
 
     assert_not_equal first, second
   end
