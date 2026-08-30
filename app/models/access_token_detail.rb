@@ -8,6 +8,8 @@ class AccessTokenDetail < ApplicationRecord
 
   GROUPS_REFRESH_POLLING_INTERVAL_MS = 2500
   GROUPS_REFRESH_TIMEOUT_AFTER = 85.seconds
+  # Recover if the scheduled timeout is lost or fails to settle the run.
+  GROUPS_REFRESH_STALE_AFTER = 15.minutes
 
   enum :groups_refresh_state, { running: 0, failed: 1 }, prefix: :groups_refresh
 
@@ -19,6 +21,7 @@ class AccessTokenDetail < ApplicationRecord
     super() &&
       groups_refresh_requested_at.present? &&
       groups_refresh_run_id.present? &&
+      groups_refresh_requested_at > GROUPS_REFRESH_STALE_AFTER.ago &&
       (run_id.nil? || groups_refresh_run_id == run_id)
   end
 

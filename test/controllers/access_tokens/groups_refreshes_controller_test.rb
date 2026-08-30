@@ -59,6 +59,23 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
     assert_match(/data-controller="polling"/, response.body)
   end
 
+  test "#create should replace an abandoned run" do
+    abandoned_run_id = mark_refresh_running
+    detail.update!(groups_refresh_requested_at: AccessTokenDetail::GROUPS_REFRESH_STALE_AFTER.ago - 1.minute)
+    sign_in_as user
+
+    assert_enqueued_with(job: TokenGroupsRefreshJob) do
+      post access_token_groups_refresh_path(access_token)
+    end
+
+    assert_response :success
+    detail.reload
+    assert detail.groups_refresh_running?
+    refute_equal abandoned_run_id, detail.groups_refresh_run_id
+    assert_enqueued_with(job: TokenGroupsRefreshTimeoutJob,
+                         args: [detail.id, detail.groups_refresh_run_id])
+  end
+
   test "#create should start a new run immediately after timeout" do
     timed_out_run_id = mark_refresh_running
     TokenGroupsRefreshTimeoutJob.perform_now(detail.id, timed_out_run_id)

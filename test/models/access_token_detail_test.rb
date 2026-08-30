@@ -29,6 +29,17 @@ class AccessTokenDetailTest < ActiveSupport::TestCase
     assert_not detail.groups_refresh_running?(run_id: NEXT_RUN_ID)
   end
 
+  test "#groups_refresh_running? should treat an old run as abandoned" do
+    detail = build(:access_token_detail, groups_refresh_state: :running,
+                                         groups_refresh_requested_at: Time.current,
+                                         groups_refresh_run_id: RUN_ID)
+
+    travel AccessTokenDetail::GROUPS_REFRESH_STALE_AFTER + 1.minute do
+      assert_not detail.groups_refresh_running?
+      assert_not detail.groups_refresh_running?(run_id: RUN_ID)
+    end
+  end
+
   test "#groups_refresh_run_id should use the native UUID type" do
     assert_equal :uuid, AccessTokenDetail.type_for_attribute("groups_refresh_run_id").type
   end
