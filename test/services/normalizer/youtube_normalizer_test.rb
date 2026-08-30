@@ -45,7 +45,7 @@ class Normalizer::YoutubeNormalizerTest < ActiveSupport::TestCase
     assert_equal [], post.attachment_urls
   end
 
-  test "#normalize should include description as comment" do
+  test "#normalize should include description as comment by default" do
     entry = create(:feed_entry, raw_data: {
       "title" => "Video",
       "link" => "https://www.youtube.com/watch?v=abc123",
@@ -56,6 +56,33 @@ class Normalizer::YoutubeNormalizerTest < ActiveSupport::TestCase
     post = normalizer.normalize
 
     assert_equal ["This is a description."], post.comments
+  end
+
+  test "#normalize should preserve description paragraphs for FreeFeed" do
+    entry = create(:feed_entry, raw_data: {
+      "title" => "Video",
+      "link" => "https://www.youtube.com/watch?v=abc123",
+      "content" => "First paragraph.\n\nSecond paragraph.\nAnother line."
+    })
+
+    post = Normalizer::YoutubeNormalizer.new(entry).normalize
+
+    assert_equal ["First paragraph.\n\nSecond paragraph.\nAnother line."], post.comments
+  end
+
+  test "#normalize should omit description when the feed option is off" do
+    entry = create(:feed_entry, feed: create(:feed, feed_profile_key: "youtube", params: {
+      "url" => "https://www.youtube.com/@channel",
+      "include_description" => false
+    }), raw_data: {
+      "title" => "Video",
+      "link" => "https://www.youtube.com/watch?v=abc123",
+      "content" => "This is a description."
+    })
+
+    post = Normalizer::YoutubeNormalizer.new(entry).normalize
+
+    assert_empty post.comments
   end
 
   test "#normalize should truncate a description that exceeds the comment limit" do

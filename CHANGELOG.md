@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-30
 
+- YouTube feeds now keep video description paragraphs in the first comment. You can preview these comments or switch them off in the feed's options.
 - Feed previews no longer restart unexpectedly after finishing, avoiding duplicate fetching or AI work.
 - Emails now end with a simpler sign-off, without the site link repeated at the bottom.
 - A group-list refresh that takes too long can now be retried right away.

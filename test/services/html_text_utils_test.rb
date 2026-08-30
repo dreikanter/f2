@@ -20,6 +20,24 @@ class HtmlTextUtilsTest < ActiveSupport::TestCase
     assert_equal "", subject.strip_html("")
   end
 
+  test "#strip_html_preserving_paragraphs should preserve plain-text paragraphs" do
+    text = "First paragraph.\r\n\r\nSecond   paragraph.\nThird line."
+
+    assert_equal "First paragraph.\n\nSecond paragraph.\nThird line.",
+                 subject.strip_html_preserving_paragraphs(text)
+  end
+
+  test "#strip_html_preserving_paragraphs should translate HTML paragraphs and breaks" do
+    html = "<p>Hello <strong>world</strong></p><p>Second<br>line</p>"
+
+    assert_equal "Hello world\n\nSecond\nline", subject.strip_html_preserving_paragraphs(html)
+  end
+
+  test "#strip_html_preserving_paragraphs should return empty string for blank input" do
+    assert_equal "", subject.strip_html_preserving_paragraphs(nil)
+    assert_equal "", subject.strip_html_preserving_paragraphs("")
+  end
+
   test "#extract_images should extract image sources" do
     html = '<p><img src="https://example.com/1.jpg"><img src="https://example.com/2.png"></p>'
     result = subject.extract_images(html)

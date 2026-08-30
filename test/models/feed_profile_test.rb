@@ -215,12 +215,15 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_equal [], FeedProfile.parameter_keys_for("webhook")
   end
 
-  test "youtube profile declares the Shorts option" do
+  test "youtube profile declares its options" do
     options = FeedProfile.options_for("youtube")
 
-    assert_equal ["exclude_shorts"], options.map(&:name)
+    assert_equal %w[exclude_shorts include_description], options.map(&:name)
     assert_predicate options.first, :boolean?
     assert_equal "Skip Shorts", options.first.title
+    assert_predicate options.second, :boolean?
+    assert_equal "Post video descriptions", options.second.title
+    assert_equal true, options.second.default
   end
 
   test ".options_for returns nothing for a profile declaring only its source" do

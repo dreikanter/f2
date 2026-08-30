@@ -52,6 +52,23 @@ class PostPreviewComponentTest < ViewComponent::TestCase
     assert_includes result.text, "Body"
   end
 
+  test "#render should show comments with paragraph formatting" do
+    post_data = { "content" => "Body", "comments" => ["First paragraph.\n\nSecond paragraph."] }
+
+    result = render_inline(PostPreviewComponent.new(post_data: post_data))
+
+    section = result.at_css('[data-key="preview.comments"]')
+    assert_not_nil section
+    assert_equal 1, section.css('[data-key="preview.comment"]').size
+    assert_equal ["First paragraph.", "Second paragraph."], section.css("p").drop(1).map { |p| p.text.strip }
+  end
+
+  test "#render should omit comments when none are present" do
+    result = render_inline(PostPreviewComponent.new(post_data: { "content" => "Body" }))
+
+    assert_empty result.css('[data-key="preview.comments"]')
+  end
+
   test "renders image attachments as thumbnails linking to the originals" do
     post_data = {
       "content" => "Body",

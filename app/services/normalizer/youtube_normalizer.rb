@@ -13,8 +13,14 @@ module Normalizer
     end
 
     def normalize_comments
-      description = raw_data.dig("content") || ""
-      description.present? ? [strip_html(description)] : []
+      return [] unless include_description?
+
+      description = strip_html_preserving_paragraphs(raw_data.dig("content"))
+      [description].compact_blank
+    end
+
+    def include_description?
+      feed_entry.feed.params.fetch("include_description", true)
     end
   end
 end
