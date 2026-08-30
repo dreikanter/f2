@@ -112,6 +112,7 @@ class WithdrawAllPosts
   def mark_withdrawn(post)
     post.update!(
       freefeed_post_id: nil,
+      freefeed_post_url: nil,
       status: :withdrawn
     )
   end

@@ -166,8 +166,14 @@ if Rails.env.development?
     puts "✅ Feed entries created (#{FeedEntry.count} total)"
 
     # Generate posts for each feed entry
-    FeedEntry.includes(:feed).find_each do |entry|
+    FeedEntry.includes(feed: :access_token).find_each do |entry|
       post_data = entry.raw_data
+      freefeed_post_id = "ff_#{SecureRandom.hex(8)}"
+      feed = entry.feed
+      freefeed_post_url = if feed.access_token && feed.target_group.present?
+        "#{feed.access_token.host}/#{feed.target_group}/#{freefeed_post_id}"
+      end
+
       all_posts << {
         feed_id: entry.feed_id,
         feed_entry_id: entry.id,
@@ -176,7 +182,8 @@ if Rails.env.development?
         source_url: post_data["link"] || "https://example.com/post",
         published_at: entry.published_at,
         status: 1, # published
-        freefeed_post_id: "ff_#{SecureRandom.hex(8)}",
+        freefeed_post_id: freefeed_post_id,
+        freefeed_post_url: freefeed_post_url,
         attachment_urls: [],
         comments: [],
         validation_errors: [],

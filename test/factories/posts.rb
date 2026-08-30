@@ -23,6 +23,11 @@ FactoryBot.define do
     trait :published do
       status { :published }
       freefeed_post_id { "freefeed-#{SecureRandom.uuid}" }
+      freefeed_post_url do
+        next if freefeed_post_id.blank?
+
+        "#{feed.access_token.host}/#{feed.target_group}/#{freefeed_post_id}"
+      end
       reposted_at { Time.current }
     end
 

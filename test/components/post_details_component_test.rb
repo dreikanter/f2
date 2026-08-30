@@ -50,4 +50,22 @@ class PostDetailsComponentTest < ViewComponent::TestCase
 
     assert_not_nil result.css('[data-key="post.freefeed_post_id.value"] div.truncate').first
   end
+
+  test "#render should link the FreeFeed post ID to its stored URL" do
+    post = create(:post, :published, feed: feed)
+
+    result = render_inline(PostDetailsComponent.new(post: post))
+
+    link = result.css('[data-key="post.freefeed_post_id.value"] a').first
+    assert_not_nil link
+    assert_equal post.freefeed_post_url, link["href"]
+  end
+
+  test "#render should show the FreeFeed post ID unlinked when no URL was stored" do
+    post = create(:post, :published, feed: feed, freefeed_post_url: nil)
+
+    result = render_inline(PostDetailsComponent.new(post: post))
+
+    assert_nil result.css('[data-key="post.freefeed_post_id.value"] a').first
+  end
 end

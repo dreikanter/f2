@@ -18,7 +18,7 @@ class PostWithdrawalJob < ApplicationJob
     client = access_token.build_client
     client.delete_post(freefeed_post_id)
 
-    Post.where(id: post_id).update_all(freefeed_post_id: nil)
+    Post.where(id: post_id).update_all(freefeed_post_id: nil, freefeed_post_url: nil)
   rescue RateLimit::Throttled => e
     reschedule_for_rate_limit(e.retry_after)
   rescue FreefeedClient::Error => e

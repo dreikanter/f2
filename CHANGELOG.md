@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-30
 
+- The FreeFeed Post ID on a post's page now always links to the post, even after the connected token is removed.
 - Feed previews now load after opening instead of getting stuck on the loading screen.
 - YouTube feeds now keep video description paragraphs in the first comment. You can preview these comments or switch them off in the feed's options.
 - Feed previews no longer restart unexpectedly after finishing, avoiding duplicate fetching or AI work.

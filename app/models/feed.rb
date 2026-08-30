@@ -140,8 +140,8 @@ class Feed < ApplicationRecord
     @import_after_time = value.to_s.strip
   end
 
-  # Link to the target group on its FreeFeed instance. Post#freefeed_url
-  # builds on top of this to point at individual published posts.
+  # Link to the target group on its FreeFeed instance. FreefeedPublisher
+  # builds on top of this to compose each post's stored freefeed_post_url.
   def target_group_url
     return unless access_token && target_group.present?
 
