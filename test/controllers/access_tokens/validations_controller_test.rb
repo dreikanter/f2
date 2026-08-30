@@ -15,7 +15,7 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should respond with turbo_stream format once validation resolves" do
-    access_token.update!(status: :active)
+    access_token.update!(state: :active)
     sign_in_as user
     get access_token_validation_path(access_token)
 
@@ -24,7 +24,7 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should update access-token-show div once validation resolves" do
-    access_token.update!(status: :active)
+    access_token.update!(state: :active)
     sign_in_as user
     get access_token_validation_path(access_token)
 
@@ -49,7 +49,7 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should return no content while validating" do
-    access_token.update!(status: :validating)
+    access_token.update!(state: :validating)
     sign_in_as user
     get access_token_validation_path(access_token)
 
@@ -57,18 +57,18 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
     assert_empty response.body
   end
 
-  test "#show should show active state with data-status attribute" do
-    access_token.update!(status: :active)
+  test "#show should expose the active credential state" do
+    access_token.update!(state: :active)
     sign_in_as user
     get access_token_validation_path(access_token)
 
     assert_response :success
-    assert_match /data-status="active"/, response.body
+    assert_match /data-credential-state="active"/, response.body
     assert_match />Valid</, response.body
   end
 
   test "#show should render the Continue link with feed_id when feed_id is provided" do
-    access_token.update!(status: :active)
+    access_token.update!(state: :active)
     sign_in_as user
     draft = create(:feed, :draft, user: user)
 
@@ -82,12 +82,12 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
   test "#show should not settle an overdue validation" do
     run_id = SecureRandom.uuid
     access_token.update!(
-      status: :validating,
+      state: :validating,
       validation_started_at: (AccessToken::VALIDATION_TIMEOUT + 1.minute).ago,
       validation_run_id: run_id
     )
     original_attributes = access_token.attributes.slice(
-      "status", "validation_started_at", "validation_run_id", "updated_at"
+      "state", "validation_started_at", "validation_run_id", "updated_at"
     )
     sign_in_as user
 
@@ -100,7 +100,7 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should keep waiting on a validation that is still in flight" do
-    access_token.update!(status: :validating, validation_started_at: 1.minute.ago)
+    access_token.update!(state: :validating, validation_started_at: 1.minute.ago)
     sign_in_as user
 
     get access_token_validation_path(access_token)
@@ -109,13 +109,13 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
     assert access_token.reload.validating?
   end
 
-  test "#show should show inactive state with data-status attribute" do
-    access_token.update!(status: :inactive, scopes: AccessToken::TOKEN_SCOPES)
+  test "#show should expose the inactive credential state" do
+    access_token.update!(state: :inactive, scopes: AccessToken::TOKEN_SCOPES)
     sign_in_as user
     get access_token_validation_path(access_token)
 
     assert_response :success
-    assert_match /data-status="inactive"/, response.body
+    assert_match /data-credential-state="inactive"/, response.body
     assert_match /couldn't confirm this token/, response.body
   end
 end

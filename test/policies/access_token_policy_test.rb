@@ -95,7 +95,7 @@ class AccessTokenPolicyTest < ActiveSupport::TestCase
   end
 
   test "should deny refresh access when the token is not active" do
-    access_token.status = :inactive
+    access_token.state = :inactive
     policy = policy_for_user(user, access_token)
     assert_not policy.refresh?
   end

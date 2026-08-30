@@ -26,6 +26,11 @@
 #       enabled: "ON"
 
 en:
+  activerecord:
+    models:
+      access_token: Access token
+      ai_credential: AI credential
+      search_credential: Search credential
   hello: "Hello world"
 
   events:

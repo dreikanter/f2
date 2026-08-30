@@ -1,52 +1,39 @@
 require "test_helper"
 require "view_component/test_case"
 
-# Drives both concrete rows, so a subclass that stops inheriting — or a derived
-# route, DOM id, or test hook that drifts — fails here rather than silently
-# rendering a different row for one credential type.
 class CredentialListItemComponentTest < ViewComponent::TestCase
   CASES = {
-    AiCredentialListItemComponent => {
-      factory: :ai_credential,
-      key_prefix: "ai_credential",
-      path_segment: "ai_credentials",
-      menu_id: "ai-credential-menu",
-      noun: "AI credential"
-    },
-    SearchCredentialListItemComponent => {
-      factory: :search_credential,
-      key_prefix: "search_credential",
-      path_segment: "search_credentials",
-      menu_id: "search-credential-menu",
-      noun: "search credential"
-    }
+    access_token: { trait: :active, path_segment: "access_tokens" },
+    ai_credential: { trait: :active, path_segment: "ai_credentials" },
+    search_credential: { trait: :active, path_segment: "search_credentials" }
   }.freeze
 
   def user
     @user ||= create(:user)
   end
 
-  def each_case(trait = :active)
-    CASES.each do |component_class, expected|
-      credential = create(expected[:factory], trait, user: user)
-      yield render_inline(component_class.new(credential: credential)), credential, expected
+  def each_case(trait: nil)
+    CASES.each do |factory, expected|
+      credential = create(factory, trait || expected[:trait], user: user)
+      result = render_inline(CredentialListItemComponent.new(credential: credential))
+      yield result, credential, expected
     end
   end
 
   def menu_item(result, label)
-    result.css("a[role='menuitem']").find { |a| a.text.strip == label }
+    result.css("[role='menuitem']").find { |item| item.text.strip == label }
   end
 
-  test "#render should namespace the row and status icon hooks per credential type" do
-    each_case do |result, credential, expected|
-      prefix = expected[:key_prefix]
+  test "#render should use shared row and state-icon hooks" do
+    each_case do |result, credential, _expected|
+      key = credential.model_name.param_key
 
-      assert_not_nil result.css("[data-key='#{prefix}.#{credential.id}']").first, prefix
-      assert_not_nil result.at_css("[data-key='#{prefix}.#{credential.id}.status_icon'] svg"), prefix
+      assert_not_nil result.at_css("[data-key='#{key}.#{credential.id}']"), key
+      assert_not_nil result.at_css("[data-key='#{key}.#{credential.id}.state_icon'] svg"), key
     end
   end
 
-  test "#render should link the title to the credential" do
+  test "#render should link the display name to the credential" do
     each_case do |result, credential, expected|
       link = result.css("a").first
 
@@ -55,62 +42,48 @@ class CredentialListItemComponentTest < ViewComponent::TestCase
     end
   end
 
-  test "#render should show the provider name on the second line" do
-    each_case do |result, credential, expected|
-      assert_includes result.to_html, provider_name_for(credential), expected[:key_prefix]
+  test "#render should show the provider name" do
+    each_case do |result, credential, _expected|
+      assert_includes result.text, credential.provider_name
     end
   end
 
-  test "#render should offer Details, Edit, Make default and Delete" do
+  test "#render should offer Details, Edit, and modal-backed Delete actions" do
     each_case do |result, credential, expected|
       assert_includes menu_item(result, "Details")["href"], "/#{expected[:path_segment]}/#{credential.id}"
       assert_includes menu_item(result, "Edit")["href"], "/#{expected[:path_segment]}/#{credential.id}/edit"
-      assert_includes menu_item(result, "Make default")["href"],
-                      "/#{expected[:path_segment]}/#{credential.id}/default"
-      assert_not_nil menu_item(result, "Delete…")
-    end
-  end
 
-  test "#render should name the credential type in the delete prompt" do
-    each_case do |result, _credential, expected|
-      assert_equal "Delete this #{expected[:noun]}? Feeds using it will be disabled.",
-                   menu_item(result, "Delete…")["data-turbo-confirm"]
+      delete = menu_item(result, "Delete…")
+      assert_equal CredentialDeleteModalComponent.modal_id(credential), delete["data-modal-trigger-modal-id-value"]
+      assert_equal "modal-trigger", delete["data-controller"]
     end
   end
 
   test "#render should separate Delete from the actions above it" do
-    each_case do |result, credential, expected|
-      menu = result.at_css("##{expected[:menu_id]}-#{credential.id}")
+    each_case do |result, credential, _expected|
+      menu = result.at_css("##{credential.model_name.param_key.dasherize}-menu-#{credential.id}")
 
-      assert_equal "separator", menu.css("li")[-2]["role"], expected[:key_prefix]
-      assert_equal "Delete…", menu.css("li").last.text.strip, expected[:key_prefix]
+      assert_equal "separator", menu.css("li")[-2]["role"]
+      assert_equal "Delete…", menu.css("li").last.text.strip
     end
   end
 
-  test "#render should derive the menu id from the credential type" do
-    each_case do |result, credential, expected|
-      assert_not_nil result.css("##{expected[:menu_id]}-#{credential.id}").first, expected[:menu_id]
+  test "#render should offer Make default only for defaultable credentials" do
+    each_case do |result, credential, _expected|
+      if credential.respond_to?(:default?)
+        assert_not_nil menu_item(result, "Make default")
+      else
+        assert_nil menu_item(result, "Make default")
+      end
     end
   end
 
-  test "#render should badge the default credential and drop its Make default action" do
-    ai = create(:ai_credential, :active, user: user)
-    user.update!(default_ai_credential: ai)
-    result = render_inline(AiCredentialListItemComponent.new(credential: ai))
+  test "#render should badge a default credential and omit Make default" do
+    credential = create(:ai_credential, :active, user: user)
+    user.update!(default_ai_credential: credential)
+    result = render_inline(CredentialListItemComponent.new(credential: credential))
 
-    assert_not_nil result.css("[data-key='ai_credential.default-badge']").first
+    assert_not_nil result.at_css("[data-key='ai_credential.default-badge']")
     assert_nil menu_item(result, "Make default")
-  end
-
-  test "#render should omit the badge for a non-default credential" do
-    each_case do |result, _credential, expected|
-      assert_empty result.css("[data-key='#{expected[:key_prefix]}.default-badge']")
-    end
-  end
-
-  private
-
-  def provider_name_for(credential)
-    credential.is_a?(AiCredential) ? credential.llm_provider.display_name : credential.provider_label
   end
 end

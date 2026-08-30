@@ -4,16 +4,18 @@
     <% header.with_breadcrumb(label: "Search credentials", url: search_credentials_path) %>
     <% unless search_credential.pending? || search_credential.validating? %>
       <% header.with_context_paragraph do %>
-        <%= render credential_status_badge(search_credential) %>
+        <%= render credential_state_badge(search_credential) %>
       <% end %>
     <% end %>
     <% header.with_action_button do %>
       <%= render HeaderMenuComponent.new(
         menu_id: "search-credential-header-menu-#{search_credential.id}",
-        items: credential_actions_menu_items(search_credential, delete_confirm: "Delete this search credential?")
+        items: credential_actions_menu_items(search_credential)
       ) %>
     <% end %>
   <% end %>
+
+  <%= render CredentialDeleteModalComponent.new(credential: search_credential) %>
 
   <% case search_credential.state %>
   <% when "pending", "validating" %>

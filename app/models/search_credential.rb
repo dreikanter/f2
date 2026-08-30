@@ -17,6 +17,8 @@ class SearchCredential < ApplicationRecord
     WebSearchProvider.label_for(provider)
   end
 
+  alias_method :provider_name, :provider_label
+
   def estimated_search_cost_cents(call_count)
     BigDecimal(WebSearchProvider.cents_per_1k_requests_for(provider).to_s) * call_count / 1000
   end

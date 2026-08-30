@@ -4,16 +4,18 @@
     <% header.with_breadcrumb(label: "AI credentials", url: ai_credentials_path) %>
     <% unless ai_credential.pending? || ai_credential.validating? %>
       <% header.with_context_paragraph do %>
-        <%= render credential_status_badge(ai_credential) %>
+        <%= render credential_state_badge(ai_credential) %>
       <% end %>
     <% end %>
     <% header.with_action_button do %>
       <%= render HeaderMenuComponent.new(
         menu_id: "ai-credential-header-menu-#{ai_credential.id}",
-        items: credential_actions_menu_items(ai_credential, delete_confirm: "Delete this AI credential? Feeds using it will be disabled.")
+        items: credential_actions_menu_items(ai_credential)
       ) %>
     <% end %>
   <% end %>
+
+  <%= render CredentialDeleteModalComponent.new(credential: ai_credential) %>
 
   <% case ai_credential.state %>
   <% when "pending", "validating" %>

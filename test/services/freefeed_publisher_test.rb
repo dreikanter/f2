@@ -6,7 +6,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
   end
 
   def access_token
-    @access_token ||= create(:access_token, user: user, status: :active)
+    @access_token ||= create(:access_token, user: user, state: :active)
   end
 
   def feed
@@ -84,7 +84,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
   end
 
   test "#initialize should raise when access token inactive" do
-    inactive_token = create(:access_token, user: user, status: :inactive)
+    inactive_token = create(:access_token, user: user, state: :inactive)
     feed_with_inactive_token = create(:feed, user: user, access_token: inactive_token, feed_profile_key: "rss", target_group: "testgroup")
     post = create(:post, feed: feed_with_inactive_token, feed_entry: feed_entry, content: "Test content")
 

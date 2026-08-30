@@ -7,7 +7,7 @@ class AccessToken < ApplicationRecord
   validates :token, presence: true, on: :create
   validates :host, presence: true, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid HTTP or HTTPS URL" }
 
-  enum :status, { pending: 0, validating: 1, active: 2, inactive: 3 }
+  enum :state, { pending: 0, validating: 1, active: 2, inactive: 3 }
 
   before_validation :generate_default_name, if: -> { name.blank? }
   before_destroy :disable_associated_feeds
@@ -72,7 +72,7 @@ class AccessToken < ApplicationRecord
 
   def self.build_with_token(attributes = {})
     defaults = {
-      status: :pending,
+      state: :pending,
       encrypted_token: attributes[:token],
       host: FREEFEED_HOSTS[:production][:url]
     }
@@ -88,7 +88,7 @@ class AccessToken < ApplicationRecord
     TokenValidationJob.perform_later(self, run_id)
   end
 
-  # Reserves a run without changing status while the job waits. Background
+  # Reserves a run without changing state while the job waits. Background
   # callers use this so publishers can keep using an active token until the
   # validation worker actually starts.
   def enqueue_validation
@@ -102,7 +102,7 @@ class AccessToken < ApplicationRecord
   # @return [String] the run ID
   def start_validation!(run_id: SecureRandom.uuid)
     started_at = Time.current
-    update!(status: :validating, validation_started_at: started_at, validation_run_id: run_id)
+    update!(state: :validating, validation_started_at: started_at, validation_run_id: run_id)
     schedule_validation_timeout(run_id, started_at)
     run_id
   end
@@ -116,7 +116,7 @@ class AccessToken < ApplicationRecord
 
       unless validating? && validation_started_at.present?
         started_at = Time.current
-        update!(status: :validating, validation_started_at: started_at)
+        update!(state: :validating, validation_started_at: started_at)
         schedule_validation_timeout(run_id, started_at)
       end
     end
@@ -130,7 +130,7 @@ class AccessToken < ApplicationRecord
     with_lock do
       return false unless validation_run_id == run_id && (pending? || validating?)
 
-      update!(status: :inactive, validation_started_at: nil, validation_run_id: nil)
+      update!(state: :inactive, validation_started_at: nil, validation_run_id: nil)
       Event.create!(
         type: VALIDATION_ABANDONED_EVENT_TYPE,
         user: user,
@@ -220,8 +220,11 @@ class AccessToken < ApplicationRecord
   end
 
   def display_name
-    owner = access_token_detail&.freefeed_user_info&.dig("username") || name
-    "#{host_domain} - #{owner}"
+    name
+  end
+
+  def provider_name
+    owner.present? ? "@#{owner} at #{host_domain}" : host_domain
   end
 
   def disable_associated_feeds
@@ -246,7 +249,7 @@ class AccessToken < ApplicationRecord
     with_lock do
       return false if run_id && validation_run_id != run_id
 
-      update!(**attributes, status: :inactive, validation_started_at: nil, validation_run_id: nil)
+      update!(**attributes, state: :inactive, validation_started_at: nil, validation_run_id: nil)
 
       enabled_feeds = feeds.enabled
       return true unless enabled_feeds.exists?

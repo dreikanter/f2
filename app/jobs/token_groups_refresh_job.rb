@@ -1,5 +1,5 @@
 # Refetches the FreeFeed groups a token can post to, on user request, without
-# touching the token's status (unlike full revalidation, which would briefly
+# touching the token's state (unlike full revalidation, which would briefly
 # make publishing reject queued posts). Settles the detail's refresh marker so
 # the pages polling for the outcome can stop.
 class TokenGroupsRefreshJob < ApplicationJob

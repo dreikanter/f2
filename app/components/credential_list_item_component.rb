@@ -1,10 +1,6 @@
-# A settings-list row for one provider credential: status icon, name with an
-# optional Default badge, provider name underneath, and the actions menu.
-#
-# Subclasses supply the two things that can't come from the record — the
-# provider's display name and the noun used in the delete prompt. Routes, DOM
-# ids, and test hooks are all derived from the model name, so the AI and web
-# search rows stay in step by construction.
+# A settings-list row for any API credential exposing state, display_name, and
+# provider_name. Default selection is an optional capability: records defining
+# #default? receive the badge and action; access tokens do not.
 class CredentialListItemComponent < ListItemComponent
   def initialize(credential:)
     super()
@@ -22,16 +18,6 @@ class CredentialListItemComponent < ListItemComponent
 
   attr_reader :credential
 
-  def provider_name
-    raise NotImplementedError, "#{self.class.name} must implement #provider_name"
-  end
-
-  # Reads mid-sentence in the delete prompt, e.g. "Delete this AI credential?".
-  def credential_noun
-    raise NotImplementedError, "#{self.class.name} must implement #credential_noun"
-  end
-
-  # Namespaces the data-key hooks: "ai_credential", "search_credential".
   def key_prefix
     credential.model_name.param_key
   end
@@ -49,9 +35,9 @@ class CredentialListItemComponent < ListItemComponent
   end
 
   def icon_element
-    helpers.tag.span(helpers.credential_status_icon(credential.state),
+    helpers.tag.span(helpers.credential_state_icon(credential.state),
                      class: "inline-flex shrink-0",
-                     data: { key: "#{key_prefix}.#{credential.id}.status_icon" })
+                     data: { key: "#{key_prefix}.#{credential.id}.state_icon" })
   end
 
   def primary_element
@@ -64,13 +50,13 @@ class CredentialListItemComponent < ListItemComponent
   end
 
   def default_badge
-    return unless credential.default?
+    return unless defaultable? && credential.default?
 
     render(BadgeComponent.new(text: "Default", color: :info, key: "#{key_prefix}.default-badge"))
   end
 
   def secondary_element
-    helpers.tag.div(provider_name, class: "truncate text-sm text-muted")
+    helpers.tag.div(credential.provider_name, class: "truncate text-sm text-muted")
   end
 
   def menu
@@ -78,31 +64,15 @@ class CredentialListItemComponent < ListItemComponent
   end
 
   def menu_items
-    items = [
-      { label: "Details", href: credential_url },
-      { label: "Edit", href: edit_url }
-    ]
-    items << { label: "Make default", href: default_url, data: { turbo_method: :patch } } unless credential.default?
-    items << { separator: true }
-    items << { label: "Delete…", href: credential_url,
-               data: { turbo_method: :delete, turbo_confirm: delete_confirm } }
-    items
+    helpers.credential_actions_menu_items(credential, include_details: true)
   end
 
-  def delete_confirm
-    "Delete this #{credential_noun}? Feeds using it will be disabled."
+  def defaultable?
+    credential.respond_to?(:default?)
   end
 
   def credential_url
     helpers.polymorphic_path(credential)
-  end
-
-  def edit_url
-    helpers.edit_polymorphic_path(credential)
-  end
-
-  def default_url
-    helpers.polymorphic_path([credential, :default])
   end
 
   def menu_id

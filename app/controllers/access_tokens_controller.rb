@@ -51,7 +51,7 @@ class AccessTokensController < ApplicationController
     if new_token
       attrs.merge!(
         encrypted_token: new_token,
-        status: :pending,
+        state: :pending,
         validation_started_at: nil,
         validation_run_id: nil
       )

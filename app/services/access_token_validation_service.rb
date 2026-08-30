@@ -17,7 +17,7 @@ class AccessTokenValidationService
 
     access_token.with_validation_run(run_id) do
       access_token.update!(
-        status: :active,
+        state: :active,
         owner: user_info[:username],
         freefeed_user_id: user_info[:id],
         scopes: scopes,
