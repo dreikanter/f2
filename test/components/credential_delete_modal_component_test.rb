@@ -17,7 +17,11 @@ class CredentialDeleteModalComponentTest < ViewComponent::TestCase
       result = render_inline(CredentialDeleteModalComponent.new(credential: credential))
 
       assert_not_nil result.at_css("##{CredentialDeleteModalComponent.modal_id(credential)}")
-      assert_equal polymorphic_path(credential), result.at_css("form")["action"]
+      expected_path = Rails.application.routes.url_helpers.public_send(
+        "#{credential.model_name.singular}_path",
+        credential
+      )
+      assert_equal expected_path, result.at_css("form")["action"]
       assert_not_nil result.at_css("input[name='_method'][value='delete']")
       assert_includes result.text, credential.display_name
       assert_includes result.text, "Any feeds using it will be automatically disabled."
