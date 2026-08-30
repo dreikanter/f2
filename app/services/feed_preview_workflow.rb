@@ -19,10 +19,11 @@ class FeedPreviewWorkflow
 
   attr_reader :run_id
 
-  # Conditional update: only the current run may transition the row. A stale
-  # run (superseded by a newer enqueue that rewrote run_id) updates 0 rows.
-  def transition!(attrs)
+  # Conditional update: only the current run may transition the row. The
+  # optional status guard makes the initial pending -> processing claim atomic.
+  def transition!(expected_status: nil, **attrs)
     scope = FeedPreview.where(id: feed_preview.id, run_id: run_id)
+    scope = scope.where(status: expected_status) if expected_status
     updated = scope.update_all(attrs.merge(updated_at: Time.current))
     feed_preview.reload if updated.positive?
     updated.positive?
@@ -38,7 +39,10 @@ class FeedPreviewWorkflow
 
   def initialize_workflow(_input)
     record_started_at
-    halt! unless transition!(status: FeedPreview.statuses[:processing])
+    halt! unless transition!(
+      expected_status: FeedPreview.statuses[:pending],
+      status: FeedPreview.statuses[:processing]
+    )
 
     Feed.new(
       params: feed_preview.params,

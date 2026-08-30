@@ -40,6 +40,19 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     assert preview.reload.failed?
   end
 
+  test "#perform should not reopen a settled run on duplicate delivery" do
+    feed_url = "https://example.com/feed.xml"
+    preview = create(:feed_preview, feed_profile_key: "rss", params: { "url" => feed_url }, run_id: RUN_ID)
+    stub_request(:get, feed_url)
+      .to_return(status: 200, body: file_fixture("feeds/rss/feed.xml").read,
+                 headers: { "Content-Type" => "application/xml" })
+
+    2.times { FeedPreviewJob.perform_now(preview.id, RUN_ID) }
+
+    assert_requested :get, feed_url, times: 1
+    assert preview.reload.ready?
+  end
+
   test "#perform should not write results after timeout rotates run_id" do
     preview = create(:feed_preview, :processing, feed_profile_key: "rss",
                                                 params: { "url" => "https://example.com/feed.xml" },
