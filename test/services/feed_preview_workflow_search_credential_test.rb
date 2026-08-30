@@ -3,7 +3,7 @@ require "test_helper"
 class FeedPreviewWorkflowSearchCredentialTest < ActiveSupport::TestCase
   AI_RUN_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 
-  test "AI preview passes its explicit search credential to the temporary feed and LLM context" do
+  test "AI preview passes its persisted search credential to the temporary feed and LLM context" do
     user = create(:user)
     ai_credential = create(
       :ai_credential,
@@ -19,6 +19,7 @@ class FeedPreviewWorkflowSearchCredentialTest < ActiveSupport::TestCase
       params: { "prompt" => "rust async" },
       ai_credential: ai_credential,
       ai_model: "claude-sonnet-4-6",
+      search_credential: search_credential,
       status: :pending,
       run_id: AI_RUN_ID
     )
@@ -43,15 +44,11 @@ class FeedPreviewWorkflowSearchCredentialTest < ActiveSupport::TestCase
       captured_feed = feed
       fake_client.new(ai_credential, ->(context) { captured_context = context })
     }) do
-      FeedPreviewWorkflow.new(
-        preview,
-        run_id: AI_RUN_ID,
-        search_credential: search_credential
-      ).execute
+      FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
     end
 
-    assert_same search_credential, captured_feed.search_credential
-    assert_same search_credential, captured_context.search_credential
+    assert_equal search_credential, captured_feed.search_credential
+    assert_same captured_feed.search_credential, captured_context.search_credential
     assert_not captured_feed.persisted?
   end
 end
