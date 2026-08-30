@@ -39,6 +39,8 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     assert_equal models, credential.available_models
     assert_not_nil credential.last_validated_at
     assert_nil credential.last_error
+    assert_nil credential.validation_started_at
+    assert_nil credential.validation_run_id
   end
 
   test "#perform should deactivate the credential and its feeds when the key is rejected" do
@@ -117,5 +119,38 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     moonshot.reload
     assert_equal "inactive", moonshot.state
     assert_not_nil moonshot.last_error
+  end
+
+  test "#perform should not let a superseded run overwrite the credential" do
+    current_run_id = SecureRandom.uuid
+    credential.update!(state: :validating, validation_started_at: Time.current,
+                       validation_run_id: current_run_id)
+    original_attributes = credential.attributes.slice(
+      "state", "available_models", "validation_started_at", "validation_run_id", "updated_at"
+    )
+
+    LlmClient.stub(:for, ->(_) { flunk "stale run reached the provider" }) do
+      AiCredentialValidationJob.perform_now(
+        credential.id, SecureRandom.uuid, "inactive"
+      )
+    end
+
+    assert_equal original_attributes, credential.reload.attributes.slice(*original_attributes.keys)
+  end
+
+  test "#perform should not revive a run after its timeout" do
+    run_id = SecureRandom.uuid
+    credential.update!(state: :validating, validation_started_at: 15.minutes.ago,
+                       validation_run_id: run_id)
+    ProviderCredentialValidationTimeoutJob.perform_now(
+      "AiCredential", credential.id, run_id, "inactive"
+    )
+
+    LlmClient.stub(:for, ->(_) { flunk "timed-out run reached the provider" }) do
+      AiCredentialValidationJob.perform_now(credential.id, run_id, "inactive")
+    end
+
+    assert credential.reload.inactive?
+    assert_nil credential.validation_run_id
   end
 end

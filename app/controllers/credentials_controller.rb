@@ -35,7 +35,7 @@ class CredentialsController < ApplicationController
 
     if @credential.save
       @feed&.update_column(feed_foreign_key, @credential.id)
-      validation_job.perform_later(@credential)
+      @credential.validate_async(validation_job)
       redirect_to polymorphic_path(@credential, feed_id: @feed&.id)
     else
       render :new, status: :unprocessable_entity
@@ -56,7 +56,7 @@ class CredentialsController < ApplicationController
     key_changed = credential_data_from_params["api_key"].present?
 
     if @credential.update(updated_credential_attrs(key_changed: key_changed))
-      validation_job.perform_later(@credential) if key_changed
+      @credential.validate_async(validation_job) if key_changed
       redirect_to polymorphic_path(@credential)
     else
       render :edit, status: :unprocessable_entity
@@ -92,7 +92,12 @@ class CredentialsController < ApplicationController
     attrs = { display_name: credential_params[:display_name] }
     return attrs unless key_changed
 
-    attrs.merge(credential_data: credential_data_from_params, state: :pending)
+    attrs.merge(
+      credential_data: credential_data_from_params,
+      state: :pending,
+      validation_started_at: nil,
+      validation_run_id: nil
+    )
   end
 
   def build_credential

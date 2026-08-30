@@ -1,6 +1,8 @@
 require "test_helper"
 
 class SearchCredentialTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   def user
     @user ||= create(:user)
   end
@@ -115,6 +117,27 @@ class SearchCredentialTest < ActiveSupport::TestCase
     assert credential.active?
     credential.inactive!
     assert credential.inactive?
+  end
+
+  test "#validate_async should open a run and schedule its worker and timeout" do
+    credential = create(:search_credential, user: user)
+
+    freeze_time do
+      run_id = credential.validate_async(SearchCredentialValidationJob)
+
+      assert credential.reload.validating?
+      assert_equal run_id, credential.validation_run_id
+      assert_equal Time.current, credential.validation_started_at
+      assert_enqueued_with(
+        job: SearchCredentialValidationJob,
+        args: [credential.id, run_id, "inactive"]
+      )
+      assert_enqueued_with(
+        job: ProviderCredentialValidationTimeoutJob,
+        args: ["SearchCredential", credential.id, run_id, "inactive"],
+        at: Time.current + ProviderCredential::VALIDATION_TIMEOUT
+      )
+    end
   end
 
   test "#deactivate! should persist the error and create a warning event" do

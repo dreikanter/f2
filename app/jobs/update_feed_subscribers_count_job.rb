@@ -24,7 +24,7 @@ class UpdateFeedSubscribersCountJob < ApplicationJob
     # disabling the token and notifying the user. Not validate_token_async: its
     # eager flip to `validating` would make FreefeedPublisher reject queued
     # posts as poison while the validation job waits to run.
-    TokenValidationJob.perform_later(feed.access_token)
+    feed.access_token.enqueue_validation
   rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError, FreefeedClient::NotFoundError => e
     # Statistics can be out of a token's reach while publishing still works:
     # scoped app tokens get 401 "token has no access to this API method", and a

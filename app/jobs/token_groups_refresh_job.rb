@@ -32,7 +32,7 @@ class TokenGroupsRefreshJob < ApplicationJob
   rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError
     # The token can't even read its own groups — hand it to validation, which
     # owns disabling the token and notifying the user.
-    TokenValidationJob.perform_later(access_token)
+    access_token.enqueue_validation
     detail.fail_groups_refresh!(run_id: run_id)
   rescue StandardError => e
     Rails.error.report(e, context: { access_token_id: access_token.id })

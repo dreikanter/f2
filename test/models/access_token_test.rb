@@ -158,47 +158,62 @@ class AccessTokenTest < ActiveSupport::TestCase
     token = create(:access_token)
     assert token.pending?
 
-    assert_enqueued_with(job: TokenValidationJob, args: [token]) do
+    assert_enqueued_with(job: TokenValidationJob) do
       token.validate_token_async
     end
 
     assert token.reload.validating?
     assert_not_nil token.validation_started_at
+    assert_not_nil token.validation_run_id
+    assert_enqueued_with(
+      job: AccessTokenValidationTimeoutJob,
+      args: [token.id, token.validation_run_id],
+      at: token.validation_started_at + AccessToken::VALIDATION_TIMEOUT
+    )
   end
 
-  test "#validation_abandoned? should be true once an in-progress run goes quiet" do
-    token = create(:access_token, status: :validating,
-                                  validation_started_at: (AccessToken::VALIDATION_STALE_AFTER + 1.minute).ago)
+  test "#enqueue_validation should reserve a run without changing an active status" do
+    token = create(:access_token, :active)
 
-    assert token.validation_abandoned?
+    assert_enqueued_with(job: TokenValidationJob) do
+      token.enqueue_validation
+    end
+
+    assert token.reload.active?
+    assert_not_nil token.validation_run_id
+    assert_nil token.validation_started_at
   end
 
-  test "#validation_abandoned? should be false while a run is still within its window" do
-    token = create(:access_token, status: :validating, validation_started_at: 1.minute.ago)
+  test "#start_validation! should supersede an older run" do
+    token = create(:access_token, status: :validating, validation_run_id: SecureRandom.uuid)
+    old_run_id = token.validation_run_id
 
-    assert_not token.validation_abandoned?
+    new_run_id = token.start_validation!
+
+    assert_not_equal old_run_id, new_run_id
+    assert_equal new_run_id, token.reload.validation_run_id
   end
 
-  test "#validation_abandoned? should be false without a run to judge" do
-    token = create(:access_token, status: :pending, validation_started_at: nil)
+  test "#claim_validation! should restart a run left pending after exhausted retries" do
+    token = create(:access_token, status: :pending, validation_started_at: 1.minute.ago,
+                                  validation_run_id: SecureRandom.uuid)
+    new_run_id = SecureRandom.uuid
 
-    assert_not token.validation_abandoned?
-  end
+    assert token.claim_validation!(new_run_id, start_if_idle: true)
 
-  test "#validation_abandoned? should be false once the token has settled" do
-    token = create(:access_token, :active,
-                   validation_started_at: (AccessToken::VALIDATION_STALE_AFTER + 1.minute).ago)
-
-    assert_not token.validation_abandoned?
+    assert token.reload.validating?
+    assert_equal new_run_id, token.validation_run_id
   end
 
   test "#disable_token_and_feeds should close the open validation run" do
-    token = create(:access_token, status: :validating, validation_started_at: 1.minute.ago)
+    token = create(:access_token, status: :validating, validation_started_at: 1.minute.ago,
+                                  validation_run_id: SecureRandom.uuid)
 
     token.disable_token_and_feeds
 
     assert token.reload.inactive?
     assert_nil token.validation_started_at
+    assert_nil token.validation_run_id
   end
 
   # Host validation tests
@@ -345,7 +360,9 @@ class AccessTokenTest < ActiveSupport::TestCase
       )
       .to_return(status: 401, body: "")
 
-    service = AccessTokenValidationService.new(access_token)
+    run_id = SecureRandom.uuid
+    access_token.update!(status: :validating, validation_started_at: Time.current, validation_run_id: run_id)
+    service = AccessTokenValidationService.new(access_token, run_id: run_id)
     service.call
 
     access_token.reload

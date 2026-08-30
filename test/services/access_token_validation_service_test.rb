@@ -1,6 +1,12 @@
 require "test_helper"
 
 class AccessTokenValidationServiceTest < ActiveSupport::TestCase
+  def validation_service(token = access_token)
+    run_id = SecureRandom.uuid
+    token.update!(status: :validating, validation_started_at: Time.current, validation_run_id: run_id)
+    AccessTokenValidationService.new(token, run_id: run_id)
+  end
+
   def user
     @user ||= create(:user)
   end
@@ -58,7 +64,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
     stub_app_token_info
 
-    service = AccessTokenValidationService.new(access_token)
+    service = validation_service
     service.call
 
     assert_equal "active", access_token.reload.status
@@ -104,7 +110,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
     stub_app_token_info
 
-    service = AccessTokenValidationService.new(access_token)
+    service = validation_service
     assert_nil access_token.access_token_detail
 
     service.call
@@ -152,7 +158,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
     stub_app_token_info
 
-    service = AccessTokenValidationService.new(access_token)
+    service = validation_service
     service.call
 
     detail = access_token.reload.access_token_detail
@@ -171,7 +177,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       .to_return(status: 200, body: [].to_json)
     stub_app_token_info
 
-    AccessTokenValidationService.new(access_token).call
+    validation_service.call
 
     detail.reload
     assert_nil detail.groups_refresh_state
@@ -190,7 +196,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       .to_return(status: 200, body: [].to_json)
     stub_app_token_info
 
-    AccessTokenValidationService.new(access_token).call
+    validation_service.call
 
     detail.reload
     assert_not detail.groups_refresh_failed?
@@ -201,7 +207,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     stub_successful_account_calls
     stub_app_token_info(scopes: ["read-my-info", "manage-posts"])
 
-    AccessTokenValidationService.new(access_token).call
+    validation_service.call
 
     assert_equal ["read-my-info", "manage-posts"], access_token.reload.scopes
     assert_not access_token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE)
@@ -215,7 +221,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
         body: { err: "This method is only available with the application token" }.to_json
       )
 
-    AccessTokenValidationService.new(access_token).call
+    validation_service.call
 
     access_token.reload
     assert access_token.active?
@@ -229,7 +235,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       .to_return(status: 500, body: "Internal Server Error")
 
     assert_raises(FreefeedClient::Error) do
-      AccessTokenValidationService.new(access_token).call
+      validation_service.call
     end
 
     access_token.reload
@@ -240,7 +246,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   test "#call should skip the account calls when the token lacks read-my-info" do
     stub_app_token_info(scopes: ["manage-posts"])
 
-    AccessTokenValidationService.new(access_token).call
+    validation_service.call
 
     assert_not_requested :get, "#{access_token.host}/v4/users/whoami"
     assert_not_requested :get, "#{access_token.host}/v4/managedGroups"
@@ -249,7 +255,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   test "#call should record the scopes it disabled an under-permissioned token for" do
     stub_app_token_info(scopes: ["manage-posts"])
 
-    AccessTokenValidationService.new(access_token).call
+    validation_service.call
 
     access_token.reload
     assert access_token.inactive?
@@ -262,10 +268,28 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     stub_app_token_info
     stub_successful_account_calls
 
-    AccessTokenValidationService.new(access_token).call
+    validation_service.call
 
     assert access_token.reload.active?
     assert_nil access_token.validation_started_at
+  end
+
+  test "#call should not write a successful result after the run is superseded" do
+    stale_run_id = SecureRandom.uuid
+    access_token.update!(status: :validating, validation_started_at: 1.minute.ago,
+                         validation_run_id: stale_run_id)
+    service = AccessTokenValidationService.new(access_token, run_id: stale_run_id)
+    current_run_id = SecureRandom.uuid
+    access_token.update!(validation_started_at: Time.current, validation_run_id: current_run_id)
+    stub_app_token_info
+    stub_successful_account_calls
+
+    service.call
+
+    access_token.reload
+    assert access_token.validating?
+    assert_equal current_run_id, access_token.validation_run_id
+    assert_nil access_token.owner
   end
 
   test "#call should report a missing identity permission as its own event" do
@@ -274,7 +298,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     access_token.update!(status: :validating)
     stub_app_token_info(scopes: ["manage-posts"])
 
-    AccessTokenValidationService.new(access_token).call
+    validation_service.call
 
     assert_equal "disabled", feed.reload.state
     event = Event.find_by!(subject: access_token)
@@ -290,7 +314,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
         body: { err: "This method is only available with the application token" }.to_json
       )
 
-    AccessTokenValidationService.new(access_token).call
+    validation_service.call
 
     assert access_token.reload.active?
     assert_requested :get, "#{access_token.host}/v4/users/whoami"
@@ -304,7 +328,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
       .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
 
-    AccessTokenValidationService.new(access_token).call
+    validation_service.call
 
     assert access_token.reload.inactive?
     assert_equal "disabled", feed.reload.state
@@ -317,7 +341,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       .to_return(status: 500, body: "Internal Server Error")
 
     assert_raises(FreefeedClient::Error) do
-      AccessTokenValidationService.new(access_token).call
+      validation_service.call
     end
 
     assert_equal [AccessToken::READ_MY_INFO_SCOPE], access_token.reload.scopes
@@ -334,7 +358,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       )
       .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
 
-    service = AccessTokenValidationService.new(access_token)
+    service = validation_service
     service.call
 
     assert_equal "inactive", access_token.reload.status
@@ -345,7 +369,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_return(status: 403, body: { err: "invalid JWT payload format" }.to_json)
 
-    service = AccessTokenValidationService.new(access_token)
+    service = validation_service
     service.call
 
     assert_equal "inactive", access_token.reload.status
@@ -362,7 +386,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       )
       .to_return(status: 500, body: "Internal Server Error")
 
-    service = AccessTokenValidationService.new(access_token)
+    service = validation_service
 
     assert_raises(FreefeedClient::Error) do
       service.call
@@ -390,7 +414,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       )
       .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
 
-    service = AccessTokenValidationService.new(access_token)
+    service = validation_service
 
     assert_difference "Event.count", 1 do
       service.call
@@ -424,7 +448,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       )
       .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
 
-    service = AccessTokenValidationService.new(access_token)
+    service = validation_service
 
     assert_no_difference "Event.count" do
       service.call
@@ -462,7 +486,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       )
       .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
 
-    service = AccessTokenValidationService.new(access_token)
+    service = validation_service
     service.call
 
     assert_equal "inactive", access_token.reload.status

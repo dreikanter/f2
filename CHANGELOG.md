@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-08-30
 
 - A group-list refresh that takes too long can now be retried right away.
+- Token and credential checks now recover if background work stops unexpectedly, instead of staying stuck in progress.
 
 ## 2026-08-29
 

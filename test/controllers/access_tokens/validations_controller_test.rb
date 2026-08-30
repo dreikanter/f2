@@ -79,15 +79,24 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, edit_feed_path(draft.id)
   end
 
-  test "#show should settle a validation whose run never reported back" do
-    access_token.update!(status: :validating, validation_started_at: (AccessToken::VALIDATION_STALE_AFTER + 1.minute).ago)
+  test "#show should not settle an overdue validation" do
+    run_id = SecureRandom.uuid
+    access_token.update!(
+      status: :validating,
+      validation_started_at: (AccessToken::VALIDATION_TIMEOUT + 1.minute).ago,
+      validation_run_id: run_id
+    )
+    original_attributes = access_token.attributes.slice(
+      "status", "validation_started_at", "validation_run_id", "updated_at"
+    )
     sign_in_as user
 
-    get access_token_validation_path(access_token)
+    assert_no_difference("Event.count") do
+      get access_token_validation_path(access_token)
+    end
 
-    assert_response :success
-    assert_match /data-status="inactive"/, response.body
-    assert access_token.reload.inactive?
+    assert_response :no_content
+    assert_equal original_attributes, access_token.reload.attributes.slice(*original_attributes.keys)
   end
 
   test "#show should keep waiting on a validation that is still in flight" do

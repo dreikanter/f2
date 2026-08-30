@@ -10,6 +10,7 @@ module ProviderCredential
   extend ActiveSupport::Concern
 
   DISPLAY_NAME_MAX_LENGTH = 80
+  VALIDATION_TIMEOUT = 15.minutes
 
   included do
     belongs_to :user
@@ -45,11 +46,93 @@ module ProviderCredential
     user.update!("default_#{param_key}": self)
   end
 
+  # Opens a fresh run before enqueueing so a queue stall is covered by the same
+  # timeout as a worker that disappears after starting.
+  def validate_async(validation_job)
+    fallback_state = active? ? :active : :inactive
+    started_at = Time.current
+    run_id = SecureRandom.uuid
+
+    update!(
+      state: :validating,
+      last_error: nil,
+      validation_started_at: started_at,
+      validation_run_id: run_id
+    )
+    validation_job.perform_later(id, run_id, fallback_state.to_s)
+    ProviderCredentialValidationTimeoutJob
+      .set(wait_until: started_at + VALIDATION_TIMEOUT)
+      .perform_later(self.class.name, id, run_id, fallback_state.to_s)
+    run_id
+  end
+
+  # Starts a legacy or deferred job only when it cannot supersede another run.
+  # @param run_id [String, nil] UUID captured by the worker
+  # @return [Array<String>, nil] run ID and fallback state when claimed
+  def claim_validation!(run_id = nil)
+    with_lock do
+      if run_id.present?
+        return [run_id, inactive? ? "inactive" : "active"] if validation_run_id == run_id
+        return nil
+      else
+        return nil if validation_run_id.present?
+        run_id = SecureRandom.uuid
+      end
+
+      fallback_state = active? ? "active" : "inactive"
+      started_at = Time.current
+      update!(
+        state: :validating,
+        last_error: nil,
+        validation_started_at: started_at,
+        validation_run_id: run_id
+      )
+      ProviderCredentialValidationTimeoutJob
+        .set(wait_until: started_at + VALIDATION_TIMEOUT)
+        .perform_later(self.class.name, id, run_id, fallback_state)
+      [run_id, fallback_state]
+    end
+  end
+
+  # @param run_id [String] UUID captured by the worker
+  # @param state [Symbol, String] terminal state
+  # @param attributes [Hash] additional terminal attributes
+  # @return [Boolean] whether the matching run was settled
+  def settle_validation!(run_id:, state:, **attributes)
+    with_lock do
+      return false unless validation_run_id == run_id
+
+      update!(
+        **attributes,
+        state: state,
+        validation_started_at: nil,
+        validation_run_id: nil
+      )
+    end
+
+    true
+  end
+
+  # @param run_id [String] UUID captured by the timeout job
+  # @param fallback_state [String] state to restore without judging the key
+  # @return [Boolean] whether the matching run was settled
+  def timeout_validation!(run_id:, fallback_state:)
+    settle_validation!(run_id: run_id, state: fallback_state)
+  end
+
   # Takes the credential and everything depending on it out of service in one
   # transaction: a key that just failed cannot back a running feed.
-  def deactivate!(last_error: nil)
+  def deactivate!(last_error: nil, run_id: nil)
     with_lock do
-      update!(state: :inactive, last_validated_at: Time.current, last_error: last_error)
+      return false if run_id && validation_run_id != run_id
+
+      update!(
+        state: :inactive,
+        last_validated_at: Time.current,
+        last_error: last_error,
+        validation_started_at: nil,
+        validation_run_id: nil
+      )
 
       Event.create!(
         type: self.class::DEACTIVATED_EVENT_TYPE,
@@ -60,6 +143,8 @@ module ProviderCredential
 
       feeds.where(state: Feed.states[:enabled]).update_all(state: Feed.states[:disabled])
     end
+
+    true
   end
 
   private
