@@ -1,5 +1,10 @@
 <%# locals: (preview:) %>
-<%= turbo_frame_tag "feed-preview" do %>
+<%# The modal's preview-button controller reads this frame as its "frame"
+    target. Turbo replaces the whole element on each response (see
+    FeedPreviewsController#render_frame), so the attribute has to be set here
+    too, or the controller loses the target after the first preview and the
+    button silently stops opening the modal. %>
+<%= turbo_frame_tag "feed-preview", data: { preview_button_target: "frame" } do %>
   <%# Stable polling host: polls the preview by id and swaps only the inner
       body, so the controller element is never torn down mid-poll. Polling stops
       once a terminal (ready/failed) body marks itself done. %>

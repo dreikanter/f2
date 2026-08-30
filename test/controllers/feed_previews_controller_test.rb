@@ -311,6 +311,20 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/data-key="preview.processing"/, response.body)
   end
 
+  # The preview-button Stimulus controller reads this frame as its "frame"
+  # target. Since #create replaces the whole frame element, dropping the
+  # attribute here would make the controller lose the target after the first
+  # preview, silently breaking the button on the next open.
+  test "#create should keep the preview-button frame target on the replaced frame" do
+    sign_in_as(user)
+
+    post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } },
+         headers: TURBO_STREAM
+
+    assert_response :success
+    assert_match(/data-preview-button-target="frame"/, response.body)
+  end
+
   test "#show should render the failed state without restarting a run" do
     sign_in_as(user)
     create(:feed_preview, :failed, user: user, feed_profile_key: "rss",
