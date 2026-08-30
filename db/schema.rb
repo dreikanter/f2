@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_08_29_170000) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_30_230000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -23,6 +23,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_29_170000) do
     t.jsonb "managed_groups", default: [], null: false
     t.integer "groups_refresh_state"
     t.datetime "groups_refresh_requested_at"
+    t.uuid "groups_refresh_run_id"
     t.index ["access_token_id"], name: "index_access_token_details_on_access_token_id", unique: true
     t.check_constraint "groups_refresh_state = ANY (ARRAY[0, 1])", name: "access_token_details_groups_refresh_state_valid"
   end

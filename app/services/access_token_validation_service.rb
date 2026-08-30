@@ -34,7 +34,8 @@ class AccessTokenValidationService
         freefeed_user_info: user_info.deep_stringify_keys,
         managed_groups: managed_groups.map { |group| group.deep_stringify_keys },
         groups_refresh_state: nil,
-        groups_refresh_requested_at: nil
+        groups_refresh_requested_at: nil,
+        groups_refresh_run_id: nil
       )
     end
   rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError

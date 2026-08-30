@@ -14,6 +14,12 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
                        managed_groups: [{ "username" => "oldgroup" }])
   end
 
+  def mark_refresh_running(detail = self.detail, run_id: SecureRandom.uuid)
+    detail.update!(groups_refresh_state: :running, groups_refresh_requested_at: Time.current,
+                   groups_refresh_run_id: run_id)
+    run_id
+  end
+
   test "#create should require authentication" do
     post access_token_groups_refresh_path(access_token)
     assert_redirected_to new_session_path
@@ -23,28 +29,49 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
     detail
     sign_in_as user
 
-    assert_enqueued_with(job: TokenGroupsRefreshJob, args: [access_token]) do
+    assert_enqueued_with(job: TokenGroupsRefreshJob) do
       post access_token_groups_refresh_path(access_token)
     end
 
     assert_response :success
     assert detail.reload.groups_refresh_running?
+    assert_enqueued_with(job: TokenGroupsRefreshJob, args: [access_token, detail.groups_refresh_run_id])
+    assert_enqueued_with(job: TokenGroupsRefreshTimeoutJob,
+                         args: [detail.id, detail.groups_refresh_run_id],
+                         at: detail.groups_refresh_requested_at + AccessTokenDetail::GROUPS_REFRESH_TIMEOUT_AFTER)
     assert_match(/turbo-stream.*action="replace".*target="available-groups"/, response.body)
     assert_match(/data-controller="polling"/, response.body)
+    assert_match(/data-polling-interval-value="2500"/, response.body)
+    assert_match(/data-polling-max-polls-value="36"/, response.body)
     assert_match(/access_token\.groups-refreshing/, response.body)
     assert_match(/access_token\.groups-refresh-timeout/, response.body)
   end
 
   test "#create should not enqueue another job while a refresh is running" do
-    detail.begin_groups_refresh!
+    mark_refresh_running
     sign_in_as user
 
-    assert_no_enqueued_jobs(only: TokenGroupsRefreshJob) do
+    assert_no_enqueued_jobs(only: [TokenGroupsRefreshJob, TokenGroupsRefreshTimeoutJob]) do
       post access_token_groups_refresh_path(access_token)
     end
 
     assert_response :success
     assert_match(/data-controller="polling"/, response.body)
+  end
+
+  test "#create should start a new run immediately after timeout" do
+    timed_out_run_id = mark_refresh_running
+    TokenGroupsRefreshTimeoutJob.perform_now(detail.id, timed_out_run_id)
+    sign_in_as user
+
+    assert_enqueued_with(job: TokenGroupsRefreshJob) do
+      post access_token_groups_refresh_path(access_token)
+    end
+
+    detail.reload
+    assert detail.groups_refresh_running?
+    refute_equal timed_out_run_id, detail.groups_refresh_run_id
+    assert_enqueued_with(job: TokenGroupsRefreshJob, args: [access_token, detail.groups_refresh_run_id])
   end
 
   test "#create should create the detail when the token has none" do
@@ -77,17 +104,21 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "#show should stay silent while the refresh is running" do
-    detail.begin_groups_refresh!
+    mark_refresh_running
+    original_attributes = detail.attributes.slice(
+      "groups_refresh_state", "groups_refresh_requested_at", "groups_refresh_run_id", "updated_at"
+    )
     sign_in_as user
 
     get access_token_groups_refresh_path(access_token)
 
     assert_response :no_content
     assert_empty response.body
+    assert_equal original_attributes, detail.reload.attributes.slice(*original_attributes.keys)
   end
 
   test "#show should render the settled groups section once the refresh completes" do
-    detail.complete_groups_refresh!([{ "username" => "newgroup" }])
+    detail.update!(managed_groups: [{ "username" => "newgroup" }])
     sign_in_as user
 
     get access_token_groups_refresh_path(access_token)
@@ -100,7 +131,7 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "#show should surface a failed refresh" do
-    detail.fail_groups_refresh!
+    detail.update!(groups_refresh_state: :failed, groups_refresh_requested_at: Time.current)
     sign_in_as user
 
     get access_token_groups_refresh_path(access_token)
@@ -112,7 +143,7 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "#show should point at the token when a failed refresh disabled it" do
-    detail.fail_groups_refresh!
+    detail.update!(groups_refresh_state: :failed, groups_refresh_requested_at: Time.current)
     access_token.inactive!
     sign_in_as user
 
@@ -140,7 +171,7 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "#show should keep the unsaved selection when re-rendering the selector" do
-    detail.complete_groups_refresh!([{ "username" => "alpha" }, { "username" => "beta" }])
+    detail.update!(managed_groups: [{ "username" => "alpha" }, { "username" => "beta" }])
     sign_in_as user
 
     get access_token_groups_refresh_path(access_token, context: "feed_form", selected: "beta")
@@ -152,7 +183,7 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "#show should keep a selection that is missing from the refreshed list" do
-    detail.complete_groups_refresh!([{ "username" => "alpha" }])
+    detail.update!(managed_groups: [{ "username" => "alpha" }])
     sign_in_as user
 
     get access_token_groups_refresh_path(access_token, context: "feed_form", selected: "gone")
@@ -164,7 +195,7 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
 
   test "#show should blame the fetch when a failed refresh leaves no groups" do
     @detail = create(:access_token_detail, access_token: access_token)
-    @detail.fail_groups_refresh!
+    @detail.update!(groups_refresh_state: :failed, groups_refresh_requested_at: Time.current)
     sign_in_as user
 
     get access_token_groups_refresh_path(access_token, context: "feed_form")
