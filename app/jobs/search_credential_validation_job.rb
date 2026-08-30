@@ -6,22 +6,19 @@ class SearchCredentialValidationJob < ApplicationJob
 
   queue_as :default
 
-  # @param credential [SearchCredential] credential being validated
-  # @param run_id [String] validation UUID
-  # @param _fallback_state [String] state captured for the timeout job
-  def perform(credential, run_id, _fallback_state)
-    return unless credential.validation_run?(run_id)
+  # @param run [OperationRun] validation being performed
+  def perform(run)
+    return unless run.running?
+
+    credential = run.subject
 
     record_usage(credential)
     credential.web_search_provider.search(VALIDATION_QUERY, max_results: 1)
-    credential.settle_validation!(
-      run_id: run_id,
-      state: :active,
-      last_validated_at: Time.current,
-      last_error: nil
-    )
+    run.succeed! do |current_credential|
+      current_credential.update!(state: :active, last_validated_at: Time.current, last_error: nil)
+    end
   rescue WebSearchProvider::Error => e
-    credential.deactivate!(last_error: e.message, run_id: run_id)
+    credential.deactivate!(last_error: e.message, run: run)
   end
 
   private

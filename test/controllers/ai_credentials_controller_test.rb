@@ -72,7 +72,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     saved = AiCredential.last
     assert_redirected_to ai_credential_path(saved)
     assert_equal "validating", saved.state
-    assert_not_nil saved.validation_run_id
+    assert_not_nil saved.active_operation_run(:validation)
   end
 
   test "#new should accept and remember a feed_id owned by current_user" do
@@ -338,7 +338,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     active.reload
     assert_equal new_key, active.credential_data["api_key"]
     assert_equal "validating", active.state
-    assert_not_nil active.validation_run_id
+    assert_not_nil active.active_operation_run(:validation)
   end
 
   test "#update should keep existing credential_data when api_key is blank" do

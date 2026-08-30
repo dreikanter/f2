@@ -80,15 +80,9 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should not settle an overdue validation" do
-    run_id = SecureRandom.uuid
-    access_token.update!(
-      state: :validating,
-      validation_started_at: (AccessToken::VALIDATION_TIMEOUT + 1.minute).ago,
-      validation_run_id: run_id
-    )
-    original_attributes = access_token.attributes.slice(
-      "state", "validation_started_at", "validation_run_id", "updated_at"
-    )
+    access_token.update!(state: :validating)
+    run = create(:operation_run, subject: access_token, started_at: (AccessToken::VALIDATION_TIMEOUT + 1.minute).ago)
+    original_attributes = access_token.attributes.slice("state", "updated_at")
     sign_in_as user
 
     assert_no_difference("Event.count") do
@@ -97,10 +91,12 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :no_content
     assert_equal original_attributes, access_token.reload.attributes.slice(*original_attributes.keys)
+    assert_predicate run.reload, :running?
   end
 
   test "#show should keep waiting on a validation that is still in flight" do
-    access_token.update!(state: :validating, validation_started_at: 1.minute.ago)
+    access_token.update!(state: :validating)
+    create(:operation_run, subject: access_token, started_at: 1.minute.ago)
     sign_in_as user
 
     get access_token_validation_path(access_token)

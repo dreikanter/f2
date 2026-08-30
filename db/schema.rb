@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_08_31_000000) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_31_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -21,11 +21,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_31_000000) do
     t.jsonb "data", default: {}, null: false
     t.jsonb "freefeed_user_info", default: {}, null: false
     t.jsonb "managed_groups", default: [], null: false
-    t.integer "groups_refresh_state"
-    t.datetime "groups_refresh_requested_at"
-    t.uuid "groups_refresh_run_id"
     t.index ["access_token_id"], name: "index_access_token_details_on_access_token_id", unique: true
-    t.check_constraint "groups_refresh_state = ANY (ARRAY[0, 1])", name: "access_token_details_groups_refresh_state_valid"
   end
 
   create_table "access_tokens", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -40,8 +36,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_31_000000) do
     t.uuid "user_id", null: false
     t.string "freefeed_user_id"
     t.string "scopes", default: [], null: false, array: true
-    t.datetime "validation_started_at"
-    t.uuid "validation_run_id"
     t.index ["freefeed_user_id"], name: "index_access_tokens_on_freefeed_user_id"
     t.index ["user_id", "name"], name: "index_access_tokens_on_user_id_and_name", unique: true
   end
@@ -57,8 +51,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_31_000000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.jsonb "available_models", default: [], null: false
-    t.datetime "validation_started_at"
-    t.uuid "validation_run_id"
     t.index ["user_id", "provider", "display_name"], name: "index_ai_credentials_on_user_id_and_provider_and_display_name", unique: true
     t.index ["user_id", "state"], name: "index_ai_credentials_on_user_id_and_state"
   end
@@ -247,6 +239,21 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_31_000000) do
     t.index ["user_id", "started_at"], name: "index_llm_usages_on_user_id_and_started_at"
   end
 
+  create_table "operation_runs", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "subject_id", null: false
+    t.string "subject_type", null: false
+    t.integer "kind", null: false
+    t.integer "status", null: false
+    t.datetime "started_at"
+    t.datetime "deadline_at"
+    t.datetime "finished_at"
+    t.jsonb "context", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subject_type", "subject_id", "kind"], name: "index_operation_runs_on_active_subject_and_kind", unique: true, where: "(status = ANY (ARRAY[0, 1]))"
+    t.index ["subject_type", "subject_id"], name: "index_operation_runs_on_subject"
+  end
+
   create_table "permissions", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -309,8 +316,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_31_000000) do
     t.text "last_error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.datetime "validation_started_at"
-    t.uuid "validation_run_id"
     t.index ["user_id", "provider", "display_name"], name: "index_search_credentials_on_owner_provider_name", unique: true
     t.index ["user_id", "state"], name: "index_search_credentials_on_user_id_and_state"
   end

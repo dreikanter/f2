@@ -1,9 +1,13 @@
 class AccessTokenValidationService
-  attr_reader :access_token, :run_id
+  attr_reader :run
 
-  def initialize(access_token, run_id:)
-    @access_token = access_token
-    @run_id = run_id
+  # @param run [OperationRun] access-token validation run
+  def initialize(run)
+    @run = run
+  end
+
+  def access_token
+    run.subject
   end
 
   def call
@@ -15,33 +19,28 @@ class AccessTokenValidationService
     user_info = fetch_user_info
     managed_groups = fetch_managed_groups
 
-    access_token.with_validation_run(run_id) do
-      access_token.update!(
+    run.succeed! do |token|
+      token.update!(
         state: :active,
         owner: user_info[:username],
         freefeed_user_id: user_info[:id],
         scopes: scopes,
-        last_used_at: Time.current,
-        validation_started_at: nil,
-        validation_run_id: nil
+        last_used_at: Time.current
       )
 
-      access_token_detail = access_token.access_token_detail || access_token.build_access_token_detail
+      access_token_detail = token.access_token_detail || token.build_access_token_detail
 
       # Also settles any in-flight groups refresh: validation just wrote a
       # fresh list, so pages polling for a refresh outcome can stop.
       access_token_detail.update!(
-        freefeed_user_info: user_info.deep_stringify_keys,
-        managed_groups: managed_groups.map { |group| group.deep_stringify_keys },
-        groups_refresh_state: nil,
-        groups_refresh_requested_at: nil,
-        groups_refresh_run_id: nil
+        freefeed_user_info: user_info.deep_stringify_keys
       )
+      access_token_detail.replace_managed_groups_and_finish_refresh!(managed_groups)
     end
   rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError
     # The token is dead, not under-permissioned. The scope check above already
     # routed that case elsewhere.
-    access_token.disable_token_and_feeds(run_id: run_id)
+    access_token.disable_token_and_feeds(run: run)
   rescue RateLimit::Throttled
     # Throttling is control flow, not a validation failure: let it propagate so
     # the job reschedules. Reporting it here would surface a fault on every
@@ -69,7 +68,7 @@ class AccessTokenValidationService
   def disable_for_missing_scope(scopes)
     access_token.disable_token_and_feeds(
       event_type: "access_token_missing_scope",
-      run_id: run_id,
+      run: run,
       attributes: { scopes: scopes }
     )
   end
