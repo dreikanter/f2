@@ -78,6 +78,15 @@ class CredentialListItemComponentTest < ViewComponent::TestCase
     end
   end
 
+  test "#render should separate Delete from the actions above it" do
+    each_case do |result, credential, expected|
+      menu = result.at_css("##{expected[:menu_id]}-#{credential.id}")
+
+      assert_equal "separator", menu.css("li")[-2]["role"], expected[:key_prefix]
+      assert_equal "Delete…", menu.css("li").last.text.strip, expected[:key_prefix]
+    end
+  end
+
   test "#render should derive the menu id from the credential type" do
     each_case do |result, credential, expected|
       assert_not_nil result.css("##{expected[:menu_id]}-#{credential.id}").first, expected[:menu_id]

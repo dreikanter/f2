@@ -83,6 +83,7 @@ class CredentialListItemComponent < ListItemComponent
       { label: "Edit", href: edit_url }
     ]
     items << { label: "Make default", href: default_url, data: { turbo_method: :patch } } unless credential.default?
+    items << { separator: true }
     items << { label: "Delete…", href: credential_url,
                data: { turbo_method: :delete, turbo_confirm: delete_confirm } }
     items
