@@ -9,6 +9,18 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     @credential ||= create(:ai_credential, user: user, state: :pending)
   end
 
+  def perform_validation(current = credential)
+    fallback_state = current.active? ? "active" : "inactive"
+    run_id = SecureRandom.uuid
+    current.update!(
+      state: :validating,
+      last_error: nil,
+      validation_started_at: Time.current,
+      validation_run_id: run_id
+    )
+    AiCredentialValidationJob.perform_now(current, run_id, fallback_state)
+  end
+
   def stub_available_models(result)
     LlmClient.stub(:for, ->(_) { fake_client(result) }) do
       yield
@@ -31,7 +43,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     models = [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }]
 
     stub_available_models(models) do
-      AiCredentialValidationJob.perform_now(credential)
+      perform_validation
     end
 
     credential.reload
@@ -47,7 +59,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     feed = create(:feed, :enabled, user: user, ai_credential: credential)
 
     stub_available_models(LlmClient::AuthError.new("invalid api key")) do
-      AiCredentialValidationJob.perform_now(credential)
+      perform_validation
     end
 
     credential.reload
@@ -63,7 +75,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     feed = create(:feed, :enabled, user: user, ai_credential: active)
 
     stub_available_models(LlmClient::ProviderError.new("500 upstream")) do
-      AiCredentialValidationJob.perform_now(active)
+      perform_validation(active)
     end
 
     active.reload
@@ -77,7 +89,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     feed = create(:feed, :enabled, user: user, ai_credential: credential)
 
     stub_available_models(LlmClient::RateLimited.new("429")) do
-      AiCredentialValidationJob.perform_now(credential)
+      perform_validation
     end
 
     assert_equal "enabled", feed.reload.state
@@ -88,7 +100,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
   # validating, so a transient failure has to leave a state that settles.
   test "#perform should settle a never-active credential rather than leave it polling" do
     stub_available_models(LlmClient::ProviderError.new("500 upstream")) do
-      AiCredentialValidationJob.perform_now(credential)
+      perform_validation
     end
 
     credential.reload
@@ -101,7 +113,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
   # and strand the credential in "validating".
   test "#perform should not strand credential in validating when the provider key does not resolve" do
     RubyLLM::Provider.stub(:resolve, nil) do
-      AiCredentialValidationJob.perform_now(credential)
+      perform_validation
     end
 
     credential.reload
@@ -114,7 +126,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
                       credential_data: { "api_key" => "sk-moon-test" })
     stub_request(:get, "https://api.moonshot.ai/v1/models").to_timeout
 
-    AiCredentialValidationJob.perform_now(moonshot)
+    perform_validation(moonshot)
 
     moonshot.reload
     assert_equal "inactive", moonshot.state
@@ -131,7 +143,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
 
     LlmClient.stub(:for, ->(_) { flunk "stale run reached the provider" }) do
       AiCredentialValidationJob.perform_now(
-        credential.id, SecureRandom.uuid, "inactive"
+        credential, SecureRandom.uuid, "inactive"
       )
     end
 
@@ -143,11 +155,11 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     credential.update!(state: :validating, validation_started_at: 15.minutes.ago,
                        validation_run_id: run_id)
     ProviderCredentialValidationTimeoutJob.perform_now(
-      "AiCredential", credential.id, run_id, "inactive"
+      credential, run_id, "inactive"
     )
 
     LlmClient.stub(:for, ->(_) { flunk "timed-out run reached the provider" }) do
-      AiCredentialValidationJob.perform_now(credential.id, run_id, "inactive")
+      AiCredentialValidationJob.perform_now(credential, run_id, "inactive")
     end
 
     assert credential.reload.inactive?

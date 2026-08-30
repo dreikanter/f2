@@ -7,11 +7,9 @@ class TokenGroupsRefreshJob < ApplicationJob
 
   queue_as :default
 
-  # The optional default lets jobs enqueued by the previous release drain
-  # without touching a run they cannot identify.
-  def perform(access_token, run_id = nil)
-    return if run_id.blank?
-
+  # @param access_token [AccessToken] token whose groups are being refreshed
+  # @param run_id [String] groups-refresh UUID
+  def perform(access_token, run_id)
     detail = running_detail(access_token, run_id)
     return unless detail&.groups_refresh_running?(run_id: run_id)
     return detail.fail_groups_refresh!(run_id: run_id) unless access_token.active?

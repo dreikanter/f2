@@ -69,7 +69,7 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
     end
 
     validation_run_id = access_token.reload.validation_run_id
-    assert_enqueued_with(job: TokenValidationJob, args: [access_token.id, validation_run_id])
+    assert_enqueued_with(job: TokenValidationJob, args: [access_token, validation_run_id])
 
     assert detail.reload.groups_refresh_failed?
   end
@@ -155,14 +155,5 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
     assert_empty detail.reload.group_names
     assert detail.groups_refresh_failed?
     assert_equal ["oldgroup"], cache.read(access_token.groups_cache_key)
-  end
-
-  test "#perform should ignore a legacy job without a run id" do
-    detail
-
-    TokenGroupsRefreshJob.perform_now(access_token)
-
-    assert_not_requested :get, /managedGroups/
-    assert detail.reload.groups_refresh_running?
   end
 end

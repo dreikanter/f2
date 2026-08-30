@@ -59,39 +59,17 @@ module ProviderCredential
       validation_started_at: started_at,
       validation_run_id: run_id
     )
-    validation_job.perform_later(id, run_id, fallback_state.to_s)
+    validation_job.perform_later(self, run_id, fallback_state.to_s)
     ProviderCredentialValidationTimeoutJob
       .set(wait_until: started_at + VALIDATION_TIMEOUT)
-      .perform_later(self.class.name, id, run_id, fallback_state.to_s)
+      .perform_later(self, run_id, fallback_state.to_s)
     run_id
   end
 
-  # Starts a legacy or deferred job only when it cannot supersede another run.
-  # @param run_id [String, nil] UUID captured by the worker
-  # @return [Array<String>, nil] run ID and fallback state when claimed
-  def claim_validation!(run_id = nil)
-    with_lock do
-      if run_id.present?
-        return [run_id, inactive? ? "inactive" : "active"] if validation_run_id == run_id
-        return nil
-      else
-        return nil if validation_run_id.present?
-        run_id = SecureRandom.uuid
-      end
-
-      fallback_state = active? ? "active" : "inactive"
-      started_at = Time.current
-      update!(
-        state: :validating,
-        last_error: nil,
-        validation_started_at: started_at,
-        validation_run_id: run_id
-      )
-      ProviderCredentialValidationTimeoutJob
-        .set(wait_until: started_at + VALIDATION_TIMEOUT)
-        .perform_later(self.class.name, id, run_id, fallback_state)
-      [run_id, fallback_state]
-    end
+  # @param run_id [String] UUID captured by the worker
+  # @return [Boolean] whether the worker owns the current run
+  def validation_run?(run_id)
+    self.class.where(id: id, validation_run_id: run_id).exists?
   end
 
   # @param run_id [String] UUID captured by the worker

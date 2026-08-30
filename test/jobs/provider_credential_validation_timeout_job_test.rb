@@ -8,7 +8,7 @@ class ProviderCredentialValidationTimeoutJobTest < ActiveJob::TestCase
                                         validation_run_id: run_id)
 
     ProviderCredentialValidationTimeoutJob.perform_now(
-      "AiCredential", credential.id, run_id, "inactive"
+      credential, run_id, "inactive"
     )
 
     assert credential.reload.inactive?
@@ -23,7 +23,7 @@ class ProviderCredentialValidationTimeoutJobTest < ActiveJob::TestCase
                                             validation_run_id: run_id)
 
     ProviderCredentialValidationTimeoutJob.perform_now(
-      "SearchCredential", credential.id, run_id, "active"
+      credential, run_id, "active"
     )
 
     assert credential.reload.active?
@@ -38,7 +38,7 @@ class ProviderCredentialValidationTimeoutJobTest < ActiveJob::TestCase
     )
 
     ProviderCredentialValidationTimeoutJob.perform_now(
-      "SearchCredential", credential.id, SecureRandom.uuid, "inactive"
+      credential, SecureRandom.uuid, "inactive"
     )
 
     assert_equal original_attributes, credential.reload.attributes.slice(*original_attributes.keys)
