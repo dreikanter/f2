@@ -10,15 +10,15 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
   end
 
   def active_token
-    @active_token ||= create(:access_token, user: user, status: :active)
+    @active_token ||= create(:access_token, user: user, state: :active)
   end
 
   def inactive_token
-    @inactive_token ||= create(:access_token, user: user, status: :inactive)
+    @inactive_token ||= create(:access_token, user: user, state: :inactive)
   end
 
   def other_users_token
-    @other_users_token ||= create(:access_token, user: other_user, status: :active)
+    @other_users_token ||= create(:access_token, user: other_user, state: :active)
   end
 
   def feed

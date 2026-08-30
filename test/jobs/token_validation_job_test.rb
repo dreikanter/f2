@@ -11,7 +11,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
 
   def start_validation(token = access_token)
     run_id = SecureRandom.uuid
-    token.update!(status: :validating, validation_started_at: Time.current, validation_run_id: run_id)
+    token.update!(state: :validating, validation_started_at: Time.current, validation_run_id: run_id)
     run_id
   end
 
@@ -179,7 +179,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert custom_token.active?
   end
 
-  test ".perform_now should broadcast status update on successful validation" do
+  test ".perform_now should broadcast state update on successful validation" do
     stub_successful_freefeed_response
 
     assert_nothing_raised do
@@ -190,7 +190,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert access_token.active?
   end
 
-  test ".perform_now should broadcast status update on failed validation" do
+  test ".perform_now should broadcast state update on failed validation" do
     stub_failed_freefeed_response
 
     assert_nothing_raised do
@@ -252,7 +252,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
 
   test "#perform should ignore a superseded run before calling FreeFeed" do
     current_run_id = SecureRandom.uuid
-    access_token.update!(status: :validating, validation_started_at: Time.current,
+    access_token.update!(state: :validating, validation_started_at: Time.current,
                         validation_run_id: current_run_id)
 
     TokenValidationJob.perform_now(access_token, SecureRandom.uuid)
@@ -264,7 +264,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
 
   test "#perform should not revive a run after its timeout" do
     run_id = SecureRandom.uuid
-    access_token.update!(status: :validating, validation_started_at: 15.minutes.ago,
+    access_token.update!(state: :validating, validation_started_at: 15.minutes.ago,
                         validation_run_id: run_id)
     AccessTokenValidationTimeoutJob.perform_now(access_token, run_id)
 

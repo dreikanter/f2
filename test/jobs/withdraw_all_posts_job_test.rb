@@ -38,7 +38,7 @@ class WithdrawAllPostsJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should exit gracefully if access token is inactive" do
-    feed.access_token.update!(status: :inactive)
+    feed.access_token.update!(state: :inactive)
     service_called = false
     WithdrawAllPosts.stub(:new, ->(*args, **) { service_called = true }) do
       WithdrawAllPostsJob.perform_now(feed.id, user.id)

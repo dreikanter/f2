@@ -2,7 +2,7 @@ FactoryBot.define do
   factory :access_token do
     association :user
     sequence(:name) { |n| "Token #{n}" }
-    status { :pending }
+    state { :pending }
     last_used_at { nil }
     host { "https://candy.freefeed.net" }
 
@@ -17,7 +17,7 @@ FactoryBot.define do
     end
 
     trait :active do
-      status { :active }
+      state { :active }
       owner { "testuser" }
       sequence(:freefeed_user_id) { |n| "ff-user-#{n}" }
       # Validation records these, so an active token always carries them.
@@ -25,7 +25,7 @@ FactoryBot.define do
     end
 
     trait :inactive do
-      status { :inactive }
+      state { :inactive }
     end
 
     trait :recently_used do

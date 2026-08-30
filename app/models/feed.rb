@@ -530,7 +530,7 @@ class Feed < ApplicationRecord
   def access_token_active_when_enabled
     return if access_token.nil? || access_token.active?
 
-    errors.add(:access_token, "must be active (currently #{access_token.status})")
+    errors.add(:access_token, "must be active (currently #{access_token.state})")
   end
 
   def ai_credential_required_when_enabled_ai_profile

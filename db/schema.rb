@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_08_30_231000) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_31_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -35,7 +35,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_30_231000) do
     t.datetime "last_used_at"
     t.string "name", null: false
     t.string "owner"
-    t.integer "status", default: 0, null: false
+    t.integer "state", default: 0, null: false
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
     t.string "freefeed_user_id"

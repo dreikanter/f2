@@ -1,11 +1,11 @@
 <% content_for :title, "Access Token" %>
 
 <div id="access-token-show" class="space-y-8" data-key="admin.access_token.show">
-  <%= render PageHeaderComponent.new(title: @access_token.name) do |header| %>
+  <%= render PageHeaderComponent.new(title: @access_token.display_name) do |header| %>
     <% header.with_breadcrumb(label: "Admin Panel", url: admin_path) %>
     <% unless @access_token.pending? || @access_token.validating? %>
       <% header.with_context_paragraph do %>
-        <%= render access_token_status_badge(@access_token) %>
+        <%= render credential_state_badge(@access_token) %>
       <% end %>
     <% end %>
     <% header.with_context_paragraph do %>

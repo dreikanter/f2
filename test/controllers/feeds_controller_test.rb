@@ -1034,7 +1034,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
   test "#edit should keep the Enable checkbox interactive for an enabled feed without active tokens" do
     sign_in_as(user)
     enabled = create(:feed, :enabled, user: user, access_token: access_token)
-    access_token.update!(status: :inactive)
+    access_token.update!(state: :inactive)
 
     get edit_feed_url(enabled)
 

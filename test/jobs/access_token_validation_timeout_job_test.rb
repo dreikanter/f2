@@ -7,9 +7,9 @@ class AccessTokenValidationTimeoutJobTest < ActiveJob::TestCase
 
   test "#perform should settle the matching run without disabling feeds" do
     run_id = SecureRandom.uuid
-    token = create(:access_token, user: user, status: :active)
+    token = create(:access_token, user: user, state: :active)
     feed = create(:feed, user: user, access_token: token, state: :enabled)
-    token.update!(status: :validating, validation_started_at: 15.minutes.ago, validation_run_id: run_id)
+    token.update!(state: :validating, validation_started_at: 15.minutes.ago, validation_run_id: run_id)
 
     assert_difference -> { Event.where(type: AccessToken::VALIDATION_ABANDONED_EVENT_TYPE).count }, 1 do
       AccessTokenValidationTimeoutJob.perform_now(token, run_id)
@@ -23,10 +23,10 @@ class AccessTokenValidationTimeoutJobTest < ActiveJob::TestCase
 
   test "#perform should ignore a superseded run" do
     current_run_id = SecureRandom.uuid
-    token = create(:access_token, user: user, status: :validating,
+    token = create(:access_token, user: user, state: :validating,
                                   validation_started_at: Time.current, validation_run_id: current_run_id)
     original_attributes = token.attributes.slice(
-      "status", "validation_started_at", "validation_run_id", "updated_at"
+      "state", "validation_started_at", "validation_run_id", "updated_at"
     )
 
     assert_no_difference("Event.count") do

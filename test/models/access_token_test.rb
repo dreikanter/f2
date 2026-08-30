@@ -46,7 +46,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "freefeed:custom.example.com:u-7", c.rate_limit_subject
   end
 
-  test ".build_with_token stores encrypted token and sets pending status" do
+  test ".build_with_token stores encrypted token and sets pending state" do
     token = AccessToken.build_with_token(
       name: "Test Token",
       user: user,
@@ -137,10 +137,10 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_not_includes active_tokens, pending_token
   end
 
-  test "can update status to active with owner" do
+  test "can update state to active with owner" do
     token = create(:access_token)
     assert token.pending?
-    token.update!(status: :active, owner: "testuser")
+    token.update!(state: :active, owner: "testuser")
 
     assert token.reload.active?
     assert_equal "testuser", token.owner
@@ -154,7 +154,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert token.reload.inactive?
   end
 
-  test "#validate_token_async updates status and enqueues job when valid" do
+  test "#validate_token_async updates state and enqueues job when valid" do
     token = create(:access_token)
     assert token.pending?
 
@@ -187,7 +187,7 @@ class AccessTokenTest < ActiveSupport::TestCase
   end
 
   test "#start_validation! should supersede an older run" do
-    token = create(:access_token, status: :validating, validation_run_id: SecureRandom.uuid)
+    token = create(:access_token, state: :validating, validation_run_id: SecureRandom.uuid)
     old_run_id = token.validation_run_id
 
     new_run_id = token.start_validation!
@@ -207,7 +207,7 @@ class AccessTokenTest < ActiveSupport::TestCase
   end
 
   test "#disable_token_and_feeds should close the open validation run" do
-    token = create(:access_token, status: :validating, validation_started_at: 1.minute.ago,
+    token = create(:access_token, state: :validating, validation_started_at: 1.minute.ago,
                                   validation_run_id: SecureRandom.uuid)
 
     token.disable_token_and_feeds
@@ -346,7 +346,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     enabled_feed = create(:feed, user: user, access_token: access_token, state: :enabled)
     another_disabled_feed = create(:feed, user: user, access_token: access_token, state: :disabled)
     disabled_feed = create(:feed, user: user, access_token: access_token, state: :disabled)
-    access_token.update!(status: :validating)
+    access_token.update!(state: :validating)
 
     stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
       .to_return(status: 200, body: { token: { id: "t", scopes: AccessToken::TOKEN_SCOPES } }.to_json)
@@ -362,7 +362,7 @@ class AccessTokenTest < ActiveSupport::TestCase
       .to_return(status: 401, body: "")
 
     run_id = SecureRandom.uuid
-    access_token.update!(status: :validating, validation_started_at: Time.current, validation_run_id: run_id)
+    access_token.update!(state: :validating, validation_started_at: Time.current, validation_run_id: run_id)
     service = AccessTokenValidationService.new(access_token, run_id: run_id)
     service.call
 
@@ -371,7 +371,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     another_disabled_feed.reload
     disabled_feed.reload
 
-    assert_equal "inactive", access_token.status
+    assert_equal "inactive", access_token.state
     assert_equal "disabled", enabled_feed.state
     assert_equal "disabled", another_disabled_feed.state
     assert_equal "disabled", disabled_feed.state
@@ -396,17 +396,22 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "custom.example.com", token.host_domain
   end
 
-  test "#display_name should return host_domain and username when detail exists" do
-    token = create(:access_token, :active, host: "https://freefeed.net")
-    token.create_access_token_detail!(freefeed_user_info: { "username" => "testuser" })
+  test "#display_name should return the user-defined token name" do
+    token = build(:access_token, name: "My Token")
 
-    assert_equal "freefeed.net - testuser", token.display_name
+    assert_equal "My Token", token.display_name
   end
 
-  test "#display_name should return host_domain and token name when detail missing" do
-    token = build(:access_token, host: "https://freefeed.net", name: "My Token")
+  test "#provider_name should identify the owner and FreeFeed instance" do
+    token = build(:access_token, host: "https://freefeed.net", owner: "testuser")
 
-    assert_equal "freefeed.net - My Token", token.display_name
+    assert_equal "@testuser at freefeed.net", token.provider_name
+  end
+
+  test "#provider_name should fall back to the FreeFeed instance" do
+    token = build(:access_token, host: "https://freefeed.net", owner: nil)
+
+    assert_equal "freefeed.net", token.provider_name
   end
 
   test "FREEFEED_HOSTS URLs should all be valid HTTP(S) URLs" do

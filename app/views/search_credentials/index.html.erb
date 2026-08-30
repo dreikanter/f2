@@ -18,7 +18,7 @@
 
   <% if @credentials.any? %>
     <div id="search_credentials_list">
-      <%= render SearchCredentialsListComponent.new(credentials: @credentials) %>
+      <%= render CredentialsListComponent.new(credentials: @credentials) %>
     </div>
   <% else %>
     <div>

@@ -760,7 +760,7 @@ class FeedTest < ActiveSupport::TestCase
 
   test "#disable should still work for an enabled feed whose token went inactive" do
     feed = create(:feed, :enabled, user: preview_user, access_token: access_token_for(preview_user))
-    feed.access_token.update!(status: :inactive)
+    feed.access_token.update!(state: :inactive)
 
     assert feed.disable
     assert_predicate feed.reload, :disabled?

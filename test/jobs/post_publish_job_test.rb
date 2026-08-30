@@ -112,7 +112,7 @@ class PostPublishJobTest < ActiveJob::TestCase
       PostPublishJob.perform_now(feed.id)
     end
 
-    assert_equal "inactive", access_token.reload.status
+    assert_equal "inactive", access_token.reload.state
     assert_equal "enqueued", post.reload.status
   end
 
@@ -126,7 +126,7 @@ class PostPublishJobTest < ActiveJob::TestCase
     end
 
     assert_equal "disabled", feed.reload.state
-    assert_equal "active", access_token.reload.status
+    assert_equal "active", access_token.reload.state
     assert_equal "enqueued", post.reload.status
 
     event = Event.where(type: "feed_target_group_unavailable", subject: feed).last
