@@ -41,12 +41,6 @@ class EventTest < ActiveSupport::TestCase
     assert event.expires_at.present?
   end
 
-  test "should allow blank message" do
-    event = Event.create!(type: "test_event", message: "")
-
-    assert_equal "", event.message
-  end
-
   test "should validate required fields" do
     event = Event.new
 

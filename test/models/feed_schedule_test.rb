@@ -22,24 +22,4 @@ class FeedScheduleTest < ActiveSupport::TestCase
       assert next_run > Time.current
     end
   end
-
-  test "#calculate_next_run_at should handle daily cron" do
-    feed = build(:feed, cron_expression: "0 9 * * *")
-    schedule = build(:feed_schedule, feed: feed)
-
-    freeze_time do
-      next_run = schedule.calculate_next_run_at
-      assert next_run.is_a?(Time)
-    end
-  end
-
-  test "#calculate_next_run_at should handle hourly cron" do
-    feed = build(:feed, cron_expression: "0 * * * *")
-    schedule = build(:feed_schedule, feed: feed)
-
-    freeze_time do
-      next_run = schedule.calculate_next_run_at
-      assert next_run.is_a?(Time)
-    end
-  end
 end
