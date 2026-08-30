@@ -34,7 +34,7 @@ class FreefeedPostComponent < ViewComponent::Base
   end
 
   def freefeed_url
-    post.freefeed_url
+    post.freefeed_post_url
   end
 
   def timestamp_tag

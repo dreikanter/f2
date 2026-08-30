@@ -182,6 +182,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
 
     assert_equal "freefeed_post_123", freefeed_post_id
     assert_equal "freefeed_post_123", post.reload.freefeed_post_id
+    assert_equal "#{access_token.host}/testgroup/freefeed_post_123", post.freefeed_post_url
     assert_equal "published", post.status
     assert_not_nil post.reposted_at
   end

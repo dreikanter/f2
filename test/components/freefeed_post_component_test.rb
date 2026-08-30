@@ -77,7 +77,7 @@ class FreefeedPostComponentTest < ViewComponent::TestCase
     result = render_inline(FreefeedPostComponent.new(post: post))
 
     link = result.css('a[data-key="freefeed_post.timestamp"]').first
-    assert_equal post.freefeed_url, link["href"]
+    assert_equal post.freefeed_post_url, link["href"]
   end
 
   test "#render should keep the action links decorative" do

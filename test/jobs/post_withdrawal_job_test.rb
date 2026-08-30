@@ -81,7 +81,9 @@ class PostWithdrawalJobTest < ActiveJob::TestCase
 
     PostWithdrawalJob.perform_now(feed.id, "test_post_123", post.id)
 
-    assert_nil post.reload.freefeed_post_id
+    post.reload
+    assert_nil post.freefeed_post_id
+    assert_nil post.freefeed_post_url
   end
 
   test ".perform_now should keep the FreeFeed post id when deletion fails" do

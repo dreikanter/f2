@@ -58,13 +58,6 @@ class Post < ApplicationRecord
   after_update :recount_published_posts, if: :saved_change_to_status?
   after_update :discard_publication_checkpoint, if: :publication_no_longer_active?
 
-  def freefeed_url
-    group_url = feed&.target_group_url
-    return unless group_url && freefeed_post_id.present?
-
-    "#{group_url}/#{freefeed_post_id}"
-  end
-
   def normalized_attributes
     as_json(only: NORMALIZED_ATTRIBUTES)
   end

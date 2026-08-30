@@ -188,7 +188,12 @@ class FreefeedPublisher
   end
 
   def update_post_with_freefeed_id(freefeed_post_id)
-    post.update!(freefeed_post_id: freefeed_post_id, status: :published, reposted_at: Time.current)
+    post.update!(
+      freefeed_post_id: freefeed_post_id,
+      freefeed_post_url: "#{post.feed.target_group_url}/#{freefeed_post_id}",
+      status: :published,
+      reposted_at: Time.current
+    )
   rescue => e
     raise PublishError, "Failed to update post status: #{e.message}"
   end
