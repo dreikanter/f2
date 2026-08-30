@@ -10,15 +10,14 @@ class FeedPreviewWorkflow
 
   attr_reader :feed_preview
 
-  def initialize(feed_preview, run_id:, search_credential: nil)
+  def initialize(feed_preview, run_id:)
     @feed_preview = feed_preview
     @run_id = run_id
-    @search_credential = search_credential
   end
 
   private
 
-  attr_reader :run_id, :search_credential
+  attr_reader :run_id
 
   # Conditional update: only the current run may transition the row. A stale
   # run (superseded by a newer enqueue that rewrote run_id) updates 0 rows.
@@ -47,7 +46,7 @@ class FeedPreviewWorkflow
       user: feed_preview.user,
       ai_credential_id: feed_preview.ai_credential_id,
       ai_model: feed_preview.ai_model,
-      search_credential: search_credential
+      search_credential: feed_preview.search_credential
     )
   end
 
