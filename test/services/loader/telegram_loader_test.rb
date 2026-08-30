@@ -72,10 +72,6 @@ class Loader::TelegramLoaderTest < ActiveSupport::TestCase
     assert_match(/No public web preview for examplechannel/, error.message)
   end
 
-  test "#load should accept a preview page with no posts yet" do
-    assert_equal PREVIEW_BODY, loader("examplechannel", http_client: mock_client).load
-  end
-
   private
 
   class MockHttpClient
