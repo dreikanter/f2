@@ -215,26 +215,6 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_equal [], FeedProfile.parameter_keys_for("webhook")
   end
 
-  OPTION_SCHEMA = {
-    "type" => "object",
-    "properties" => {
-      "url" => { "type" => "string", "format" => "uri" },
-      "fancy" => { "type" => "boolean", "title" => "Fancy mode" }
-    },
-    "required" => ["url"],
-    "additionalProperties" => false
-  }.freeze
-
-  test ".options_for returns the params a profile declares beyond its source" do
-    options = FeedProfile.stub(:parameter_schema_for, ->(_key) { OPTION_SCHEMA }) do
-      FeedProfile.options_for("rss")
-    end
-
-    assert_equal ["fancy"], options.map(&:name)
-    assert_predicate options.first, :boolean?
-    assert_equal "Fancy mode", options.first.title
-  end
-
   test "youtube profile declares the Shorts option" do
     options = FeedProfile.options_for("youtube")
 

@@ -221,12 +221,7 @@ class FeedTest < ActiveSupport::TestCase
   end
 
   test "should require cron_expression for enabled feeds" do
-    # Test the validation logic directly by bypassing the auto-disable callback
-    feed = create(:feed, state: :enabled)
-
-    # Manually set state and cron_expression to test the validation condition
-    feed.define_singleton_method(:enabled?) { true }
-    feed.cron_expression = nil
+    feed = build(:feed, state: :enabled, cron_expression: nil)
 
     assert_not feed.valid?
     assert feed.errors.of_kind?(:cron_expression, :blank)

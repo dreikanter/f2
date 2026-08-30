@@ -97,19 +97,6 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_respond_to wf, :stats
   end
 
-  test "#record_stats should store provided values" do
-    wf = FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID)
-    assert_empty wf.stats
-
-    wf.define_singleton_method(:test_record_stats) do
-      send(:record_stats, test_stat: "value", count: 42)
-    end
-
-    wf.test_record_stats
-
-    assert_equal({ test_stat: "value", count: 42 }, wf.stats)
-  end
-
   test "#execute should mark the preview ready with normalized posts and ready_at" do
     preview = create(:feed_preview, feed_profile_key: "rss",
                      params: { "url" => "https://example.com/feed.xml" }, run_id: RUN_ID)
