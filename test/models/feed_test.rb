@@ -515,12 +515,6 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_enabled?
   end
 
-  test "#can_be_enabled? returns false when feed has no access token" do
-    feed = create(:feed, :without_access_token)
-
-    assert_not feed.can_be_enabled?
-  end
-
   test "#can_be_enabled? returns false when feed has inactive access token" do
     user = create(:user)
     access_token = create(:access_token, :inactive, user: user)

@@ -494,20 +494,6 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  # Fix 3: unknown profile_key renders cleared pane, no row, no job
-  test "#show should render cleared pane for an unknown profile_key" do
-    sign_in_as(user)
-
-    assert_no_difference("FeedPreview.count") do
-      assert_no_enqueued_jobs do
-        post feed_previews_url, params: { profile_key: "nope", "params" => { url: "http://example.com/feed.xml" } },
-            headers: TURBO_STREAM
-      end
-    end
-
-    assert_response :success
-  end
-
   test "#create should render cleared pane for an unknown profile_key" do
     sign_in_as(user)
 
