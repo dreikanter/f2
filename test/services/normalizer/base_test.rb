@@ -9,12 +9,6 @@ class Normalizer::BaseTest < ActiveSupport::TestCase
     @normalizer ||= Normalizer::Base.new(feed_entry)
   end
 
-  test "#initialize should run without errors" do
-    assert_nothing_raised do
-      Normalizer::Base.new(feed_entry)
-    end
-  end
-
   test "#normalize_source_url should raise NotImplementedError" do
     error = assert_raises(NotImplementedError) do
       normalizer.send(:normalize_source_url)
