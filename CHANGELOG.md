@@ -12,6 +12,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 - Emails now end with a simpler sign-off, without the site link repeated at the bottom.
 - A group-list refresh that takes too long can now be retried right away.
 - Token and credential checks now recover if background work stops unexpectedly, instead of staying stuck in progress.
+- Opening an image from a feed preview now pops in quickly instead of zooming in slowly.
+- Fixed the feed preview button not reopening the preview after you closed it once.
 
 ## 2026-08-29
 

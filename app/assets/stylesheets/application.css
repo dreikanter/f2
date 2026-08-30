@@ -3,6 +3,15 @@
 @import "glightbox/dist/css/glightbox.css";
 @config "../../../tailwind.config.mjs";
 
+/* GLightbox's default zoom effect takes 500ms, which reads as sluggish for a
+   simple image pop. This stays outside @layer so it can win against the
+   library's own unlayered rule of the same specificity. */
+.gzoomIn,
+.gzoomOut {
+  -webkit-animation-duration: 80ms;
+  animation-duration: 80ms;
+}
+
 /* Semantic color tokens. Tailwind v4 maps each --color-* entry onto the whole
    family of color utilities (bg-, text-, border-, ring-, divide-, …, plus
    variants like hover:/focus:), so `text-body`, `bg-surface`, `border-border`,

@@ -1,5 +1,8 @@
 <%# locals: (preview:) %>
-<%= turbo_frame_tag "feed-preview" do %>
+<%# Keep this in sync with the frame tag in feed_form_component.html.erb:
+    Turbo replaces the whole element on each response, so both copies need
+    the preview-button "frame" target attribute. %>
+<%= turbo_frame_tag "feed-preview", data: { preview_button_target: "frame" } do %>
   <%# Stable polling host: polls the preview by id and swaps only the inner
       body, so the controller element is never torn down mid-poll. Polling stops
       once a terminal (ready/failed) body marks itself done. %>
