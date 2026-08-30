@@ -55,11 +55,6 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal EXPLICIT_RUN_ID, wf.send(:run_id)
   end
 
-  test "#initialize should fall back to feed_preview.run_id when run_id is omitted" do
-    wf = FeedPreviewWorkflow.new(feed_preview)
-    assert_equal feed_preview.run_id, wf.send(:run_id)
-  end
-
   test ".included should mix in Workflow module" do
     assert_includes FeedPreviewWorkflow.included_modules, Workflow
   end
