@@ -61,6 +61,24 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal "https://example.com/post1", feed_preview.posts_data.first["source_url"]
   end
 
+  test "#execute should include normalized comments in preview posts" do
+    url = "https://www.youtube.com/feeds/videos.xml?channel_id=UCabc123def456ghi789jkl"
+    preview = create(:feed_preview, user: user, feed_profile_key: "youtube",
+                     params: { "url" => url, "include_description" => true },
+                     status: :pending, run_id: RUN_ID)
+    stub_request(:get, url).to_return(
+      status: 200,
+      body: file_fixture("feeds/youtube/feed.xml").read,
+      headers: { "Content-Type" => "application/atom+xml" }
+    )
+
+    FeedPreviewWorkflow.new(preview, run_id: RUN_ID).execute
+
+    comments = preview.reload.posts_data.first["comments"]
+    assert_equal 1, comments.size
+    assert_includes comments.first, "A beginner-friendly introduction"
+  end
+
   test "#execute should record the stats reported to preview readers" do
     body = rss_body
     stub_request(:get, FEED_URL)

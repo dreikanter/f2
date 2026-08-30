@@ -55,6 +55,14 @@ class PostPreviewComponent < ViewComponent::Base
     valid_attachments.any?
   end
 
+  def comments?
+    comments.any?
+  end
+
+  def comments
+    @comments ||= Array(post_data["comments"]).filter_map { |comment| comment.to_s.presence }
+  end
+
   def image_attachments
     @image_attachments ||= valid_attachments.select { |attachment| image_attachment?(attachment) }
   end
