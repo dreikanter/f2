@@ -8,6 +8,20 @@ module HtmlTextUtils
     doc.text.strip.gsub(/\s+/, " ")
   end
 
+  def strip_html_preserving_paragraphs(text)
+    return "" if text.blank?
+
+    doc = Nokogiri::HTML::DocumentFragment.parse(text)
+    doc.css("br").each { |node| node.after("\n") }
+    doc.css("p").each { |node| node.after("\n\n") }
+
+    doc.text.lines
+      .map { |line| line.gsub(/[[:blank:]]+/, " ").strip }
+      .join("\n")
+      .strip
+      .gsub(/\n{2,}/, "\n\n")
+  end
+
   def extract_images(text)
     return [] if text.blank?
 

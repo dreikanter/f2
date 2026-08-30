@@ -84,13 +84,17 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
     assert_empty render_typed.css('[name="feed[params][url]"]')
   end
 
-  test "#render should render the Shorts option for a youtube feed" do
+  test "#render should render the YouTube options" do
     subject = feed(feed_profile_key: "youtube", "url" => "https://www.youtube.com/@chan")
 
     result = render_inline(FeedProfileOptionsComponent.new(feed: subject))
 
     assert_not_nil result.css('input[type="checkbox"][name="feed[params][exclude_shorts]"]').first
+    description = result.css('input[type="checkbox"][name="feed[params][include_description]"][checked]').first
+
+    assert_not_nil description
     assert_includes labels(result), "Skip Shorts"
+    assert_includes labels(result), "Post video descriptions"
   end
 
   test "#render should scope option ids by profile" do
