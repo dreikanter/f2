@@ -94,9 +94,7 @@ class CredentialsController < ApplicationController
 
     attrs.merge(
       credential_data: credential_data_from_params,
-      state: :pending,
-      validation_started_at: nil,
-      validation_run_id: nil
+      state: :pending
     )
   end
 

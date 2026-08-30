@@ -64,6 +64,13 @@ JobRun:
     # nothing user-supplied to validate.
     UniqueIndexChecker:
       enabled: false
+OperationRun:
+  index_operation_runs_on_active_subject_and_kind:
+    # wontfix: completed history may repeat a subject and kind. OperationRun
+    # serializes starts on the subject; this partial index is the race guard
+    # that allows only one queued or running operation.
+    UniqueIndexChecker:
+      enabled: false
 RateLimit::Bucket:
   index_rate_limit_buckets_on_key:
     # wontfix: RateLimit uses Bucket.create_or_find_by!, which depends on the

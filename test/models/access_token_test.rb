@@ -163,13 +163,13 @@ class AccessTokenTest < ActiveSupport::TestCase
     end
 
     assert token.reload.validating?
-    assert_not_nil token.validation_started_at
-    assert_not_nil token.validation_run_id
-    assert_enqueued_with(job: TokenValidationJob, args: [token, token.validation_run_id])
+    run = token.active_operation_run(:validation)
+    assert_not_nil run.started_at
+    assert_enqueued_with(job: TokenValidationJob, args: [run])
     assert_enqueued_with(
       job: AccessTokenValidationTimeoutJob,
-      args: [token, token.validation_run_id],
-      at: token.validation_started_at + AccessToken::VALIDATION_TIMEOUT
+      args: [run],
+      at: run.deadline_at
     )
   end
 
@@ -181,40 +181,30 @@ class AccessTokenTest < ActiveSupport::TestCase
     end
 
     assert token.reload.active?
-    assert_not_nil token.validation_run_id
-    assert_nil token.validation_started_at
-    assert_enqueued_with(job: TokenValidationJob, args: [token, token.validation_run_id])
+    run = token.active_operation_run(:validation)
+    assert_predicate run, :queued?
+    assert_nil run.started_at
+    assert_enqueued_with(job: TokenValidationJob, args: [run])
   end
 
   test "#start_validation! should supersede an older run" do
-    token = create(:access_token, state: :validating, validation_run_id: SecureRandom.uuid)
-    old_run_id = token.validation_run_id
+    token = create(:access_token, state: :validating)
+    old_run = create(:operation_run, subject: token)
 
-    new_run_id = token.start_validation!
+    new_run = token.start_validation!
 
-    assert_not_equal old_run_id, new_run_id
-    assert_equal new_run_id, token.reload.validation_run_id
-  end
-
-  test "#claim_validation! should start a reserved run" do
-    run_id = SecureRandom.uuid
-    token = create(:access_token, :active, validation_started_at: nil, validation_run_id: run_id)
-
-    assert token.claim_validation!(run_id)
-
-    assert token.reload.validating?
-    assert_equal run_id, token.validation_run_id
+    assert_predicate old_run.reload, :superseded?
+    assert_equal new_run, token.active_operation_run(:validation)
   end
 
   test "#disable_token_and_feeds should close the open validation run" do
-    token = create(:access_token, state: :validating, validation_started_at: 1.minute.ago,
-                                  validation_run_id: SecureRandom.uuid)
+    token = create(:access_token, state: :validating)
+    run = create(:operation_run, subject: token)
 
-    token.disable_token_and_feeds
+    token.disable_token_and_feeds(run: run)
 
     assert token.reload.inactive?
-    assert_nil token.validation_started_at
-    assert_nil token.validation_run_id
+    assert_predicate run.reload, :failed?
   end
 
   # Host validation tests
@@ -361,9 +351,9 @@ class AccessTokenTest < ActiveSupport::TestCase
       )
       .to_return(status: 401, body: "")
 
-    run_id = SecureRandom.uuid
-    access_token.update!(state: :validating, validation_started_at: Time.current, validation_run_id: run_id)
-    service = AccessTokenValidationService.new(access_token, run_id: run_id)
+    run = create(:operation_run, subject: access_token)
+    access_token.update!(state: :validating)
+    service = AccessTokenValidationService.new(run)
     service.call
 
     access_token.reload

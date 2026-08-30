@@ -123,19 +123,20 @@ class SearchCredentialTest < ActiveSupport::TestCase
     credential = create(:search_credential, user: user)
 
     freeze_time do
-      run_id = credential.validate_async(SearchCredentialValidationJob)
+      run = credential.validate_async(SearchCredentialValidationJob)
 
       assert credential.reload.validating?
-      assert_equal run_id, credential.validation_run_id
-      assert_equal Time.current, credential.validation_started_at
+      assert_equal credential, run.subject
+      assert_equal Time.current, run.started_at
+      assert_equal "inactive", run.context.fetch("fallback_state")
       assert_enqueued_with(
         job: SearchCredentialValidationJob,
-        args: [credential, run_id, "inactive"]
+        args: [run]
       )
       assert_enqueued_with(
         job: ProviderCredentialValidationTimeoutJob,
-        args: [credential, run_id, "inactive"],
-        at: Time.current + ProviderCredential::VALIDATION_TIMEOUT
+        args: [run],
+        at: run.deadline_at
       )
     end
   end

@@ -2,9 +2,9 @@ require "test_helper"
 
 class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   def validation_service(token = access_token)
-    run_id = SecureRandom.uuid
-    token.update!(state: :validating, validation_started_at: Time.current, validation_run_id: run_id)
-    AccessTokenValidationService.new(token, run_id: run_id)
+    token.update!(state: :validating)
+    run = create(:operation_run, subject: token)
+    AccessTokenValidationService.new(run)
   end
 
   def user
@@ -168,8 +168,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
   test "#call should settle an in-flight groups refresh" do
     detail = create(:access_token_detail, access_token: access_token)
-    detail.update!(groups_refresh_state: :running, groups_refresh_requested_at: Time.current,
-                   groups_refresh_run_id: SecureRandom.uuid)
+    refresh = create(:operation_run, subject: detail, kind: :groups_refresh)
 
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_return(status: 200, body: { users: { id: "user123", username: "testuser" } }.to_json)
@@ -180,15 +179,14 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     validation_service.call
 
     detail.reload
-    assert_nil detail.groups_refresh_state
     assert_not detail.groups_refresh_running?
-    assert_nil detail.groups_refresh_run_id
+    assert_predicate refresh.reload, :succeeded?
   end
 
   test "#call should clear a failed groups refresh" do
-    detail = create(:access_token_detail, access_token: access_token, groups_refresh_state: :failed,
-                                          groups_refresh_requested_at: Time.current,
-                                          groups_refresh_run_id: SecureRandom.uuid)
+    detail = create(:access_token_detail, access_token: access_token)
+    create(:operation_run, subject: detail, kind: :groups_refresh, status: :failed,
+                           finished_at: Time.current)
 
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_return(status: 200, body: { users: { id: "user123", username: "testuser" } }.to_json)
@@ -200,7 +198,6 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
     detail.reload
     assert_not detail.groups_refresh_failed?
-    assert_nil detail.groups_refresh_run_id
   end
 
   test "#call should persist a partial scope list" do
@@ -264,23 +261,22 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should close the open validation run when the token checks out" do
-    access_token.update!(validation_started_at: 1.minute.ago)
     stub_app_token_info
     stub_successful_account_calls
 
-    validation_service.call
+    service = validation_service
+    run = service.run
+    service.call
 
     assert access_token.reload.active?
-    assert_nil access_token.validation_started_at
+    assert_predicate run.reload, :succeeded?
   end
 
   test "#call should not write a successful result after the run is superseded" do
-    stale_run_id = SecureRandom.uuid
-    access_token.update!(state: :validating, validation_started_at: 1.minute.ago,
-                         validation_run_id: stale_run_id)
-    service = AccessTokenValidationService.new(access_token, run_id: stale_run_id)
-    current_run_id = SecureRandom.uuid
-    access_token.update!(validation_started_at: Time.current, validation_run_id: current_run_id)
+    access_token.update!(state: :validating)
+    stale_run = create(:operation_run, subject: access_token, started_at: 1.minute.ago)
+    service = AccessTokenValidationService.new(stale_run)
+    current_run = OperationRun.start!(subject: access_token, kind: :validation)
     stub_app_token_info
     stub_successful_account_calls
 
@@ -288,7 +284,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
     access_token.reload
     assert access_token.validating?
-    assert_equal current_run_id, access_token.validation_run_id
+    assert_equal current_run, access_token.active_operation_run(:validation)
     assert_nil access_token.owner
   end
 

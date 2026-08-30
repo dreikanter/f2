@@ -7,18 +7,19 @@ class TokenGroupsRefreshJob < ApplicationJob
 
   queue_as :default
 
-  # @param access_token [AccessToken] token whose groups are being refreshed
-  # @param run_id [String] groups-refresh UUID
-  def perform(access_token, run_id)
-    detail = running_detail(access_token, run_id)
-    return unless detail&.groups_refresh_running?(run_id: run_id)
-    return detail.fail_groups_refresh!(run_id: run_id) unless access_token.active?
+  # @param run [OperationRun] groups refresh being performed
+  def perform(run)
+    return unless run.running?
+
+    detail = run.subject
+    access_token = detail.access_token
+    return run.fail! unless access_token.active?
 
     result = RateLimit.acquire(:freefeed, subject: access_token.rate_limit_subject, cost: { get: 1 })
     return reschedule_for_rate_limit(result.retry_after) unless result.allowed?
 
     groups = access_token.build_client.managed_groups
-    return unless detail.complete_groups_refresh!(groups, run_id: run_id)
+    return unless run.succeed! { |current_detail| current_detail.replace_managed_groups!(groups) }
 
     Rails.cache.write(
       access_token.groups_cache_key,
@@ -31,10 +32,10 @@ class TokenGroupsRefreshJob < ApplicationJob
     # The token can't even read its own groups — hand it to validation, which
     # owns disabling the token and notifying the user.
     access_token.enqueue_validation
-    detail.fail_groups_refresh!(run_id: run_id)
+    run.fail!
   rescue StandardError => e
     Rails.error.report(e, context: { access_token_id: access_token.id })
-    detail.fail_groups_refresh!(run_id: run_id)
+    run.fail!
   end
 
   private
@@ -42,15 +43,6 @@ class TokenGroupsRefreshJob < ApplicationJob
   # Leave a settled marker behind when throttle retries run out, so polling
   # pages and future refreshes don't see a refresh that will never finish.
   def on_rate_limit_exhausted(_error)
-    access_token, run_id = arguments
-    running_detail(access_token, run_id)&.fail_groups_refresh!(run_id: run_id)
-  end
-
-  def running_detail(access_token, run_id)
-    AccessTokenDetail.find_by(
-      access_token_id: access_token.id,
-      groups_refresh_state: :running,
-      groups_refresh_run_id: run_id
-    )
+    arguments.first.fail!
   end
 end

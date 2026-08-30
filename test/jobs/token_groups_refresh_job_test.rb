@@ -1,16 +1,16 @@
 require "test_helper"
 
 class TokenGroupsRefreshJobTest < ActiveJob::TestCase
-  RUN_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
-
   def access_token
     @access_token ||= create(:access_token, :active)
   end
 
   def detail
-    @detail ||= create(:access_token_detail, access_token: access_token, groups_refresh_state: :running,
-                                             groups_refresh_requested_at: Time.current,
-                                             groups_refresh_run_id: RUN_ID)
+    @detail ||= create(:access_token_detail, access_token: access_token)
+  end
+
+  def refresh_run
+    @refresh_run ||= create(:operation_run, subject: detail, kind: :groups_refresh)
   end
 
   def stub_managed_groups(status: 200, body: [{ username: "newgroup" }].to_json)
@@ -22,14 +22,14 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
     detail
     stub_managed_groups
 
-    TokenGroupsRefreshJob.perform_now(access_token, RUN_ID)
+    TokenGroupsRefreshJob.perform_now(refresh_run)
 
     detail.reload
     assert_equal ["newgroup"], detail.group_names
     assert detail.managed_groups.first.key?("screen_name")
     assert_not detail.groups_refresh_running?
     assert_not detail.groups_refresh_failed?
-    assert_nil detail.groups_refresh_run_id
+    assert_predicate refresh_run.reload, :succeeded?
   end
 
   test "#perform should refresh the cached group names" do
@@ -38,23 +38,17 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
 
     cache = ActiveSupport::Cache::MemoryStore.new
     Rails.stub(:cache, cache) do
-      TokenGroupsRefreshJob.perform_now(access_token, RUN_ID)
+      TokenGroupsRefreshJob.perform_now(refresh_run)
     end
 
     assert_equal ["newgroup"], cache.read(access_token.groups_cache_key)
-  end
-
-  test "#perform should do nothing when the token has no detail" do
-    TokenGroupsRefreshJob.perform_now(access_token, RUN_ID)
-
-    assert_not_requested :get, /managedGroups/
   end
 
   test "#perform should mark the refresh failed for an inactive token" do
     detail
     access_token.inactive!
 
-    TokenGroupsRefreshJob.perform_now(access_token, RUN_ID)
+    TokenGroupsRefreshJob.perform_now(refresh_run)
 
     assert detail.reload.groups_refresh_failed?
     assert_not_requested :get, /managedGroups/
@@ -65,11 +59,11 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
     stub_managed_groups(status: 401, body: "Unauthorized")
 
     assert_enqueued_with(job: TokenValidationJob) do
-      TokenGroupsRefreshJob.perform_now(access_token, RUN_ID)
+      TokenGroupsRefreshJob.perform_now(refresh_run)
     end
 
-    validation_run_id = access_token.reload.validation_run_id
-    assert_enqueued_with(job: TokenValidationJob, args: [access_token, validation_run_id])
+    validation = access_token.active_operation_run(:validation)
+    assert_enqueued_with(job: TokenValidationJob, args: [validation])
 
     assert detail.reload.groups_refresh_failed?
   end
@@ -80,7 +74,7 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
 
     reported = nil
     Rails.error.stub(:report, ->(error, **) { reported = error }) do
-      TokenGroupsRefreshJob.perform_now(access_token, RUN_ID)
+      TokenGroupsRefreshJob.perform_now(refresh_run)
     end
 
     assert_kind_of FreefeedClient::Error, reported
@@ -91,8 +85,8 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
     detail
     drain_freefeed(access_token.rate_limit_subject, :get, remaining: 0)
 
-    assert_enqueued_with(job: TokenGroupsRefreshJob, args: [access_token, RUN_ID]) do
-      TokenGroupsRefreshJob.perform_now(access_token, RUN_ID)
+    assert_enqueued_with(job: TokenGroupsRefreshJob, args: [refresh_run]) do
+      TokenGroupsRefreshJob.perform_now(refresh_run)
     end
 
     assert detail.reload.groups_refresh_running?
@@ -104,9 +98,9 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
     stub_managed_groups(status: 429, body: "")
 
     reported = []
-    assert_enqueued_with(job: TokenGroupsRefreshJob, args: [access_token, RUN_ID]) do
+    assert_enqueued_with(job: TokenGroupsRefreshJob, args: [refresh_run]) do
       Rails.error.stub(:report, ->(*args, **) { reported << args }) do
-        TokenGroupsRefreshJob.perform_now(access_token, RUN_ID)
+        TokenGroupsRefreshJob.perform_now(refresh_run)
       end
     end
 
@@ -118,7 +112,7 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
     detail
     drain_freefeed(access_token.rate_limit_subject, :get, remaining: 0)
 
-    job = TokenGroupsRefreshJob.new(access_token, RUN_ID)
+    job = TokenGroupsRefreshJob.new(refresh_run)
     job.executions = RateLimited::MAX_ATTEMPTS
 
     Rails.error.stub(:report, ->(*, **) { }) do
@@ -131,9 +125,9 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
 
   test "#perform should ignore a timed-out run before fetching groups" do
     detail
-    TokenGroupsRefreshTimeoutJob.perform_now(detail.id, RUN_ID)
+    TokenGroupsRefreshTimeoutJob.perform_now(refresh_run)
 
-    TokenGroupsRefreshJob.perform_now(access_token, RUN_ID)
+    TokenGroupsRefreshJob.perform_now(refresh_run)
 
     assert_not_requested :get, /managedGroups/
     assert detail.reload.groups_refresh_failed?
@@ -144,12 +138,12 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
     cache = ActiveSupport::Cache::MemoryStore.new
     cache.write(access_token.groups_cache_key, ["oldgroup"])
     stub_request(:get, "#{access_token.host}/v4/managedGroups").to_return do
-      TokenGroupsRefreshTimeoutJob.perform_now(detail.id, RUN_ID)
+      TokenGroupsRefreshTimeoutJob.perform_now(refresh_run)
       { status: 200, body: [{ username: "late-group" }].to_json }
     end
 
     Rails.stub(:cache, cache) do
-      TokenGroupsRefreshJob.perform_now(access_token, RUN_ID)
+      TokenGroupsRefreshJob.perform_now(refresh_run)
     end
 
     assert_empty detail.reload.group_names

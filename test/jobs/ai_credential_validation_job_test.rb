@@ -11,14 +11,10 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
 
   def perform_validation(current = credential)
     fallback_state = current.active? ? "active" : "inactive"
-    run_id = SecureRandom.uuid
-    current.update!(
-      state: :validating,
-      last_error: nil,
-      validation_started_at: Time.current,
-      validation_run_id: run_id
-    )
-    AiCredentialValidationJob.perform_now(current, run_id, fallback_state)
+    current.update!(state: :validating, last_error: nil)
+    run = create(:operation_run, subject: current, context: { fallback_state: fallback_state })
+    AiCredentialValidationJob.perform_now(run)
+    run
   end
 
   def stub_available_models(result)
@@ -51,8 +47,6 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     assert_equal models, credential.available_models
     assert_not_nil credential.last_validated_at
     assert_nil credential.last_error
-    assert_nil credential.validation_started_at
-    assert_nil credential.validation_run_id
   end
 
   test "#perform should deactivate the credential and its feeds when the key is rejected" do
@@ -134,35 +128,28 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
   end
 
   test "#perform should not let a superseded run overwrite the credential" do
-    current_run_id = SecureRandom.uuid
-    credential.update!(state: :validating, validation_started_at: Time.current,
-                       validation_run_id: current_run_id)
-    original_attributes = credential.attributes.slice(
-      "state", "available_models", "validation_started_at", "validation_run_id", "updated_at"
-    )
+    credential.update!(state: :validating)
+    stale_run = create(:operation_run, subject: credential, status: :superseded, finished_at: Time.current)
+    original_attributes = credential.attributes.slice("state", "available_models", "updated_at")
 
     LlmClient.stub(:for, ->(_) { flunk "stale run reached the provider" }) do
-      AiCredentialValidationJob.perform_now(
-        credential, SecureRandom.uuid, "inactive"
-      )
+      AiCredentialValidationJob.perform_now(stale_run)
     end
 
     assert_equal original_attributes, credential.reload.attributes.slice(*original_attributes.keys)
   end
 
   test "#perform should not revive a run after its timeout" do
-    run_id = SecureRandom.uuid
-    credential.update!(state: :validating, validation_started_at: 15.minutes.ago,
-                       validation_run_id: run_id)
-    ProviderCredentialValidationTimeoutJob.perform_now(
-      credential, run_id, "inactive"
-    )
+    credential.update!(state: :validating)
+    run = create(:operation_run, subject: credential, started_at: 15.minutes.ago,
+                                 context: { fallback_state: "inactive" })
+    ProviderCredentialValidationTimeoutJob.perform_now(run)
 
     LlmClient.stub(:for, ->(_) { flunk "timed-out run reached the provider" }) do
-      AiCredentialValidationJob.perform_now(credential, run_id, "inactive")
+      AiCredentialValidationJob.perform_now(run)
     end
 
     assert credential.reload.inactive?
-    assert_nil credential.validation_run_id
+    assert_predicate run.reload, :timed_out?
   end
 end

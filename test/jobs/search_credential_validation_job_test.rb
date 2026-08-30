@@ -27,14 +27,10 @@ class SearchCredentialValidationJobTest < ActiveJob::TestCase
 
   def perform_validation(current = credential)
     fallback_state = current.active? ? "active" : "inactive"
-    run_id = SecureRandom.uuid
-    current.update!(
-      state: :validating,
-      last_error: nil,
-      validation_started_at: Time.current,
-      validation_run_id: run_id
-    )
-    SearchCredentialValidationJob.perform_now(current, run_id, fallback_state)
+    current.update!(state: :validating, last_error: nil)
+    run = create(:operation_run, subject: current, context: { fallback_state: fallback_state })
+    SearchCredentialValidationJob.perform_now(run)
+    run
   end
 
   test "#perform should validate with one result, record usage, and activate the credential" do
@@ -51,8 +47,6 @@ class SearchCredentialValidationJobTest < ActiveJob::TestCase
     assert credential.active?
     assert_not_nil credential.last_validated_at
     assert_nil credential.last_error
-    assert_nil credential.validation_started_at
-    assert_nil credential.validation_run_id
     assert_empty search_event.incoming_event_references
     assert_equal [{ query: SearchCredentialValidationJob::VALIDATION_QUERY, max_results: 1 }], provider.calls
   end
@@ -103,19 +97,15 @@ class SearchCredentialValidationJobTest < ActiveJob::TestCase
   end
 
   test "#perform should not let a superseded run make a billed request" do
-    current_run_id = SecureRandom.uuid
-    credential.update!(state: :validating, validation_started_at: Time.current,
-                       validation_run_id: current_run_id)
+    credential.update!(state: :validating)
+    stale_run = create(:operation_run, subject: credential, status: :superseded, finished_at: Time.current)
     provider = FakeProvider.new
 
     WebSearchProvider.stub(:for, provider) do
-      SearchCredentialValidationJob.perform_now(
-        credential, SecureRandom.uuid, "inactive"
-      )
+      SearchCredentialValidationJob.perform_now(stale_run)
     end
 
     assert_empty provider.calls
-    assert_equal current_run_id, credential.reload.validation_run_id
     assert credential.validating?
   end
 end
