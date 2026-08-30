@@ -130,11 +130,11 @@ class SearchCredentialTest < ActiveSupport::TestCase
       assert_equal Time.current, credential.validation_started_at
       assert_enqueued_with(
         job: SearchCredentialValidationJob,
-        args: [credential.id, run_id, "inactive"]
+        args: [credential, run_id, "inactive"]
       )
       assert_enqueued_with(
         job: ProviderCredentialValidationTimeoutJob,
-        args: ["SearchCredential", credential.id, run_id, "inactive"],
+        args: [credential, run_id, "inactive"],
         at: Time.current + ProviderCredential::VALIDATION_TIMEOUT
       )
     end

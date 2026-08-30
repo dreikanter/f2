@@ -85,7 +85,7 @@ class AccessToken < ApplicationRecord
 
   def validate_token_async
     run_id = start_validation!
-    TokenValidationJob.perform_later(id, run_id)
+    TokenValidationJob.perform_later(self, run_id)
   end
 
   # Reserves a run without changing status while the job waits. Background
@@ -94,7 +94,7 @@ class AccessToken < ApplicationRecord
   def enqueue_validation
     run_id = SecureRandom.uuid
     update!(validation_run_id: run_id, validation_started_at: nil)
-    TokenValidationJob.perform_later(id, run_id)
+    TokenValidationJob.perform_later(self, run_id)
   end
 
   # Opens a new user-initiated run, superseding any older worker still in flight.
@@ -107,27 +107,18 @@ class AccessToken < ApplicationRecord
     run_id
   end
 
-  # Claims a deferred run unless another validation has started since it was
-  # queued. A retry with the current run ID simply resumes that run.
+  # Claims this run unless another validation has started since it was queued.
   # @param run_id [String] UUID captured when the job was enqueued
-  # @param start_if_idle [Boolean] whether a deferred check may open the run
   # @return [Boolean] whether the job owns the current run
-  def claim_validation!(run_id, start_if_idle: false)
+  def claim_validation!(run_id)
     with_lock do
-      if validation_run_id == run_id
-        unless validating? && validation_started_at.present?
-          started_at = Time.current
-          update!(status: :validating, validation_started_at: started_at)
-          schedule_validation_timeout(run_id, started_at)
-        end
-        return true
-      end
-      return false unless start_if_idle
-      return false if validation_run_id.present? && validating?
+      return false unless validation_run_id == run_id
 
-      started_at = Time.current
-      update!(status: :validating, validation_started_at: started_at, validation_run_id: run_id)
-      schedule_validation_timeout(run_id, started_at)
+      unless validating? && validation_started_at.present?
+        started_at = Time.current
+        update!(status: :validating, validation_started_at: started_at)
+        schedule_validation_timeout(run_id, started_at)
+      end
     end
 
     true
@@ -271,7 +262,7 @@ class AccessToken < ApplicationRecord
   private
 
   def schedule_validation_timeout(run_id, started_at)
-    AccessTokenValidationTimeoutJob.set(wait_until: started_at + VALIDATION_TIMEOUT).perform_later(id, run_id)
+    AccessTokenValidationTimeoutJob.set(wait_until: started_at + VALIDATION_TIMEOUT).perform_later(self, run_id)
   end
 
   def create_validation_failed_event(event_type:, feed_ids:, disabled_count:)

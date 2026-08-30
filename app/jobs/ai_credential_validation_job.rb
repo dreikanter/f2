@@ -6,18 +6,11 @@
 class AiCredentialValidationJob < ApplicationJob
   queue_as :default
 
-  # @param credential_id [String, AiCredential] credential UUID; record accepted for queued legacy jobs
-  # @param run_id [String, nil] validation UUID
-  # @param fallback_state [String, nil] state to restore after an inconclusive check
-  def perform(credential_id, run_id = nil, fallback_state = nil)
-    credential = credential_id.is_a?(AiCredential) ? credential_id : AiCredential.find_by(id: credential_id)
-    return unless credential
-
-    claimed_run = credential.claim_validation!(run_id)
-    return unless claimed_run
-
-    run_id, inferred_fallback_state = claimed_run
-    fallback_state ||= inferred_fallback_state
+  # @param credential [AiCredential] credential being validated
+  # @param run_id [String] validation UUID
+  # @param fallback_state [String] state to restore after an inconclusive check
+  def perform(credential, run_id, fallback_state)
+    return unless credential.validation_run?(run_id)
 
     # Both alternatives are terminal: the validation page polls silently while a
     # credential is pending or validating, so leaving it either way would spin

@@ -25,12 +25,24 @@ class SearchCredentialValidationJobTest < ActiveJob::TestCase
     @credential ||= create(:search_credential, user: user, state: :pending, last_error: "old error")
   end
 
+  def perform_validation(current = credential)
+    fallback_state = current.active? ? "active" : "inactive"
+    run_id = SecureRandom.uuid
+    current.update!(
+      state: :validating,
+      last_error: nil,
+      validation_started_at: Time.current,
+      validation_run_id: run_id
+    )
+    SearchCredentialValidationJob.perform_now(current, run_id, fallback_state)
+  end
+
   test "#perform should validate with one result, record usage, and activate the credential" do
     provider = FakeProvider.new
 
     assert_difference("Event.where(type: WebSearchUsage::EVENT_TYPE).count", 1) do
       WebSearchProvider.stub(:for, provider) do
-        SearchCredentialValidationJob.perform_now(credential)
+        perform_validation
       end
     end
 
@@ -59,7 +71,7 @@ class SearchCredentialValidationJobTest < ActiveJob::TestCase
 
       assert_difference("Event.count", 2) do
         WebSearchProvider.stub(:for, provider) do
-          SearchCredentialValidationJob.perform_now(current)
+          perform_validation(current)
         end
       end
 
@@ -83,7 +95,7 @@ class SearchCredentialValidationJobTest < ActiveJob::TestCase
 
     WebSearchUsage.stub(:record!, failing) do
       WebSearchProvider.stub(:for, provider) do
-        SearchCredentialValidationJob.perform_now(credential)
+        perform_validation
       end
     end
 
@@ -98,7 +110,7 @@ class SearchCredentialValidationJobTest < ActiveJob::TestCase
 
     WebSearchProvider.stub(:for, provider) do
       SearchCredentialValidationJob.perform_now(
-        credential.id, SecureRandom.uuid, "inactive"
+        credential, SecureRandom.uuid, "inactive"
       )
     end
 

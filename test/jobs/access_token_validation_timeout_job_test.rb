@@ -12,7 +12,7 @@ class AccessTokenValidationTimeoutJobTest < ActiveJob::TestCase
     token.update!(status: :validating, validation_started_at: 15.minutes.ago, validation_run_id: run_id)
 
     assert_difference -> { Event.where(type: AccessToken::VALIDATION_ABANDONED_EVENT_TYPE).count }, 1 do
-      AccessTokenValidationTimeoutJob.perform_now(token.id, run_id)
+      AccessTokenValidationTimeoutJob.perform_now(token, run_id)
     end
 
     assert token.reload.inactive?
@@ -30,15 +30,9 @@ class AccessTokenValidationTimeoutJobTest < ActiveJob::TestCase
     )
 
     assert_no_difference("Event.count") do
-      AccessTokenValidationTimeoutJob.perform_now(token.id, SecureRandom.uuid)
+      AccessTokenValidationTimeoutJob.perform_now(token, SecureRandom.uuid)
     end
 
     assert_equal original_attributes, token.reload.attributes.slice(*original_attributes.keys)
-  end
-
-  test "#perform should ignore a missing token" do
-    assert_nothing_raised do
-      AccessTokenValidationTimeoutJob.perform_now(SecureRandom.uuid, SecureRandom.uuid)
-    end
   end
 end

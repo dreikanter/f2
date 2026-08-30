@@ -9,7 +9,7 @@
 #
 # Alternatively re-validate each token record:
 #
-# AccessToken.active.find_each { TokenValidationJob.perform_later(_1) }
+# AccessToken.active.find_each(&:validate_token_async)
 class AddScopesToAccessTokens < ActiveRecord::Migration[8.0]
   def up
     add_column :access_tokens, :scopes, :string, array: true, null: false, default: []

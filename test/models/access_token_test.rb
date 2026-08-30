@@ -165,9 +165,10 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert token.reload.validating?
     assert_not_nil token.validation_started_at
     assert_not_nil token.validation_run_id
+    assert_enqueued_with(job: TokenValidationJob, args: [token, token.validation_run_id])
     assert_enqueued_with(
       job: AccessTokenValidationTimeoutJob,
-      args: [token.id, token.validation_run_id],
+      args: [token, token.validation_run_id],
       at: token.validation_started_at + AccessToken::VALIDATION_TIMEOUT
     )
   end
@@ -182,6 +183,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert token.reload.active?
     assert_not_nil token.validation_run_id
     assert_nil token.validation_started_at
+    assert_enqueued_with(job: TokenValidationJob, args: [token, token.validation_run_id])
   end
 
   test "#start_validation! should supersede an older run" do
@@ -194,15 +196,14 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal new_run_id, token.reload.validation_run_id
   end
 
-  test "#claim_validation! should restart a run left pending after exhausted retries" do
-    token = create(:access_token, status: :pending, validation_started_at: 1.minute.ago,
-                                  validation_run_id: SecureRandom.uuid)
-    new_run_id = SecureRandom.uuid
+  test "#claim_validation! should start a reserved run" do
+    run_id = SecureRandom.uuid
+    token = create(:access_token, :active, validation_started_at: nil, validation_run_id: run_id)
 
-    assert token.claim_validation!(new_run_id, start_if_idle: true)
+    assert token.claim_validation!(run_id)
 
     assert token.reload.validating?
-    assert_equal new_run_id, token.validation_run_id
+    assert_equal run_id, token.validation_run_id
   end
 
   test "#disable_token_and_feeds should close the open validation run" do
