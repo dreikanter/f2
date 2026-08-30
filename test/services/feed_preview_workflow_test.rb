@@ -16,12 +16,14 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
                              params: { "url" => FEED_URL }, status: :pending, run_id: RUN_ID)
   end
 
+  # Non-ASCII content keeps the body's byte size apart from its character
+  # count, so a content_size stat measured in characters fails the stats test.
   def rss_body(items: 1)
     entries = items.times.map do |i|
       <<~XML
         <item>
           <title>Test Post #{i + 1}</title>
-          <description>Test content for preview</description>
+          <description>Тестовое содержимое превью</description>
           <link>https://example.com/post#{i + 1}</link>
           <pubDate>Mon, 01 Jan 2024 12:00:00 GMT</pubDate>
           <guid>https://example.com/post#{i + 1}</guid>
