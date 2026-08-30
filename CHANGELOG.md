@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-30
+
+- A group-list refresh that takes too long can now be retried right away.
+
 ## 2026-08-29
 
 - Preview now reflects the feed settings you picked, so a YouTube preview with Skip Shorts on leaves them out too.

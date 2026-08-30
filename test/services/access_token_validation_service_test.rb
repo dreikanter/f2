@@ -162,7 +162,8 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
   test "#call should settle an in-flight groups refresh" do
     detail = create(:access_token_detail, access_token: access_token)
-    detail.begin_groups_refresh!
+    detail.update!(groups_refresh_state: :running, groups_refresh_requested_at: Time.current,
+                   groups_refresh_run_id: SecureRandom.uuid)
 
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_return(status: 200, body: { users: { id: "user123", username: "testuser" } }.to_json)
@@ -175,11 +176,13 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     detail.reload
     assert_nil detail.groups_refresh_state
     assert_not detail.groups_refresh_running?
+    assert_nil detail.groups_refresh_run_id
   end
 
   test "#call should clear a failed groups refresh" do
-    detail = create(:access_token_detail, access_token: access_token)
-    detail.fail_groups_refresh!
+    detail = create(:access_token_detail, access_token: access_token, groups_refresh_state: :failed,
+                                          groups_refresh_requested_at: Time.current,
+                                          groups_refresh_run_id: SecureRandom.uuid)
 
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_return(status: 200, body: { users: { id: "user123", username: "testuser" } }.to_json)
@@ -189,7 +192,9 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
     AccessTokenValidationService.new(access_token).call
 
-    assert_not detail.reload.groups_refresh_failed?
+    detail.reload
+    assert_not detail.groups_refresh_failed?
+    assert_nil detail.groups_refresh_run_id
   end
 
   test "#call should persist a partial scope list" do
