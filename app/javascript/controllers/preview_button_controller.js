@@ -6,7 +6,7 @@ import { csrfToken } from "controllers/helpers/csrf_token"
 // and provider selections when opening the modal. Closing it aborts the request
 // and unmounts any active poller.
 export default class extends Controller {
-  static targets = ["button", "frame", "source", "hint"]
+  static targets = ["button", "form", "frame", "source", "hint"]
   static values = {
     endpoint: String,
     source: String,
@@ -133,7 +133,7 @@ export default class extends Controller {
   // unchecked boxes, and select semantics come for free. Each control names its
   // own param, keeping that mapping in the form rather than this parser.
   _optionParams() {
-    const submitted = new FormData(this.element)
+    const submitted = new FormData(this.formTarget)
     const values = new Map()
 
     this.element.querySelectorAll("[data-param-name]").forEach((field) => {
