@@ -3,8 +3,9 @@ require "test_helper"
 class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   RUN_ID = "11111111-1111-4111-8111-111111111111"
   NEXT_RUN_ID = "22222222-2222-4222-8222-222222222222"
-  EXPLICIT_RUN_ID = "33333333-3333-4333-8333-333333333333"
   AI_RUN_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+
+  FEED_URL = "https://example.com/feed.xml"
 
   def user
     @user ||= create(:user)
@@ -12,15 +13,24 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
 
   def feed_preview
     @feed_preview ||= create(:feed_preview, user: user, feed_profile_key: "rss",
-                             params: { "url" => "https://example.com/feed.xml" },
-                             status: :pending, run_id: RUN_ID)
+                             params: { "url" => FEED_URL }, status: :pending, run_id: RUN_ID)
   end
 
-  def workflow
-    @workflow ||= FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID)
-  end
+  # Non-ASCII content keeps the body's byte size apart from its character
+  # count, so a content_size stat measured in characters fails the stats test.
+  def rss_body(items: 1)
+    entries = items.times.map do |i|
+      <<~XML
+        <item>
+          <title>Test Post #{i + 1}</title>
+          <description>Тестовое содержимое превью</description>
+          <link>https://example.com/post#{i + 1}</link>
+          <pubDate>Mon, 01 Jan 2024 12:00:00 GMT</pubDate>
+          <guid>https://example.com/post#{i + 1}</guid>
+        </item>
+      XML
+    end
 
-  def rss_body
     <<~XML
       <?xml version="1.0" encoding="UTF-8"?>
       <rss version="2.0">
@@ -28,130 +38,108 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
           <title>Test Feed</title>
           <description>Test Description</description>
           <link>https://example.com</link>
-          <item>
-            <title>Test Post</title>
-            <description>Test content for preview</description>
-            <link>https://example.com/post1</link>
-            <pubDate>Mon, 01 Jan 2024 12:00:00 GMT</pubDate>
-            <guid>https://example.com/post1</guid>
-          </item>
+          #{entries.join}
         </channel>
       </rss>
     XML
   end
 
-  def stub_rss_loader_returning_one_item
-    stub_request(:get, "https://example.com/feed.xml")
-      .to_return(status: 200, body: rss_body, headers: { "Content-Type" => "application/xml" })
-  end
-
-  test "#initialize should assign feed_preview and start with empty stats" do
-    assert_equal feed_preview, workflow.feed_preview
-    assert_equal({}, workflow.stats)
-  end
-
-  test "#initialize should prefer the given run_id over the feed_preview's" do
-    wf = FeedPreviewWorkflow.new(feed_preview, run_id: EXPLICIT_RUN_ID)
-    assert_equal EXPLICIT_RUN_ID, wf.send(:run_id)
-  end
-
-  test ".included should mix in Workflow module" do
-    assert_includes FeedPreviewWorkflow.included_modules, Workflow
-  end
-
-  test "#load_feed_contents should run the loader with the preview purpose" do
-    captured = nil
-    raw_data = "Привет"
-    loader = Object.new
-    loader.define_singleton_method(:load) { raw_data }
-    temp_feed = Object.new
-    temp_feed.define_singleton_method(:loader_instance) do |options = {}|
-      captured = options
-      loader
-    end
-
-    workflow.send(:load_feed_contents, temp_feed)
-
-    assert_equal({ purpose: :preview }, captured)
-    assert_equal raw_data.bytesize, workflow.stats[:content_size]
-  end
-
-  test ".const_get should expose PREVIEW_POSTS_LIMIT constant" do
-    assert_equal 10, FeedPreview::PREVIEW_POSTS_LIMIT
-  end
-
-  test "#execute should support error handling helpers" do
-    wf = FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID)
-    assert_respond_to wf, :execute
-    assert_equal feed_preview, wf.feed_preview
-  end
-
-  test "#record_stats should merge stats correctly" do
-    wf = FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID)
-    assert_empty wf.stats
-    assert_respond_to wf, :stats
+  def stub_rss_loader(items: 1)
+    stub_request(:get, FEED_URL)
+      .to_return(status: 200, body: rss_body(items: items), headers: { "Content-Type" => "application/xml" })
   end
 
   test "#execute should mark the preview ready with normalized posts and ready_at" do
-    preview = create(:feed_preview, feed_profile_key: "rss",
-                     params: { "url" => "https://example.com/feed.xml" }, run_id: RUN_ID)
-    stub_rss_loader_returning_one_item
+    stub_rss_loader
 
-    FeedPreviewWorkflow.new(preview, run_id: RUN_ID).execute
+    FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID).execute
 
-    preview.reload
-    assert preview.ready?
-    assert preview.ready_at.present?
-    assert_equal 1, preview.posts_count
+    feed_preview.reload
+    assert feed_preview.ready?
+    assert feed_preview.ready_at.present?
+    assert_equal 1, feed_preview.posts_count
+    assert_equal "https://example.com/post1", feed_preview.posts_data.first["source_url"]
   end
 
-  test "#execute should not finalize when the run_id is stale" do
-    preview = create(:feed_preview, feed_profile_key: "rss",
-                     params: { "url" => "https://example.com/feed.xml" }, run_id: NEXT_RUN_ID)
-    stub_rss_loader_returning_one_item
+  test "#execute should record the stats reported to preview readers" do
+    body = rss_body
+    stub_request(:get, FEED_URL)
+      .to_return(status: 200, body: body, headers: { "Content-Type" => "application/xml" })
 
-    FeedPreviewWorkflow.new(preview, run_id: RUN_ID).execute # superseded run
+    FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID).execute
 
-    preview.reload
-    refute preview.ready?
+    stats = feed_preview.reload.data["stats"]
+    assert_equal body.bytesize, stats["content_size"]
+    assert_equal 1, stats["total_entries"]
+    assert_equal 1, stats["preview_entries"]
+    assert_equal 1, stats["normalized_posts"]
   end
 
-  # Fix 5: superseded run halts early without calling the loader or marking failed
-  test "#execute should not invoke the loader and should not mark failed when run_id is superseded" do
-    preview = create(:feed_preview, feed_profile_key: "rss",
-                     params: { "url" => "https://example.com/feed.xml" }, run_id: NEXT_RUN_ID)
+  test "#execute should cap the preview at PREVIEW_POSTS_LIMIT while reporting the full entry count" do
+    total = FeedPreview::PREVIEW_POSTS_LIMIT + 2
+    stub_rss_loader(items: total)
 
-    # The stub for the loader URL is intentionally absent — if the loader were
-    # called it would raise a WebMock::NetConnectNotAllowedError, failing the test.
+    FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID).execute
+
+    feed_preview.reload
+    assert_equal FeedPreview::PREVIEW_POSTS_LIMIT, feed_preview.posts_count
+    assert_equal total, feed_preview.total_entries_count
+  end
+
+  test "#execute should mark the preview failed and re-raise when a step fails" do
+    stub_request(:get, FEED_URL).to_return(status: 500, body: "")
+
+    assert_raises(Loader::Error) do
+      FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID).execute
+    end
+
+    assert feed_preview.reload.failed?
+  end
+
+  test "#execute should halt before loading when the run is superseded" do
+    preview = create(:feed_preview, user: user, feed_profile_key: "rss",
+                     params: { "url" => "https://example.com/superseded.xml" },
+                     status: :pending, run_id: NEXT_RUN_ID)
+
+    # No loader stub: a request would raise WebMock::NetConnectNotAllowedError.
     FeedPreviewWorkflow.new(preview, run_id: RUN_ID).execute
 
     preview.reload
     assert preview.pending?, "expected preview to remain pending (not failed), got #{preview.status}"
+    assert_nil preview.data
   end
 
-  test "#execute should run the AI loader with the preview's selected provider and model" do
+  test "#execute should run the AI loader with the preview's selected model for the preview purpose" do
     credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
     preview = create(:feed_preview, user: user, feed_profile_key: "llm",
                      params: { "prompt" => "rust async" }, ai_credential: credential,
                      ai_model: "claude-sonnet-4-6", status: :pending, run_id: AI_RUN_ID)
 
     captured_feed = nil
-    captured_model = nil
+    captured_context = nil
     fake_client = Class.new do
       attr_reader :credential
-      def initialize(credential) = (@credential = credential)
-      define_method(:call) do |ctx, **_opts|
-        captured_model = ctx.model
+
+      def initialize(credential, callback)
+        @credential = credential
+        @callback = callback
+      end
+
+      def call(context, **_options)
+        @callback.call(context)
         LlmClient::Result.new(payload: { "items" => [] }, usage_id: 1)
       end
     end
 
-    LlmClient.stub(:for, ->(feed) { captured_feed = feed; fake_client.new(credential) }) do
+    LlmClient.stub(:for, lambda { |feed|
+      captured_feed = feed
+      fake_client.new(credential, ->(context) { captured_context = context })
+    }) do
       FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
     end
 
     assert_equal credential.id, captured_feed.ai_credential_id
-    assert_equal "claude-sonnet-4-6", captured_feed.ai_model
-    assert_equal "claude-sonnet-4-6", captured_model
+    assert_equal "claude-sonnet-4-6", captured_context.model
+    assert_equal :preview, captured_context.purpose
   end
 end
