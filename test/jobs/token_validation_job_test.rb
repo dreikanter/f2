@@ -37,7 +37,9 @@ class TokenValidationJobTest < ActiveJob::TestCase
       drain_freefeed(subject, :get, remaining: 0)
 
       Rails.error.stub(:report, ->(*, **) { }) do
-        assert_no_enqueued_jobs { job.perform_now }
+        assert_no_enqueued_jobs only: TokenValidationJob do
+          job.perform_now
+        end
       end
     end
 
@@ -71,6 +73,8 @@ class TokenValidationJobTest < ActiveJob::TestCase
     access_token.reload
     assert access_token.active?
     assert_equal "testuser", access_token.owner
+    assert_nil access_token.validation_started_at
+    assert_nil access_token.validation_run_id
   end
 
   test ".perform_now should mark token as inactive when validation fails" do
@@ -233,6 +237,31 @@ class TokenValidationJobTest < ActiveJob::TestCase
     end
   end
 
+  test "#perform should ignore a superseded run before calling FreeFeed" do
+    current_run_id = SecureRandom.uuid
+    access_token.update!(status: :validating, validation_started_at: Time.current,
+                        validation_run_id: current_run_id)
+
+    TokenValidationJob.perform_now(access_token.id, SecureRandom.uuid)
+
+    assert_not_requested :get, %r{#{Regexp.escape(access_token.host)}}
+    assert_equal current_run_id, access_token.reload.validation_run_id
+    assert access_token.validating?
+  end
+
+  test "#perform should not revive a run after its timeout" do
+    run_id = SecureRandom.uuid
+    access_token.update!(status: :validating, validation_started_at: 15.minutes.ago,
+                        validation_run_id: run_id)
+    AccessTokenValidationTimeoutJob.perform_now(access_token.id, run_id)
+
+    TokenValidationJob.perform_now(access_token.id, run_id)
+
+    assert_not_requested :get, %r{#{Regexp.escape(access_token.host)}}
+    assert access_token.reload.inactive?
+    assert_nil access_token.validation_run_id
+  end
+
   test ".perform_now should succeed on retry after transient failure" do
     stub_app_token_info
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
@@ -268,9 +297,10 @@ class TokenValidationJobTest < ActiveJob::TestCase
     end
     access_token.reload
     assert access_token.validating?
+    run_id = access_token.validation_run_id
 
     # Second run (retry) succeeds
-    TokenValidationJob.perform_now(access_token)
+    TokenValidationJob.perform_now(access_token.id, run_id)
     access_token.reload
     assert access_token.active?
     assert_equal "testuser", access_token.owner

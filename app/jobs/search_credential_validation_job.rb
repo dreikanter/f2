@@ -6,13 +6,33 @@ class SearchCredentialValidationJob < ApplicationJob
 
   queue_as :default
 
-  def perform(credential)
-    credential.validating!
+  # @param credential_id [String, SearchCredential] credential UUID; record accepted for queued legacy jobs
+  # @param run_id [String, nil] validation UUID
+  # @param _fallback_state [String, nil] state captured for the timeout job
+  def perform(credential_id, run_id = nil, _fallback_state = nil)
+    credential =
+      if credential_id.is_a?(SearchCredential)
+        credential_id
+      else
+        SearchCredential.find_by(id: credential_id)
+      end
+    return unless credential
+
+    claimed_run = credential.claim_validation!(run_id)
+    return unless claimed_run
+
+    run_id = claimed_run.first
+
     record_usage(credential)
     credential.web_search_provider.search(VALIDATION_QUERY, max_results: 1)
-    credential.update!(state: :active, last_validated_at: Time.current, last_error: nil)
+    credential.settle_validation!(
+      run_id: run_id,
+      state: :active,
+      last_validated_at: Time.current,
+      last_error: nil
+    )
   rescue WebSearchProvider::Error => e
-    credential.deactivate!(last_error: e.message)
+    credential.deactivate!(last_error: e.message, run_id: run_id)
   end
 
   private

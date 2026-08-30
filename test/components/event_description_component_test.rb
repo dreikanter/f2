@@ -130,7 +130,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
   test "#call should name an abandoned check as its own reason" do
     token = create(:access_token, user: user)
     event = Event.create!(
-      type: AccessTokenValidationWatchdog::EVENT_TYPE,
+      type: AccessToken::VALIDATION_ABANDONED_EVENT_TYPE,
       level: :warning,
       subject: token,
       user: user

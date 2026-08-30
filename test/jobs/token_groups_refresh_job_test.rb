@@ -64,9 +64,12 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
     detail
     stub_managed_groups(status: 401, body: "Unauthorized")
 
-    assert_enqueued_with(job: TokenValidationJob, args: [access_token]) do
+    assert_enqueued_with(job: TokenValidationJob) do
       TokenGroupsRefreshJob.perform_now(access_token, RUN_ID)
     end
+
+    validation_run_id = access_token.reload.validation_run_id
+    assert_enqueued_with(job: TokenValidationJob, args: [access_token.id, validation_run_id])
 
     assert detail.reload.groups_refresh_failed?
   end

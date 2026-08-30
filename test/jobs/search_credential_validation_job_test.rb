@@ -39,6 +39,8 @@ class SearchCredentialValidationJobTest < ActiveJob::TestCase
     assert credential.active?
     assert_not_nil credential.last_validated_at
     assert_nil credential.last_error
+    assert_nil credential.validation_started_at
+    assert_nil credential.validation_run_id
     assert_empty search_event.incoming_event_references
     assert_equal [{ query: SearchCredentialValidationJob::VALIDATION_QUERY, max_results: 1 }], provider.calls
   end
@@ -86,5 +88,22 @@ class SearchCredentialValidationJobTest < ActiveJob::TestCase
     end
 
     assert credential.reload.active?
+  end
+
+  test "#perform should not let a superseded run make a billed request" do
+    current_run_id = SecureRandom.uuid
+    credential.update!(state: :validating, validation_started_at: Time.current,
+                       validation_run_id: current_run_id)
+    provider = FakeProvider.new
+
+    WebSearchProvider.stub(:for, provider) do
+      SearchCredentialValidationJob.perform_now(
+        credential.id, SecureRandom.uuid, "inactive"
+      )
+    end
+
+    assert_empty provider.calls
+    assert_equal current_run_id, credential.reload.validation_run_id
+    assert credential.validating?
   end
 end

@@ -1,13 +1,12 @@
 class AccessTokenValidationService
-  attr_reader :access_token
+  attr_reader :access_token, :run_id
 
-  def initialize(access_token)
+  def initialize(access_token, run_id:)
     @access_token = access_token
+    @run_id = run_id
   end
 
   def call
-    access_token.begin_validation! unless access_token.validating?
-
     # Scopes come first because that route is always allowed. It answers for any
     # live token, and tells us whether the rest of the sequence can succeed.
     scopes = fetch_scopes
@@ -16,14 +15,15 @@ class AccessTokenValidationService
     user_info = fetch_user_info
     managed_groups = fetch_managed_groups
 
-    access_token.with_lock do
+    access_token.with_validation_run(run_id) do
       access_token.update!(
         status: :active,
         owner: user_info[:username],
         freefeed_user_id: user_info[:id],
         scopes: scopes,
         last_used_at: Time.current,
-        validation_started_at: nil
+        validation_started_at: nil,
+        validation_run_id: nil
       )
 
       access_token_detail = access_token.access_token_detail || access_token.build_access_token_detail
@@ -41,7 +41,7 @@ class AccessTokenValidationService
   rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError
     # The token is dead, not under-permissioned. The scope check above already
     # routed that case elsewhere.
-    access_token.disable_token_and_feeds
+    access_token.disable_token_and_feeds(run_id: run_id)
   rescue RateLimit::Throttled
     # Throttling is control flow, not a validation failure: let it propagate so
     # the job reschedules. Reporting it here would surface a fault on every
@@ -67,8 +67,11 @@ class AccessTokenValidationService
   # Persist the scopes on the way down. They are what lets the token page say
   # the token is alive but unusable, instead of calling it expired.
   def disable_for_missing_scope(scopes)
-    access_token.update!(scopes: scopes)
-    access_token.disable_token_and_feeds(event_type: "access_token_missing_scope")
+    access_token.disable_token_and_feeds(
+      event_type: "access_token_missing_scope",
+      run_id: run_id,
+      attributes: { scopes: scopes }
+    )
   end
 
   def fetch_user_info

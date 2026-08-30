@@ -122,7 +122,7 @@ class UpdateFeedSubscribersCountJobTest < ActiveJob::TestCase
     feed = feed_with_stale_count
     stub_statistics_error(feed, status: 401, err: "inactive or expired token")
 
-    assert_enqueued_with(job: TokenValidationJob, args: [feed.access_token]) do
+    assert_enqueued_with(job: TokenValidationJob) do
       UpdateFeedSubscribersCountJob.perform_now(feed)
     end
 

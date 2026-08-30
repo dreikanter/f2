@@ -11,8 +11,6 @@ class ValidationsController < ApplicationController
     record = policy_scope(validated_class).find(params[:"#{param_key}_id"])
     authorize record
 
-    settle_abandoned_validation(record)
-
     # Stay silent while validation is still in flight so the poller leaves the
     # spinner running instead of redrawing (and restarting) it every cycle.
     return head :no_content if record.pending? || record.validating?
@@ -25,13 +23,6 @@ class ValidationsController < ApplicationController
   end
 
   private
-
-  # Polling is the only thing that ever revisits a validation, so it's where a
-  # run that died without settling the record gets noticed. Subclasses whose
-  # model can be left mid-validation point this at their watchdog, which owns
-  # both the verdict and the write — the endpoint stays a read.
-  def settle_abandoned_validation(record)
-  end
 
   # Doubles as the target element id (dasherized) and the partial's local name.
   def param_key

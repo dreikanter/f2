@@ -80,30 +80,88 @@ class AccessToken < ApplicationRecord
     new(defaults.merge(attributes))
   end
 
-  # A validation that hasn't reported back in this long has nothing left
-  # working on it: TokenValidationJob gives up on its rate-limit retries well
-  # inside the window, so anything still in flight would have settled by now.
-  # See AccessTokenValidationWatchdog.
-  VALIDATION_STALE_AFTER = 15.minutes
+  VALIDATION_TIMEOUT = 15.minutes
+  VALIDATION_ABANDONED_EVENT_TYPE = "access_token_validation_abandoned".freeze
 
   def validate_token_async
-    begin_validation!
-    TokenValidationJob.perform_later(self)
+    run_id = start_validation!
+    TokenValidationJob.perform_later(id, run_id)
   end
 
-  # Opens a validation run. The timestamp is what later tells a reader whether
-  # anything is still working on the token, so it moves with the state.
-  def begin_validation!
-    update!(status: :validating, validation_started_at: Time.current)
+  # Reserves a run without changing status while the job waits. Background
+  # callers use this so publishers can keep using an active token until the
+  # validation worker actually starts.
+  def enqueue_validation
+    run_id = SecureRandom.uuid
+    update!(validation_run_id: run_id, validation_started_at: nil)
+    TokenValidationJob.perform_later(id, run_id)
   end
 
-  # In progress, with no run left to finish it. A blank timestamp means no run
-  # was ever opened under this marker, which says nothing either way, so it
-  # doesn't count as evidence.
-  def validation_abandoned?
-    (pending? || validating?) &&
-      validation_started_at.present? &&
-      validation_started_at < VALIDATION_STALE_AFTER.ago
+  # Opens a new user-initiated run, superseding any older worker still in flight.
+  # @param run_id [String] UUID identifying the run
+  # @return [String] the run ID
+  def start_validation!(run_id: SecureRandom.uuid)
+    started_at = Time.current
+    update!(status: :validating, validation_started_at: started_at, validation_run_id: run_id)
+    schedule_validation_timeout(run_id, started_at)
+    run_id
+  end
+
+  # Claims a deferred run unless another validation has started since it was
+  # queued. A retry with the current run ID simply resumes that run.
+  # @param run_id [String] UUID captured when the job was enqueued
+  # @param start_if_idle [Boolean] whether a deferred check may open the run
+  # @return [Boolean] whether the job owns the current run
+  def claim_validation!(run_id, start_if_idle: false)
+    with_lock do
+      if validation_run_id == run_id
+        unless validating? && validation_started_at.present?
+          started_at = Time.current
+          update!(status: :validating, validation_started_at: started_at)
+          schedule_validation_timeout(run_id, started_at)
+        end
+        return true
+      end
+      return false unless start_if_idle
+      return false if validation_run_id.present? && validating?
+
+      started_at = Time.current
+      update!(status: :validating, validation_started_at: started_at, validation_run_id: run_id)
+      schedule_validation_timeout(run_id, started_at)
+    end
+
+    true
+  end
+
+  # @param run_id [String] UUID captured by the timeout job
+  # @return [Boolean] whether the matching run was settled
+  def timeout_validation!(run_id:)
+    with_lock do
+      return false unless validation_run_id == run_id && (pending? || validating?)
+
+      update!(status: :inactive, validation_started_at: nil, validation_run_id: nil)
+      Event.create!(
+        type: VALIDATION_ABANDONED_EVENT_TYPE,
+        user: user,
+        subject: self,
+        level: :warning
+      )
+    end
+
+    true
+  end
+
+  # Runs a terminal write only while the caller still owns this validation.
+  # @param run_id [String] UUID captured by the worker
+  # @return [Boolean] whether the block ran
+  def with_validation_run(run_id)
+    with_lock do
+      return false unless validation_run_id == run_id
+
+      yield
+    end
+
+    true
   end
 
   def build_client
@@ -193,20 +251,28 @@ class AccessToken < ApplicationRecord
 
   # `event_type` carries the reason, so a dead token and an under-permissioned
   # one read differently in the event log.
-  def disable_token_and_feeds(event_type: "access_token_validation_failed")
+  def disable_token_and_feeds(event_type: "access_token_validation_failed", run_id: nil, attributes: {})
     with_lock do
-      update!(status: :inactive, validation_started_at: nil)
+      return false if run_id && validation_run_id != run_id
+
+      update!(**attributes, status: :inactive, validation_started_at: nil, validation_run_id: nil)
 
       enabled_feeds = feeds.enabled
-      return unless enabled_feeds.exists?
+      return true unless enabled_feeds.exists?
 
       feed_ids = enabled_feeds.pluck(:id)
       disabled_count = enabled_feeds.update_all(state: :disabled)
       create_validation_failed_event(event_type: event_type, feed_ids: feed_ids, disabled_count: disabled_count)
     end
+
+    true
   end
 
   private
+
+  def schedule_validation_timeout(run_id, started_at)
+    AccessTokenValidationTimeoutJob.set(wait_until: started_at + VALIDATION_TIMEOUT).perform_later(id, run_id)
+  end
 
   def create_validation_failed_event(event_type:, feed_ids:, disabled_count:)
     Event.create!(

@@ -48,7 +48,14 @@ class AccessTokensController < ApplicationController
 
     new_token = params.dig(:access_token, :token).presence
     attrs = { name: params.dig(:access_token, :name) }
-    attrs[:encrypted_token] = new_token if new_token
+    if new_token
+      attrs.merge!(
+        encrypted_token: new_token,
+        status: :pending,
+        validation_started_at: nil,
+        validation_run_id: nil
+      )
+    end
 
     if @access_token.update(attrs)
       @access_token.validate_token_async if new_token

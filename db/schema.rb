@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_08_30_230000) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_30_231000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -41,6 +41,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_30_230000) do
     t.string "freefeed_user_id"
     t.string "scopes", default: [], null: false, array: true
     t.datetime "validation_started_at"
+    t.uuid "validation_run_id"
     t.index ["freefeed_user_id"], name: "index_access_tokens_on_freefeed_user_id"
     t.index ["user_id", "name"], name: "index_access_tokens_on_user_id_and_name", unique: true
   end
@@ -56,6 +57,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_30_230000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.jsonb "available_models", default: [], null: false
+    t.datetime "validation_started_at"
+    t.uuid "validation_run_id"
     t.index ["user_id", "provider", "display_name"], name: "index_ai_credentials_on_user_id_and_provider_and_display_name", unique: true
     t.index ["user_id", "state"], name: "index_ai_credentials_on_user_id_and_state"
   end
@@ -306,6 +309,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_30_230000) do
     t.text "last_error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "validation_started_at"
+    t.uuid "validation_run_id"
     t.index ["user_id", "provider", "display_name"], name: "index_search_credentials_on_owner_provider_name", unique: true
     t.index ["user_id", "state"], name: "index_search_credentials_on_user_id_and_state"
   end

@@ -1,6 +1,4 @@
-# Marks when a token's validation run started, so a reader can tell an
-# in-flight check from one whose run died without settling the record.
-# See AccessTokenValidationWatchdog.
+# Records when a token's validation run started.
 class AddValidationStartedAtToAccessTokens < ActiveRecord::Migration[8.0]
   def up
     add_column :access_tokens, :validation_started_at, :datetime
