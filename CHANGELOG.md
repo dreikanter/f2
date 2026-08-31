@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-31
+
+- Post images can now be opened in a lightbox from the post's page, just like in the preview.
+
 ## 2026-08-30
 
 - The FreeFeed Post ID on a post's page now always links to the post, even after the connected token is removed.

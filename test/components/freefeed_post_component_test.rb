@@ -101,6 +101,18 @@ class FreefeedPostComponentTest < ViewComponent::TestCase
     assert_equal 2, attachments.css("a").size
   end
 
+  test "#render should wire attachment thumbnails to the lightbox controller" do
+    post = create(:post, :with_attachments, feed: feed)
+
+    result = render_inline(FreefeedPostComponent.new(post: post))
+
+    attachments = result.css('[data-key="freefeed_post.attachments"]').first
+    assert_equal "lightbox", attachments["data-controller"]
+    link = attachments.css("a").first
+    assert_equal "item", link["data-lightbox-target"]
+    assert_equal "click->lightbox#open", link["data-action"]
+  end
+
   test "#render should fall back to a generic alt for unparseable attachment URLs" do
     post = create(:post, feed: feed, attachment_urls: ["https://example.com/bad path.jpg"])
 
