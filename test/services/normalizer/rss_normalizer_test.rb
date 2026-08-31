@@ -84,6 +84,19 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     ], post.attachment_urls
   end
 
+  test "#normalize should exclude emoji images from attachment_urls" do
+    entry = create(:feed_entry, raw_data: {
+      "summary" => "Comic of the day.",
+      "link" => "https://example.com/comic",
+      "content" => '<p><img src="https://example.com/comic.jpg"></p>' \
+                   '<p>Surrounded <img src="https://s.w.org/images/core/emoji/16.0.1/72x72/1f414.png" alt="🐔" class="wp-smiley"></p>'
+    })
+
+    post = Normalizer::RssNormalizer.new(entry).normalize
+
+    assert_equal ["https://example.com/comic.jpg"], post.attachment_urls
+  end
+
   test "#normalize should dedupe enclosure and content images differing only by query string" do
     entry = create(:feed_entry, raw_data: {
       "summary" => "Photo of the day.",

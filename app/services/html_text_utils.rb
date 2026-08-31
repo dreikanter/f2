@@ -1,6 +1,11 @@
 module HtmlTextUtils
   CONTENT_URL_SEPARATOR = " - "
 
+  # WordPress replaces emoji characters with images in feed content
+  # (wp_staticize_emoji), so they arrive as regular <img> tags.
+  EMOJI_IMAGE_CLASSES = %w[wp-smiley emoji].freeze
+  EMOJI_IMAGE_URL = %r{//s\.w\.org/images/core/emoji/}i
+
   def strip_html(text)
     return "" if text.blank?
 
@@ -26,7 +31,7 @@ module HtmlTextUtils
     return [] if text.blank?
 
     doc = Nokogiri::HTML::DocumentFragment.parse(text)
-    doc.css("img").map { |image| image["src"] }.compact
+    doc.css("img").filter_map { |image| image["src"] unless emoji_image?(image) }
   end
 
   def truncate_text(text, max_length: Post::MAX_CONTENT_LENGTH)
@@ -50,5 +55,13 @@ module HtmlTextUtils
 
     text = truncate_text(content, max_length: content_fit_limit(url, max_content_length:, max_url_length:))
     url.blank? ? text : "#{text}#{CONTENT_URL_SEPARATOR}#{url}"
+  end
+
+  private
+
+  def emoji_image?(image)
+    return true if image["class"].to_s.split.intersect?(EMOJI_IMAGE_CLASSES)
+
+    image["src"].to_s.match?(EMOJI_IMAGE_URL)
   end
 end

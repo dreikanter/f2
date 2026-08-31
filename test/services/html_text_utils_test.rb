@@ -50,6 +50,27 @@ class HtmlTextUtilsTest < ActiveSupport::TestCase
     assert_equal ["https://example.com/image.jpg"], result
   end
 
+  test "#extract_images should skip emoji images marked with a class" do
+    html = <<~HTML
+      <p>Surrounded <img src="https://s.w.org/images/core/emoji/16.0.1/72x72/1f414.png" alt="🐔" class="wp-smiley"></p>
+      <p><img src="https://example.com/comic.jpg"></p>
+    HTML
+
+    assert_equal ["https://example.com/comic.jpg"], subject.extract_images(html)
+  end
+
+  test "#extract_images should skip emoji images without a class" do
+    html = '<p><img src="https://s.w.org/images/core/emoji/16.0.1/72x72/1f414.png" alt="🐔"></p>'
+
+    assert_equal [], subject.extract_images(html)
+  end
+
+  test "#extract_images should keep images with an unrelated class" do
+    html = '<p><img src="https://example.com/comic.jpg" class="alignnone size-full"></p>'
+
+    assert_equal ["https://example.com/comic.jpg"], subject.extract_images(html)
+  end
+
   test "#extract_images should return empty array for blank input" do
     assert_equal [], subject.extract_images(nil)
     assert_equal [], subject.extract_images("")
