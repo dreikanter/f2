@@ -1,6 +1,9 @@
 module Normalizer
   # RSS-specific normalizer for feed entries
   class RssNormalizer < Base
+    # Where an entry's text may live, best source first.
+    CONTENT_FIELDS = %w[summary content description title].freeze
+
     private
 
     def content
@@ -43,9 +46,11 @@ module Normalizer
       validate_url(original_url)
     end
 
+    # An entry whose body is a bare image (comics, photo feeds) strips down to
+    # nothing, so keep walking the chain instead of settling for the first
+    # field that happens to be filled; the title is the last resort.
     def normalize_content
-      content = raw_data.dig("summary") || raw_data.dig("content") || raw_data.dig("description") || raw_data.dig("title") || ""
-      strip_html(content)
+      CONTENT_FIELDS.lazy.filter_map { |field| strip_html(raw_data[field]).presence }.first || ""
     end
 
     def normalize_attachment_urls
