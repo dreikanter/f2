@@ -134,6 +134,18 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_equal ["https://example.com/photo.jpg"], post.attachment_urls
   end
 
+  test "#normalize should use the description image when the content image is unusable" do
+    entry = create(:feed_entry, raw_data: {
+      "summary" => '<img src="https://example.com/photo.jpg"/>',
+      "content" => '<img src="/relative/photo.jpg"/>',
+      "link" => "https://example.com/photo"
+    })
+
+    post = Normalizer::RssNormalizer.new(entry).normalize
+
+    assert_equal ["https://example.com/photo.jpg"], post.attachment_urls
+  end
+
   test "#normalize should dedupe enclosure and content images differing only by query string" do
     entry = create(:feed_entry, raw_data: {
       "summary" => "Photo of the day.",

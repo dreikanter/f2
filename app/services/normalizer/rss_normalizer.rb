@@ -75,8 +75,15 @@ module Normalizer
     # back to it rather than scanning both fields: where a feed fills in
     # content:encoded, the excerpt tends to repeat the same picture as a
     # thumbnail under a different path, which would attach it twice.
+    #
+    # Images Base would drop as unsafe don't count as a hit, or a relative src
+    # in content:encoded would mask a usable picture in the excerpt.
     def inline_images
-      extract_images(raw_data["content"]).presence || extract_images(raw_data["summary"])
+      attachable_images(raw_data["content"]).presence || attachable_images(raw_data["summary"])
+    end
+
+    def attachable_images(html)
+      extract_images(html).select { |url| PublicUrl.safe?(url) }
     end
 
     def validate_url(url)
