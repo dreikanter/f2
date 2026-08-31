@@ -9,14 +9,14 @@ module HtmlTextUtils
   def strip_html(text)
     return "" if text.blank?
 
-    doc = Nokogiri::HTML::DocumentFragment.parse(text)
+    doc = restore_emoji_characters(Nokogiri::HTML::DocumentFragment.parse(text))
     doc.text.strip.gsub(/\s+/, " ")
   end
 
   def strip_html_preserving_paragraphs(text)
     return "" if text.blank?
 
-    doc = Nokogiri::HTML::DocumentFragment.parse(text)
+    doc = restore_emoji_characters(Nokogiri::HTML::DocumentFragment.parse(text))
     doc.css("br").each { |node| node.after("\n") }
     doc.css("p").each { |node| node.after("\n\n") }
 
@@ -58,6 +58,18 @@ module HtmlTextUtils
   end
 
   private
+
+  # The alt attribute holds the character the emoji image stands for. Put it
+  # back, or stripping the tags would drop the emoji from the text.
+  def restore_emoji_characters(doc)
+    doc.css("img").each do |image|
+      next unless emoji_image?(image)
+
+      image.replace(Nokogiri::XML::Text.new(image["alt"].to_s, image.document))
+    end
+
+    doc
+  end
 
   def emoji_image?(image)
     return true if image["class"].to_s.split.intersect?(EMOJI_IMAGE_CLASSES)

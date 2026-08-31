@@ -15,6 +15,12 @@ class HtmlTextUtilsTest < ActiveSupport::TestCase
     assert_equal "Hello world", result
   end
 
+  test "#strip_html should keep the character an emoji image stands for" do
+    html = '<p>Surrounded <img src="https://s.w.org/images/core/emoji/16.0.1/72x72/1f414.png" alt="🐔" class="wp-smiley"></p>'
+
+    assert_equal "Surrounded 🐔", subject.strip_html(html)
+  end
+
   test "#strip_html should return empty string for blank input" do
     assert_equal "", subject.strip_html(nil)
     assert_equal "", subject.strip_html("")
@@ -31,6 +37,12 @@ class HtmlTextUtilsTest < ActiveSupport::TestCase
     html = "<p>Hello <strong>world</strong></p><p>Second<br>line</p>"
 
     assert_equal "Hello world\n\nSecond\nline", subject.strip_html_preserving_paragraphs(html)
+  end
+
+  test "#strip_html_preserving_paragraphs should keep the character an emoji image stands for" do
+    html = '<p>Surrounded <img src="https://s.w.org/images/core/emoji/16.0.1/72x72/1f414.png" alt="🐔" class="wp-smiley"></p><p>Second</p>'
+
+    assert_equal "Surrounded 🐔\n\nSecond", subject.strip_html_preserving_paragraphs(html)
   end
 
   test "#strip_html_preserving_paragraphs should return empty string for blank input" do
