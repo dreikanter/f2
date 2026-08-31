@@ -84,6 +84,31 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     ], post.attachment_urls
   end
 
+  test "#normalize should include an image found only in the description" do
+    entry = create(:feed_entry, raw_data: {
+      "title" => "Wumo 28. Jul 2023",
+      "summary" => '<a href="https://wumo.com/wumo/2023/07/28"><img src="https://wumo.com/img/wumo/2023/07/wumo64abf9be.jpg" alt="Wumo 28. Jul 2023"/></a>',
+      "link" => "https://wumo.com/wumo/2023/07/28"
+    })
+
+    post = Normalizer::RssNormalizer.new(entry).normalize
+
+    assert_equal ["https://wumo.com/img/wumo/2023/07/wumo64abf9be.jpg"], post.attachment_urls
+    assert_equal "enqueued", post.status
+  end
+
+  test "#normalize should ignore description images when the content has its own" do
+    entry = create(:feed_entry, raw_data: {
+      "summary" => '<img src="https://example.com/photo-150x150.jpg"/> Excerpt.',
+      "content" => '<img src="https://example.com/photo.jpg"/> Full text.',
+      "link" => "https://example.com/photo"
+    })
+
+    post = Normalizer::RssNormalizer.new(entry).normalize
+
+    assert_equal ["https://example.com/photo.jpg"], post.attachment_urls
+  end
+
   test "#normalize should dedupe enclosure and content images differing only by query string" do
     entry = create(:feed_entry, raw_data: {
       "summary" => "Photo of the day.",

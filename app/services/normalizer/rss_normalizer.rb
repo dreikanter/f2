@@ -49,7 +49,7 @@ module Normalizer
     end
 
     def normalize_attachment_urls
-      dedup_attachment_urls(image_urls + content_images)
+      dedup_attachment_urls(image_urls + inline_images)
     end
 
     # The same image often arrives both as an <enclosure> and as an inline
@@ -65,8 +65,13 @@ module Normalizer
       enclosures.filter_map { |e| e["url"] if e["type"].nil? || e["type"].start_with?("image/") }
     end
 
-    def content_images
-      extract_images(raw_data.dig("content") || "")
+    # Some feeds carry the post image only as an <img> inside <description>
+    # (Feedjira's `summary`), with no enclosure and no content:encoded. Fall
+    # back to it rather than scanning both fields: where a feed fills in
+    # content:encoded, the excerpt tends to repeat the same picture as a
+    # thumbnail under a different path, which would attach it twice.
+    def inline_images
+      extract_images(raw_data["content"]).presence || extract_images(raw_data["summary"])
     end
 
     def validate_url(url)
