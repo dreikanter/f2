@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-31
 
+- A spinner now shows while we check a link for a new or edited feed, so it's clear the check is still running.
 - Post images can now be opened in a lightbox from the post's page, just like in the preview.
 
 ## 2026-08-30

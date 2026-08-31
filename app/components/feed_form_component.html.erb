@@ -46,7 +46,10 @@
                                  class: helpers.input_field_classes(disabled: true),
                                  data: { preview_button_target: "source", action: "input->preview-button#refreshAvailability", key: "form.source-edit" } %>
               <% if checking? %>
-                <p class="text-sm text-muted" role="status" data-key="form.source-checking">Checking this feed. This usually takes a few seconds.</p>
+                <p class="flex items-center gap-2 text-sm text-muted" role="status" data-key="form.source-checking">
+                  <%= helpers.icon "loader-circle", css_class: "size-4 animate-spin" %>
+                  Checking this feed. This usually takes a few seconds.
+                </p>
               <% elsif source_error %>
                 <p class="text-sm text-danger" data-key="form.source-error"><%= source_error %></p>
               <% elsif source_discovered? %>
