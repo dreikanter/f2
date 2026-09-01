@@ -36,6 +36,17 @@ class FeedIdentificationsFormTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='entry.actions-webhook'] input[data-turbo-submits-with='Preparing…']", count: 1
   end
 
+  test "#create should spin an indicator next to the checking status" do
+    sign_in_as(user)
+
+    post feed_identifications_path,
+         params: { url: "http://example.com/feed.xml" },
+         headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "[data-key='entry.checking-status'] svg[data-icon='loader-circle'].animate-spin", count: 1
+  end
+
   test "#create should disable and visibly dim the checking submit button" do
     sign_in_as(user)
 

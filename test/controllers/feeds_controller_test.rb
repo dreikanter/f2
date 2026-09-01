@@ -1361,6 +1361,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "fieldset[disabled]"
     assert_select "input[data-key='form.source-edit'][value=?]", new_url
     assert_select "input[type=submit][value='Checking…'][disabled]"
+    assert_select "[data-key='form.source-checking'] svg[data-icon='loader-circle'].animate-spin", count: 1
     assert_select "[data-controller*='polling']"
     assert_includes response.body, "feed_id=#{feed.id}"
     assert_select "[data-polling-interval-value='2500'][data-polling-max-polls-value='36']"

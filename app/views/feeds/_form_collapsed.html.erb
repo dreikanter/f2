@@ -55,7 +55,10 @@
                                aria: { label: "Source link" },
                                data: { key: "form.entry-link" } %>
               <% if checking %>
-                <p class="text-sm text-muted" role="status" data-key="entry.checking-status">Checking this feed. This usually takes a few seconds.</p>
+                <p class="flex items-center gap-2 text-sm text-muted" role="status" data-key="entry.checking-status">
+                  <%= icon "loader-circle", css_class: "size-4 animate-spin" %>
+                  Checking this feed. This usually takes a few seconds.
+                </p>
               <% elsif error && mode == "link" %>
                 <p class="text-sm text-danger" data-key="entry.error"><%= error %></p>
               <% else %>
