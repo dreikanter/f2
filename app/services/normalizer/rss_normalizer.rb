@@ -1,6 +1,9 @@
 module Normalizer
   # RSS-specific normalizer for feed entries
   class RssNormalizer < Base
+    # Where an entry's text may live, best source first.
+    CONTENT_FIELDS = %w[summary content description title].freeze
+
     private
 
     def content
@@ -43,13 +46,15 @@ module Normalizer
       validate_url(original_url)
     end
 
+    # An entry whose body is a bare image (comics, photo feeds) strips down to
+    # nothing, so keep walking the chain instead of settling for the first
+    # field that happens to be filled; the title is the last resort.
     def normalize_content
-      content = raw_data.dig("summary") || raw_data.dig("content") || raw_data.dig("description") || raw_data.dig("title") || ""
-      strip_html(content)
+      CONTENT_FIELDS.lazy.filter_map { |field| strip_html(raw_data[field]).presence }.first || ""
     end
 
     def normalize_attachment_urls
-      dedup_attachment_urls(image_urls + content_images)
+      dedup_attachment_urls(image_urls + inline_images)
     end
 
     # The same image often arrives both as an <enclosure> and as an inline
@@ -65,8 +70,20 @@ module Normalizer
       enclosures.filter_map { |e| e["url"] if e["type"].nil? || e["type"].start_with?("image/") }
     end
 
-    def content_images
-      extract_images(raw_data.dig("content") || "")
+    # Some feeds carry the post image only as an <img> inside <description>
+    # (Feedjira's `summary`), with no enclosure and no content:encoded. Fall
+    # back to it rather than scanning both fields: where a feed fills in
+    # content:encoded, the excerpt tends to repeat the same picture as a
+    # thumbnail under a different path, which would attach it twice.
+    #
+    # Images Base would drop as unsafe don't count as a hit, or a relative src
+    # in content:encoded would mask a usable picture in the excerpt.
+    def inline_images
+      attachable_images(raw_data["content"]).presence || attachable_images(raw_data["summary"])
+    end
+
+    def attachable_images(html)
+      extract_images(html).select { |url| PublicUrl.safe?(url) }
     end
 
     def validate_url(url)
