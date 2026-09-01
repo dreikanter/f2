@@ -6,7 +6,7 @@ GIT
 
 GIT
   remote: https://github.com/rails/rails.git
-  revision: ac1a25371cdb30e0a8a8801e62de1a2cb373b530
+  revision: 20f6c257ce85523f17df2d5af7273f199fba58f1
   branch: main
   specs:
     actioncable (8.2.0.alpha)
@@ -68,7 +68,7 @@ GIT
       activejob (= 8.2.0.alpha)
       activerecord (= 8.2.0.alpha)
       activesupport (= 8.2.0.alpha)
-      marcel (~> 1.0)
+      marcel (~> 2.0)
     activesupport (8.2.0.alpha)
       base64
       bigdecimal
@@ -306,7 +306,7 @@ GEM
       net-imap
       net-pop
       net-smtp
-    marcel (1.2.1)
+    marcel (2.1.0)
     mcp (1.1.0)
       json_schemer (>= 2.4)
     mini_mime (1.1.5)
@@ -482,17 +482,14 @@ GEM
       prism (>= 1.2, < 2.0)
       rbs (>= 3, < 5)
     ruby-progressbar (1.13.0)
-    ruby_llm (1.16.0)
+    ruby_llm (1.2.0)
       base64
       event_stream_parser (~> 1)
-      faraday (>= 1.10.0)
-      faraday-multipart (>= 1)
-      faraday-net_http (>= 1)
-      faraday-retry (>= 1)
-      marcel (~> 1)
-      ruby_llm-schema (~> 0)
+      faraday (~> 2)
+      faraday-multipart (~> 1)
+      faraday-net_http (~> 3)
+      faraday-retry (~> 2)
       zeitwerk (~> 2)
-    ruby_llm-schema (0.4.0)
     ruby_parser (3.22.0)
       racc (~> 1.5)
       sexp_processor (~> 4.16)
