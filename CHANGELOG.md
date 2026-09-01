@@ -6,6 +6,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 - RSS feeds that put the picture only in the post description now attach it, so comics and photo feeds keep their images.
 - Posts whose feed entry is just a picture now use the entry's title as their text, instead of showing only a link.
+- Emoji from a post's text no longer end up attached as images.
 - Post images can now be opened in a lightbox from the post's page, just like in the preview.
 
 ## 2026-08-30

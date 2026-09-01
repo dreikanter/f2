@@ -15,6 +15,12 @@ class HtmlTextUtilsTest < ActiveSupport::TestCase
     assert_equal "Hello world", result
   end
 
+  test "#strip_html should keep the character an emoji image stands for" do
+    html = '<p>Surrounded <img src="https://s.w.org/images/core/emoji/16.0.1/72x72/1f414.png" alt="🐔" class="wp-smiley"></p>'
+
+    assert_equal "Surrounded 🐔", subject.strip_html(html)
+  end
+
   test "#strip_html should return empty string for blank input" do
     assert_equal "", subject.strip_html(nil)
     assert_equal "", subject.strip_html("")
@@ -33,6 +39,12 @@ class HtmlTextUtilsTest < ActiveSupport::TestCase
     assert_equal "Hello world\n\nSecond\nline", subject.strip_html_preserving_paragraphs(html)
   end
 
+  test "#strip_html_preserving_paragraphs should keep the character an emoji image stands for" do
+    html = '<p>Surrounded <img src="https://s.w.org/images/core/emoji/16.0.1/72x72/1f414.png" alt="🐔" class="wp-smiley"></p><p>Second</p>'
+
+    assert_equal "Surrounded 🐔\n\nSecond", subject.strip_html_preserving_paragraphs(html)
+  end
+
   test "#strip_html_preserving_paragraphs should return empty string for blank input" do
     assert_equal "", subject.strip_html_preserving_paragraphs(nil)
     assert_equal "", subject.strip_html_preserving_paragraphs("")
@@ -48,6 +60,27 @@ class HtmlTextUtilsTest < ActiveSupport::TestCase
     html = '<p><img alt="test"><img src="https://example.com/image.jpg"></p>'
     result = subject.extract_images(html)
     assert_equal ["https://example.com/image.jpg"], result
+  end
+
+  test "#extract_images should skip emoji images marked with a class" do
+    html = <<~HTML
+      <p>Surrounded <img src="https://s.w.org/images/core/emoji/16.0.1/72x72/1f414.png" alt="🐔" class="wp-smiley"></p>
+      <p><img src="https://example.com/comic.jpg"></p>
+    HTML
+
+    assert_equal ["https://example.com/comic.jpg"], subject.extract_images(html)
+  end
+
+  test "#extract_images should skip emoji images without a class" do
+    html = '<p><img src="https://s.w.org/images/core/emoji/16.0.1/72x72/1f414.png" alt="🐔"></p>'
+
+    assert_equal [], subject.extract_images(html)
+  end
+
+  test "#extract_images should keep images with an unrelated class" do
+    html = '<p><img src="https://example.com/comic.jpg" class="alignnone size-full"></p>'
+
+    assert_equal ["https://example.com/comic.jpg"], subject.extract_images(html)
   end
 
   test "#extract_images should return empty array for blank input" do
