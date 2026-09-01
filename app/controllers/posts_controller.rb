@@ -75,11 +75,11 @@ class PostsController < ApplicationController
       refresh_published_metric(@post.feed, @post.reposted_at)
     end
 
-    @notice = destroy_notice
+    notice = destroy_notice
 
     respond_to do |format|
-      format.html { redirect_to destroy_redirect_path, notice: @notice }
-      format.turbo_stream
+      format.html { redirect_to destroy_redirect_path, notice: notice }
+      format.turbo_stream { flash.now[:notice] = notice }
     end
   end
 

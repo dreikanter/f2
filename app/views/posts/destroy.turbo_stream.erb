@@ -6,8 +6,4 @@
   <% end %>
 <% end %>
 
-<%= turbo_stream.prepend "flash-messages" do %>
-  <%= render AlertComponent.new(variant: :info) do %>
-    <span><%= @notice %></span>
-  <% end %>
-<% end %>
+<%= turbo_stream.replace "flash-messages", partial: "layouts/flash" %>
