@@ -127,6 +127,15 @@ class PostListItemComponentTest < ViewComponent::TestCase
     assert_includes menu_items, "Delete…"
   end
 
+  test "#render should separate Delete from the actions above it" do
+    Current.session = build(:session, user: user)
+    result = render_inline PostListItemComponent.new(post: post)
+    menu = result.at_css("#post-menu-#{post.id}")
+
+    assert_equal "separator", menu.css("li")[-2]["role"]
+    assert_equal "Delete…", menu.css("li").last.text.strip
+  end
+
   test "#render should render the delete modal for a published post" do
     Current.session = build(:session, user: user)
     result = render_inline PostListItemComponent.new(post: post)
@@ -151,6 +160,7 @@ class PostListItemComponentTest < ViewComponent::TestCase
     menu_items = result.css('[role="menuitem"]').map { |item| item.text.strip }
     assert_includes menu_items, "Details"
     assert_not_includes menu_items, "Delete…"
+    assert_nil result.at_css("#post-menu-#{draft_post.id} li[role='separator']")
   end
 
   test "#render should render the status line as a borderless muted row" do
@@ -158,7 +168,7 @@ class PostListItemComponentTest < ViewComponent::TestCase
 
     status = result.at_css('[data-key="post.status"]')
     assert_not_nil status
-    assert_empty result.css(".border-t")
+    assert_not_includes status.parent["class"].to_s, "border-t"
   end
 
   test "#render should offer the source as a menu item opening in a new tab" do

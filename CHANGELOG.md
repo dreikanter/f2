@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-01
+
+- Delete actions in post menus are now separated from the routine actions above them.
+
 ## 2026-08-31
 
 - A spinner now shows while we check a link for a new or edited feed, so it's clear the check is still running.
