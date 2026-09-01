@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-09-01
 
 - Delete actions in post menus are now separated from the routine actions above them.
+- Deleting several posts in a row now keeps only the latest confirmation message on the page.
 
 ## 2026-08-31
 

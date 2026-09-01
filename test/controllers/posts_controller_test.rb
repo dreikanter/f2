@@ -214,7 +214,9 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "turbo-stream"
     assert_includes response.body, "id=\"#{dom_id(published_post)}\""
     assert_includes response.body, "Withdrawn"
-    assert_includes response.body, "The post will be withdrawn from FreeFeed"
+    assert_select "turbo-stream[action='replace'][target='flash-messages']" do
+      assert_select "#flash-messages [role='alert']", text: /The post will be withdrawn from FreeFeed/, count: 1
+    end
     assert_equal "withdrawn", published_post.reload.status
 
     event = Event.last

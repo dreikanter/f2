@@ -79,7 +79,7 @@ class PostsController < ApplicationController
 
     respond_to do |format|
       format.html { redirect_to destroy_redirect_path, notice: @notice }
-      format.turbo_stream
+      format.turbo_stream { flash.now[:notice] = @notice }
     end
   end
 
