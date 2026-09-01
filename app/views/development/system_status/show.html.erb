@@ -17,7 +17,7 @@
 
   <section class="space-y-4">
     <h2 class="text-2xl font-semibold mb-3 text-heading">Integrations</h2>
-    <p class="text-body">Optional services this deploy talks to. Required settings aren't listed — the app refuses to start without them.</p>
+    <p class="text-body">Optional services this deploy talks to.</p>
     <%= render(DescriptionListComponent.new) do |list| %>
       <% @integrations.each do |name, enabled| %>
         <% list.with_item(StatListItemComponent.new(
