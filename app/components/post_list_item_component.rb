@@ -95,6 +95,7 @@ class PostListItemComponent < ListItemComponent
     items = [{ label: "Details", href: post_url }]
     items << { label: "Source", href: source_url, target: "_blank", rel: "noopener", data: { key: "post.source" } } if source_url
     if delete_allowed?
+      items << { separator: true }
       items << { label: "Delete…", href: "#",
                  data: { controller: "modal-trigger", modal_trigger_modal_id_value: delete_modal_id, action: "click->modal-trigger#open" } }
     end

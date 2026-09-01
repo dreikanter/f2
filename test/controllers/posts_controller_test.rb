@@ -182,6 +182,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "button[data-dropdown-toggle='post-header-menu-#{published_post.id}']"
     assert_select "#post-header-menu-#{published_post.id} a[data-key='post.source'][href='#{feed_entry_path(published_post.feed_entry)}']", text: "Source"
+    assert_select "#post-header-menu-#{published_post.id} li[role='separator']", count: 1
     assert_select "#post-header-menu-#{published_post.id} a[data-key='post.delete']", text: "Delete…"
   end
 
@@ -193,6 +194,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "#post-header-menu-#{draft_post.id} a[data-key='post.source']", text: "Source"
+    assert_select "#post-header-menu-#{draft_post.id} li[role='separator']", count: 0
     assert_select "#post-header-menu-#{draft_post.id} a[data-key='post.delete']", count: 0
   end
 
