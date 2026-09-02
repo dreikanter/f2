@@ -61,32 +61,6 @@
     <%= render Admin::UserInvitationsComponent.new(user: @user, stats: @stats) %>
   </section>
 
-  <% if @stats.invited_users.any? %>
-    <section class="space-y-4">
-      <h3 class="text-xl font-semibold mb-2 text-heading">Users Invited by <%= @user.name %></h3>
-      <div class="overflow-x-auto rounded-lg border border-border">
-        <table class="w-full text-left text-sm text-heading">
-          <thead class="border-b border-border bg-surface-muted text-xs uppercase text-body">
-            <tr class="hover:bg-surface-muted">
-              <th scope="col" class="px-6 py-3">Name</th>
-              <th scope="col" class="px-6 py-3">Email</th>
-              <th scope="col" class="px-6 py-3">Invited</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border bg-surface">
-            <% @stats.invited_users.each do |invite| %>
-              <tr class="hover:bg-surface-muted">
-                <td class="px-6 py-4 whitespace-nowrap"><%= link_to invite.invited_user.name, admin_user_path(invite.invited_user), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %></td>
-                <td class="px-6 py-4 whitespace-nowrap"><%= invite.invited_user.email_address %></td>
-                <td class="px-6 py-4 whitespace-nowrap"><%= short_time_ago(invite.created_at) %></td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  <% end %>
-
   <section class="space-y-4">
     <h2 class="text-2xl font-semibold mb-3 text-heading">Active Sessions</h2>
 

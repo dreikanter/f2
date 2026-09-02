@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-02
+
+- Admin user details now show who invited the user and link to everyone they invited, using email addresses when names are blank.
+
 ## 2026-09-01
 
 - Delete actions in post menus are now separated from the routine actions above them.

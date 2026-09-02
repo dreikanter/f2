@@ -42,6 +42,28 @@ class Admin::UserDetailsComponentTest < ViewComponent::TestCase
     assert_includes result.text, "Never"
   end
 
+  test "#call should link to the user who sent the invitation" do
+    inviter = create(:user, name: "Inviter")
+    invited_user = create(:user)
+    create(:invite, created_by_user: inviter, invited_user: invited_user)
+
+    result = render_component(invited_user)
+
+    assert_equal "Invited By", result.css("dt").last.text
+    assert_equal "Inviter", result.css("dd").last.at_css("a").text
+    assert_equal "/admin/users/#{inviter.id}", result.css("dd").last.at_css("a")["href"]
+  end
+
+  test "#call should identify an inviter with a blank name by email" do
+    inviter = create(:user, name: "", email_address: "inviter@example.com")
+    invited_user = create(:user)
+    create(:invite, created_by_user: inviter, invited_user: invited_user)
+
+    result = render_component(invited_user)
+
+    assert_equal "inviter@example.com", result.css("dd").last.at_css("a").text
+  end
+
   test "#call should show a Pending confirmation status for inactive users" do
     result = render_component(create(:user, :inactive))
 
