@@ -9,6 +9,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-02
 
+- The admin user page now shows only sessions that were actually used and active within the last 30 days.
 - Admin user details now show who invited the user and link to everyone they invited, using email addresses when names are blank.
 - Admin user actions now live in the page header menu.
 

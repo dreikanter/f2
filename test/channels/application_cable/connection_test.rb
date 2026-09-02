@@ -15,4 +15,11 @@ class ApplicationCable::ConnectionTest < ActionCable::Connection::TestCase
   test "#connect should reject without valid session" do
     assert_reject_connection { connect }
   end
+
+  test "#connect should reject a session past the inactivity timeout" do
+    session = create(:session, last_seen_at: Session::INACTIVITY_TIMEOUT.ago - 1.minute)
+    cookies.signed[:session_id] = session.id
+
+    assert_reject_connection { connect }
+  end
 end

@@ -47,6 +47,23 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "Actions", count: 0
   end
 
+  test "should display only active sessions" do
+    sign_in_as(admin_user)
+    user = create(:user)
+    active = create(:session, user: user, user_agent: "Firefox", last_seen_at: 1.day.ago)
+    unused = create(:session, user: user, user_agent: "curl", last_seen_at: nil)
+    expired = create(:session, user: user, user_agent: "Old Firefox", last_seen_at: Session::INACTIVITY_TIMEOUT.ago - 1.minute)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "h2", text: "Active Sessions"
+    assert_select "p", text: /Sessions inactive for 30 days are signed out automatically/
+    assert_select "td", text: active.user_agent
+    assert_select "td", text: unused.user_agent, count: 0
+    assert_select "td", text: expired.user_agent, count: 0
+  end
+
   test "should show active suspend button for other users" do
     sign_in_as(admin_user)
     other_user = create(:user)

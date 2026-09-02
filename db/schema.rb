@@ -328,7 +328,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_03_120000) do
     t.datetime "updated_at", null: false
     t.string "user_agent"
     t.uuid "user_id", null: false
-    t.index ["user_id"], name: "index_sessions_on_user_id"
+    t.datetime "last_seen_at"
+    t.index ["user_id", "last_seen_at"], name: "index_sessions_on_user_id_and_last_seen_at"
   end
 
   create_table "solid_cable_messages", force: :cascade do |t|

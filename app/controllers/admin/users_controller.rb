@@ -32,7 +32,7 @@ class Admin::UsersController < ApplicationController
     },
     last_seen: {
       title: "Last Seen",
-      order_by: "MAX(sessions.updated_at)",
+      order_by: "MAX(sessions.last_seen_at)",
       direction: :desc
     }
   }.freeze
@@ -69,7 +69,7 @@ class Admin::UsersController < ApplicationController
                COUNT(DISTINCT feeds.id) AS feeds_count,
                COUNT(DISTINCT access_tokens.id) AS access_tokens_count,
                COUNT(DISTINCT posts.id) AS posts_count,
-               MAX(sessions.updated_at) AS last_seen_at")
+               MAX(sessions.last_seen_at) AS last_seen_at")
       .order(sortable_order)
   end
 

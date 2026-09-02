@@ -9,9 +9,9 @@ class UserStatsTest < ActiveSupport::TestCase
     @stats ||= UserStats.new(user)
   end
 
-  test "#last_session should return most recent session" do
-    session1 = create(:session, user: user, updated_at: 1.day.ago)
-    session2 = create(:session, user: user, updated_at: 1.hour.ago)
+  test "#last_session should return most recent session including expired sessions" do
+    create(:session, user: user, last_seen_at: 32.days.ago)
+    session2 = create(:session, user: user, last_seen_at: 31.days.ago)
 
     assert_equal session2, UserStats.new(user).last_session
   end
@@ -20,13 +20,14 @@ class UserStatsTest < ActiveSupport::TestCase
     assert_nil UserStats.new(user).last_session
   end
 
-  test "#sessions should return all sessions ordered by updated_at desc" do
-    session1 = create(:session, user: user, updated_at: 2.days.ago)
-    session2 = create(:session, user: user, updated_at: 1.hour.ago)
-    session3 = create(:session, user: user, updated_at: 1.day.ago)
+  test "#active_sessions should exclude expired sessions and order the rest by last_seen_at desc" do
+    create(:session, user: user, last_seen_at: 31.days.ago)
+    create(:session, user: user, last_seen_at: nil)
+    session2 = create(:session, user: user, last_seen_at: 1.hour.ago)
+    session3 = create(:session, user: user, last_seen_at: 1.day.ago)
 
-    sessions = UserStats.new(user).sessions
-    assert_equal [session2, session3, session1], sessions
+    sessions = UserStats.new(user).active_sessions
+    assert_equal [session2, session3], sessions
   end
 
   test "#feeds_count should return total number of feeds" do
