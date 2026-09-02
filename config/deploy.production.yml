@@ -1,13 +1,19 @@
 # Deploy to these servers.
 #
-# Hosts here (and the accessory host below) are SSH targets, so they use the
+# Hosts here (and accessory hosts below) are SSH targets, so they use the
 # grey DNS-only record app-origin.fffeeder.com that resolves straight to the
 # box. The public name app.fffeeder.com is Cloudflare-proxied (orange); using
 # it as an SSH target would route port 22 through Cloudflare and fail.
 # proxy.host stays the public name. See docs/deployment-setup.md.
 servers:
   web:
-    - app-origin.fffeeder.com
+    hosts:
+      - app-origin.fffeeder.com
+    env:
+      clear:
+        # Gauge sampling runs once in the Puma master process; see
+        # config/initializers/metrics.rb.
+        METRICS_GAUGES: "true"
   jobs:
     hosts:
       - app-origin.fffeeder.com
@@ -41,6 +47,32 @@ accessories:
     directories:
       - data:/var/lib/postgresql
 
+  # Metrics backend. VictoriaMetrics with its built-in web UI (vmui at
+  # :8428/vmui). Bound to localhost, so the app pushes over the private Kamal
+  # network (see METRICS_URL below). View the UI via an SSH tunnel:
+  # ssh -L 8428:127.0.0.1:8428 app-origin.fffeeder.com, then http://localhost:8428/vmui
+  # Remove with: bin/kamal accessory remove victoriametrics -d production
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.145.0
+    host: app-origin.fffeeder.com
+    port: "127.0.0.1:8428:8428"
+    cmd: "-retentionPeriod=6 -promscrape.config=/etc/victoriametrics/scrape.yml -vmui.customDashboardsPath=/etc/victoriametrics/dashboards"
+    files:
+      - config/victoriametrics/scrape.yml:/etc/victoriametrics/scrape.yml
+      - config/victoriametrics/dashboards/node-overview.json:/etc/victoriametrics/dashboards/node-overview.json
+    directories:
+      - vmdata:/victoria-metrics-data
+
+  # Host-level OS metrics (disk space, RAM, CPU). Reads the host root through
+  # a read-only mount; scraped by VictoriaMetrics over the Kamal network
+  # (see config/victoriametrics/scrape.yml), so no published port.
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.11.1
+    host: app-origin.fffeeder.com
+    cmd: "--path.rootfs=/host"
+    volumes:
+      - "/:/host:ro,rslave"
+
 # Environment variables.
 env:
   clear:
@@ -53,3 +85,9 @@ env:
     # share this 2-core host. If memory becomes the binding constraint, drop
     # back to 1 worker.
     WEB_CONCURRENCY: 2
+    # Reaches the victoriametrics accessory by container name over the Kamal
+    # network. Unset this (or remove the accessory) to disable metrics.
+    METRICS_URL: http://f2-victoriametrics:8428/api/v1/import/prometheus
+    # The sampled gauges move on hour scales; a 60s push loses no visible
+    # resolution and quarters the per-process DB sampling.
+    METRICS_FLUSH_INTERVAL: "60"
