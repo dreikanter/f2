@@ -58,6 +58,19 @@ class DropdownMenuComponentTest < ViewComponent::TestCase
     assert_equal "Sure?", button["data-turbo-confirm"]
   end
 
+  test "#render should render disabled items without a link" do
+    result = render_inline(DropdownMenuComponent.new(menu_id: "m", items: [
+      { label: "Unavailable", disabled: true, title: "Not available", data: { key: "item.disabled" } }
+    ]))
+
+    item = result.at_css("[role='menuitem'][data-key='item.disabled']")
+    assert_equal "span", item.name
+    assert_equal "true", item["aria-disabled"]
+    assert_equal "Not available", item["title"]
+    assert_includes item["class"], "cursor-not-allowed"
+    assert_nil result.at_css("a, form")
+  end
+
   test "#render should draw a rule for a separator item" do
     result = render_inline(DropdownMenuComponent.new(menu_id: "m", items: [
       { label: "Edit", href: "/feeds/1" },
