@@ -43,6 +43,8 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "test@example.com"
+    assert_select "button[data-dropdown-toggle='admin-user-header-menu-#{user.id}']", count: 1
+    assert_select "h2", text: "Actions", count: 0
   end
 
   test "should show active suspend button for other users" do
@@ -52,7 +54,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     get admin_user_path(other_user)
 
     assert_response :success
-    assert_select "a", text: "Suspend user…"
+    assert_select "#admin-user-header-menu-#{other_user.id} a[data-key='actions.suspend']", text: "Suspend user…"
     assert_select "[data-key='actions.suspend_self_disabled']", count: 0
   end
 
@@ -63,7 +65,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='actions.suspend_self_disabled']", text: "Suspend user…"
-    assert_select "a", text: "Suspend user…", count: 0
+    assert_select "#admin-user-header-menu-#{admin_user.id} a", text: "Suspend user…", count: 0
   end
 
   test "should show confirm email button for a user with a pending email" do
@@ -73,7 +75,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     get admin_user_path(user)
 
     assert_response :success
-    assert_select "[data-key='actions.confirm_email']", text: "Confirm Email…"
+    assert_select "#admin-user-header-menu-#{user.id} [data-key='actions.confirm_email']", text: "Confirm Email…"
   end
 
   test "should confirm email behind a confirmation dialog" do
