@@ -1,16 +1,17 @@
-# VictoriaMetrics on Staging
+# VictoriaMetrics
 
-Staging runs VictoriaMetrics as a Kamal accessory (`config/deploy.staging.yml`) with its built-in web UI (vmui). It collects metrics from two directions:
+Staging and production each run their own VictoriaMetrics as a Kamal accessory (`config/deploy.staging.yml`, `config/deploy.production.yml`) with its built-in web UI (vmui). The two stacks are independent: each stores only its own host's data. Retention is 1 month on staging, 2 months on production. Each collects metrics from two directions:
 
 - **Scrape:** VM pulls host OS metrics (CPU, memory, disk, network) from the `node-exporter` accessory, per `config/victoriametrics/scrape.yml`.
-- **Push:** the app sends its own `feeder_*` metrics (counters and gauges, including PostgreSQL sizes) to VM's import endpoint on the configured flush interval — 60 seconds on staging. See `app/services/metrics.rb` and `config/initializers/metrics.rb`.
+- **Push:** the app sends its own `feeder_*` metrics (counters and gauges, including PostgreSQL sizes) to VM's import endpoint on the configured flush interval, 60 seconds on both destinations. See `app/services/metrics.rb` and `config/initializers/metrics.rb`.
 
 Metric definitions and guidance for interpreting them are in [Application metrics](metrics.md).
 
 VM is bound to localhost on the server, so view the UI through an SSH tunnel:
 
 ```
-ssh -L 8428:127.0.0.1:8428 dev.fffeeder.com
+ssh -L 8428:127.0.0.1:8428 dev-origin.fffeeder.com   # staging
+ssh -L 8428:127.0.0.1:8428 app-origin.fffeeder.com   # production
 ```
 
 Then open http://localhost:8428/vmui.
@@ -27,7 +28,7 @@ The push side is controlled by app env vars (set under `env:` in the deploy conf
 | `METRICS_INSTANCE` | `host:pid` | Override for the `instance` label on counter series. |
 | `METRICS_GAUGES` | unset | Register the DB-sampled gauges in this process. Set on the web role only, so a single process samples them instead of every process repeating the same queries. Counters are unaffected and push from everywhere. |
 
-Staging sets `METRICS_URL` and `METRICS_FLUSH_INTERVAL: "60"` globally (the sampled gauges move slowly, so a 60s push loses no visible resolution), plus `METRICS_GAUGES` on the web role; everything else uses defaults. The flush interval is the cheapest lever if the gauges ever get expensive — the charts just get coarser resolution.
+Both destinations set `METRICS_URL` and `METRICS_FLUSH_INTERVAL: "60"` globally (the sampled gauges move slowly, so a 60s push loses no visible resolution), plus `METRICS_GAUGES` on the web role; everything else uses defaults. The flush interval is the cheapest lever if the gauges ever get expensive — the charts just get coarser resolution.
 
 One consequence of web-only gauges: if Puma is down, gauge series stop while counters keep flowing from the workers.
 
@@ -38,7 +39,7 @@ Predefined dashboards live in `config/victoriametrics/dashboards/` as JSON files
 To add a dashboard:
 
 1. Create the JSON file in `config/victoriametrics/dashboards/`.
-2. Add a matching mount line to the `victoriametrics` accessory in `config/deploy.staging.yml`:
+2. Add a matching mount line to the `victoriametrics` accessory in both `config/deploy.staging.yml` and `config/deploy.production.yml`:
 
    ```yaml
    files:
@@ -55,6 +56,7 @@ Dashboard and scrape config changes do **not** ship with `bin/kamal deploy` — 
 
 ```
 bin/kamal accessory reboot victoriametrics -d staging
+bin/kamal accessory reboot victoriametrics -d production
 ```
 
 Kamal uploads the mounted files from your local working tree, so make sure you're on the commit you want to ship. The reboot recreates the container with fresh files and flags.
@@ -73,4 +75,4 @@ New series have no backfill: charts for a newly added metric start at the moment
 
 - Metrics history survives reboots — it lives in the `vmdata` volume on the host.
 - The reboot causes a few seconds of downtime. App pushes during that window fail gracefully (logged, never raised) and node-exporter data has a small gap; both recover on their own.
-- To tear the whole thing down: `bin/kamal accessory remove victoriametrics -d staging` and unset `METRICS_URL`.
+- To tear the whole thing down on a destination: `bin/kamal accessory remove victoriametrics -d <destination>` and unset `METRICS_URL` there.
