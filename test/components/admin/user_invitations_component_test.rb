@@ -30,4 +30,17 @@ class Admin::UserInvitationsComponentTest < ViewComponent::TestCase
     assert_not_nil edit
     assert_equal "modal-trigger", edit["data-controller"]
   end
+
+  test "#call should link to invited users by name or email" do
+    named_user = create(:user, name: "Named User")
+    unnamed_user = create(:user, name: "", email_address: "unnamed@example.com")
+    create(:invite, created_by_user: user, invited_user: named_user, created_at: 1.day.ago)
+    create(:invite, created_by_user: user, invited_user: unnamed_user)
+
+    result = render_component
+    invited_users = result.css("dt").find { |item| item.text == "Invited Users" }.next_element
+
+    assert_equal ["unnamed@example.com", "Named User"], invited_users.css("a").map(&:text)
+    assert_equal ["/admin/users/#{unnamed_user.id}", "/admin/users/#{named_user.id}"], invited_users.css("a").map { _1["href"] }
+  end
 end

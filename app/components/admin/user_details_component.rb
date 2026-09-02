@@ -19,6 +19,7 @@ class Admin::UserDetailsComponent < ViewComponent::Base
       list.with_item(stat_item("Updated", helpers.datetime_with_duration_tag(@user.updated_at)))
       list.with_item(stat_item("Password Updated", optional_time(@user.password_updated_at)))
       list.with_item(stat_item("Last Seen", optional_time(@stats.last_session&.updated_at)))
+      list.with_item(stat_item("Invited By", invited_by_value))
     end
   end
 
@@ -41,5 +42,9 @@ class Admin::UserDetailsComponent < ViewComponent::Base
 
   def optional_time(time)
     time.present? ? helpers.datetime_with_duration_tag(time) : helpers.tag.span("Never", class: "text-muted")
+  end
+
+  def invited_by_value
+    helpers.admin_user_link(@user.invited_by_user) if @user.invited_by_user
   end
 end
