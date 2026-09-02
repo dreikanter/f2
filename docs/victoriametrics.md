@@ -1,6 +1,6 @@
 # VictoriaMetrics
 
-Staging and production each run their own VictoriaMetrics as a Kamal accessory (`config/deploy.staging.yml`, `config/deploy.production.yml`) with its built-in web UI (vmui). The two stacks are independent: each stores only its own host's data. Retention is 1 month on staging, 6 months on production. Each collects metrics from two directions:
+Staging and production each run their own VictoriaMetrics as a Kamal accessory (`config/deploy.staging.yml`, `config/deploy.production.yml`) with its built-in web UI (vmui). The two stacks are independent: each stores only its own host's data. Retention is 1 month on staging, 2 months on production. Each collects metrics from two directions:
 
 - **Scrape:** VM pulls host OS metrics (CPU, memory, disk, network) from the `node-exporter` accessory, per `config/victoriametrics/scrape.yml`.
 - **Push:** the app sends its own `feeder_*` metrics (counters and gauges, including PostgreSQL sizes) to VM's import endpoint on the configured flush interval, 60 seconds on both destinations. See `app/services/metrics.rb` and `config/initializers/metrics.rb`.

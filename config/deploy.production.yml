@@ -56,7 +56,7 @@ accessories:
     image: victoriametrics/victoria-metrics:v1.145.0
     host: app-origin.fffeeder.com
     port: "127.0.0.1:8428:8428"
-    cmd: "-retentionPeriod=6 -promscrape.config=/etc/victoriametrics/scrape.yml -vmui.customDashboardsPath=/etc/victoriametrics/dashboards"
+    cmd: "-retentionPeriod=2 -promscrape.config=/etc/victoriametrics/scrape.yml -vmui.customDashboardsPath=/etc/victoriametrics/dashboards"
     files:
       - config/victoriametrics/scrape.yml:/etc/victoriametrics/scrape.yml
       - config/victoriametrics/dashboards/node-overview.json:/etc/victoriametrics/dashboards/node-overview.json
