@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_08_31_020000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_03_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -269,6 +269,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_31_020000) do
     t.integer "comments_published_count", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "post_create_started_at"
     t.index ["post_id"], name: "index_post_publications_on_post_id", unique: true
     t.check_constraint "attachments_processed_count >= 0", name: "post_publications_attachments_processed_count_non_negative"
     t.check_constraint "comments_published_count >= 0", name: "post_publications_comments_published_count_non_negative"

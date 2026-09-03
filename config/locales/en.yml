@@ -77,6 +77,9 @@ en:
     feed_post_comments_failed:
       name: "Comments couldn't be published"
       description_html: "%{subject_link} published a post, but some comments couldn't be added"
+    feed_post_publication_interrupted:
+      name: "Publishing was interrupted"
+      description_html: "%{subject_link} was interrupted while publishing a post; check the group to see whether it made it through"
     ai_credential_deactivated:
       name: "AI credential deactivated"
       description_html: "AI credential %{subject_link} stopped working; update the key to resume its feeds."

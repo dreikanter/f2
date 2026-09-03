@@ -75,6 +75,23 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_equal feed.id, kwargs.dig(:context, :feed)["id"]
   end
 
+  test ".perform_now should fail an interrupted post instead of publishing it again" do
+    post = create(:post, :enqueued, feed: feed)
+    post.create_post_publication!(post_create_started_at: 5.minutes.ago)
+    stub_publish_success
+
+    PostPublishJob.perform_now(feed.id)
+
+    assert_equal "failed", post.reload.status
+    assert_nil post.post_publication
+    assert_not_requested(:post, "#{access_token.host}/v4/posts")
+
+    event = Event.where(type: "feed_post_publication_interrupted", subject: feed).last
+    assert_not_nil event
+    assert_predicate event, :error?
+    assert_equal post.id, event.metadata["post_id"]
+  end
+
   test ".perform_now should fail a post with an unfetchable attachment without reporting it" do
     post = create(:post, :enqueued, feed: feed, attachment_urls: ["https://example.com/missing.png"])
     stub_request(:get, "https://example.com/missing.png").to_return(status: 404, body: "Not Found")

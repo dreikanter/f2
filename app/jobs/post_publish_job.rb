@@ -79,6 +79,12 @@ class PostPublishJob < ApplicationJob
   rescue FreefeedPublisher::CommentPublishError => e
     count_published(post) unless was_published
     record_comment_failure(feed, post, e)
+  rescue FreefeedPublisher::InterruptedPublicationError => e
+    # A create request was in flight when a previous run stopped, so FreeFeed may
+    # already hold this post. Publishing again would duplicate it and we have no
+    # id to check, so fail the post and let the user decide.
+    record_interrupted_publication(feed, post)
+    fail_post(feed, post, e)
   rescue FreefeedPublisher::SourceContentError => e
     # Source content is gone (e.g. an attachment URL returns 404). Expected external
     # condition: fail the post and move on, but don't page error tracking.
@@ -107,6 +113,16 @@ class PostPublishJob < ApplicationJob
     Rails.logger.error "Failed to publish comments for post #{post.id}: #{error.message}"
     Rails.error.report(error, context: { post: post.attributes, feed: feed.attributes })
     schedule_next(feed)
+  end
+
+  def record_interrupted_publication(feed, post)
+    Event.create!(
+      type: "feed_post_publication_interrupted",
+      level: :error,
+      subject: feed,
+      user: feed.user,
+      metadata: { post_id: post.id }
+    )
   end
 
   # Mark a post failed and advance the chain. Reports to error tracking only for

@@ -452,6 +452,59 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_equal "Account 'testgroup' was not found", error.server_message
   end
 
+  test "#resume should raise InterruptedPublicationError when a create attempt was in flight" do
+    post = post_with_content("Test content")
+    post.create_post_publication!(post_create_started_at: Time.current)
+
+    assert_raises(FreefeedPublisher::InterruptedPublicationError) do
+      FreefeedPublisher.new(post).resume
+    end
+
+    assert_not_requested(:post, "#{access_token.host}/v4/posts")
+  end
+
+  test "#publish should record the create attempt before sending the request" do
+    post = post_with_content("Test content")
+    recorded = nil
+
+    stub_request(:post, "#{access_token.host}/v4/posts").to_return do
+      recorded = PostPublication.find_by(post_id: post.id)&.post_create_started_at
+      {
+        status: 200,
+        headers: { "Content-Type" => "application/json" },
+        body: { posts: { id: "ff-post-1" } }.to_json
+      }
+    end
+
+    FreefeedPublisher.new(post).publish
+
+    assert_not_nil recorded, "the attempt must be persisted before the request goes out"
+  end
+
+  test "#publish should clear the create attempt when the group rejects the post" do
+    post = post_with_content("Test content")
+    stub_request(:post, "#{access_token.host}/v4/posts")
+      .to_return(status: 403, body: { err: "You can not post to some of destinations: testgroup" }.to_json)
+
+    assert_raises(FreefeedPublisher::TargetGroupUnavailableError) do
+      FreefeedPublisher.new(post).publish
+    end
+
+    assert_nil post.reload.post_publication.post_create_started_at
+  end
+
+  test "#publish should clear the create attempt when FreeFeed throttles the request" do
+    post = post_with_content("Test content")
+    stub_request(:post, "#{access_token.host}/v4/posts")
+      .to_return(status: 429, headers: { "Retry-After" => "30" })
+
+    assert_raises(RateLimit::Throttled) do
+      FreefeedPublisher.new(post).publish
+    end
+
+    assert_nil post.reload.post_publication.post_create_started_at
+  end
+
   test "#publish should raise error when FreeFeed API fails" do
     post = post_with_content("Test content")
 
