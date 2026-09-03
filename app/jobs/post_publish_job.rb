@@ -81,8 +81,6 @@ class PostPublishJob < ApplicationJob
   rescue FreefeedPublisher::CommentPublishError => e
     count_published(post) unless was_published
     record_comment_failure(feed, post, e)
-  rescue FreefeedPublisher::InterruptedPublicationError
-    fail_interrupted(feed, post)
   rescue FreefeedPublisher::SourceContentError => e
     # Source content is gone (e.g. an attachment URL returns 404). Expected external
     # condition: fail the post and move on, but don't page error tracking.

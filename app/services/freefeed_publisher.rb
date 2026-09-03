@@ -13,7 +13,8 @@ class FreefeedPublisher
   class SourceContentError < PublishError; end
 
   # A create request was in flight when a previous run stopped. FreeFeed may hold
-  # a post whose id we never saw, so resuming would repost it.
+  # a post whose id we never saw, so resuming would repost it. PostPublishJob
+  # checks #interrupted? up front, so this is the backstop for a direct caller.
   class InterruptedPublicationError < PublishError
     MESSAGE = "Post creation was interrupted; FreeFeed may already hold this post".freeze
 
