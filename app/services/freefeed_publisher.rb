@@ -12,8 +12,8 @@ class FreefeedPublisher
   # moves on without paging error tracking. See PostPublishJob.
   class SourceContentError < PublishError; end
 
-  # A post-creation request was in flight when a previous run stopped. FreeFeed
-  # may hold a post we never recorded an id for, so resuming would repost it.
+  # A create request was in flight when a previous run stopped. FreeFeed may hold
+  # a post whose id we never saw, so resuming would repost it.
   class InterruptedPublicationError < PublishError; end
 
   # The target group rejected the post (lost access, restricted, or deleted), but
@@ -147,11 +147,9 @@ class FreefeedPublisher
     nil
   end
 
-  # The attempt is recorded before the request goes out: a process that dies
-  # waiting for the response leaves FreeFeed holding a post whose id we never
-  # saw, and a blind resume would post it twice. Failures that prove nothing was
-  # created clear the mark again, so those posts still resume normally. A fault
-  # with an unknown outcome keeps it, and #continue_publication refuses to retry.
+  # The attempt is marked before the request, not after: a process that dies
+  # waiting for the response leaves a post we can't identify. Failures that prove
+  # nothing was created clear the mark, so those posts still resume.
   def create_freefeed_post(attachment_ids)
     publication.update!(post_create_started_at: Time.current)
 

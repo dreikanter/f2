@@ -80,9 +80,8 @@ class PostPublishJob < ApplicationJob
     count_published(post) unless was_published
     record_comment_failure(feed, post, e)
   rescue FreefeedPublisher::InterruptedPublicationError => e
-    # A create request was in flight when a previous run stopped, so FreeFeed may
-    # already hold this post. Publishing again would duplicate it and we have no
-    # id to check, so fail the post and let the user decide.
+    # FreeFeed may already hold this post and there is no id to check it by, so
+    # fail it rather than risk a duplicate.
     record_interrupted_publication(feed, post)
     fail_post(feed, post, e)
   rescue FreefeedPublisher::SourceContentError => e
