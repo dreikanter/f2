@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-03
 
+- A post interrupted while being published is no longer posted a second time. It's marked as failed instead, with a note to check the group.
 - Savage Chickens cartoons now lead with the strip's name and keep the caption as the first comment.
 
 ## 2026-09-02

@@ -12,6 +12,17 @@ class FreefeedPublisher
   # moves on without paging error tracking. See PostPublishJob.
   class SourceContentError < PublishError; end
 
+  # A create request was in flight when a previous run stopped. FreeFeed may hold
+  # a post whose id we never saw, so resuming would repost it. PostPublishJob
+  # checks #interrupted? up front, so this is the backstop for a direct caller.
+  class InterruptedPublicationError < PublishError
+    MESSAGE = "Post creation was interrupted; FreeFeed may already hold this post".freeze
+
+    def initialize(message = MESSAGE)
+      super
+    end
+  end
+
   # The target group rejected the post (lost access, restricted, or deleted), but
   # the token still works — so the job disables only this feed, not the token.
   # #reason is a deterministic, UI-safe code (POSTING_DENIED/GROUP_NOT_FOUND);
@@ -58,9 +69,23 @@ class FreefeedPublisher
     continue_publication
   end
 
+  # True when a previous run sent a create request and stopped before recording
+  # the id. Checked before the job reserves quota, so a post that can't be
+  # published doesn't spend it.
+  #
+  # @return [Boolean] whether the outcome of a create request is unknown
+  def interrupted?
+    return false if already_published?
+    return false unless post.post_publication
+
+    post.post_publication.post_create_started_at?
+  end
+
   private
 
   def continue_publication
+    raise InterruptedPublicationError if interrupted?
+
     publication
 
     unless already_published?
@@ -138,28 +163,38 @@ class FreefeedPublisher
     nil
   end
 
+  # The attempt is marked before the request, not after: a process that dies
+  # waiting for the response leaves a post we can't identify. Failures that prove
+  # nothing was created clear the mark, so those posts still resume.
   def create_freefeed_post(attachment_ids)
+    publication.update!(post_create_started_at: Time.current)
+
     client.create_post(
       body: post.content,
       feeds: [post.feed.target_group],
       attachment_ids: attachment_ids
     )
-  rescue RateLimit::Throttled
-    raise
-  rescue FreefeedClient::UnauthorizedError
+  rescue RateLimit::Throttled, FreefeedClient::UnauthorizedError
+    discard_post_create_attempt
     raise
   rescue FreefeedClient::ForbiddenError => e
+    discard_post_create_attempt
     raise TargetGroupUnavailableError.new(
       reason: TargetGroupUnavailableError::POSTING_DENIED,
       server_message: e.message
     )
   rescue FreefeedClient::NotFoundError => e
+    discard_post_create_attempt
     raise TargetGroupUnavailableError.new(
       reason: TargetGroupUnavailableError::GROUP_NOT_FOUND,
       server_message: e.message
     )
   rescue => e
     raise PublishError, "Failed to create FreeFeed post: #{e.message}"
+  end
+
+  def discard_post_create_attempt
+    publication.update!(post_create_started_at: nil)
   end
 
   def publish_pending_comments
