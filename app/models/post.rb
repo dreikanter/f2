@@ -56,10 +56,22 @@ class Post < ApplicationRecord
   after_destroy :recount_imported_posts
   after_destroy :recount_published_posts, if: :published?
   after_update :recount_published_posts, if: :saved_change_to_status?
-  after_update :discard_publication_checkpoint, if: :publication_no_longer_active?
 
   def normalized_attributes
     as_json(only: NORMALIZED_ATTRIBUTES)
+  end
+
+  # Takes the post off the publication path. Dropping the resume checkpoint is
+  # part of that: the publish chain prioritizes posts that still have one, and
+  # would otherwise pick this post up again.
+  #
+  # @param attributes [Hash] extra attributes to write alongside the status
+  # @return [Boolean] true when the update succeeded
+  def withdraw!(**attributes)
+    transaction do
+      post_publication&.destroy!
+      update!(status: :withdrawn, **attributes)
+    end
   end
 
   # Trim a comment to FreeFeed's hard limit so publishing never fails on length.
@@ -73,14 +85,6 @@ class Post < ApplicationRecord
   end
 
   private
-
-  def publication_no_longer_active?
-    saved_change_to_status? && !enqueued? && !published?
-  end
-
-  def discard_publication_checkpoint
-    post_publication&.destroy!
-  end
 
   def validate_comments_length
     return unless comments.is_a?(Array)

@@ -110,11 +110,7 @@ class WithdrawAllPosts
   end
 
   def mark_withdrawn(post)
-    post.update!(
-      freefeed_post_id: nil,
-      freefeed_post_url: nil,
-      status: :withdrawn
-    )
+    post.withdraw!(freefeed_post_id: nil, freefeed_post_url: nil)
   end
 
   def recompute_metrics(dates)

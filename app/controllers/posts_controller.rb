@@ -70,7 +70,7 @@ class PostsController < ApplicationController
     if @delete_record
       delete_post_record(@post)
     else
-      @post.withdrawn!
+      @post.withdraw!
       log_post_event("post_withdrawn", @post)
       refresh_published_metric(@post.feed, @post.reposted_at)
     end
