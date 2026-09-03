@@ -19,6 +19,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       "podcast",
       "reddit",
       "rss",
+      "savagechickens",
       "smbc",
       "telegram",
       "theycantalk",

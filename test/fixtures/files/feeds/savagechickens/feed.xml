@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Sample Feed Title</title>
+	<atom:link href="https://www.savagechickens.com/feed" rel="self" type="application/rss+xml" />
+	<link>https://www.savagechickens.com</link>
+	<description></description>
+	<lastBuildDate>Thu, 03 Sep 2026 05:54:32 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=5.4.21</generator>
+	<item>
+		<title>Sample Sample Sample</title>
+		<link>https://www.savagechickens.com/2026/09/sample-sample.html</link>
+					<comments>https://www.savagechickens.com/2026/09/sample-sample.html#respond</comments>
+
+		<dc:creator><![CDATA[Sample Author]]></dc:creator>
+		<pubDate>Thu, 03 Sep 2026 07:01:32 +0000</pubDate>
+				<category><![CDATA[Sample Category]]></category>
+		<category><![CDATA[Sample Tag]]></category>
+		<guid isPermaLink="false">https://www.savagechickens.com/?p=10001</guid>
+
+					<description><![CDATA[Sample caption one.]]></description>
+										<content:encoded><![CDATA[<p><img src="https://www.savagechickens.com/wp-content/uploads/sample-one.jpg" alt="Sample Sample Sample" width="400" height="675" /></p>
+<p>Sample <a href="https://www.savagechickens.com/tag/sample">caption</a> one.</p>
+]]></content:encoded>
+
+					<wfw:commentRss>https://www.savagechickens.com/2026/09/sample-sample.html/feed</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+
+
+			</item>
+	<item>
+		<title>Sample Entry Two</title>
+		<link>https://www.savagechickens.com/2026/09/sample-two.html</link>
+					<comments>https://www.savagechickens.com/2026/09/sample-two.html#respond</comments>
+
+		<dc:creator><![CDATA[Sample Author]]></dc:creator>
+		<pubDate>Tue, 01 Sep 2026 07:00:11 +0000</pubDate>
+				<category><![CDATA[Sample Category]]></category>
+		<guid isPermaLink="false">https://www.savagechickens.com/?p=10002</guid>
+
+					<description><![CDATA[Sample caption two, or &#8220;sample two&#8221; for short.]]></description>
+										<content:encoded><![CDATA[<p><img src="https://www.savagechickens.com/wp-content/uploads/sample-two.jpg" alt="Sample Entry Two" width="400" height="676" /></p>
+<p>Sample caption two, or &#8220;sample two&#8221; for short.</p>
+]]></content:encoded>
+
+					<wfw:commentRss>https://www.savagechickens.com/2026/09/sample-two.html/feed</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+
+
+			</item>
+	<item>
+		<title>Sample Entry Three</title>
+		<link>https://www.savagechickens.com/2026/08/sample-three.html</link>
+					<comments>https://www.savagechickens.com/2026/08/sample-three.html#respond</comments>
+
+		<dc:creator><![CDATA[Sample Author]]></dc:creator>
+		<pubDate>Fri, 28 Aug 2026 07:00:47 +0000</pubDate>
+				<category><![CDATA[Sample Category]]></category>
+		<guid isPermaLink="false">https://www.savagechickens.com/?p=10003</guid>
+
+					<description><![CDATA[Sample first paragraph, long enough that WordPress cuts it into an excerpt. 🙂 Sample second paragraph starts here and then stops [&#8230;]]]></description>
+										<content:encoded><![CDATA[<p><img src="https://www.savagechickens.com/wp-content/uploads/sample-three.jpg" alt="Sample Entry Three" width="400" height="767" /></p>
+<p>Sample first paragraph, long enough that WordPress cuts it into an excerpt. <img src="https://s.w.org/images/core/emoji/12.0.0-1/72x72/1f642.png" alt="🙂" class="wp-smiley" style="height: 1em; max-height: 1em;" /></p>
+<p>Sample second paragraph, with a <a href="https://www.savagechickens.com/2020/01/sample-archive.html">sample link</a> and a second <a href="https://www.savagechickens.com/2021/01/sample-archive-two.html">sample link</a>.</p>
+]]></content:encoded>
+
+					<wfw:commentRss>https://www.savagechickens.com/2026/08/sample-three.html/feed</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+
+
+			</item>
+</channel>
+</rss>

@@ -1,0 +1,14 @@
+{
+  "attachment_urls": [
+    "https://www.savagechickens.com/wp-content/uploads/sample-one.jpg"
+  ],
+  "comments": [
+    "Sample caption one."
+  ],
+  "content": "Sample Sample Sample - https://www.savagechickens.com/2026/09/sample-sample.html",
+  "published_at": "2026-09-03T07:01:32.000Z",
+  "source_url": "https://www.savagechickens.com/2026/09/sample-sample.html",
+  "status": "enqueued",
+  "uid": "https://www.savagechickens.com/?p=10001",
+  "validation_errors": []
+}
