@@ -36,6 +36,17 @@ class WithdrawAllPostsTest < ActiveSupport::TestCase
     assert_not_predicate post4.reload, :withdrawn?, "published posts without a FreeFeed ID are not touched"
   end
 
+  test "#call should drop the publication checkpoint of a withdrawn post" do
+    post = create(:post, :published, feed: feed, freefeed_post_id: "post1")
+    post.create_post_publication!
+
+    stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
+
+    service.call
+
+    assert_nil post.reload.post_publication
+  end
+
   test "#call should recompute published metrics for affected dates" do
     post1 = create(:post, :published, feed: feed, freefeed_post_id: "post1")
     metric = create(:feed_metric, :with_published_posts, feed: feed, date: post1.reposted_at.to_date)

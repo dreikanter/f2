@@ -188,7 +188,7 @@ class PostCommentDeliveryTest < ActiveJob::TestCase
       assert_predicate first, :published?
       assert_not_nil first.post_publication
 
-      first.withdrawn!
+      first.withdraw!
       PostWithdrawalJob.perform_now(feed.id, first.freefeed_post_id, first.id)
 
       perform_enqueued_jobs(only: PostPublishJob) do

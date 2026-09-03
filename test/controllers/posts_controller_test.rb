@@ -226,6 +226,16 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "info", event.level
   end
 
+  test "#destroy should drop the publication checkpoint when withdrawing" do
+    sign_in_as(user)
+    published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
+    published_post.create_post_publication!
+
+    delete post_url(published_post), params: { delete_freefeed_post: "1" }
+
+    assert_nil published_post.reload.post_publication
+  end
+
   test "#destroy should refresh the daily published metric after withdrawing" do
     sign_in_as(user)
     create(:post, :published, feed: feed, reposted_at: Time.current)
