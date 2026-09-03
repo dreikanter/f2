@@ -278,6 +278,19 @@ class FeedProfile
       normalizer: { class: "Normalizer::TheycantalkNormalizer", config: {} },
       title_extractor: "TitleExtractor::RssTitleExtractor"
     },
+    "savagechickens" => {
+      display_name: "Savage Chickens",
+      description: "Doug Savage's sticky note cartoons",
+      input_shape: :url,
+      depends_on_ai: false,
+      scheduled: true,
+      matcher: "ProfileMatcher::SavagechickensProfileMatcher",
+      parameter_schema: URL_PARAMETER_SCHEMA,
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::SavagechickensNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor"
+    },
     "tomorrows" => {
       display_name: "365 Tomorrows",
       description: "Daily flash science fiction from 365tomorrows.com",

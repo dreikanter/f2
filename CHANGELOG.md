@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-03
+
+- Savage Chickens cartoons now lead with the strip's name and keep the caption as the first comment.
+
 ## 2026-09-02
 
 - Admin user details now show who invited the user and link to everyone they invited, using email addresses when names are blank.
