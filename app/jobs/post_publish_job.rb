@@ -45,13 +45,15 @@ class PostPublishJob < ApplicationJob
 
   def publish(feed, post)
     was_published = post.published?
+    publisher = FreefeedPublisher.new(post)
+    return fail_interrupted(feed, post) if publisher.interrupted?
+
     posts = post_cost(post)
     return reject_oversized(feed, post, posts) unless within_capacity?(posts)
 
     result = RateLimit.acquire(:freefeed, subject: feed.access_token.rate_limit_subject, cost: { post: posts })
     return reschedule_for_rate_limit(result.retry_after) unless result.allowed?
 
-    publisher = FreefeedPublisher.new(post)
     post.post_publication ? publisher.resume : publisher.publish
     count_published(post) unless was_published
     schedule_next(feed)
@@ -79,11 +81,8 @@ class PostPublishJob < ApplicationJob
   rescue FreefeedPublisher::CommentPublishError => e
     count_published(post) unless was_published
     record_comment_failure(feed, post, e)
-  rescue FreefeedPublisher::InterruptedPublicationError => e
-    # FreeFeed may already hold this post and there is no id to check it by, so
-    # fail it rather than risk a duplicate.
-    record_interrupted_publication(feed, post)
-    fail_post(feed, post, e)
+  rescue FreefeedPublisher::InterruptedPublicationError
+    fail_interrupted(feed, post)
   rescue FreefeedPublisher::SourceContentError => e
     # Source content is gone (e.g. an attachment URL returns 404). Expected external
     # condition: fail the post and move on, but don't page error tracking.
@@ -114,7 +113,10 @@ class PostPublishJob < ApplicationJob
     schedule_next(feed)
   end
 
-  def record_interrupted_publication(feed, post)
+  # FreeFeed may already hold this post and there is no id to check it by, so
+  # fail it rather than risk a duplicate. The interruption itself is a fault
+  # worth investigating, so it reaches error tracking too.
+  def fail_interrupted(feed, post)
     Event.create!(
       type: "feed_post_publication_interrupted",
       level: :error,
@@ -122,6 +124,8 @@ class PostPublishJob < ApplicationJob
       user: feed.user,
       metadata: { post_id: post.id }
     )
+
+    fail_post(feed, post, FreefeedPublisher::InterruptedPublicationError.new, report: true)
   end
 
   # Mark a post failed and advance the chain. Reports to error tracking only for

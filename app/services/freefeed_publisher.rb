@@ -14,7 +14,13 @@ class FreefeedPublisher
 
   # A create request was in flight when a previous run stopped. FreeFeed may hold
   # a post whose id we never saw, so resuming would repost it.
-  class InterruptedPublicationError < PublishError; end
+  class InterruptedPublicationError < PublishError
+    MESSAGE = "Post creation was interrupted; FreeFeed may already hold this post".freeze
+
+    def initialize(message = MESSAGE)
+      super
+    end
+  end
 
   # The target group rejected the post (lost access, restricted, or deleted), but
   # the token still works — so the job disables only this feed, not the token.
@@ -62,17 +68,26 @@ class FreefeedPublisher
     continue_publication
   end
 
+  # True when a previous run sent a create request and stopped before recording
+  # the id. Checked before the job reserves quota, so a post that can't be
+  # published doesn't spend it.
+  #
+  # @return [Boolean] whether the outcome of a create request is unknown
+  def interrupted?
+    return false if already_published?
+    return false unless post.post_publication
+
+    post.post_publication.post_create_started_at?
+  end
+
   private
 
   def continue_publication
+    raise InterruptedPublicationError if interrupted?
+
     publication
 
     unless already_published?
-      if publication.post_create_started_at?
-        raise InterruptedPublicationError,
-              "Post creation was interrupted; FreeFeed may already hold this post"
-      end
-
       attachment_ids = upload_pending_attachments
 
       # An attachment-only post whose uploads were all skipped (oversized) would

@@ -463,6 +463,13 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_not_requested(:post, "#{access_token.host}/v4/posts")
   end
 
+  test "#interrupted? should be false once the post carries a FreeFeed id" do
+    post = post_with_content("Test content", freefeed_post_id: "existing_id")
+    post.create_post_publication!(post_create_started_at: Time.current)
+
+    assert_not_predicate FreefeedPublisher.new(post), :interrupted?
+  end
+
   test "#publish should record the create attempt before sending the request" do
     post = post_with_content("Test content")
     recorded = nil

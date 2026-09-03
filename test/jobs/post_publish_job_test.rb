@@ -75,16 +75,26 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_equal feed.id, kwargs.dig(:context, :feed)["id"]
   end
 
-  test ".perform_now should fail an interrupted post instead of publishing it again" do
+  test ".perform_now should fail an interrupted post without republishing or reserving capacity" do
     post = create(:post, :enqueued, feed: feed)
     post.create_post_publication!(post_create_started_at: 5.minutes.ago)
+    subject = access_token.rate_limit_subject
     stub_publish_success
 
-    PostPublishJob.perform_now(feed.id)
+    reported = []
+    freeze_time do
+      Rails.error.stub(:report, ->(error, **) { reported << error }) do
+        PostPublishJob.perform_now(feed.id)
+      end
 
-    assert_equal "failed", post.reload.status
-    assert_nil post.post_publication
-    assert_not_requested(:post, "#{access_token.host}/v4/posts")
+      assert_equal "failed", post.reload.status
+      assert_nil post.post_publication
+      assert_not_requested(:post, "#{access_token.host}/v4/posts")
+      assert_equal 1, reported.size
+      assert_instance_of FreefeedPublisher::InterruptedPublicationError, reported.first
+      assert_equal RateLimit.capacity(:freefeed, :post), freefeed_tokens_left(subject, :post),
+        "an interrupted post must be failed before reserving any capacity"
+    end
 
     event = Event.where(type: "feed_post_publication_interrupted", subject: feed).last
     assert_not_nil event
