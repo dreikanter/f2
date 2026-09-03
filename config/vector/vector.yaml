@@ -5,7 +5,7 @@ sources:
   app:
     type: docker_logs
     # Kamal names containers "<service>-<role>-<destination>-<version>", so these
-    # prefixes match f2-web-staging-* / f2-jobs-staging-*. Accessories are excluded.
+    # prefixes match app containers in both destinations. Accessories are excluded.
     include_containers:
       - f2-web
       - f2-jobs
