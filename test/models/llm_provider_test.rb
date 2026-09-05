@@ -44,7 +44,7 @@ class LlmProviderTest < ActiveSupport::TestCase
     assert_equal :openai, provider.ruby_llm_provider
     assert_equal "gpt-5.6-luna", provider.default_model
     assert_nil provider.api_base
-    assert provider.assume_model_exists?
+    assert provider.minimal_model_metadata?
   end
 
   test "#find should return the moonshot provider mapped to the openai runtime" do
@@ -53,12 +53,12 @@ class LlmProviderTest < ActiveSupport::TestCase
     assert_equal :openai, provider.ruby_llm_provider
     assert_equal "kimi-k2.6", provider.default_model
     assert_equal "https://api.moonshot.ai/v1", provider.api_base
-    assert provider.assume_model_exists?
+    assert provider.minimal_model_metadata?
   end
 
-  test "#assume_model_exists? should default to false for native providers" do
-    assert_not LlmProvider.find("anthropic").assume_model_exists?
-    assert_not LlmProvider.find("openrouter").assume_model_exists?
+  test "#minimal_model_metadata? should default to false for native providers" do
+    assert_not LlmProvider.find("anthropic").minimal_model_metadata?
+    assert_not LlmProvider.find("openrouter").minimal_model_metadata?
   end
 
   test "#configure should set the api key on the ruby_llm-provider key" do

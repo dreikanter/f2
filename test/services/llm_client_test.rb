@@ -127,7 +127,7 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_not_nil usage.duration_ms
   end
 
-  test "#call should map a schema violation to SchemaError and record the failure" do
+  test "#call should stop after one correction and record both schema failures" do
     client = LlmClient.new(credential)
     bad_response = LlmClient::ProviderResponse.new(
       payload: { "wrong" => "shape" },
@@ -136,7 +136,7 @@ class LlmClientTest < ActiveSupport::TestCase
     )
     stub_provider_response(client, bad_response)
 
-    assert_difference("LlmUsage.count", 1) do
+    assert_difference("LlmUsage.count", 2) do
       assert_raises(LlmClient::SchemaError) { client.call(default_ctx, **call_opts) }
     end
 
@@ -443,7 +443,7 @@ class LlmClientTest < ActiveSupport::TestCase
       cache_write_tokens: 0, cache_read_tokens: 0
     ))
 
-    assert_difference("LlmUsage.count", 1) do
+    assert_difference("LlmUsage.count", 2) do
       assert_raises(LlmClient::SchemaError) { client.call(default_ctx, **call_opts) }
     end
 
@@ -634,7 +634,7 @@ class LlmClientTest < ActiveSupport::TestCase
   end
 
   def stub_chat(client, chat)
-    context = Object.new
+    context = Struct.new(:config).new(RubyLLM.config.dup)
     context.define_singleton_method(:chat) { |**_| chat }
     client.credential.stub(:ruby_llm_context, context) { yield }
   end
@@ -739,10 +739,10 @@ class LlmClientTest < ActiveSupport::TestCase
                   output_schema: FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, web: false, system: nil)
     end
 
-    assert_equal({ provider: { require_parameters: true } }, chat.params)
+    assert_equal({ max_tokens: 8_192, provider: { require_parameters: true } }, chat.params)
   end
 
-  test "#invoke_provider should send no params for a provider that asks for none" do
+  test "#invoke_provider should bound output without other optional params" do
     client = LlmClient.new(credential)
     chat = FakeChat.new
 
@@ -751,7 +751,7 @@ class LlmClientTest < ActiveSupport::TestCase
                   output_schema: FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, web: false, system: nil)
     end
 
-    assert_empty chat.params
+    assert_equal({ max_tokens: 8_192 }, chat.params)
   end
 
   test "#invoke_provider should not set instructions when no system prompt is given" do

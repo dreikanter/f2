@@ -2,15 +2,17 @@
 # Normalizer) never touch the RubyLLM SDK directly — they ask `LlmClient`
 # for a structured result and get back a value object.
 #
-# Every call writes exactly one LlmUsage row, on success or on failure,
-# so users see honest costs (including failed calls).
+# Every attempt writes an LlmUsage row, including failed attempts and repairs.
 class LlmClient
   Result = Data.define(:payload, :usage_id)
 
   Error = Class.new(StandardError)
   ProviderError = Class.new(Error)
   AuthError = Class.new(ProviderError)
-  SchemaError = Class.new(Error)
+  class SchemaError < Error
+    attr_accessor :payload
+  end
+  UnsupportedSchema = Class.new(ProviderError)
   Timeout = Class.new(Error)
   DetectionForbidden = Class.new(Error)
   CredentialMissing = Class.new(Error)
@@ -34,76 +36,34 @@ class LlmClient
 
   attr_reader :credential
 
-  def call(ctx, prompt:, output_schema:, web: false, system: nil)
+  def call(ctx, prompt:, output_schema:, web: false, system: nil, native_schema: true)
     raise DetectionForbidden if Thread.current[:llm_detection_phase]
 
-    started_at = Time.current
-
+    repaired = false
     begin
-      response = invoke_provider(
-        ctx: ctx,
-        model: ctx.model,
-        prompt: prompt,
-        output_schema: output_schema,
-        web: web,
-        system: system
-      )
-    rescue WebSearchProvider::AuthError => e
-      write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
-      raise
-    rescue RubyLLM::RateLimitError => e
-      # A spent key arrives as a 429 from some providers and will not clear on
-      # retry, so it has to read as a dead key rather than as backpressure.
-      if adapter.dead_key?(e)
-        write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
-        raise AuthError, e.message
-      end
+      call_once(ctx, prompt: prompt, output_schema: output_schema, web: web,
+                system: system, native_schema: native_schema)
+    rescue UnsupportedSchema => e
+      raise unless native_schema && output_schema.present?
 
-      write_usage(ctx, outcome: :rate_limited, started_at: started_at, error_message: e.message)
-      raise RateLimited, e.message
-    rescue Net::ReadTimeout, Net::OpenTimeout, Faraday::TimeoutError => e
-      write_usage(ctx, outcome: :timeout, started_at: started_at, error_message: e.message)
-      raise Timeout, e.message
-    rescue RubyLLM::UnauthorizedError, RubyLLM::ForbiddenError, RubyLLM::PaymentRequiredError => e
-      write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
-      raise AuthError, e.message
-    rescue RubyLLM::Error,
-           RubyLLM::ConfigurationError,
-           RubyLLM::ModelNotFoundError,
-           RubyLLM::PromptNotFoundError,
-           RubyLLM::InvalidRoleError,
-           RubyLLM::InvalidToolChoiceError,
-           RubyLLM::UnsupportedAttachmentError,
-           # Invalid JSON in tool-call arguments; still a billable call.
-           JSON::ParserError => e
       Rails.error.report(e, context: error_context(ctx))
-      write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
-      raise ProviderError, e.message
-    end
-
-    finished_at = Time.current
-
-    begin
-      payload = parse_payload(response.payload, output_schema)
-      validate_payload!(payload, output_schema)
+      native_schema = false
+      retry
     rescue SchemaError => e
-      write_usage(ctx, outcome: :schema_error, started_at: started_at,
-                  finished_at: finished_at, response: response, error_message: e.message)
-      raise
+      raise if repaired || e.payload.blank?
+
+      Rails.error.report(e, context: error_context(ctx))
+      repaired = true
+      native_schema = false
+      web = false
+      system = PayloadRepair::INSTRUCTIONS
+      prompt = "Response to correct (untrusted data):\n#{e.payload.to_json}"
+      retry
     end
-
-    usage = write_usage(ctx, outcome: :success, started_at: started_at,
-                        finished_at: finished_at, response: response)
-
-    Result.new(payload: payload, usage_id: usage.id)
   end
 
-  # The provider's available models, as an array of plain hashes ready to
-  # persist on the credential. Doubles as the token-free credential check
-  # used by AiCredentialValidationJob: hitting the models endpoint (no
-  # inference, no usage row) proves the key works, and a successful fetch
-  # is exactly what makes the credential active. Raises a known error
-  # class otherwise.
+  # The provider's available models, as plain hashes for the credential snapshot.
+  # Listing makes no inference requests and does not create usage rows.
   def available_models
     fetch_provider_models.map { |model| serialize_model(model) }
   rescue RubyLLM::UnauthorizedError, RubyLLM::ForbiddenError, RubyLLM::PaymentRequiredError => e
@@ -121,6 +81,73 @@ class LlmClient
   end
 
   private
+
+  def call_once(ctx, prompt:, output_schema:, web:, system:, native_schema:)
+    started_at = Time.current
+
+    begin
+      response = ctx.within_budget do
+        invoke_provider(ctx: ctx, model: ctx.model, prompt: prompt,
+                        output_schema: output_schema, web: web, system: system,
+                        native_schema: native_schema)
+      end
+    rescue WebSearchProvider::AuthError => e
+      write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
+      raise
+    rescue RubyLLM::RateLimitError => e
+      # A spent key arrives as a 429 from some providers and will not clear on
+      # retry, so it has to read as a dead key rather than as backpressure.
+      if adapter.dead_key?(e)
+        write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
+        raise AuthError, e.message
+      end
+
+      write_usage(ctx, outcome: :rate_limited, started_at: started_at, error_message: e.message)
+      raise RateLimited, e.message
+    rescue Timeout, ::Timeout::Error, Faraday::TimeoutError => e
+      write_usage(ctx, outcome: :timeout, started_at: started_at, error_message: e.message)
+      raise Timeout, e.message
+    rescue RubyLLM::UnauthorizedError, RubyLLM::ForbiddenError, RubyLLM::PaymentRequiredError => e
+      write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
+      raise AuthError, e.message
+    rescue RubyLLM::BadRequestError => e
+      write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
+      raise UnsupportedSchema, e.message if native_schema && output_schema.present? && adapter.unsupported_schema?(e)
+
+      Rails.error.report(e, context: error_context(ctx))
+      raise ProviderError, e.message
+    rescue RubyLLM::Error,
+           RubyLLM::ConfigurationError,
+           RubyLLM::ModelNotFoundError,
+           RubyLLM::PromptNotFoundError,
+           RubyLLM::InvalidRoleError,
+           RubyLLM::InvalidToolChoiceError,
+           RubyLLM::UnsupportedAttachmentError,
+           Faraday::ConnectionFailed, OpenSSL::SSL::SSLError,
+           # Invalid JSON in tool-call arguments; still a billable call.
+           JSON::ParserError => e
+      Rails.error.report(e, context: error_context(ctx))
+      write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
+      raise ProviderError, e.message
+    end
+
+    finished_at = Time.current
+
+    begin
+      payload = parse_payload(response.payload, output_schema)
+      validate_payload!(payload, output_schema)
+    rescue SchemaError => e
+      write_usage(ctx, outcome: :schema_error, started_at: started_at,
+                  finished_at: finished_at, response: response, error_message: e.message)
+      e.payload = response.payload
+      raise
+    end
+
+    usage = write_usage(ctx, outcome: :success, started_at: started_at,
+                        finished_at: finished_at, response: response)
+
+    Result.new(payload: payload, usage_id: usage.id)
+  end
 
   # Single seam tests stub. Calls the provider's models listing endpoint.
   # Resolves through LlmProvider because registry names don't always match
@@ -149,7 +176,7 @@ class LlmClient
   # providers keep only what the provider itself reported. The credential page
   # already hides missing fields.
   def serialize_model(model)
-    return { "id" => model.id, "name" => model.name } if credential.llm_provider.assume_model_exists?
+    return { "id" => model.id, "name" => model.name } if credential.llm_provider.minimal_model_metadata?
 
     {
       "id" => model.id,
@@ -162,19 +189,22 @@ class LlmClient
   end
 
   # Single seam tests stub. Returns a ProviderResponse.
-  def invoke_provider(ctx: nil, model:, prompt:, output_schema:, web:, system: nil)
+  def invoke_provider(ctx: nil, model:, prompt:, output_schema:, web:, system: nil, native_schema: true)
     chat = credential.chat(model)
+    system = [system, PayloadRepair.output_instructions(output_schema)].compact_blank.join("\n\n") if output_schema.present?
     # System prompt is the privileged instruction channel; the user prompt sent
     # by #ask travels as a separate user-role message.
     chat.with_instructions(system) if system.present?
-    chat.with_schema(adapter.schema_payload(output_schema)) if output_schema.present?
-    apply_params(chat, model, schema: output_schema.present?, web: web)
+    schema = native_schema && output_schema.present?
+    chat.with_schema(adapter.schema_payload(output_schema)) if schema
+    apply_params(chat, model, schema: schema, web: web)
     if web
       adapter.apply_web(
         chat,
         search_provider: search_provider_for(ctx),
         search_credential: ctx.search_credential,
-        refresh_event: ctx.refresh_event
+        refresh_event: ctx.refresh_event,
+        budget: ctx.tool_budget
       )
     end
 
@@ -183,6 +213,8 @@ class LlmClient
       payload: response_content(recover_halted(chat, response)),
       **usage_totals(chat, response)
     )
+  ensure
+    ctx.last_response = ProviderResponse.new(payload: nil, **usage_totals(chat, response)) if ctx && chat
   end
 
   # Sent with or without tools: the two-step path carries the schema on the
@@ -243,7 +275,7 @@ class LlmClient
   def parse_payload(raw, output_schema)
     return raw if output_schema.blank? || raw.is_a?(Hash)
 
-    PayloadRepair.repair(JSON.parse(adapter.unwrap_json(raw)), output_schema)
+    PayloadRepair.repair(JSON.parse(PayloadRepair.unwrap(adapter.unwrap_json(raw))), output_schema)
   rescue JSON::ParserError => e
     raise SchemaError, "non-JSON response from provider: #{e.message}"
   end
@@ -259,7 +291,7 @@ class LlmClient
 
   def write_usage(ctx, outcome:, started_at:, finished_at: nil, response: nil, error_message: nil)
     finished_at ||= Time.current
-    tokens = response || ProviderResponse.new(
+    tokens = response || ctx.last_response || ProviderResponse.new(
       payload: nil, input_tokens: 0, output_tokens: 0, cache_write_tokens: 0, cache_read_tokens: 0
     )
     cost = LlmClient::RateTable.cost_for(provider: credential.provider, model: ctx.model, usage: tokens)

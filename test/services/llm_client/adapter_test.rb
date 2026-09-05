@@ -78,13 +78,13 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
   test "Anthropic should not send provider-hosted web tools" do
     adapter = LlmClient::Adapter::Anthropic.new
 
-    assert_equal({}, adapter.params_for("claude-opus-4-8", schema: true, web: true))
+    assert_equal({ max_tokens: 8_192 }, adapter.params_for("claude-opus-4-8", schema: true, web: true))
   end
 
   test "OpenRouter should require structured parameters without enabling its web plugin" do
     params = LlmClient::Adapter::OpenRouter.new.params_for("openai/gpt-4o", schema: false, web: true)
 
-    assert_equal({ provider: { require_parameters: true } }, params)
+    assert_equal({ max_tokens: 8_192, provider: { require_parameters: true } }, params)
     assert_not params.key?(:plugins)
   end
 
@@ -93,25 +93,26 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
   test "OpenRouter should require structured parameters on a schema-only call" do
     params = LlmClient::Adapter::OpenRouter.new.params_for("openai/gpt-4o", schema: true, web: false)
 
-    assert_equal({ provider: { require_parameters: true } }, params)
+    assert_equal({ max_tokens: 8_192, provider: { require_parameters: true } }, params)
   end
 
   test "OpenAI should opt out of reasoning on tool-enabled calls" do
     adapter = LlmClient::Adapter::OpenAi.new
 
-    assert_equal({ reasoning_effort: "none" }, adapter.params_for("gpt-5.6-luna", schema: false, web: true))
+    assert_equal({ max_completion_tokens: 8_192, reasoning_effort: "none" }, adapter.params_for("gpt-5.6-luna", schema: false, web: true))
   end
 
   # Structuring keeps its reasoning: no tool is there to collide with it.
   test "OpenAI should keep reasoning on a schema-only call" do
     adapter = LlmClient::Adapter::OpenAi.new
 
-    assert_equal({}, adapter.params_for("gpt-5.6-luna", schema: true, web: false))
+    assert_equal({ max_completion_tokens: 8_192 }, adapter.params_for("gpt-5.6-luna", schema: true, web: false))
   end
 
-  test "#params_for should send nothing when a call carries neither a schema nor tools" do
+  test "#params_for should only bound output when a call carries neither a schema nor tools" do
     LlmClient::Adapter::REGISTRY.each_key do |name|
-      assert_equal({}, LlmClient::Adapter.for(name).params_for("model", schema: false, web: false), name)
+      parameter = name == "openai" ? :max_completion_tokens : :max_tokens
+      assert_equal({ parameter => 8_192 }, LlmClient::Adapter.for(name).params_for("model", schema: false, web: false), name)
     end
   end
 
@@ -122,7 +123,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
       def web_params(_model) = { provider: { sort: "latency" }, reasoning_effort: "none" }
     end.new
 
-    assert_equal({ provider: { require_parameters: true, sort: "latency" },
+    assert_equal({ max_tokens: 8_192, provider: { require_parameters: true, sort: "latency" },
                    response_format: "json", reasoning_effort: "none" },
                  adapter.params_for("model", schema: true, web: true))
   end
@@ -166,6 +167,43 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_not adapter.dead_key?(rate_limit_error({ error: { type: "rate_limit_exceeded" } }.to_json))
     assert_not adapter.dead_key?(rate_limit_error("<html>502</html>"))
     assert_not adapter.dead_key?(RubyLLM::RateLimitError.new("429"))
+  end
+
+  def schema_error(detail)
+    RubyLLM::BadRequestError.new(Struct.new(:body).new({ error: detail }.to_json), detail[:message])
+  end
+
+  test "#unsupported_schema? should recognize explicit OpenAI schema feature rejections" do
+    errors = [
+      schema_error(param: "response_format", code: "unsupported_parameter", message: "Unsupported parameter"),
+      schema_error(param: "response_format", code: nil,
+                   message: "Invalid parameter: 'response_format' of type 'json_schema' is not supported with this model.")
+    ]
+
+    %w[openai moonshot openrouter].each do |provider|
+      errors.each { |error| assert LlmClient::Adapter.for(provider).unsupported_schema?(error), provider }
+    end
+  end
+
+  test "#unsupported_schema? should distinguish Anthropic feature rejection from invalid schemas" do
+    adapter = LlmClient::Adapter::Anthropic.new
+
+    assert adapter.unsupported_schema?(schema_error(message: "output_config.format is not supported for this model"))
+    assert_not adapter.unsupported_schema?(schema_error(message: "output_config.format.schema: unsupported keyword oneOf"))
+    assert_not adapter.unsupported_schema?(schema_error(message: "tools are not supported for this model"))
+  end
+
+  test "#unsupported_schema? should keep ambiguous and malformed errors as failures" do
+    adapter = LlmClient::Adapter::OpenAi.new
+    [
+      RubyLLM::BadRequestError.new("response_format failed"),
+      RubyLLM::BadRequestError.new(Struct.new(:body).new("not JSON")),
+      schema_error(param: "response_format.json_schema.schema", code: "unsupported_parameter"),
+      schema_error(param: "response_format", code: "invalid_json_schema", message: "Invalid schema"),
+      schema_error(param: "response_format", code: nil, message: "Some schema keywords are not supported")
+    ].each do |error|
+      assert_not adapter.unsupported_schema?(error)
+    end
   end
 
   test "#combined_extraction? should be true only for providers verified for one-call web+schema" do

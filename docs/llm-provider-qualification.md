@@ -5,7 +5,7 @@
 Use this report to inspect model discovery before changing model selection.
 It lists the models and metadata returned by the application's existing
 `LlmClient` serialization. Some fields come from the SDK registry; their presence
-does not prove runtime compatibility. Providers using `assume_model_exists`
+does not prove runtime compatibility. OpenAI and Moonshot
 currently expose only IDs and names in that serialization, so missing capability
 metadata is expected.
 
@@ -30,6 +30,36 @@ provider's `PASS`, `FAIL`, or `SKIP` result. No result approves a model for use.
 
 Paid capability probes below are separate actions. Run them only for a specific
 integration question with bounded costs; model discovery does not require them.
+
+## Text output and bounded fallback
+
+`LlmClient#call` accepts `native_schema: false` to request JSON through
+instructions while keeping local schema validation mandatory. With `web: false`,
+this path sends neither tools nor an API response-format constraint. It uses the
+same credential, exact model ID, and provider transport as the usual path.
+Invocation lets the provider resolve the model ID instead of requiring it to
+exist in the SDK's bundled registry. The application's selection gate is separate.
+
+An explicit model-level rejection of the response-format feature retries once
+without the API schema. Other bad requests, invalid schema definitions, tool
+rejections, authentication failures, rate limits, and outages still fail. Error
+recognition is deliberately narrow; unfamiliar errors remain visible rather
+than triggering a speculative retry. A schema fallback can retain web tools;
+the existing separate gathering and structuring path remains available.
+
+Malformed or locally invalid output gets at most one correction request using
+only the returned content, without web tools or an API schema. The correction
+must preserve facts and omit refusals and capability notices from feed items.
+Every successful result passes the same local schema validation.
+
+One call context shares a four-attempt limit, the SDK's configured request-time
+allowance, and one web-tool budget across gathering, structuring, and retries.
+Each completion is capped at 8,192 output tokens. SDK automatic completion
+retries are disabled. Each attempt has its own usage row, including malformed
+responses and completed tool rounds preceding a provider failure.
+
+The HTTP tests exercise these request shapes without paid calls. This change
+does not yet remove the model selection gate or make retrieval optional.
 
 ## Model qualification
 
