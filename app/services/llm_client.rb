@@ -353,7 +353,7 @@ class LlmClient
     cost = nil if ctx.retrieval&.fetch("mode", nil) == "native" && ctx.retrieval["search_calls"] != 0
     cost = nil if ctx.retrieval&.fetch("token_usage_reported", nil) == false
 
-    LlmUsage.create!(
+    usage = LlmUsage.create!(
       user: credential.user,
       feed: ctx.feed,
       ai_credential: credential,
@@ -374,6 +374,11 @@ class LlmClient
       duration_ms: ((finished_at - started_at) * 1000).round,
       error_message: error_message
     )
+    # Previews have no persisted feed, so each attempt needs an exact reference.
+    if ctx.purpose.to_s == "preview" && ctx.refresh_event
+      ctx.refresh_event.event_references.create!(reference: usage)
+    end
+    usage
   end
 
   def error_context(ctx)

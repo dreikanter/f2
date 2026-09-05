@@ -4,6 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-05
 
+- AI previews appear in recent activity with usage details, including failed attempts.
+
 - AI posts consistently include their source URL in the body.
 
 - OpenAI feeds use built-in web search by default, with bounded requests and a fallback when search is unsupported.

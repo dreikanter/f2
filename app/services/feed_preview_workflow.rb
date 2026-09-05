@@ -34,7 +34,8 @@ class FeedPreviewWorkflow
 
     logger.error "FeedPreviewWorkflow error at #{current_step}: #{error.message}"
 
-    transition!(status: FeedPreview.statuses[:failed])
+    updated = transition!(status: FeedPreview.statuses[:failed])
+    @activity&.finish!(status: updated ? "failed" : "interrupted", stats: stats)
   end
 
   def initialize_workflow(_input)
@@ -43,6 +44,7 @@ class FeedPreviewWorkflow
       expected_status: FeedPreview.statuses[:pending],
       status: FeedPreview.statuses[:processing]
     )
+    @activity = FeedPreviewActivity.new(feed_preview) if FeedProfile.depends_on_ai?(feed_preview.feed_profile_key)
 
     Feed.new(
       params: feed_preview.params,
@@ -57,7 +59,7 @@ class FeedPreviewWorkflow
   def load_feed_contents(temp_feed)
     # `purpose` reaches LlmUsage via the loader's call context, so AI spend
     # from previews is distinguishable from scheduled runs.
-    loader = temp_feed.loader_instance(purpose: :preview)
+    loader = temp_feed.loader_instance(purpose: :preview, refresh_event: @activity&.event)
     raw_data = loader.load
 
     record_stats(content_size: content_bytesize(raw_data))
@@ -113,11 +115,14 @@ class FeedPreviewWorkflow
 
   def finalize_workflow(posts)
     record_completed_at
-    transition!(
-      status: FeedPreview.statuses[:ready],
-      ready_at: Time.current,
-      data: { posts: posts, stats: stats }
-    )
+    FeedPreview.transaction do
+      updated = transition!(
+        status: FeedPreview.statuses[:ready],
+        ready_at: Time.current,
+        data: { posts: posts, stats: stats }
+      )
+      @activity&.finish!(status: updated ? "completed" : "interrupted", stats: stats)
+    end
     posts
   end
 end
