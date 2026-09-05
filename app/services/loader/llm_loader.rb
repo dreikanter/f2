@@ -77,21 +77,8 @@ module Loader
       PROMPT
     end
 
-    # The chosen model when the credential still supports it, otherwise its
-    # default supported model — a dropped model degrades gracefully instead of
-    # failing the run. The provider default is the last resort when the
-    # credential exposes no verified models at all. A persisted feed records the
-    # fallback once, keyed on the model actually used, so the page prompts a
-    # re-pick even when the whole snapshot dropped out.
     def model_for(credential)
-      chosen = feed.ai_model
-      resolved = feed.effective_ai_model(credential).presence || credential.llm_provider.default_model
-
-      if feed.persisted? && chosen.present? && resolved != chosen
-        feed.note_ai_model_fallback!(from: chosen, to: resolved)
-      end
-
-      resolved
+      feed.effective_ai_model(credential).presence || credential.llm_provider.default_model
     end
 
     def config

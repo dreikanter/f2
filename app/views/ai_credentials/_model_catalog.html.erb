@@ -1,0 +1,20 @@
+<%# locals: (ai_credential:) %>
+<% if ai_credential.models_refreshing? %>
+  <div data-controller="polling"
+       data-polling-endpoint-value="<%= ai_credential_model_catalog_path(ai_credential) %>"
+       data-polling-interval-value="<%= polling_interval_ms %>"
+       data-polling-max-polls-value="<%= polling_max_polls %>"
+       data-polling-stop-condition-value="[data-model-catalog-done]"
+       data-polling-indicate-busy-value="false">
+    <div id="ai-credential-model-catalog">
+      <%= render "ai_credentials/model_catalog_content", ai_credential: ai_credential %>
+    </div>
+    <p data-polling-target="timeoutMessage" hidden class="text-sm text-muted">
+      The refresh is taking longer than expected. Reload this page to check again.
+    </p>
+  </div>
+<% else %>
+  <div id="ai-credential-model-catalog">
+    <%= render "ai_credentials/model_catalog_content", ai_credential: ai_credential %>
+  </div>
+<% end %>

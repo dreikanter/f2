@@ -69,6 +69,8 @@ class LlmUsageListItemComponent < ListItemComponent
   end
 
   def formatted_cost
+    return "Unknown" if usage.cost_estimate_cents.nil?
+
     helpers.number_to_currency(usage.cost_estimate_cents / 100.0)
   end
 

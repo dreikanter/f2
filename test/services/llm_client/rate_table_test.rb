@@ -61,8 +61,8 @@ class LlmClient::RateTableTest < ActiveSupport::TestCase
     assert_equal 705, cost
   end
 
-  test "#cost_for should return 0 for an unknown model" do
-    assert_equal 0, LlmClient::RateTable.cost_for(
+  test "#cost_for should return nil for an unknown model" do
+    assert_nil LlmClient::RateTable.cost_for(
       provider: "anthropic",
       model: "claude-imaginary",
       usage: usage(input: 1_000_000)
@@ -76,7 +76,7 @@ class LlmClient::RateTableTest < ActiveSupport::TestCase
     LlmClient::RateTable.reload!
 
     assert_nil LlmClient::RateTable.rate_for(provider: "anthropic", model: "claude-sonnet-4-6")
-    assert_equal 0, LlmClient::RateTable.cost_for(
+    assert_nil LlmClient::RateTable.cost_for(
       provider: "anthropic",
       model: "claude-sonnet-4-6",
       usage: usage(input: 1_000_000)
@@ -85,5 +85,15 @@ class LlmClient::RateTableTest < ActiveSupport::TestCase
     LlmClient::RateTable.send(:remove_const, :PATH)
     LlmClient::RateTable.const_set(:PATH, original)
     LlmClient::RateTable.reload!
+  end
+  test "#cost_for should use published exact model pricing including explicit free rates" do
+    cost = LlmClient::RateTable.cost_for(provider: "openai", model: "brand-new",
+      usage: usage(input: 1_000_000, output: 500_000), pricing: { "input" => 2, "output" => 0 })
+    assert_equal 200, cost
+  end
+
+  test "#cost_for should keep partial pricing unknown when an unpriced token category was used" do
+    assert_nil LlmClient::RateTable.cost_for(provider: "anthropic", model: "claude-sonnet-4-6",
+      usage: usage(input: 1_000_000, cache_read: 10), pricing: { "input" => 1 })
   end
 end

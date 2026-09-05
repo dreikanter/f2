@@ -90,4 +90,13 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
     assert_equal "0", result.css('[data-key="llm_stats.search_calls.value"]').first.text.strip
     assert_equal "$0.00000", result.css('[data-key="llm_stats.search_estimated_spend.value"]').first.text.strip
   end
+  test "#render should distinguish partial and fully unknown spend" do
+    create(:llm_usage, feed: feed, user: feed.user, cost_estimate_cents: nil)
+    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    assert_equal "Unknown", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
+
+    create(:llm_usage, feed: feed, user: feed.user, cost_estimate_cents: 25)
+    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    assert_equal "$0.25 + unknown", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
+  end
 end

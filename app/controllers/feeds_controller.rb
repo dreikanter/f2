@@ -5,6 +5,8 @@ class FeedsController < ApplicationController
   include StatePolling
   include FeedListing
 
+  before_action :refresh_model_catalogs, only: %i[new edit]
+
   # Operational fields, editable on any feed.
   ALWAYS_PERMITTED_PARAMS = %i[
     name
@@ -138,6 +140,10 @@ class FeedsController < ApplicationController
   # Entry mode on the new-feed page, normalized from the ?mode tab links.
   def mode
     %w[ai webhook].include?(params[:mode]) ? params[:mode] : "link"
+  end
+
+  def refresh_model_catalogs
+    current_user.ai_credentials.active.find_each(&:refresh_models_async)
   end
 
   def enable_feed?

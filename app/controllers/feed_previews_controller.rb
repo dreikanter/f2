@@ -45,11 +45,19 @@ class FeedPreviewsController < ApplicationController
   end
 
   # Server-side backstop for the Stimulus button: an AI preview needs owned,
-  # active AI and search credentials plus a verified model.
+  # active AI and search credentials plus a listed or previously selected model.
   def invalid_ai_selection?
     return false unless FeedProfile.depends_on_ai?(profile_key)
 
-    ai_credential.blank? || search_credential.blank? || !ai_credential.supports_model?(ai_model)
+    ai_credential.blank? || search_credential.blank? || !available_ai_model?
+  end
+
+  def available_ai_model?
+    return false if ai_model.blank?
+    return true if ai_credential.supports_model?(ai_model)
+    return true if preview && preview.ai_model == ai_model
+
+    Current.user.feeds.exists?(ai_credential: ai_credential, ai_model: ai_model)
   end
 
   def previews

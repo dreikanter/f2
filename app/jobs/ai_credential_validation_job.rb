@@ -16,14 +16,16 @@ class AiCredentialValidationJob < ApplicationJob
     # credential is pending or validating, so leaving it either way would spin
     # forever without ever showing the error.
     models = LlmClient.for(credential).available_models
-    run.succeed! do |current_credential|
+    succeeded = run.succeed! do |current_credential|
       current_credential.update!(
         state: :active,
         available_models: models,
+        models_refreshed_at: nil,
         last_validated_at: Time.current,
         last_error: nil
       )
     end
+    credential.refresh_models_async(force: true) if succeeded
   rescue LlmClient::AuthError => e
     # Must precede the provider error it descends from. A rejected key is dead,
     # and a dead key cannot back a running feed.

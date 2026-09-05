@@ -8,8 +8,6 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
     @user ||= create(:user)
   end
 
-  # Anthropic's live snapshot offers both, but only Sonnet is in the capability
-  # matrix — Opus stands in for an offered-but-unverified model gating drops.
   def models
     [
       { "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" },
@@ -45,14 +43,14 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
     assert component(ai_feed).credentials?
   end
 
-  test "#credentials? should be false when the only credential's provider has no matrix models" do
+  test "#credentials? should include a newly listed provider model" do
     unverified_credential
-    assert_not component(ai_feed).credentials?
+    assert component(ai_feed).credentials?
   end
 
-  test "#models_by_credential should keep only capability-matrix models, mapped with names" do
+  test "#models_by_credential should offer all listed models, mapped with names" do
     assert_equal(
-      { credential.id.to_s => [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }] },
+      { credential.id.to_s => models.reverse },
       component(ai_feed).models_by_credential
     )
   end
@@ -62,17 +60,17 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
     assert_equal "claude-sonnet-4-6", component(ai_feed).models_by_credential[credential.id.to_s].first["name"]
   end
 
-  test "#models_by_credential should drop a credential left with no matrix models" do
+  test "#models_by_credential should retain a credential with newly listed models" do
     credential.update!(available_models: [{ "id" => "claude-3-haiku-unverified", "name" => "Unverified" }])
-    assert_empty component(ai_feed).models_by_credential
+    assert_equal ["claude-3-haiku-unverified"], component(ai_feed).models_by_credential.fetch(credential.id.to_s).pluck("id")
   end
 
-  test "#selectable_credentials should exclude a credential whose provider has no matrix models" do
+  test "#selectable_credentials should include credentials with newly listed models" do
     credential
     unverified_credential
     ids = component(ai_feed).selectable_credentials.map(&:id)
     assert_includes ids, credential.id
-    assert_not_includes ids, unverified_credential.id
+    assert_includes ids, unverified_credential.id
   end
 
   test "#ai_profile_keys should list only AI-backed profiles" do
@@ -86,15 +84,15 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
     assert_equal credential.id.to_s, component(ai_feed(ai_credential: nil)).selected_credential_id
   end
 
-  test "#selected_credential_id should skip a saved credential that isn't selectable" do
+  test "#selected_credential_id should keep a saved credential with newly listed models" do
     credential
-    assert_equal credential.id.to_s, component(ai_feed(ai_credential: unverified_credential)).selected_credential_id
+    assert_equal unverified_credential.id.to_s, component(ai_feed(ai_credential: unverified_credential)).selected_credential_id
   end
 
   test "#model_select_options should lead with a disabled hidden placeholder" do
     options = component(ai_feed(ai_credential: credential)).model_select_options
     assert_equal ["Select a model…", "", { disabled: true, hidden: true }], options.first
-    assert_equal [["Claude Sonnet 4.6", "claude-sonnet-4-6"]], options.drop(1)
+    assert_equal [["Claude Opus 4.7", "claude-opus-4-7"], ["Claude Sonnet 4.6", "claude-sonnet-4-6"]], options.drop(1)
   end
 
   test "#selected_model_id should return the saved model when it's still offered" do
@@ -102,9 +100,10 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
     assert_equal "claude-sonnet-4-6", component(feed).selected_model_id
   end
 
-  test "#selected_model_id should be blank when the saved model isn't offered" do
+  test "#selected_model_id should preserve a saved model absent from the listing" do
     feed = ai_feed(ai_credential: credential, ai_model: "claude-opus-4-7")
-    assert_equal "", component(feed).selected_model_id
+    feed.ai_model = "removed-model"
+    assert_equal "removed-model", component(feed).selected_model_id
   end
 
   test "#model_unavailable? should be true when the saved model is no longer offered" do
@@ -112,12 +111,12 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
     assert component(feed).model_unavailable?
   end
 
-  test "#model_unavailable? should be true when the saved model is offered but not in the matrix" do
+  test "#model_unavailable? should be false for a newly listed model" do
     feed = ai_feed(ai_credential: credential, ai_model: "claude-opus-4-7")
-    assert component(feed).model_unavailable?
+    assert_not component(feed).model_unavailable?
   end
 
-  test "#model_unavailable? should be false when the saved model is offered and verified" do
+  test "#model_unavailable? should be false when the saved model is offered" do
     feed = ai_feed(ai_credential: credential, ai_model: "claude-sonnet-4-6")
     assert_not component(feed).model_unavailable?
   end

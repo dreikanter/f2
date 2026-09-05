@@ -15,20 +15,18 @@ class AiCredentialModelsComponent < ViewComponent::Base
     model["name"].presence || model["id"]
   end
 
-  # Compact one-liner of the facts worth scanning: context size and
-  # whatever capabilities the provider reports. Returns nil when there's
-  # nothing to show, so the template can decide with a single call.
   def model_details(model)
+    metadata = model.fetch("metadata", {})
     parts = []
-    parts << "#{helpers.number_with_delimiter(model['context_window'])} token context" if model["context_window"].present?
-    capabilities = capabilities(model)
-    parts << capabilities.join(", ") if capabilities.present?
-    parts.join(" · ").presence
-  end
-
-  private
-
-  def capabilities(model)
-    Array(model["capabilities"]).map { |capability| capability.to_s.tr("_", " ") }
+    context = metadata["context_window"]
+    parts << "#{helpers.number_with_delimiter(context)} token context" if context
+    { "tool_call" => "Tools", "structured_output" => "Structured output" }.each do |key, label|
+      value = metadata[key]
+      parts << "#{label}: #{value.nil? ? 'unknown' : (value ? 'yes' : 'no')}"
+    end
+    outputs = metadata["output_modalities"]
+    parts << "Output: #{outputs.join(', ')}" if outputs.is_a?(Array) && outputs.any?
+    parts << "Source: #{metadata['source']}" if metadata["source"]
+    parts.join(" · ")
   end
 end

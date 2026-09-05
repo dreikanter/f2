@@ -134,4 +134,8 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "status is unknown"
     assert_not_includes result.to_html, "refreshed"
   end
+  test "#call should label unknown spend when calls were made" do
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event_with_spend(nil)))
+    assert_equal "(AI: unknown cost)", result.css("[data-key='events.llm_cost']").first&.text
+  end
 end

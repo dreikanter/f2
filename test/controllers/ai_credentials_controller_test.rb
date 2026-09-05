@@ -225,9 +225,9 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='ai_credential.validating']"
   end
 
-  test "#show should render the active state without polling for an active credential" do
+  test "#show should render without polling when the active credential catalog is fresh" do
     sign_in_as(user)
-    active = create(:ai_credential, :active, user: user)
+    active = create(:ai_credential, :active, user: user, models_refreshed_at: Time.current)
 
     get ai_credential_url(active)
 

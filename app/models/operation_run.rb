@@ -6,7 +6,8 @@ class OperationRun < ApplicationRecord
 
   enum :kind, {
     validation: 0,
-    groups_refresh: 1
+    groups_refresh: 1,
+    models_refresh: 2
   }
 
   enum :status, {

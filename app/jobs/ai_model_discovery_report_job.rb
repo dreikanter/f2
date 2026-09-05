@@ -6,7 +6,7 @@ class AiModelDiscoveryReportJob < ApplicationJob
 
   def self.description
     "Lists models using one active staging credential per provider, from any account. " \
-      "Uses free model-listing requests only. Open the finished run and copy its details to share the report."
+      "Uses free model-listing and published metadata requests only. Open the finished run and copy its details to share the report."
   end
 
   def perform
@@ -32,7 +32,7 @@ class AiModelDiscoveryReportJob < ApplicationJob
     credential = AiCredential.active.where(provider: provider.name).order(:created_at, :id).first
     return { provider: provider.name, status: "SKIP", note: "No active staging credential" } unless credential
 
-    models = LlmClient.for(credential).available_models.sort_by { |model| model.fetch("id") }
+    models = AiModelCatalog.fetch(credential, allow_empty: true).sort_by { |model| model.fetch("id") }
     {
       provider: provider.name,
       status: models.empty? ? "FAIL" : "PASS",
@@ -40,8 +40,8 @@ class AiModelDiscoveryReportJob < ApplicationJob
       sdk_provider: provider.ruby_llm_provider.to_s,
       minimal_model_metadata: provider.minimal_model_metadata?,
       model_count: models.size,
-      models_without_capability_metadata: models.count { |model| !model.key?("capabilities") },
-      metadata_source: "LlmClient model serialization; may include SDK registry metadata",
+      models_without_capability_metadata: models.count { |model| !model.fetch("metadata", {}).key?("structured_output") && !model.fetch("metadata", {}).key?("tool_call") },
+      metadata_source: "Provider listing with advisory models.dev metadata matched by provider and exact model ID",
       models: models
     }
   rescue StandardError => e

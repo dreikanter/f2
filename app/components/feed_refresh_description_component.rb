@@ -34,9 +34,10 @@ class FeedRefreshDescriptionComponent < EventDescriptionComponent
   # call still shows.
   def spend_tag
     cents = event.metadata.dig("stats", "llm_cost_cents")
-    return if cents.nil?
+    return if cents.nil? && event.metadata.dig("stats", "llm_calls").to_i.zero?
 
-    helpers.tag.span("(AI: #{helpers.number_to_currency(cents / 100.0)})",
+    cost = cents.nil? ? "unknown cost" : helpers.number_to_currency(cents / 100.0)
+    helpers.tag.span("(AI: #{cost})",
                      class: "text-muted", data: { key: "events.llm_cost" })
   end
 end

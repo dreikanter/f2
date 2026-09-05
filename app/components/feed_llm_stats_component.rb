@@ -67,7 +67,10 @@ class FeedLlmStatsComponent < StatsPanelComponent
   end
 
   def formatted_cost
-    helpers.number_to_currency(total_cost_cents / 100.0)
+    known = helpers.number_to_currency(total_cost_cents / 100.0)
+    return known unless usages.where(cost_estimate_cents: nil).exists?
+
+    usages.where.not(cost_estimate_cents: nil).exists? ? "#{known} + unknown" : "Unknown"
   end
 
   def formatted_search_cost

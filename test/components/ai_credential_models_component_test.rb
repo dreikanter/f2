@@ -7,8 +7,7 @@ class AiCredentialModelsComponentTest < ViewComponent::TestCase
       {
         "id" => "claude-sonnet-4-6",
         "name" => "Claude Sonnet 4.6",
-        "context_window" => 200_000,
-        "capabilities" => ["function_calling"]
+        "metadata" => { "context_window" => 200_000, "tool_call" => true, "structured_output" => false, "source" => "models.dev" }
       }
     ]
   end
@@ -28,7 +27,9 @@ class AiCredentialModelsComponentTest < ViewComponent::TestCase
 
     text = result.css('[data-key="ai_credential.model"]').first.text
     assert_includes text, "200,000 token context"
-    assert_includes text, "function calling"
+    assert_includes text, "Tools: yes"
+    assert_includes text, "Structured output: no"
+    assert_includes text, "models.dev"
   end
 
   test "#render should fall back to the id when name is blank" do
@@ -59,5 +60,11 @@ class AiCredentialModelsComponentTest < ViewComponent::TestCase
     result = render_inline(AiCredentialModelsComponent.new(ai_credential: credential))
 
     assert_empty result.css('[data-key="ai_credential.models"]')
+  end
+  test "#render should keep capabilities unknown when only synthesized SDK fields exist" do
+    credential = create(:ai_credential, :active, available_models: [{ "id" => "new-model", "capabilities" => [] }])
+    result = render_inline(AiCredentialModelsComponent.new(ai_credential: credential))
+    assert_includes result.text, "Tools: unknown"
+    assert_includes result.text, "Structured output: unknown"
   end
 end

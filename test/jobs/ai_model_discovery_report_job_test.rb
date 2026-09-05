@@ -1,6 +1,10 @@
 require "test_helper"
 
 class AiModelDiscoveryReportJobTest < ActiveJob::TestCase
+  setup do
+    stub_request(:get, PublishedModelMetadata::URL).to_return(body: "{}")
+  end
+
   def job
     @job ||= AiModelDiscoveryReportJob.new
   end
