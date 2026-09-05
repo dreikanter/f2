@@ -3,7 +3,7 @@
 pin "application"
 
 pin "tailwind", to: "tailwind.js"
-pin "flowbite", to: "https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.turbo.min.js", preload: true
+pin "flowbite", to: "https://cdn.jsdelivr.net/npm/flowbite@4.0.2/dist/flowbite.turbo.min.js", preload: true
 
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
 pin "@hotwired/stimulus", to: "stimulus.min.js"
