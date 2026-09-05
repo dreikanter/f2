@@ -623,7 +623,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_previewed?
   end
 
-  test "#can_be_previewed? should stay true when the saved model dropped but the credential has a fallback" do
+  test "#can_be_previewed? should stay true when the saved model is absent from the listing" do
     credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "removed-model")
@@ -631,12 +631,12 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.can_be_previewed?
   end
 
-  test "#can_be_previewed? should be false when the credential has no verified models" do
+  test "#can_be_previewed? should allow a newly listed model" do
     credential = create(:ai_credential, :active, available_models: [{ "id" => "unverified-model" }])
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "unverified-model")
 
-    assert_not feed.can_be_previewed?
+    assert feed.can_be_previewed?
   end
 
   test "#can_be_previewed? should be false for an AI profile without a credential" do
@@ -953,27 +953,25 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "claude-sonnet-4-6", feed.effective_ai_model
   end
 
-  test "#effective_ai_model should fall back to the default supported model when the chosen one dropped" do
+  test "#effective_ai_model should preserve the chosen model when it disappears" do
     credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "x" }, ai_credential: credential, ai_model: "removed-model")
 
-    assert_equal "claude-sonnet-4-6", feed.effective_ai_model
+    assert_equal "removed-model", feed.effective_ai_model
   end
 
-  # A retired model is never rewritten on the feed; it just stops being
-  # supported and resolves to the successor.
-  test "#effective_ai_model should resolve a feed pinned to the retired kimi model" do
+  test "#effective_ai_model should preserve the selected kimi version" do
     credential = create(:ai_credential, :active, provider: "moonshot",
                                                  available_models: [{ "id" => "kimi-k2.6" }, { "id" => "kimi-k2.5" }])
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "x" }, ai_credential: credential, ai_model: "kimi-k2.5")
 
-    assert_not feed.ai_model_supported?
-    assert_equal "kimi-k2.6", feed.effective_ai_model
+    assert feed.ai_model_supported?
+    assert_equal "kimi-k2.5", feed.effective_ai_model
   end
 
-  test "#ai_model_supported? should follow the credential's matrix-intersected snapshot" do
+  test "#ai_model_supported? should follow the credential's snapshot" do
     credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "x" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
@@ -981,18 +979,6 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.ai_model_supported?
     feed.ai_model = "removed-model"
     assert_not feed.ai_model_supported?
-  end
-
-  test "#note_ai_model_fallback! should record one event and dedupe the same drop" do
-    feed = create(:feed, feed_profile_key: "llm", params: { "prompt" => "x" })
-
-    assert_difference -> { feed.events.where(type: "feed_ai_model_unavailable").count }, 1 do
-      feed.note_ai_model_fallback!(from: "removed-model", to: "claude-sonnet-4-6")
-    end
-
-    assert_no_difference -> { feed.events.where(type: "feed_ai_model_unavailable").count } do
-      feed.note_ai_model_fallback!(from: "removed-model", to: "claude-sonnet-4-6")
-    end
   end
 
   test "#note_ai_gather_empty! should record a debug event for a persisted feed" do

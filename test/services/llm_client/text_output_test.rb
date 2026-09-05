@@ -275,4 +275,17 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     assert_equal %w[success timeout], LlmUsage.order(:created_at).pluck(:outcome)
     assert_equal 0, LlmUsage.order(:created_at).last.input_tokens
   end
+  test "#call should use advisory schema and output limits while validating output and tracking unknown spend" do
+    credential.update!(available_models: [{ "id" => context.model,
+      "metadata" => { "structured_output" => false, "max_output_tokens" => 1_024 } }])
+    stub_completions(completion('{"items":[]}'))
+
+    result = call
+
+    assert_equal({ "items" => [] }, result.payload)
+    assert_nil @requests.sole["response_format"]
+    assert_equal 1_024, @requests.sole["max_completion_tokens"]
+    assert_nil LlmUsage.find(result.usage_id).cost_estimate_cents
+  end
+
 end

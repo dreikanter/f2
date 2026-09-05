@@ -36,9 +36,10 @@ class LlmClient
 
   attr_reader :credential
 
-  def call(ctx, prompt:, output_schema:, web: false, system: nil, native_schema: true)
+  def call(ctx, prompt:, output_schema:, web: false, system: nil, native_schema: nil)
     raise DetectionForbidden if Thread.current[:llm_detection_phase]
 
+    native_schema = credential.model_metadata(ctx.model)["structured_output"] != false if native_schema.nil?
     repaired = false
     begin
       call_once(ctx, prompt: prompt, output_schema: output_schema, web: web,
@@ -221,6 +222,12 @@ class LlmClient
   # call that has none, and its routing is what decides the reply's shape.
   def apply_params(chat, model, schema:, web:)
     params = adapter.params_for(model, schema: schema, web: web)
+    limit = credential.model_metadata(model)["max_output_tokens"]
+    if limit.is_a?(Numeric) && limit.positive?
+      %i[max_tokens max_completion_tokens].each do |key|
+        params[key] = [params[key], limit.to_i].min if params[key]
+      end
+    end
     chat.with_params(**params) if params.present?
   end
 
@@ -294,7 +301,8 @@ class LlmClient
     tokens = response || ctx.last_response || ProviderResponse.new(
       payload: nil, input_tokens: 0, output_tokens: 0, cache_write_tokens: 0, cache_read_tokens: 0
     )
-    cost = LlmClient::RateTable.cost_for(provider: credential.provider, model: ctx.model, usage: tokens)
+    cost = LlmClient::RateTable.cost_for(provider: credential.provider, model: ctx.model, usage: tokens,
+                                               pricing: credential.model_metadata(ctx.model)["pricing"])
 
     LlmUsage.create!(
       user: credential.user,

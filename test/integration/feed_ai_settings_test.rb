@@ -103,7 +103,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     assert_select "select[data-key='form.ai-model'] option[value=''][selected]", false
   end
 
-  test "#edit should select the placeholder when the saved model is no longer offered" do
+  test "#edit should preserve selection when the saved model is no longer offered" do
     sign_in_as(user)
     stale_feed = create(:feed,
                         user: user,
@@ -115,29 +115,27 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
 
     get edit_feed_path(stale_feed)
 
-    assert_select "select[data-key='form.ai-model'] option[value=''][selected][disabled]", text: "Select a model…"
+    assert_select "select[data-key='form.ai-model'] option[value='removed-model'][selected]"
     assert_select "select[data-key='form.ai-model'] option[selected]", count: 1
   end
 
-  test "#edit should list only capability-matrix models in the model select" do
+  test "#edit should list all provider models in the model select" do
     sign_in_as(user)
 
     get edit_feed_path(ai_feed)
 
     assert_select "select[data-key='form.ai-model'] option", text: "Claude Sonnet 4.6"
-    # Opus is offered by the credential but not in the matrix, so it's gated out.
-    assert_select "select[data-key='form.ai-model'] option", text: "Claude Opus 4.7", count: 0
+    assert_select "select[data-key='form.ai-model'] option", text: "Claude Opus 4.7", count: 1
   end
 
-  test "#edit should embed each credential's capability-matrix models for the dependent dropdown" do
+  test "#edit should embed each credential's models for the dependent dropdown" do
     sign_in_as(user)
 
     get edit_feed_path(ai_feed)
 
     section = css_select("[data-key='form.ai-settings']").first
     embedded = JSON.parse(section["data-ai-settings-models-value"])
-    # Only the verified Sonnet model survives the capability-matrix gate.
-    assert_equal [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }], embedded[credential.id.to_s]
+    assert_equal ["claude-opus-4-7", "claude-sonnet-4-6"], embedded[credential.id.to_s].pluck("id")
 
     ai_profiles = JSON.parse(section["data-ai-settings-ai-profiles-value"])
     assert_includes ai_profiles, "llm"

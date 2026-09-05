@@ -53,4 +53,10 @@ class LlmUsageListItemComponentTest < ViewComponent::TestCase
 
     assert_equal "Provider error", result.css("[data-key='events.llm_usage.outcome']").text
   end
+  test "#render should label unknown cost explicitly" do
+    usage = create(:llm_usage, cost_estimate_cents: nil)
+    result = render_inline(LlmUsageListItemComponent.new(usage: usage))
+    assert_equal "Unknown", result.css('[data-key="events.llm_usage.cost"]').first.text
+  end
+
 end

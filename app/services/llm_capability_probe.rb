@@ -1,16 +1,4 @@
-# Dev-time capability probe: no (provider, model) pair enters
-# LlmModelCapability without a run that passes here.
-#
-# Every check mirrors something a feed run does. Provider-hosted retrieval is
-# deliberately not probed — every provider retrieves through our own tools
-# (LlmClient::Adapter::Base#apply_web), so a hosted mechanism tells us nothing
-# about a feed run.
-#
-# The key comes from an AiCredential named after the probe job and owned by
-# whoever launched the run, so the checks are made on the same objects and the
-# same provider configuration a feed run uses.
-#
-# See docs/llm-provider-qualification.md.
+# Optional diagnostics for investigating provider behavior.
 module LlmCapabilityProbe
   # Production's schema verbatim: a simplified copy qualifies a shape the app
   # never sends. The nullable `source_url` union is the part strict
@@ -127,7 +115,7 @@ module LlmCapabilityProbe
                     evidence: nil, seconds: (Time.current - started).round(1) }
     end
 
-    # LlmModelCapability matches on exact string, so a near-miss id qualifies
+    # Exact IDs keep diagnostic results attached to the requested model.
     # nothing. Goes through the listing the app itself calls, so a pass means
     # the credential can also be validated. The listing is recorded as evidence.
     def check_models

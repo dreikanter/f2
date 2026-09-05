@@ -1,9 +1,4 @@
-# Per-model token rates loaded from config/llm_rates.yml.
-#
-# Computes the USD cost of a single LLM call from the token counts
-# ruby_llm reports. Models or providers without an entry yield a zero
-# cost — callers should treat that as "unknown" rather than "free" when
-# surfacing spend.
+# Estimates use exact model prices; missing rates remain unknown.
 class LlmClient::RateTable
   PATH = Rails.root.join("config/llm_rates.yml")
 
@@ -27,18 +22,27 @@ class LlmClient::RateTable
       )
     end
 
-    # Returns the cost of the call in integer cents to match
-    # LlmUsage#cost_estimate_cents. An unknown model returns 0. `usage` is
-    # anything with the four token-count readers (e.g. a ProviderResponse).
-    def cost_for(provider:, model:, usage:)
-      rate = rate_for(provider: provider, model: model)
-      return 0 unless rate
+    def cost_for(provider:, model:, usage:, pricing: nil)
+      if pricing.nil?
+        rate = rate_for(provider: provider, model: model)
+        return unless rate
+
+        pricing = {
+          "input" => rate.input_per_million, "output" => rate.output_per_million,
+          "cache_write" => rate.cache_write_per_million, "cache_read" => rate.cache_read_per_million
+        }
+      end
 
       dollars_per_million = 0.0
-      dollars_per_million += usage.input_tokens.to_i * rate.input_per_million
-      dollars_per_million += usage.output_tokens.to_i * rate.output_per_million
-      dollars_per_million += usage.cache_write_tokens.to_i * rate.cache_write_per_million
-      dollars_per_million += usage.cache_read_tokens.to_i * rate.cache_read_per_million
+      %w[input output cache_write cache_read].each do |kind|
+        count = usage.public_send("#{kind}_tokens").to_i
+        next if count.zero?
+
+        price = pricing[kind]
+        return unless price.is_a?(Numeric) && price >= 0
+
+        dollars_per_million += count * price
+      end
       ((dollars_per_million / 1_000_000.0) * 100).round
     end
 

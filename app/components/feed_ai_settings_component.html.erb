@@ -15,8 +15,8 @@
       <% if model_unavailable? %>
         <%= render PanelComponent.new(variant: :info) do %>
           <div class="space-y-1" data-key="form.ai-model-unavailable">
-            <p class="font-semibold text-brand-strong">Your saved model isn't available anymore</p>
-            <p class="text-brand-strong text-sm">Pick a model below to keep this feed running.</p>
+            <p class="font-semibold text-brand-strong">Your saved model isn't in the latest list</p>
+            <p class="text-brand-strong text-sm">This feed will keep using it unless you choose another model.</p>
           </div>
         <% end %>
       <% end %>
@@ -54,7 +54,7 @@
           <% if form.object.errors[:ai_model].any? %>
             <p class="text-sm text-danger"><%= form.object.errors[:ai_model].first %></p>
           <% else %>
-            <p class="text-sm text-muted">Choose the model this feed uses to fetch posts.</p>
+            <p class="text-sm text-muted">New models appear automatically. <%= link_to "Manage model lists", ai_credentials_path, class: "underline" %>.</p>
           <% end %>
         </div>
       <% end %>

@@ -1,8 +1,7 @@
 # A user's API credential for one AI provider. `credential_data` stores
 # provider-specific fields (e.g. `{ "api_key" => "..." }`) and is encrypted at
 # rest. Lifecycle, naming, and feed teardown come from ProviderCredential;
-# what's here is the model-capability side: which models this key may actually
-# run.
+# model discovery and advisory metadata are specific to AI credentials.
 class AiCredential < ApplicationRecord
   include ProviderCredential
 
@@ -19,14 +18,38 @@ class AiCredential < ApplicationRecord
     llm_provider.display_name
   end
 
-  # Models this credential can actually back a feed with: the dev-verified
-  # capability matrix intersected with the provider's live snapshot.
-  # Membership is qualification — a snapshot model absent from the matrix (or a
-  # provider with no matrix rows) yields nothing, so nothing unverified leaks
-  # into the picker or a run.
+  MODEL_CATALOG_FRESHNESS = 1.day
+  MODEL_REFRESH_TIMEOUT = 15.minutes
+
   def supported_models
-    verified = LlmModelCapability.models_for(provider)
-    available_models.select { |model| verified.include?(model["id"]) }
+    available_models.reject do |model|
+      outputs = model.dig("metadata", "output_modalities")
+      outputs.is_a?(Array) && outputs.any? && !outputs.include?("text")
+    end
+  end
+
+  def model_metadata(model_id)
+    available_models.find { |model| model["id"] == model_id }&.fetch("metadata", {}) || {}
+  end
+
+  def refresh_models_async(force: false)
+    with_lock do
+      return unless active?
+
+      recent = latest_operation_run(:models_refresh)
+      return recent if recent&.in_progress?(stale_after: MODEL_REFRESH_TIMEOUT)
+      return if !force && models_refreshed_at && models_refreshed_at > MODEL_CATALOG_FRESHNESS.ago
+      return if !force && recent && recent.created_at > 1.hour.ago
+
+      run = OperationRun.start!(subject: self, kind: :models_refresh, timeout: MODEL_REFRESH_TIMEOUT)
+      AiModelCatalogRefreshJob.perform_later(run)
+      AiModelCatalogTimeoutJob.set(wait_until: run.deadline_at).perform_later(run)
+      run
+    end
+  end
+
+  def models_refreshing?
+    latest_operation_run(:models_refresh)&.in_progress?(stale_after: MODEL_REFRESH_TIMEOUT) || false
   end
 
   def supports_model?(model_id)
@@ -35,9 +58,6 @@ class AiCredential < ApplicationRecord
     supported_models.any? { |model| model["id"] == model_id }
   end
 
-  # The model to fall back to when a chosen model is no longer supported: the
-  # provider's configured default when it's still supported here, otherwise the
-  # first supported model, or nil when the provider has no verified models.
   def default_supported_model
     provider_default = llm_provider.default_model
     return provider_default if supports_model?(provider_default)

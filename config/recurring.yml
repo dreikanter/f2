@@ -10,6 +10,11 @@
 #     schedule: at 5am every day
 
 development:
+  refresh_ai_model_catalogs:
+    class: RefreshAiModelCatalogsJob
+    queue: default
+    schedule: every day at 2am
+
   prune_sessions:
     class: PruneSessionsJob
     queue: default
@@ -41,6 +46,11 @@ development:
     schedule: every day at 5am
 
 staging:
+  refresh_ai_model_catalogs:
+    class: RefreshAiModelCatalogsJob
+    queue: default
+    schedule: every day at 2am
+
   prune_sessions:
     class: PruneSessionsJob
     queue: default
@@ -76,6 +86,11 @@ staging:
     schedule: every hour at minute 12
 
 production:
+  refresh_ai_model_catalogs:
+    class: RefreshAiModelCatalogsJob
+    queue: default
+    schedule: every day at 2am
+
   prune_sessions:
     class: PruneSessionsJob
     queue: default

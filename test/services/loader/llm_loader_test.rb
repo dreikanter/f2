@@ -196,30 +196,30 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal ["claude-sonnet-4-6"], client.calls.map { |c| c[:model] }
   end
 
-  test "#load should fall back to a supported model and record a notice when the chosen model dropped" do
+  test "#load should keep the selected model when it disappears" do
     supported = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
     dropped_feed = create(:feed, user: user, ai_credential: supported, feed_profile_key: "llm",
                                  params: { "prompt" => "x" }, ai_model: "removed-model")
     client = fake_client(structured: { "items" => [] }, credential: supported)
 
-    assert_difference -> { dropped_feed.events.where(type: "feed_ai_model_unavailable").count }, 1 do
+    assert_no_difference -> { dropped_feed.events.where(type: "feed_ai_model_unavailable").count } do
       Loader::LlmLoader.new(dropped_feed, llm_client: client).load
     end
 
-    assert_equal ["claude-sonnet-4-6"], client.calls.map { |c| c[:model] }
+    assert_equal ["removed-model"], client.calls.map { |c| c[:model] }
   end
 
-  test "#load should record a notice and use the provider default when the whole snapshot dropped" do
+  test "#load should keep the selected model when the snapshot becomes empty" do
     empty = create(:ai_credential, :active, user: user, available_models: [])
     orphaned = create(:feed, user: user, ai_credential: empty, feed_profile_key: "llm",
                              params: { "prompt" => "x" }, ai_model: "claude-opus-4-7")
     client = fake_client(structured: { "items" => [] }, credential: empty)
 
-    assert_difference -> { orphaned.events.where(type: "feed_ai_model_unavailable").count }, 1 do
+    assert_no_difference -> { orphaned.events.where(type: "feed_ai_model_unavailable").count } do
       Loader::LlmLoader.new(orphaned, llm_client: client).load
     end
 
-    assert_equal [LlmProvider.find("anthropic").default_model], client.calls.map { |c| c[:model] }
+    assert_equal ["claude-opus-4-7"], client.calls.map { |c| c[:model] }
   end
 
   test "#load should fall back to the provider default model when no override" do

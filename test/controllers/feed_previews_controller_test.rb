@@ -227,12 +227,12 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "#show should not preview a model that is offered but not dev-verified" do
+  test "#show should preview a newly listed model" do
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user, available_models: models)
 
-    assert_no_difference("FeedPreview.count") do
-      assert_no_enqueued_jobs do
+    assert_difference("FeedPreview.count", 1) do
+      assert_enqueued_with(job: FeedPreviewJob) do
         post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" },
                              ai_credential_id: credential.id, ai_model: "claude-opus-4-7" },
             headers: TURBO_STREAM

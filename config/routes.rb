@@ -91,6 +91,7 @@ Rails.application.routes.draw do
 
   resources :ai_credentials do
     scope module: :ai_credentials do
+      resource :model_catalog, only: %i[show create]
       resource :validation, only: :show
       resource :default, only: :update
     end
