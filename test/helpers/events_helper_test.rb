@@ -130,6 +130,11 @@ class EventsHelperTest < ActionView::TestCase
     assert_equal "$0.00", format_stat_value("llm_cost_cents", 0)
   end
 
+  test "#format_stat_value should keep missing cost distinct from zero" do
+    assert_equal "Unknown", format_stat_value("llm_cost_cents", nil)
+    assert_equal "$0.00", format_stat_value("llm_cost_cents", 0)
+  end
+
   test "#format_stat_value should return value as-is for other keys" do
     assert_equal "foo", format_stat_value("some_key", "foo")
   end

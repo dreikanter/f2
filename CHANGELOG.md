@@ -8,6 +8,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 - AI feeds now attempt to correct an empty JSON object instead of immediately failing the run.
 - AI feeds can recover from unsupported response formatting and make one correction attempt when a response cannot be read.
+- Event details show unknown AI costs as “Unknown” instead of $0.00.
 
 ## 2026-09-03
 
