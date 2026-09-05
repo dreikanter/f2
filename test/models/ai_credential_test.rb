@@ -225,5 +225,4 @@ class AiCredentialTest < ActiveSupport::TestCase
     ])
     assert_equal ["text", "unknown"], credential.supported_models.pluck("id")
   end
-
 end

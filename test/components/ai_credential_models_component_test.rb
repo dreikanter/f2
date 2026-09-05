@@ -67,5 +67,4 @@ class AiCredentialModelsComponentTest < ViewComponent::TestCase
     assert_includes result.text, "Tools: unknown"
     assert_includes result.text, "Structured output: unknown"
   end
-
 end

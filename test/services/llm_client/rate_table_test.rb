@@ -96,5 +96,4 @@ class LlmClient::RateTableTest < ActiveSupport::TestCase
     assert_nil LlmClient::RateTable.cost_for(provider: "anthropic", model: "claude-sonnet-4-6",
       usage: usage(input: 1_000_000, cache_read: 10), pricing: { "input" => 1 })
   end
-
 end

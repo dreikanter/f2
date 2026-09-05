@@ -1151,5 +1151,4 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, event.metadata.dig("stats", "llm_calls")
     assert_nil event.metadata.dig("stats", "llm_cost_cents")
   end
-
 end

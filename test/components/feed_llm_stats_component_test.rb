@@ -99,5 +99,4 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
     result = render_inline(FeedLlmStatsComponent.new(feed: feed))
     assert_equal "$0.25 + unknown", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
   end
-
 end

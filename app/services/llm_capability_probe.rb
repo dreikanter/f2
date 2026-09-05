@@ -116,8 +116,6 @@ module LlmCapabilityProbe
     end
 
     # Exact IDs keep diagnostic results attached to the requested model.
-    # nothing. Goes through the listing the app itself calls, so a pass means
-    # the credential can also be validated. The listing is recorded as evidence.
     def check_models
       ids = LlmClient.new(@credential).available_models.map { |model| model["id"] }
       evidence = { model_ids: ids }

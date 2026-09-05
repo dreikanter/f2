@@ -287,5 +287,4 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     assert_equal 1_024, @requests.sole["max_completion_tokens"]
     assert_nil LlmUsage.find(result.usage_id).cost_estimate_cents
   end
-
 end

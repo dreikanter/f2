@@ -7,8 +7,8 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
                             credential_data: { "api_key" => "catalog-test-key" })
   end
 
-  def run
-    @run ||= credential.refresh_models_async(force: true)
+  def refresh_run
+    @refresh_run ||= credential.refresh_models_async(force: true)
   end
 
   def stub_models(status: 200, ids: ["new-model"], &block)
@@ -30,11 +30,11 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
 
     Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) do
       assert_no_difference [-> { LlmUsage.count }, -> { Event.count }] do
-        AiModelCatalogRefreshJob.perform_now(run)
+        AiModelCatalogRefreshJob.perform_now(refresh_run)
       end
     end
 
-    assert_predicate run.reload, :succeeded?
+    assert_predicate refresh_run.reload, :succeeded?
     assert_predicate credential.reload, :active?
     assert_equal ["new-model"], credential.supported_models.pluck("id")
     assert_equal false, credential.model_metadata("new-model")["structured_output"]
@@ -43,16 +43,16 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     assert_equal "saved-model", feed.effective_ai_model
     assert_requested request, times: 1
     assert_not_requested :post, /./
-    assert_not_includes run.context.to_json, "catalog-test-key"
+    assert_not_includes refresh_run.context.to_json, "catalog-test-key"
   end
 
   test "#perform should retain the snapshot and active credential on listing failure" do
     request = stub_models(status: 401)
     original = credential.attributes
 
-    AiModelCatalogRefreshJob.perform_now(run)
+    AiModelCatalogRefreshJob.perform_now(refresh_run)
 
-    assert_predicate run.reload, :failed?
+    assert_predicate refresh_run.reload, :failed?
     assert_equal original, credential.reload.attributes
     assert_requested request, times: 1
     assert_not_requested :get, PublishedModelMetadata::URL
@@ -62,10 +62,10 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     stub_models
     stub_request(:get, PublishedModelMetadata::URL).to_timeout
     Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) do
-      AiModelCatalogRefreshJob.perform_now(run)
+      AiModelCatalogRefreshJob.perform_now(refresh_run)
     end
 
-    assert_predicate run.reload, :succeeded?
+    assert_predicate refresh_run.reload, :succeeded?
     assert credential.reload.supports_model?("new-model")
     assert_empty credential.model_metadata("new-model")
   end
@@ -75,7 +75,7 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     stub_models
     stub_request(:get, PublishedModelMetadata::URL).to_return(status: 503)
     Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) do
-      AiModelCatalogRefreshJob.perform_now(run)
+      AiModelCatalogRefreshJob.perform_now(refresh_run)
     end
 
     assert_equal false, credential.reload.model_metadata("new-model")["tool_call"]
@@ -85,9 +85,9 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     stub_models { AiCredential.find(credential.id).update!(credential_data: { "api_key" => "replacement" }) }
     stub_request(:get, PublishedModelMetadata::URL).to_return(body: "{}")
 
-    AiModelCatalogRefreshJob.perform_now(run)
+    AiModelCatalogRefreshJob.perform_now(refresh_run)
 
-    assert_predicate run.reload, :failed?
+    assert_predicate refresh_run.reload, :failed?
     assert_equal ["saved-model"], credential.reload.available_models.pluck("id")
   end
 
@@ -95,14 +95,14 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     stub_models { OperationRun.start!(subject: AiCredential.find(credential.id), kind: :models_refresh, timeout: 15.minutes) }
     stub_request(:get, PublishedModelMetadata::URL).to_return(body: "{}")
 
-    AiModelCatalogRefreshJob.perform_now(run)
+    AiModelCatalogRefreshJob.perform_now(refresh_run)
 
-    assert_predicate run.reload, :superseded?
+    assert_predicate refresh_run.reload, :superseded?
     assert_equal ["saved-model"], credential.reload.available_models.pluck("id")
   end
 
   test "#perform should expire an old queued job without contacting the provider" do
-    current_run = run
+    current_run = refresh_run
     travel 16.minutes
 
     AiModelCatalogRefreshJob.perform_now(current_run)
@@ -113,7 +113,7 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
   end
 
   test "#refresh_models_async should deduplicate running work and honor freshness unless forced" do
-    current_run = run
+    current_run = refresh_run
     assert_no_enqueued_jobs { assert_equal current_run, credential.refresh_models_async(force: true) }
     current_run.succeed! { |record| record.update!(models_refreshed_at: Time.current) }
     assert_no_enqueued_jobs { assert_nil credential.refresh_models_async }
@@ -128,15 +128,14 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
   end
 
   test "#perform should keep completed runs settled when the timeout job arrives" do
-    run.succeed!
-    AiModelCatalogTimeoutJob.perform_now(run)
-    assert_predicate run.reload, :succeeded?
+    refresh_run.succeed!
+    AiModelCatalogTimeoutJob.perform_now(refresh_run)
+    assert_predicate refresh_run.reload, :succeeded?
   end
   test "#perform should retain the snapshot on an empty listing" do
     stub_models(ids: [])
-    AiModelCatalogRefreshJob.perform_now(run)
-    assert_predicate run.reload, :failed?
+    AiModelCatalogRefreshJob.perform_now(refresh_run)
+    assert_predicate refresh_run.reload, :failed?
     assert_equal ["saved-model"], credential.reload.available_models.pluck("id")
   end
-
 end

@@ -138,5 +138,4 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
     result = render_inline(FeedRefreshDescriptionComponent.new(event: event_with_spend(nil)))
     assert_equal "(AI: unknown cost)", result.css("[data-key='events.llm_cost']").first&.text
   end
-
 end

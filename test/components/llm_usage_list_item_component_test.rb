@@ -58,5 +58,4 @@ class LlmUsageListItemComponentTest < ViewComponent::TestCase
     result = render_inline(LlmUsageListItemComponent.new(usage: usage))
     assert_equal "Unknown", result.css('[data-key="events.llm_usage.cost"]').first.text
   end
-
 end
