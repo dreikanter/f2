@@ -5,7 +5,7 @@
 Use this report to inspect model discovery before changing model selection.
 It lists the models and metadata returned by the application's existing
 `LlmClient` serialization. Some fields come from the SDK registry; their presence
-does not prove runtime compatibility. Providers using `assume_model_exists`
+does not prove runtime compatibility. OpenAI and Moonshot
 currently expose only IDs and names in that serialization, so missing capability
 metadata is expected.
 
@@ -37,6 +37,8 @@ integration question with bounded costs; model discovery does not require them.
 instructions while keeping local schema validation mandatory. With `web: false`,
 this path sends neither tools nor an API response-format constraint. It uses the
 same credential, exact model ID, and provider transport as the usual path.
+Invocation lets the provider resolve the model ID instead of requiring it to
+exist in the SDK's bundled registry. The application's selection gate is separate.
 
 An explicit model-level rejection of the response-format feature retries once
 without the API schema. Other bad requests, invalid schema definitions, tool

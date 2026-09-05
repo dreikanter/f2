@@ -38,7 +38,7 @@ class AiModelDiscoveryReportJob < ApplicationJob
       status: models.empty? ? "FAIL" : "PASS",
       note: models.empty? ? "Models listing was empty" : "Models listing completed",
       sdk_provider: provider.ruby_llm_provider.to_s,
-      assume_model_exists: provider.assume_model_exists?,
+      minimal_model_metadata: provider.minimal_model_metadata?,
       model_count: models.size,
       models_without_capability_metadata: models.count { |model| !model.key?("capabilities") },
       metadata_source: "LlmClient model serialization; may include SDK registry metadata",

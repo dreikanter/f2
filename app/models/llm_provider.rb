@@ -15,25 +15,24 @@ class LlmProvider
   # @param default_model [String]
   # @param api_base [String, nil] set when the provider rides another's runtime
   #   at its own URL; native providers leave it nil
-  # @param assume_model_exists [Boolean] set when the provider's models aren't in
-  #   RubyLLM's bundled registry, so a call asserts the id rather than looking it
-  #   up, and the model snapshot keeps only what the provider itself reported
+  # @param minimal_model_metadata [Boolean] retain only listing IDs and names
+  #   when SDK-enriched capability and limit fields are unreliable
   # @param pin_system_role [Boolean] set when the provider rejects RubyLLM's
   #   default "developer" system role and needs "system"
   def initialize(name:, display_name:, ruby_llm_provider:, default_model:, api_base: nil,
-                 assume_model_exists: false, pin_system_role: false)
+                 minimal_model_metadata: false, pin_system_role: false)
     @name = name
     @display_name = display_name
     @ruby_llm_provider = ruby_llm_provider
     @default_model = default_model
     @api_base = api_base
-    @assume_model_exists = assume_model_exists
+    @minimal_model_metadata = minimal_model_metadata
     @pin_system_role = pin_system_role
     freeze
   end
 
-  def assume_model_exists?
-    @assume_model_exists
+  def minimal_model_metadata?
+    @minimal_model_metadata
   end
 
   def pin_system_role?
@@ -69,7 +68,7 @@ class LlmProvider
       display_name: "OpenAI",
       ruby_llm_provider: :openai,
       default_model: "gpt-5.6-luna",
-      assume_model_exists: true
+      minimal_model_metadata: true
     ),
     "moonshot" => new(
       name: "moonshot",
@@ -77,7 +76,7 @@ class LlmProvider
       ruby_llm_provider: :openai,
       default_model: "kimi-k2.6",
       api_base: "https://api.moonshot.ai/v1",
-      assume_model_exists: true,
+      minimal_model_metadata: true,
       pin_system_role: true
     )
   }.freeze

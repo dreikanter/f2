@@ -176,7 +176,7 @@ class LlmClient
   # providers keep only what the provider itself reported. The credential page
   # already hides missing fields.
   def serialize_model(model)
-    return { "id" => model.id, "name" => model.name } if credential.llm_provider.assume_model_exists?
+    return { "id" => model.id, "name" => model.name } if credential.llm_provider.minimal_model_metadata?
 
     {
       "id" => model.id,

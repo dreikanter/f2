@@ -76,9 +76,9 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
 
   test "#call should send text JSON requests through the other provider transports" do
     [
-      ["anthropic", "claude-sonnet-4-6", "https://api.anthropic.com/v1/messages"],
+      ["anthropic", "new-anthropic-model", "https://api.anthropic.com/v1/messages"],
       ["moonshot", "new-kimi-model", "https://api.moonshot.ai/v1/chat/completions"],
-      ["openrouter", "anthropic/claude-sonnet-4-6", "https://openrouter.ai/api/v1/chat/completions"]
+      ["openrouter", "vendor/new-model", "https://openrouter.ai/api/v1/chat/completions"]
     ].each do |provider, model, endpoint|
       key = create(:ai_credential, :active, provider: provider)
       ctx = LlmClient::CallContext.new(feed: nil, profile_key: "llm", stage: :loader, model: model)
@@ -97,6 +97,7 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
 
       assert_equal({ "items" => [] }, result.payload)
       request = requests.sole
+      assert_equal model, request["model"]
       assert_nil request["tools"]
       assert_nil request["response_format"]
       assert_nil request["output_config"]

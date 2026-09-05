@@ -51,9 +51,8 @@ class AiCredential < ApplicationRecord
     end
   end
 
-  # The chat a run is made on: this key, its provider's RubyLLM key, and its
-  # model-existence rule. Shared so a probe cannot qualify a model on a
-  # configuration production doesn't use.
+  # Provider listings can contain models newer than the SDK's bundled registry.
+  # Let the provider resolve the exact ID instead of requiring an SDK update.
   def chat(model)
     context = ruby_llm_context
     # The client owns bounded fallback; SDK retries would multiply its attempts.
@@ -61,7 +60,7 @@ class AiCredential < ApplicationRecord
     context.chat(
       model: model,
       provider: llm_provider.ruby_llm_provider,
-      assume_model_exists: llm_provider.assume_model_exists?
+      assume_model_exists: true
     )
   end
 end
