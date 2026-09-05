@@ -13,7 +13,7 @@ class FeedPreviewActivity
     usage_costs = LlmUsage.where(id: event.event_references.where(reference_type: "LlmUsage").select(:reference_id))
                          .pluck(:cost_estimate_cents)
     totals = stats.dup
-    if usage_costs.any?
+    if usage_costs.present?
       totals.merge!(llm_calls: usage_costs.size,
                     llm_cost_cents: usage_costs.any?(&:nil?) ? nil : usage_costs.sum)
     end
