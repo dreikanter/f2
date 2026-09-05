@@ -6,12 +6,8 @@ class Admin::UserDetailsComponentTest < ViewComponent::TestCase
     @user ||= create(:user)
   end
 
-  def stats
-    @stats ||= UserStats.new(user)
-  end
-
   def render_component(target = user)
-    render_inline(Admin::UserDetailsComponent.new(user: target, stats: UserStats.new(target)))
+    render_inline(Admin::UserDetailsComponent.new(user: target))
   end
 
   test "#call should render core user fields" do
@@ -40,6 +36,15 @@ class Admin::UserDetailsComponentTest < ViewComponent::TestCase
     result = render_component
 
     assert_includes result.text, "Never"
+  end
+
+  test "#call should show historical activity without a session" do
+    user.update!(last_seen_at: 45.days.ago)
+
+    result = render_component
+
+    last_seen = result.css("dt").find { |item| item.text == "Last Seen" }.next_element
+    assert_equal user.last_seen_at.iso8601, last_seen.at_css("time")["datetime"]
   end
 
   test "#call should link to the user who sent the invitation" do

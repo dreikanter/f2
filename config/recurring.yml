@@ -10,6 +10,11 @@
 #     schedule: at 5am every day
 
 development:
+  prune_sessions:
+    class: PruneSessionsJob
+    queue: default
+    schedule: every day at 4am
+
   feed_scheduler:
     class: FeedSchedulerJob
     queue: default
@@ -36,6 +41,11 @@ development:
     schedule: every day at 5am
 
 staging:
+  prune_sessions:
+    class: PruneSessionsJob
+    queue: default
+    schedule: every day at 4am
+
   feed_scheduler:
     class: FeedSchedulerJob
     queue: default
@@ -66,6 +76,11 @@ staging:
     schedule: every hour at minute 12
 
 production:
+  prune_sessions:
+    class: PruneSessionsJob
+    queue: default
+    schedule: every day at 4am
+
   feed_scheduler:
     class: FeedSchedulerJob
     queue: default

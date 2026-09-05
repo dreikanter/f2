@@ -328,7 +328,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_03_120000) do
     t.datetime "updated_at", null: false
     t.string "user_agent"
     t.uuid "user_id", null: false
-    t.index ["user_id"], name: "index_sessions_on_user_id"
+    t.datetime "last_seen_at", null: false
+    t.index ["last_seen_at"], name: "index_sessions_on_last_seen_at"
+    t.index ["user_id", "last_seen_at"], name: "index_sessions_on_user_id_and_last_seen_at"
   end
 
   create_table "solid_cable_messages", force: :cascade do |t|
@@ -488,6 +490,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_03_120000) do
     t.datetime "updated_at", null: false
     t.uuid "default_ai_credential_id"
     t.uuid "default_search_credential_id"
+    t.datetime "last_seen_at"
     t.index ["default_ai_credential_id"], name: "index_users_on_default_ai_credential_id"
     t.index ["default_search_credential_id"], name: "index_users_on_default_search_credential_id"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true

@@ -12,7 +12,7 @@
     <% end %>
   <% end %>
 
-  <%= render Admin::UserDetailsComponent.new(user: @user, stats: @stats) %>
+  <%= render Admin::UserDetailsComponent.new(user: @user) %>
 
   <section class="space-y-4">
     <h2 class="text-2xl font-semibold mb-3 text-heading">Permissions</h2>
@@ -69,9 +69,12 @@
   </section>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-heading">Active Sessions</h2>
+    <div>
+      <h2 class="text-2xl font-semibold text-heading">Active Sessions</h2>
+      <p class="mt-1 text-muted">Sessions inactive for <%= Session::INACTIVITY_TIMEOUT.in_days.to_i %> days are signed out automatically.</p>
+    </div>
 
-    <% if @stats.sessions.any? %>
+    <% if @stats.active_sessions.any? %>
       <div class="overflow-x-auto rounded-lg border border-border">
         <table class="w-full text-left text-sm text-heading">
           <thead class="border-b border-border bg-surface-muted text-xs uppercase text-body">
@@ -83,7 +86,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-border bg-surface">
-            <% @stats.sessions.each do |session| %>
+            <% @stats.active_sessions.each do |session| %>
               <tr class="hover:bg-surface-muted">
                 <td class="px-6 py-4 whitespace-nowrap"><%= session.ip_address %></td>
                 <td class="px-6 py-4 whitespace-nowrap max-w-md">
@@ -95,8 +98,8 @@
                   </time>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center">
-                  <time class="text-muted" datetime="<%= session.updated_at.iso8601 %>" title="<%= session.updated_at.to_fs(:long) %>">
-                    <%= short_time_ago(session.updated_at) %>
+                  <time class="text-muted" datetime="<%= session.last_seen_at.iso8601 %>" title="<%= session.last_seen_at.to_fs(:long) %>">
+                    <%= short_time_ago(session.last_seen_at) %>
                   </time>
                 </td>
               </tr>

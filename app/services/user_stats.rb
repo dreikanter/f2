@@ -5,12 +5,8 @@ class UserStats
     @user = user
   end
 
-  def sessions
-    @sessions ||= user.sessions.order(updated_at: :desc).to_a
-  end
-
-  def last_session
-    sessions.first
+  def active_sessions
+    @active_sessions ||= user.sessions.active.order(last_seen_at: :desc).to_a
   end
 
   def feeds_count

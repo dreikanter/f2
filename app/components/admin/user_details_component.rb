@@ -5,9 +5,8 @@ class Admin::UserDetailsComponent < ViewComponent::Base
     "suspended" => { label: "Suspended", color: :danger }
   }.freeze
 
-  def initialize(user:, stats:)
+  def initialize(user:)
     @user = user
-    @stats = stats
   end
 
   def call
@@ -18,7 +17,7 @@ class Admin::UserDetailsComponent < ViewComponent::Base
       list.with_item(stat_item("Created", helpers.datetime_with_duration_tag(@user.created_at)))
       list.with_item(stat_item("Updated", helpers.datetime_with_duration_tag(@user.updated_at)))
       list.with_item(stat_item("Password Updated", optional_time(@user.password_updated_at)))
-      list.with_item(stat_item("Last Seen", optional_time(@stats.last_session&.updated_at)))
+      list.with_item(stat_item("Last Seen", optional_time(@user.last_seen_at)))
       list.with_item(stat_item("Invited By", invited_by_value))
     end
   end

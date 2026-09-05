@@ -28,7 +28,7 @@ module Authentication
   end
 
   def find_session_by_cookie
-    Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
+    Session.find_active(cookies.signed[:session_id])
   end
 
   def request_authentication
@@ -54,8 +54,12 @@ module Authentication
 
   def update_session_activity
     return unless Current.session
-    return if Current.session.updated_at > 10.minutes.ago
+    return if Current.session.last_seen_at > 10.minutes.ago
 
-    Current.session.touch
+    Current.session.update!(
+      last_seen_at: Time.current,
+      user_agent: request.user_agent,
+      ip_address: request.remote_ip
+    )
   end
 end

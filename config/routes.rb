@@ -20,7 +20,7 @@ Rails.application.routes.draw do
   end
 
   constraints ->(req) {
-    session = Session.find_by(id: req.cookie_jar.signed[:session_id])
+    session = Session.find_active(req.cookie_jar.signed[:session_id])
     session&.user&.dev?
   } do
     mount MissionControl::Jobs::Engine, at: "/jobs"

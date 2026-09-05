@@ -47,6 +47,33 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "Actions", count: 0
   end
 
+  test "should display only active sessions" do
+    sign_in_as(admin_user)
+    user = create(:user)
+    active = create(:session, user: user, user_agent: "Firefox", last_seen_at: 1.day.ago)
+    curl = create(:session, user: user, user_agent: "curl")
+    expired = create(:session, user: user, user_agent: "Old Firefox", last_seen_at: Session::INACTIVITY_TIMEOUT.ago - 1.minute)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "h2", text: "Active Sessions"
+    assert_select "p", text: /Sessions inactive for 30 days are signed out automatically/
+    assert_select "td", text: active.user_agent
+    assert_select "td", text: curl.user_agent
+    assert_select "td", text: expired.user_agent, count: 0
+  end
+
+  test "should show last seen on the index after sessions have been removed" do
+    sign_in_as(admin_user)
+    user = create(:user, last_seen_at: 45.days.ago)
+
+    get admin_users_path
+
+    assert_response :success
+    assert_select "time[datetime='#{user.last_seen_at.iso8601}']"
+  end
+
   test "should show active suspend button for other users" do
     sign_in_as(admin_user)
     other_user = create(:user)
