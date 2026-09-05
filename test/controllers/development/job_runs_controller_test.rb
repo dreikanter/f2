@@ -148,6 +148,48 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
     assert_select %([data-key="development.job_runs.#{run.id}.event.#{event.id}"] pre), count: 0
   end
 
+  test "#show should copy the same JSON details that the report displays" do
+    run = create(:job_run, job_class: "PurgeExpiredEventsJob", status: :succeeded)
+    metadata = { "result" => "A \"quoted\" value <script>alert(1)</script>" }
+    create(:event, subject: run, message: "Report", metadata: metadata)
+    sign_in_as(dev_user)
+
+    get development_job_job_run_path("PurgeExpiredEventsJob", run)
+
+    assert_response :success
+    assert_select '[data-key="development.job_runs.copy"]' do |buttons|
+      assert_equal metadata, JSON.parse(buttons.sole["data-clipboard-text-value"])
+      assert_equal "click->clipboard#copy", buttons.sole["data-action"]
+      assert_select "script", count: 0
+    end
+  end
+
+  test "#create should enqueue the model discovery report on staging" do
+    sign_in_as(dev_user)
+
+    Rails.stub(:env, ActiveSupport::EnvironmentInquirer.new("staging")) do
+      assert_enqueued_with(job: AiModelDiscoveryReportJob, args: []) do
+        post development_job_job_runs_path("AiModelDiscoveryReportJob")
+      end
+    end
+
+    assert_redirected_to development_job_job_runs_path("AiModelDiscoveryReportJob")
+  end
+
+  test "#create should reject a direct model discovery request outside staging" do
+    sign_in_as(dev_user)
+
+    Rails.stub(:env, ActiveSupport::EnvironmentInquirer.new("production")) do
+      assert_no_enqueued_jobs do
+        assert_no_difference -> { JobRun.count } do
+          post development_job_job_runs_path("AiModelDiscoveryReportJob")
+        end
+      end
+    end
+
+    assert_response :not_found
+  end
+
   test "#show should require dev permission" do
     run = create(:job_run, job_class: "PurgeExpiredEventsJob")
     sign_in_as(regular_user)

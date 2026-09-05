@@ -39,4 +39,20 @@ class Development::JobsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select '[data-key="development.jobs.PurgeExpiredEventsJob"] form', count: 0
   end
+
+  test "#index should offer model discovery reports only on staging" do
+    sign_in_as(dev_user)
+
+    Rails.stub(:env, ActiveSupport::EnvironmentInquirer.new("staging")) do
+      get development_jobs_path
+      assert_response :success
+      assert_select '[data-key="development.jobs.AiModelDiscoveryReportJob"]'
+    end
+
+    Rails.stub(:env, ActiveSupport::EnvironmentInquirer.new("production")) do
+      get development_jobs_path
+      assert_response :success
+      assert_select '[data-key="development.jobs.AiModelDiscoveryReportJob"]', count: 0
+    end
+  end
 end

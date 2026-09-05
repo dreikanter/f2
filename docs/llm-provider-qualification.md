@@ -1,5 +1,38 @@
 # Qualifying an LLM provider or model
 
+## Free staging discovery report
+
+Use this report to inspect model discovery before changing model selection.
+It lists the models and metadata returned by the application's existing
+`LlmClient` serialization. Some fields come from the SDK registry; their presence
+does not prove runtime compatibility. Providers using `assume_model_exists`
+currently expose only IDs and names in that serialization, so missing capability
+metadata is expected.
+
+1. Deploy the PR branch before merging: in GitHub Actions, choose **Deploy
+   Staging**, select the PR branch under **Use workflow from**, and run it with
+   bootstrap disabled. Wait for deployment to finish.
+2. Sign in to staging with a developer account and open
+   `/development/jobs/AiModelDiscoveryReportJob/job_runs`.
+3. Click **Run**, refresh the list, and open the finished run. Click **Copy
+   details** beside its JSON report and share that text.
+
+The report uses the oldest active staging credential for each configured
+provider, regardless of owner or display name. Providers without an active
+credential are marked `SKIP`. It performs free model-listing requests only and
+leaves credentials, model snapshots, and feeds unchanged. It never generates
+content, searches, or publishes posts.
+
+The report includes the deployed revision, SDK version, model lists, and each
+listing's outcome. Provider error text is omitted because it can contain
+credentials. A completed job means the report was generated; inspect each
+provider's `PASS`, `FAIL`, or `SKIP` result. No result approves a model for use.
+
+Paid capability probes below are separate actions. Run them only for a specific
+integration question with bounded costs; model discovery does not require them.
+
+## Model qualification
+
 `LlmModelCapability` is an allowlist of `(provider, model)` pairs the AI engine
 may use, and **membership is qualification**: a pair goes in only after a live
 probe run shows it works on the shape production actually calls. The model
