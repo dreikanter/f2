@@ -19,7 +19,7 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     "https://no-rss-example.com/blog"
   end
 
-  test "full flow: add AI and search credentials, then enable the draft" do
+  test "full flow: add AI credentials, then enable the draft without external search" do
     sign_in_as(user)
     access_token
 
@@ -71,7 +71,8 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     get edit_feed_path(draft)
     assert_response :success
     assert_select "button[value='save_as_draft_and_add_credentials']", count: 0
-    assert_select "button[value='save_as_draft_and_add_search_credentials']"
+    assert_select "[data-key='credentials.gate']", count: 0
+    assert_select "select[data-key='form.search-credential'] option[selected][value='']"
 
     patch feed_path(draft), params: {
       feed: {
@@ -79,46 +80,6 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
         target_group: "testgroup",
         schedule_interval: "1h",
         ai_credential_id: ai_credential.id,
-        ai_model: "claude-sonnet-4-6"
-      },
-      commit: "save_as_draft_and_add_search_credentials"
-    }
-
-    assert_redirected_to new_search_credential_path(feed_id: draft.id)
-    follow_redirect!
-    assert_response :success
-
-    assert_difference("SearchCredential.count", 1) do
-      post search_credentials_path, params: {
-        feed_id: draft.id,
-        search_credential: {
-          provider: "serper",
-          display_name: "My Serper key",
-          credential_data: { api_key: "serper-#{SecureRandom.hex(16)}" }
-        }
-      }
-    end
-
-    search_credential = SearchCredential.last
-    draft.reload
-    assert_equal search_credential.id, draft.search_credential_id
-    assert_redirected_to search_credential_path(search_credential, feed_id: draft.id)
-
-    search_credential.update!(state: :active, last_validated_at: Time.current)
-
-    get search_credential_path(search_credential, feed_id: draft.id)
-    assert_response :success
-    assert_select "[data-key='search_credential.return-to']" do
-      assert_select "[href=?]", edit_feed_path(draft), text: /Continue setting up your feed/
-    end
-
-    patch feed_path(draft), params: {
-      feed: {
-        access_token_id: access_token.id,
-        target_group: "testgroup",
-        schedule_interval: "1h",
-        ai_credential_id: ai_credential.id,
-        search_credential_id: search_credential.id,
         ai_model: "claude-sonnet-4-6"
       },
       enable_feed: "1"
@@ -128,6 +89,7 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     draft.reload
     assert_equal "enabled", draft.state
     assert_equal "No-RSS Blog", draft.name
+    assert_nil draft.search_credential_id
 
     patch feed_path(draft), params: {
       feed: {

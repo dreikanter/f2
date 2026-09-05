@@ -85,7 +85,7 @@ en:
       description_html: "AI credential %{subject_link} stopped working; update the key to resume its feeds."
     search_credential_deactivated:
       name: "Search credential deactivated"
-      description_html: "Search credential %{subject_link} stopped working; update the key to resume its feeds."
+      description_html: "Search credential %{subject_link} stopped working. Its feeds remain enabled; update the key to restore external search."
     web_search:
       name: "Web search"
       description_html: "%{subject_link} made a web search request"

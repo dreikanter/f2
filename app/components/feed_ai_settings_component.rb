@@ -55,7 +55,8 @@ class FeedAiSettingsComponent < ViewComponent::Base
   end
 
   def selected_search_credential_id
-    @feed.search_credential_id&.to_s if active_search_credentials.any? { |credential| credential.id == @feed.search_credential_id }
+    selected = active_search_credentials.find { |credential| credential.id == @feed.search_credential_id }
+    selected&.id.to_s
   end
 
   def credential_options

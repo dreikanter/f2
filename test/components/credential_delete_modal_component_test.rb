@@ -24,7 +24,12 @@ class CredentialDeleteModalComponentTest < ViewComponent::TestCase
       assert_equal expected_path, result.at_css("form")["action"]
       assert_not_nil result.at_css("input[name='_method'][value='delete']")
       assert_includes result.text, credential.display_name
-      assert_includes result.text, "Any feeds using it will be automatically disabled."
+      if credential.is_a?(SearchCredential)
+        assert_includes result.text, "Feeds using it will stay enabled and continue without this search provider."
+        assert_not_includes result.text, "automatically disabled"
+      else
+        assert_includes result.text, "Any feeds using it will be automatically disabled."
+      end
     end
   end
 end
