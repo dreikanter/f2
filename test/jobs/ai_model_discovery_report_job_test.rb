@@ -45,7 +45,7 @@ class AiModelDiscoveryReportJobTest < ActiveJob::TestCase
     assert_equal Gem.loaded_specs.fetch("ruby_llm").version.to_s, report["ruby_llm_version"]
     assert_equal original_attributes, credential.reload.attributes
     assert_not_includes report.to_json, "staging-report-secret"
-    assert_not_includes report.to_json, credential.user.email
+    assert_not_includes report.to_json, credential.user.email_address
     assert_requested request, times: 1
     assert_not_requested :post, /./
   end
