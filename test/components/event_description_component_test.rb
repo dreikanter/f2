@@ -2,6 +2,19 @@ require "test_helper"
 require "view_component/test_case"
 
 class EventDescriptionComponentTest < ViewComponent::TestCase
+  test "#call should link saved feed preview activity to the feed" do
+    feed = create(:feed)
+    %w[started completed failed interrupted].each do |status|
+      event = create(:event, type: "feed_preview", subject: feed, user: feed.user, metadata: { status: status })
+
+      result = render_inline(EventDescriptionComponent.for(event))
+
+      assert_includes result.text, "AI feed preview"
+      assert_includes result.text, status
+      assert_equal feed.display_name, result.at_css("a").text
+      assert_equal "/feeds/#{feed.id}", result.at_css("a")["href"]
+    end
+  end
   def user
     @user ||= create(:user)
   end

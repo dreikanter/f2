@@ -68,6 +68,10 @@ en:
       completed_description_html: "AI feed preview completed"
       failed_description_html: "AI feed preview failed"
       interrupted_description_html: "AI feed preview was interrupted"
+      feed_started_description_html: "AI feed preview started for %{subject_link}"
+      feed_completed_description_html: "AI feed preview completed for %{subject_link}"
+      feed_failed_description_html: "AI feed preview failed for %{subject_link}"
+      feed_interrupted_description_html: "AI feed preview was interrupted for %{subject_link}"
     feed_refresh:
       name: "Feed refreshed"
       description_html: "%{subject_link} refreshed"

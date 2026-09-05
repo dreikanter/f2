@@ -59,7 +59,8 @@ class FeedPreviewWorkflow
   def load_feed_contents(temp_feed)
     # `purpose` reaches LlmUsage via the loader's call context, so AI spend
     # from previews is distinguishable from scheduled runs.
-    loader = temp_feed.loader_instance(purpose: :preview, refresh_event: @activity&.event)
+    loader = temp_feed.loader_instance(purpose: :preview, refresh_event: @activity&.event,
+                                      usage_feed: feed_preview.feed)
     raw_data = loader.load
 
     record_stats(content_size: content_bytesize(raw_data))

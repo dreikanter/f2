@@ -59,7 +59,7 @@ module Loader
 
     def call_context(client)
       LlmClient::CallContext.new(
-        feed: feed.persisted? ? feed : nil,
+        feed: options.fetch(:usage_feed) { feed.persisted? ? feed : nil },
         profile_key: feed.feed_profile_key,
         stage: :loader,
         model: model_for(client.credential),

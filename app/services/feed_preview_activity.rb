@@ -3,7 +3,7 @@ class FeedPreviewActivity
 
   def initialize(preview)
     @event = Event.create!(type: "feed_preview", level: :info, user: preview.user,
-                           subject: preview.ai_credential,
+                           subject: preview.feed || preview.ai_credential,
                            metadata: { status: "started", profile_key: preview.feed_profile_key })
   end
 
