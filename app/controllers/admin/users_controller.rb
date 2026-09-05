@@ -32,7 +32,7 @@ class Admin::UsersController < ApplicationController
     },
     last_seen: {
       title: "Last Seen",
-      order_by: "MAX(sessions.last_seen_at)",
+      order_by: "users.last_seen_at",
       direction: :desc
     }
   }.freeze
@@ -43,7 +43,7 @@ class Admin::UsersController < ApplicationController
   end
 
   def show
-    @user = User.includes(:feeds, :access_tokens, :sessions, :created_invites, :permissions).find(params[:id])
+    @user = User.includes(:feeds, :access_tokens, :created_invites, :permissions).find(params[:id])
     authorize [:admin, @user]
     @stats = UserStats.new(@user)
     @last_admin = @user.admin? && User.joins(:permissions).where(permissions: { name: Permission::ADMIN }).count == 1
@@ -62,14 +62,13 @@ class Admin::UsersController < ApplicationController
 
   def pagination_scope
     base_scope
-      .left_joins(:access_tokens, :sessions)
+      .left_joins(:access_tokens)
       .left_joins(feeds: :posts)
       .group("users.id")
       .select("users.*,
                COUNT(DISTINCT feeds.id) AS feeds_count,
                COUNT(DISTINCT access_tokens.id) AS access_tokens_count,
-               COUNT(DISTINCT posts.id) AS posts_count,
-               MAX(sessions.last_seen_at) AS last_seen_at")
+               COUNT(DISTINCT posts.id) AS posts_count")
       .order(sortable_order)
   end
 

@@ -54,7 +54,7 @@ module Authentication
 
   def update_session_activity
     return unless Current.session
-    return if Current.session.last_seen_at.present? && Current.session.last_seen_at > 10.minutes.ago
+    return if Current.session.last_seen_at > 10.minutes.ago
 
     Current.session.update!(
       last_seen_at: Time.current,

@@ -9,20 +9,8 @@ class UserStatsTest < ActiveSupport::TestCase
     @stats ||= UserStats.new(user)
   end
 
-  test "#last_session should return most recent session including expired sessions" do
-    create(:session, user: user, last_seen_at: 32.days.ago)
-    session2 = create(:session, user: user, last_seen_at: 31.days.ago)
-
-    assert_equal session2, UserStats.new(user).last_session
-  end
-
-  test "#last_session should return nil when no sessions" do
-    assert_nil UserStats.new(user).last_session
-  end
-
   test "#active_sessions should exclude expired sessions and order the rest by last_seen_at desc" do
     create(:session, user: user, last_seen_at: 31.days.ago)
-    create(:session, user: user, last_seen_at: nil)
     session2 = create(:session, user: user, last_seen_at: 1.hour.ago)
     session3 = create(:session, user: user, last_seen_at: 1.day.ago)
 

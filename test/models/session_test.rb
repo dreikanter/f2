@@ -32,30 +32,39 @@ class SessionTest < ActiveSupport::TestCase
     end
   end
 
-  test ".active should include established and newly issued sessions within the inactivity timeout" do
-    established = create(:session, last_seen_at: 1.day.ago)
-    issued = create(:session, last_seen_at: nil)
-    create(:session, last_seen_at: Session::INACTIVITY_TIMEOUT.ago - 1.minute)
-    create(:session, last_seen_at: nil, created_at: Session::INACTIVITY_TIMEOUT.ago - 1.minute)
+  test ".find_active should expire sessions strictly past the inactivity timeout" do
+    freeze_time do
+      active = create(:session, last_seen_at: 1.day.ago)
+      boundary = create(:session, last_seen_at: Session::INACTIVITY_TIMEOUT.ago)
+      expired = create(:session, last_seen_at: Session::INACTIVITY_TIMEOUT.ago - 1.second)
 
-    assert_equal [established.id, issued.id].sort, Session.active.pluck(:id).sort
+      assert_equal active, Session.find_active(active.id)
+      assert_equal boundary, Session.find_active(boundary.id)
+      assert_nil Session.find_active(expired.id)
+      assert_nil Session.find_active(nil)
+    end
   end
 
-  test ".established should exclude sessions whose cookie was never used" do
-    established = create(:session)
-    create(:session, last_seen_at: nil)
+  test "#create should record login activity on the session and user" do
+    freeze_time do
+      session = create(:session, last_seen_at: nil)
 
-    assert_equal [established], Session.established.to_a
+      assert_equal Time.current, session.last_seen_at
+      assert_equal Time.current, session.user.reload.last_seen_at
+    end
   end
 
-  test ".find_active should return only a session within the inactivity timeout" do
-    active = create(:session, last_seen_at: 1.day.ago)
-    issued = create(:session, last_seen_at: nil)
-    expired = create(:session, last_seen_at: Session::INACTIVITY_TIMEOUT.ago - 1.minute)
+  test "#record_user_activity should preserve the latest activity across sessions" do
+    user = create(:user, last_seen_at: 1.hour.ago)
+    old_updated_at = user.updated_at
+    session = create(:session, user: user, last_seen_at: 1.day.ago)
 
-    assert_equal active, Session.find_active(active.id)
-    assert_equal issued, Session.find_active(issued.id)
-    assert_nil Session.find_active(expired.id)
-    assert_nil Session.find_active(nil)
+    assert_in_delta 1.hour.ago, user.reload.last_seen_at, 1.second
+
+    freeze_time do
+      session.update!(last_seen_at: Time.current)
+      assert_equal Time.current, user.reload.last_seen_at
+      assert_equal old_updated_at, user.updated_at
+    end
   end
 end
