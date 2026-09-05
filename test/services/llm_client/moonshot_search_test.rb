@@ -206,7 +206,7 @@ class LlmClient::MoonshotSearchTest < ActiveSupport::TestCase
   end
 
   test "#call should retain model tokens and a possibly billed search after a fiber timeout" do
-    stub_request(:post, "#{FORMULA}/fibers").to_timeout
+    stub_request(:post, "#{FORMULA}/fibers").to_raise(Faraday::TimeoutError.new("execution expired"))
     stub_chat(completion(calls: [search_call]))
 
     assert_raises(LlmClient::Timeout) { gather }
