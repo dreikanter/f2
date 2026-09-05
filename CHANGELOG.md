@@ -4,6 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-05
 
+- Labels and values in detail lists wrap onto separate rows when space is limited, with values aligned right.
+
 - Incomplete AI cost totals show “Unknown” with an explanation and any available estimate separately.
 
 - AI previews appear in recent activity with usage details, including failed attempts.
