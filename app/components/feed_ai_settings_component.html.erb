@@ -39,7 +39,7 @@
           <%= form.select :search_credential_id, search_credential_options, { selected: selected_search_credential_id },
                           class: helpers.input_field_classes, disabled: !section_visible?,
                           data: { ai_settings_target: "searchCredentialSelect", key: "form.search-credential" } %>
-          <p class="text-sm text-muted">Without external search, the model can use supplied pages and its available knowledge. Fresh information may be unavailable.</p>
+          <p class="text-sm text-muted">OpenAI uses built-in search when available. Other providers, or models without search, use supplied pages and available knowledge. Select an external search provider to use it instead.</p>
           <% if form.object.errors[:search_credential].any? %>
             <p class="text-sm text-danger"><%= form.object.errors[:search_credential].first %></p>
           <% end %>

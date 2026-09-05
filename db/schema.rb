@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_05_110000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_05_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -233,6 +233,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_05_110000) do
     t.datetime "updated_at", null: false
     t.integer "duration_ms"
     t.text "error_message"
+    t.jsonb "retrieval", default: {}, null: false
     t.index ["ai_credential_id"], name: "index_llm_usages_on_ai_credential_id"
     t.index ["feed_id", "started_at"], name: "index_llm_usages_on_feed_id_and_started_at"
     t.index ["profile_key", "started_at"], name: "index_llm_usages_on_profile_key_and_started_at"

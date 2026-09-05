@@ -36,7 +36,9 @@ module Loader
 
     def extract(client, ctx)
       schema = config.fetch(:output_schema)
-      if LlmClient::Adapter.for(client.credential.provider).combined_extraction?
+      adapter = LlmClient::Adapter.for(client.credential.provider)
+      native_search = adapter.native_search? && !ctx.search_credential&.active?
+      if adapter.combined_extraction? && !native_search
         client.call(ctx, system: LlmPrompts::COMBINED_SYSTEM, prompt: rendered_prompt, output_schema: schema, web: true).payload
       else
         gathered = client.call(ctx, system: LlmPrompts::GATHER_SYSTEM, prompt: rendered_prompt, output_schema: nil, web: true).payload

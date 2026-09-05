@@ -20,7 +20,9 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
 
   def context
     @context ||= LlmClient::CallContext.new(feed: nil, profile_key: "llm", stage: :loader,
-                                           model: "new-unregistered-model", purpose: :preview)
+                                           model: "new-unregistered-model", purpose: :preview).tap do |ctx|
+      ctx.native_search_disabled = true
+    end
   end
 
   def completion(content, input: 20, output: 10, tool_calls: nil)

@@ -119,6 +119,10 @@ module Loader
       publishable beyond refusals, errors, or capability notices,
       return the object with an empty items array.
 
+      Preserve citations for retrieved claims as visible source URLs in the body.
+      Use the supplied citation URLs, never opaque citation markers. Citation
+      metadata alone is not a post and must not become an item.
+
       #{SAFEGUARDS}
     TEXT
   end

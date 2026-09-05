@@ -3,6 +3,10 @@ class FeedLlmStatsComponent < StatsPanelComponent
     @feed = feed
   end
 
+  def call
+    safe_join([super, cost_note].compact)
+  end
+
   private
 
   def key_prefix
@@ -67,10 +71,25 @@ class FeedLlmStatsComponent < StatsPanelComponent
   end
 
   def formatted_cost
-    known = helpers.number_to_currency(total_cost_cents / 100.0)
-    return known unless usages.where(cost_estimate_cents: nil).exists?
+    return "Unknown" if unknown_cost?
 
-    usages.where.not(cost_estimate_cents: nil).exists? ? "#{known} + unknown" : "Unknown"
+    helpers.number_to_currency(total_cost_cents / 100.0)
+  end
+
+  def unknown_cost?
+    return @unknown_cost unless @unknown_cost.nil?
+
+    @unknown_cost = usages.where(cost_estimate_cents: nil).exists?
+  end
+
+  def cost_note
+    return unless unknown_cost?
+
+    text = "Some AI or built-in search costs couldn’t be estimated."
+    if total_cost_cents.positive?
+      text += " Available estimates total #{helpers.number_to_currency(total_cost_cents / 100.0)}."
+    end
+    tag.p(text, class: "mt-2 text-sm text-muted", data: { key: "llm_stats.cost_note" })
   end
 
   def formatted_search_cost

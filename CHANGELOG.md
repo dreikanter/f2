@@ -4,6 +4,16 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-05
 
+- Labels and values in detail lists wrap onto separate rows when space is limited, with values aligned right.
+
+- Incomplete AI cost totals show “Unknown” with an explanation and any available estimate separately.
+
+- AI previews appear in recent activity with usage details, including failed attempts.
+
+- AI posts consistently include their source URL in the body.
+
+- OpenAI feeds use built-in web search by default, with bounded requests and a fallback when search is unsupported.
+
 - AI feeds can create explicitly requested original content, such as jokes, without web search or source links.
 
 - AI page fetching blocks private DNS targets, including redirects.

@@ -90,13 +90,20 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
     assert_equal "0", result.css('[data-key="llm_stats.search_calls.value"]').first.text.strip
     assert_equal "$0.00000", result.css('[data-key="llm_stats.search_estimated_spend.value"]').first.text.strip
   end
-  test "#render should distinguish partial and fully unknown spend" do
+  test "#render should explain incomplete estimates without presenting a partial sum as the total" do
     create(:llm_usage, feed: feed, user: feed.user, cost_estimate_cents: nil)
     result = render_inline(FeedLlmStatsComponent.new(feed: feed))
     assert_equal "Unknown", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
+    assert_includes result.css('[data-key="llm_stats.cost_note"]').text, "couldn’t be estimated"
+
+    create(:llm_usage, feed: feed, user: feed.user, cost_estimate_cents: 0)
+    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    assert result.css('[data-key="llm_stats.estimated_spend.value"]').all? { |value| value.text.strip == "Unknown" }
+    assert_not_includes result.css('[data-key="llm_stats.cost_note"]').text, "$0.00"
 
     create(:llm_usage, feed: feed, user: feed.user, cost_estimate_cents: 25)
     result = render_inline(FeedLlmStatsComponent.new(feed: feed))
-    assert_equal "$0.25 + unknown", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
+    assert result.css('[data-key="llm_stats.estimated_spend.value"]').all? { |value| value.text.strip == "Unknown" }
+    assert_includes result.css('[data-key="llm_stats.cost_note"]').text, "Available estimates total $0.25."
   end
 end

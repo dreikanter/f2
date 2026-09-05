@@ -52,12 +52,20 @@ class StatListItemComponentTest < ViewComponent::TestCase
     assert_equal "0", result.at_css("dd").text
   end
 
-  test "#render should use list item CSS classes" do
+  test "#render should allow label and value to wrap with the value aligned right" do
     result = render_inline(StatListItemComponent.new(label: "Posts", value: "42"))
 
     assert_includes result.at_css("div")["class"], "flex"
     assert_includes result.at_css("div")["class"], "items-baseline"
     assert_includes result.at_css("div")["class"], "justify-between"
+    assert_includes result.at_css("div")["class"], "flex-wrap"
+    assert_includes result.at_css("dd")["class"], "ml-auto"
+    assert_includes result.at_css("dd")["class"], "text-right"
+    %w[dt dd].each do |selector|
+      assert_includes result.at_css(selector)["class"], "max-w-full"
+      assert_includes result.at_css(selector)["class"], "break-words"
+      assert_includes result.at_css(selector)["class"], "flex-none"
+    end
   end
 
   test "#render should not crop the value by default" do
