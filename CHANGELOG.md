@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-05
+
+- AI feeds can recover from unsupported response formatting and make one correction attempt when a response cannot be read.
+
 ## 2026-09-03
 
 - A post interrupted while being published is no longer posted a second time. It's marked as failed instead, with a note to check the group.

@@ -55,7 +55,10 @@ class AiCredential < ApplicationRecord
   # model-existence rule. Shared so a probe cannot qualify a model on a
   # configuration production doesn't use.
   def chat(model)
-    ruby_llm_context.chat(
+    context = ruby_llm_context
+    # The client owns bounded fallback; SDK retries would multiply its attempts.
+    context.config.max_retries = 0
+    context.chat(
       model: model,
       provider: llm_provider.ruby_llm_provider,
       assume_model_exists: llm_provider.assume_model_exists?

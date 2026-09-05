@@ -1,6 +1,10 @@
 class LlmClient
   module Adapter
     class OpenRouter < Base
+      def unsupported_schema?(error)
+        OpenAi.new.unsupported_schema?(error)
+      end
+
       # OpenRouter picks the upstream, and one that doesn't implement a
       # parameter drops it silently. This restricts routing to upstreams that
       # honor what the request carries: the schema when structuring, the tools

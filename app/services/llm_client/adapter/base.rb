@@ -2,6 +2,12 @@ class LlmClient
   module Adapter
     # Basic abstraction for an LLM provider adapter.
     class Base
+      MAX_OUTPUT_TOKENS = 8_192
+
+      def output_params
+        { max_tokens: MAX_OUTPUT_TOKENS }
+      end
+
       # Provider-specific request params that remain necessary alongside the
       # shared client-side web tools.
       def web_params(_model)
@@ -18,7 +24,8 @@ class LlmClient
       # whole set, so both kinds have to be sent together.
       def params_for(model, schema:, web:)
         params = schema ? schema_params(model) : {}
-        web ? params.deep_merge(web_params(model)) : params
+        params = params.deep_merge(web_params(model)) if web
+        output_params.merge(params)
       end
 
       # Every provider uses the same credential-backed search and fetch tools.
@@ -26,8 +33,7 @@ class LlmClient
       # but search never delegates to a provider-hosted implementation.
       #
       # Both tools share one budget so the pair can't outspend it between them.
-      def apply_web(chat, search_provider:, search_credential:, refresh_event: nil)
-        budget = LlmClient::ToolBudget.new
+      def apply_web(chat, search_provider:, search_credential:, refresh_event: nil, budget: LlmClient::ToolBudget.new)
         chat.with_tool(
           LlmClient::Tools::WebSearch.new(
             provider: search_provider,
@@ -62,6 +68,10 @@ class LlmClient
       # to a rate limit, but some vendors report a spent key that way, so
       # providers refine this.
       def dead_key?(_error)
+        false
+      end
+
+      def unsupported_schema?(_error)
         false
       end
 

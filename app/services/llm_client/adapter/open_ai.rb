@@ -1,6 +1,22 @@
 class LlmClient
   module Adapter
     class OpenAi < Base
+      def output_params
+        { max_completion_tokens: MAX_OUTPUT_TOKENS }
+      end
+
+      def unsupported_schema?(error)
+        body = error.response&.body
+        body = JSON.parse(body) if body.is_a?(String)
+        detail = body.is_a?(Hash) ? body["error"] : nil
+        return false unless detail.is_a?(Hash) && detail["param"] == "response_format"
+
+        detail["code"] == "unsupported_parameter" ||
+          detail["message"].to_s.match?(/\AInvalid parameter: 'response_format' of type 'json_schema' is not supported with (?:this )?model\b/i)
+      rescue JSON::ParserError
+        false
+      end
+
       # OpenAI reports every billing stop as a 429, the status it also uses for
       # throughput throttling, so only the body separates them. Each of these
       # needs someone to add credit or raise a cap; none clears on retry.

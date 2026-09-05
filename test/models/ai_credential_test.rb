@@ -198,12 +198,13 @@ class AiCredentialTest < ActiveSupport::TestCase
   test "#chat should build the chat on the provider's RubyLLM key and model-existence rule" do
     credential = create(:ai_credential, user: user, provider: "moonshot")
     captured = nil
-    context = Object.new
+    context = Struct.new(:config).new(RubyLLM.config.dup)
     context.define_singleton_method(:chat) { |**args| captured = args }
 
     credential.stub(:ruby_llm_context, context) { credential.chat("kimi-k2.6") }
 
     assert_equal({ model: "kimi-k2.6", provider: :openai, assume_model_exists: true }, captured)
+    assert_equal 0, context.config.max_retries
   end
 
   test "#deactivate! should disable feeds running on the credential" do
