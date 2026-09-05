@@ -209,7 +209,6 @@ class FeedFormComponent < ViewComponent::Base
       next unless ai_settings(form).section_visible?
 
       missing << "AI credentials" unless ai_settings(form).credentials?
-      missing << "search credentials" unless ai_settings(form).search_credentials?
     end
   end
 

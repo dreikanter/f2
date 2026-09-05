@@ -90,14 +90,19 @@ class LlmClient::Tools::WebSearchTest < ActiveSupport::TestCase
     end
   end
 
-  test "#execute should let auth errors escape after recording the call" do
+  test "#execute should deactivate a rejected search key and let the model continue without repeated searches" do
     provider = FakeProvider.new(error: WebSearchProvider::AuthError.new("Serper: HTTP 401"))
+    feed = create(:feed, :enabled, user: credential.user, search_credential: credential)
+    search = tool(provider)
 
     assert_difference("Event.where(type: WebSearchUsage::EVENT_TYPE).count", 1) do
-      assert_raises(WebSearchProvider::AuthError) do
-        tool(provider).execute(query: "ruby feeds")
-      end
+      assert_match(/credentials were rejected/, JSON.parse(search.execute(query: "ruby feeds"))["error"])
+      assert_match(/unavailable/, JSON.parse(search.execute(query: "try again"))["error"])
     end
+    assert_predicate credential.reload, :inactive?
+    assert_equal "Serper: HTTP 401", credential.last_error
+    assert_predicate feed.reload, :enabled?
+    assert_equal ["ruby feeds"], provider.queries
   end
 
   test "#execute should not fail the search when usage recording breaks" do

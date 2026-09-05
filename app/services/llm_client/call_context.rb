@@ -5,7 +5,7 @@ class LlmClient
     MAX_ATTEMPTS = 4
 
     attr_reader :feed, :profile_key, :stage, :model, :purpose, :search_credential, :refresh_event
-    attr_accessor :last_response
+    attr_accessor :last_response, :tools_disabled
 
     def initialize(feed:, profile_key:, stage:, model:, purpose: :scheduled_run,
                    search_credential: nil, refresh_event: nil)
@@ -21,6 +21,10 @@ class LlmClient
 
     def tool_budget
       @tool_budget ||= ToolBudget.new
+    end
+
+    def supplied_pages(prompt)
+      @supplied_pages ||= SuppliedPages.new(budget: tool_budget).fetch(prompt)
     end
 
     # Gathering, structuring, and corrections consume the same allowance.

@@ -4,6 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-05
 
+- External search is optional for AI feeds; missing search credentials and unsupported tools fall back to available content.
+
 - Pick newly listed AI models without qualification, refresh model lists for free, and keep saved choices when listings change.
 
 - AI feeds now attempt to correct an empty JSON object instead of immediately failing the run.

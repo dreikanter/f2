@@ -35,10 +35,11 @@
 
       <%= render PanelComponent.new do %>
         <div class="space-y-2">
-          <%= form.label :search_credential_id, "Search provider", class: "block font-semibold text-heading" %>
+          <%= form.label :search_credential_id, "External search (optional)", class: "block font-semibold text-heading" %>
           <%= form.select :search_credential_id, search_credential_options, { selected: selected_search_credential_id },
                           class: helpers.input_field_classes, disabled: !section_visible?,
                           data: { ai_settings_target: "searchCredentialSelect", key: "form.search-credential" } %>
+          <p class="text-sm text-muted">Without external search, the model can use supplied pages and its available knowledge. Fresh information may be unavailable.</p>
           <% if form.object.errors[:search_credential].any? %>
             <p class="text-sm text-danger"><%= form.object.errors[:search_credential].first %></p>
           <% end %>
@@ -62,8 +63,7 @@
       <%= render PanelComponent.new(variant: :info) do %>
         <%= render "feed_previews/credential_gate",
                    profile_key: feed.feed_profile_key,
-                   missing_ai_credentials: !credentials?,
-                   missing_search_credentials: !search_credentials? %>
+                   missing_ai_credentials: !credentials? %>
       <% end %>
     <% end %>
   </div>

@@ -45,11 +45,11 @@ class FeedPreviewsController < ApplicationController
   end
 
   # Server-side backstop for the Stimulus button: an AI preview needs owned,
-  # active AI and search credentials plus a listed or previously selected model.
+  # active AI credentials plus a listed or previously selected model.
   def invalid_ai_selection?
     return false unless FeedProfile.depends_on_ai?(profile_key)
 
-    ai_credential.blank? || search_credential.blank? || !available_ai_model?
+    ai_credential.blank? || !available_ai_model?
   end
 
   def available_ai_model?
@@ -106,10 +106,7 @@ class FeedPreviewsController < ApplicationController
   def resolve_search_credential(profile_key, requested_id = nil)
     return unless FeedProfile.exists?(profile_key) && FeedProfile.depends_on_ai?(profile_key)
 
-    credentials = Current.user.search_credentials.active
-    return credentials.find_by(id: requested_id) if requested_id.present?
-
-    credentials.find_by(id: Current.user.default_search_credential_id) || credentials.first
+    Current.user.search_credentials.active.find_by(id: requested_id) if requested_id.present?
   end
 
   def ai_model
@@ -169,15 +166,11 @@ class FeedPreviewsController < ApplicationController
   def needs_credential_gate?
     return false unless FeedProfile.depends_on_ai?(profile_key)
 
-    missing_ai_credentials? || missing_search_credentials?
+    missing_ai_credentials?
   end
 
   def missing_ai_credentials?
     !Current.user.ai_credentials.active.exists?
-  end
-
-  def missing_search_credentials?
-    !Current.user.search_credentials.active.exists?
   end
 
   # The create response carries the whole frame, so the polling host mounts and
@@ -224,8 +217,7 @@ class FeedPreviewsController < ApplicationController
       partial: "feed_previews/credential_gate",
       locals: {
         profile_key: profile_key,
-        missing_ai_credentials: missing_ai_credentials?,
-        missing_search_credentials: missing_search_credentials?
+        missing_ai_credentials: missing_ai_credentials?
       }
     }
     respond_to do |format|

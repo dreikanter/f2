@@ -37,7 +37,7 @@ class CredentialRemovalTest < ActiveSupport::TestCase
     assert_removal_event(enabled_feed, AiCredential::REMOVED_EVENT_TYPE, disabled: true)
   end
 
-  test "destroying a search credential detaches every feed, disables enabled feeds, and records per-feed events" do
+  test "destroying a search credential detaches every feed, preserves feed states, and records per-feed events" do
     credential = create(:search_credential, user: user)
     draft_feed = create(:feed, :draft, user: user, search_credential: credential)
     disabled_feed = create(:feed, :disabled, user: user, search_credential: credential)
@@ -53,11 +53,11 @@ class CredentialRemovalTest < ActiveSupport::TestCase
     assert_nil disabled_feed.reload.search_credential_id
     assert_predicate disabled_feed, :disabled?
     assert_nil enabled_feed.reload.search_credential_id
-    assert_predicate enabled_feed, :disabled?
+    assert_predicate enabled_feed, :enabled?
 
     assert_removal_event(draft_feed, SearchCredential::REMOVED_EVENT_TYPE, disabled: false)
     assert_removal_event(disabled_feed, SearchCredential::REMOVED_EVENT_TYPE, disabled: false)
-    assert_removal_event(enabled_feed, SearchCredential::REMOVED_EVENT_TYPE, disabled: true)
+    assert_removal_event(enabled_feed, SearchCredential::REMOVED_EVENT_TYPE, disabled: false)
   end
 
   # Events are log records: what happened stays recorded even once the thing it

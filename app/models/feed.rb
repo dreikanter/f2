@@ -75,7 +75,6 @@ class Feed < ApplicationRecord
   validate :params_against_profile_schema
   validate :associations_belong_to_user
   validate :ai_credential_required_when_enabled_ai_profile, if: :enabled?
-  validate :search_credential_required_when_enabled_ai_profile, if: :enabled?
   validate :engine_fixed_on_edit
   validate :source_change_reverified
   validates :access_token, presence: true, if: :enabled?
@@ -232,7 +231,6 @@ class Feed < ApplicationRecord
     return false unless source_input.present? && feed_profile_present?
     return true unless FeedProfile.depends_on_ai?(feed_profile_key)
     return false unless ai_credential&.active?
-    return false unless search_credential&.active?
 
     effective_ai_model.present?
   end
@@ -385,7 +383,7 @@ class Feed < ApplicationRecord
   def ai_enablement_requirements_met?
     return true unless FeedProfile.depends_on_ai?(feed_profile_key)
 
-    ai_credential&.active? && search_credential&.active? && ai_model.present?
+    ai_credential&.active? && ai_model.present?
   end
 
   # Records a feed_auto_disabled event stamped with the streak length, so the
@@ -520,17 +518,6 @@ class Feed < ApplicationRecord
       # Membership is enforced only on the change that sets it, so a later-dropped
       # model never traps an unrelated edit.
       errors.add(:ai_model, "This model isn't available anymore. Pick another one.")
-    end
-  end
-
-  def search_credential_required_when_enabled_ai_profile
-    return unless feed_profile_present?
-    return unless FeedProfile.depends_on_ai?(feed_profile_key)
-
-    if search_credential.nil?
-      errors.add(:search_credential, "must be selected for AI-backed feeds")
-    elsif !search_credential.active?
-      errors.add(:search_credential, "must be active (currently #{search_credential.state})")
     end
   end
 

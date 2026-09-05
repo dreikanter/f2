@@ -9,6 +9,10 @@ class SearchCredential < ApplicationRecord
 
   validates :provider, presence: true, inclusion: { in: ->(_) { WebSearchProvider::REGISTRY.keys } }
 
+  def required_for_feeds?
+    false
+  end
+
   def web_search_provider
     WebSearchProvider.for(provider, api_key: credential_data["api_key"])
   end

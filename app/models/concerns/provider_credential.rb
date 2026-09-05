@@ -1,7 +1,7 @@
 # Shared behavior for the provider credential types (AI and web search). Both
 # wrap a user-owned API key in the same pending → validating → active|inactive
-# lifecycle, name themselves after their provider, and take their feeds down
-# with them when deactivated or destroyed.
+# lifecycle and name themselves after their provider. Required credentials
+# disable dependent feeds when deactivated or destroyed.
 #
 # Including models declare their provider vocabulary, the event types they
 # record, and their own domain logic; everything else derives from the model
@@ -68,8 +68,7 @@ module ProviderCredential
     run
   end
 
-  # Takes the credential and everything depending on it out of service in one
-  # transaction: a key that just failed cannot back a running feed.
+  # Deactivation and required-feed transitions share one transaction.
   def deactivate!(last_error: nil, run: nil)
     if run
       return false unless run.subject == self
@@ -78,6 +77,10 @@ module ProviderCredential
     end
 
     with_lock { deactivate_locked!(last_error: last_error) }
+  end
+
+  def required_for_feeds?
+    true
   end
 
   private
@@ -92,7 +95,7 @@ module ProviderCredential
       user: user
     )
 
-    feeds.where(state: Feed.states[:enabled]).update_all(state: Feed.states[:disabled])
+    feeds.where(state: Feed.states[:enabled]).update_all(state: Feed.states[:disabled]) if required_for_feeds?
     true
   end
 
@@ -118,13 +121,11 @@ module ProviderCredential
     errors.add(:base, "Enter your API key") if credential_data.blank? || credential_data["api_key"].blank?
   end
 
-  # Detach this credential from every dependent feed. Enabled feeds reuse the
-  # feed's generic disable-and-event transition; drafts and already-disabled
-  # feeds keep their state and receive a removal-only event.
+  # Optional credentials leave feeds running and record removal-only events.
   def disable_dependent_feeds
     feeds.find_each do |feed|
       feed.update_column(:"#{param_key}_id", nil)
-      next if feed.enabled? && feed.disable_with_event!(self.class::REMOVED_EVENT_TYPE, { disabled: true })
+      next if required_for_feeds? && feed.enabled? && feed.disable_with_event!(self.class::REMOVED_EVENT_TYPE, { disabled: true })
 
       Event.create!(
         type: self.class::REMOVED_EVENT_TYPE,

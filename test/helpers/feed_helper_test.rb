@@ -97,17 +97,17 @@ class FeedHelperTest < ActionView::TestCase
     assert_equal ["active AI credential"], result
   end
 
-  test "#feed_missing_enablement_parts should report a missing search credential" do
+  test "#feed_missing_enablement_parts should allow a missing search credential" do
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: credential,
                         ai_model: "claude-sonnet-4-6", search_credential: nil)
     result = feed_missing_enablement_parts(feed)
 
-    assert_equal ["active search credential"], result
+    assert_empty result
   end
 
-  test "#feed_missing_enablement_parts should report an inactive search credential" do
+  test "#feed_missing_enablement_parts should allow an inactive search credential" do
     credential = create(:ai_credential, :active)
     search_credential = create(:search_credential, :inactive, user: credential.user)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
@@ -115,7 +115,7 @@ class FeedHelperTest < ActionView::TestCase
                         ai_model: "claude-sonnet-4-6", search_credential: search_credential)
     result = feed_missing_enablement_parts(feed)
 
-    assert_equal ["active search credential"], result
+    assert_empty result
   end
 
   test "#feed_missing_enablement_parts should be empty for a ready AI feed" do
@@ -146,13 +146,13 @@ class FeedHelperTest < ActionView::TestCase
     assert_equal "To enable this feed, add: name, active access token, and target group.", feed_enable_hint(feed)
   end
 
-  test "#feed_enable_hint should name a missing search credential" do
+  test "#feed_enable_hint should allow enabling without search credentials" do
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: credential,
                         ai_model: "claude-sonnet-4-6", search_credential: nil)
 
-    assert_equal "To enable this feed, add an active search credential.", feed_enable_hint(feed)
+    assert_equal "Complete setup to enable this feed", feed_enable_hint(feed)
   end
 
   test "#feed_enable_hint should fall back to a generic prompt when nothing is missing" do

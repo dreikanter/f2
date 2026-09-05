@@ -77,9 +77,9 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     assert_select "select[data-key='form.ai-model'] option[selected][value='claude-sonnet-4-6']", text: "Claude Sonnet 4.6"
   end
 
-  test "#edit should prefer the user's default search credential when the feed has none" do
+  test "#edit should preserve no external search even when the user has a default" do
     sign_in_as(user)
-    default = create(:search_credential, :active, :default, user: user, display_name: "Default search")
+    create(:search_credential, :active, :default, user: user, display_name: "Default search")
     create(:search_credential, :active, user: user, display_name: "Other search")
     feed = create(:feed,
                   user: user,
@@ -91,7 +91,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
 
     get edit_feed_path(feed)
 
-    assert_select "select[data-key='form.search-credential'] option[selected][value='#{default.id}']"
+    assert_select "select[data-key='form.search-credential'] option[selected][value='']"
   end
 
   test "#edit should render the model placeholder as disabled so a pick can't be cleared" do
@@ -173,7 +173,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     assert_select "select[name='feed[ai_model]']", false
   end
 
-  test "#edit should show only the search credential button when AI credentials exist" do
+  test "#edit should show model controls without a search credential" do
     sign_in_as(user)
     feed_without_search = create(:feed,
                                  user: user,
@@ -185,7 +185,8 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     get edit_feed_path(feed_without_search)
 
     assert_select "button[value='save_as_draft_and_add_credentials']", count: 0
-    assert_select "button[value='save_as_draft_and_add_search_credentials']"
+    assert_select "[data-key='credentials.gate']", count: 0
+    assert_select "select[data-key='form.ai-model']"
   end
 
   test "#edit should lock the Enable checkbox off when AI credentials are missing" do
@@ -206,7 +207,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='form.enable-blocked-note']", text: /AI credentials/
   end
 
-  test "#edit should lock the Enable checkbox off when only search credentials are missing" do
+  test "#edit should allow enabling when only search credentials are missing" do
     sign_in_as(user)
     feed_without_search = create(:feed,
                                  user: user,
@@ -217,8 +218,8 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
 
     get edit_feed_path(feed_without_search)
 
-    assert_select "input[type=checkbox][name='enable_feed'][disabled]", count: 1
-    assert_select "[data-key='form.enable-blocked-note']", text: /search credentials/
+    assert_select "input[type=checkbox][name='enable_feed'][disabled]", count: 0
+    assert_select "[data-key='form.enable-blocked-note']", count: 0
   end
 
   test "#edit should keep the Enable checkbox interactive when AI setup is complete" do

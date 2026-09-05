@@ -31,6 +31,7 @@ class LlmClient
 
         { content: readable_text(response.body) }.to_json
       rescue HttpClient::Error => e
+        Rails.error.report(e)
         { error: e.message }.to_json
       end
 

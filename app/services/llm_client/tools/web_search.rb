@@ -1,11 +1,8 @@
 class LlmClient
   module Tools
     # Client-side web search for providers without usable server-side web
-    # access. Built around an injected, already-resolved WebSearchProvider,
-    # so the vendor and API key are the caller's choice. Transient failures
-    # surface as ordinary error results the model can read and work around;
-    # an auth failure escapes instead — a dead key is a run-level problem
-    # the model can't fix, and swallowing it would hide the failure forever.
+    # access. Failed searches become error results the model can work around;
+    # rejected credentials are deactivated to keep the failure visible.
     class WebSearch < RubyLLM::Tool
       description "Search the web. Returns result titles, URLs and snippets. " \
                   "Fetch a result URL with the web fetch tool to read the page."
@@ -28,12 +25,18 @@ class LlmClient
         return over_budget if over_budget
         return { error: "Refused: query must not be blank." }.to_json if query.blank?
 
+        return { error: "External search is unavailable. Continue with other available content." }.to_json if @unavailable
+
         record_usage
         results = @provider.search(query, max_results: MAX_RESULTS)
         { results: results.map(&:to_h) }.to_json
-      rescue ::WebSearchProvider::AuthError
-        raise
+      rescue ::WebSearchProvider::AuthError => e
+        Rails.error.report(e, context: { search_credential_id: @credential.id })
+        @unavailable = true
+        @credential.deactivate!(last_error: e.message)
+        { error: "External search credentials were rejected. Continue with other available content." }.to_json
       rescue ::WebSearchProvider::Error => e
+        Rails.error.report(e, context: { search_credential_id: @credential.id })
         { error: e.message }.to_json
       end
 
