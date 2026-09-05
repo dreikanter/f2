@@ -50,7 +50,7 @@ class LlmClient
       native_schema = false
       retry
     rescue SchemaError => e
-      raise if repaired || e.payload.blank?
+      raise if repaired || e.payload.to_s.blank?
 
       Rails.error.report(e, context: error_context(ctx))
       repaired = true

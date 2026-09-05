@@ -144,6 +144,34 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     assert_equal 20, LlmUsage.sum(:output_tokens)
   end
 
+  test "#call should correct an empty object with either native or text JSON output" do
+    [true, false].each do |native_schema|
+      @context = nil
+      stub_completions(completion("{}"), completion('{"items":[]}'))
+
+      assert_difference -> { LlmUsage.count }, 2 do
+        assert_equal({ "items" => [] }, call(native_schema: native_schema).payload)
+      end
+
+      assert_equal 2, @requests.size
+      assert_nil @requests[1]["response_format"]
+      assert_nil @requests[1]["tools"]
+    end
+  end
+
+  test "#call should not spend a correction attempt on a missing or whitespace-only response" do
+    [nil, "", " \n\t"].each do |content|
+      @context = nil
+      stub_completions(completion(content))
+
+      assert_difference -> { LlmUsage.count }, 1 do
+        assert_raises(LlmClient::SchemaError) { call }
+      end
+
+      assert_equal 1, @requests.size
+    end
+  end
+
   test "#call should stop when the correction still violates the local schema" do
     stub_completions(completion('{"items":[42]}'))
 
