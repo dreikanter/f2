@@ -187,6 +187,20 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "claude-sonnet-4-6", preview.ai_model
   end
 
+  test "#create should allow no external search without substituting the user's default" do
+    sign_in_as(user)
+    credential = create(:ai_credential, :active, user: user, available_models: models)
+    user.search_credentials.active.first.make_default!
+
+    assert_enqueued_with(job: FeedPreviewJob) do
+      post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" },
+                                       ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6" }
+    end
+
+    assert_response :success
+    assert_nil user.feed_previews.last.search_credential_id
+  end
+
   test "#show should keep separate previews for different verified models on the same source" do
     sign_in_as(user)
     anthropic = create(:ai_credential, :active, user: user, available_models: models)
@@ -424,12 +438,13 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
                                                 ai_model: "claude-sonnet-4-6")
     selected.update!(state: :inactive)
 
-    assert_no_enqueued_jobs do
+    assert_enqueued_jobs 1, only: FeedPreviewJob do
       patch feed_preview_url(preview), headers: TURBO_STREAM
     end
 
     assert_response :success
-    assert preview.reload.ready?, "refresh must not switch to the current default"
+    assert preview.reload.pending?
+    assert_equal selected.id, preview.search_credential_id
   end
 
   test "#update should not reach another user's preview" do

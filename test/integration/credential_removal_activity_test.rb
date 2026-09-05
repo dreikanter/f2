@@ -51,11 +51,11 @@ class CredentialRemovalActivityTest < ActionDispatch::IntegrationTest
     get feed_path(feed)
 
     assert_response :success
-    assert_predicate feed.reload, :disabled?
+    assert_predicate feed.reload, :enabled?
     assert_nil feed.search_credential_id
     assert_select "h2", text: "Recent Activity"
     assert_select "[data-key='events.entry'][data-event-type='#{SearchCredential::REMOVED_EVENT_TYPE}']" do
-      assert_select "[data-key='events.description']", text: /was disabled because its search credentials were removed/
+      assert_select "[data-key='events.description']", text: /search credentials were removed/
     end
   end
 end

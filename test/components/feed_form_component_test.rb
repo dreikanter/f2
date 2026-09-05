@@ -144,7 +144,7 @@ class FeedFormComponentTest < ViewComponent::TestCase
 
   test "#enable_missing should list every missing setup piece" do
     assert_equal ["a FreeFeed access token"], component(feed).enable_missing(nil)
-    assert_equal ["a FreeFeed access token", "AI credentials", "search credentials"],
+    assert_equal ["a FreeFeed access token", "AI credentials"],
                  component(ai_feed).enable_missing(nil)
   end
 

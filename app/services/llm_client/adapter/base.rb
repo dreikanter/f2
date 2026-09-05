@@ -28,11 +28,7 @@ class LlmClient
         output_params.merge(params)
       end
 
-      # Every provider uses the same credential-backed search and fetch tools.
-      # Adapters may still add provider-specific request params (#params_for),
-      # but search never delegates to a provider-hosted implementation.
-      #
-      # Both tools share one budget so the pair can't outspend it between them.
+      # Search is optional; both tools share one allowance.
       def apply_web(chat, search_provider:, search_credential:, refresh_event: nil, budget: LlmClient::ToolBudget.new)
         chat.with_tool(
           LlmClient::Tools::WebSearch.new(
@@ -41,7 +37,7 @@ class LlmClient
             refresh_event: refresh_event,
             budget: budget
           )
-        )
+        ) if search_provider
         chat.with_tool(LlmClient::Tools::WebFetch.new(budget: budget))
       end
 
@@ -72,6 +68,18 @@ class LlmClient
       end
 
       def unsupported_schema?(_error)
+        false
+      end
+
+      def unsupported_tools?(error)
+        body = error.response&.body
+        body = JSON.parse(body) if body.is_a?(String)
+        detail = body.is_a?(Hash) ? body["error"] : nil
+        return false unless detail.is_a?(Hash)
+        return true if detail["param"] == "tools" && detail["code"] == "unsupported_parameter"
+
+        detail["message"].to_s.match?(/\A(?:Tools?|Tool use|Function calling) (?:is|are) not supported (?:for|with|by|on) (?:this |the selected )?model\b/i)
+      rescue JSON::ParserError
         false
       end
 

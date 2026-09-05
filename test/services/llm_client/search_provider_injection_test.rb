@@ -19,7 +19,7 @@ class LlmClient::SearchProviderInjectionTest < ActiveSupport::TestCase
     end
   end
 
-  test "web calls reject a missing or inactive search credential" do
+  test "web calls omit external search for a missing or inactive search credential" do
     user = create(:user)
     ai_credential = create(:ai_credential, :active, user: user)
     inactive = create(:search_credential, :inactive, user: user)
@@ -34,9 +34,7 @@ class LlmClient::SearchProviderInjectionTest < ActiveSupport::TestCase
         search_credential: search_credential
       )
 
-      assert_raises(LlmClient::CredentialMissing) do
-        client.send(:search_provider_for, context)
-      end
+      assert_nil client.send(:search_provider_for, context)
     end
   end
 end

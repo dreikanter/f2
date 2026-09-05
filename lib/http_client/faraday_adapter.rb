@@ -78,7 +78,18 @@ module HttpClient
           config.response :follow_redirects, **redirect_options
         end
 
-        config.adapter Faraday.default_adapter
+        if opts[:pin_public_address]
+          # A proxy would resolve the hostname independently of our pinned IP.
+          config.proxy = nil
+          config.adapter :net_http do |http|
+            address = PublicUrl.public_address(http.address)
+            raise BlockedUrlError, "Blocked non-public DNS target" unless address
+
+            http.ipaddr = address
+          end
+        else
+          config.adapter Faraday.default_adapter
+        end
       end
     end
 

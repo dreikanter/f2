@@ -1,5 +1,5 @@
 # The "AI Settings" section of the feed form: AI and search credentials plus
-# the model select, or the credential gate when either required key is missing.
+# the model select, or a setup link when AI credentials are missing.
 class FeedAiSettingsComponent < ViewComponent::Base
   def initialize(feed:, form:)
     @feed = feed
@@ -29,12 +29,8 @@ class FeedAiSettingsComponent < ViewComponent::Base
     @active_search_credentials ||= @feed.user.search_credentials.active.order(:display_name)
   end
 
-  def search_credentials?
-    active_search_credentials.any?
-  end
-
   def credential_setup_complete?
-    credentials? && search_credentials?
+    credentials?
   end
 
   def models_by_credential
@@ -59,9 +55,8 @@ class FeedAiSettingsComponent < ViewComponent::Base
   end
 
   def selected_search_credential_id
-    preferred = [@feed.search_credential_id, @feed.user.default_search_credential_id].compact
-    selectable_ids = active_search_credentials.map(&:id)
-    ((preferred & selectable_ids).first || selectable_ids.first)&.to_s
+    selected = active_search_credentials.find { |credential| credential.id == @feed.search_credential_id }
+    selected&.id.to_s
   end
 
   def credential_options
@@ -71,7 +66,7 @@ class FeedAiSettingsComponent < ViewComponent::Base
   end
 
   def search_credential_options
-    active_search_credentials.map do |credential|
+    [["No external search", ""]] + active_search_credentials.map do |credential|
       ["#{credential.display_name} · #{credential.provider_label}", credential.id]
     end
   end

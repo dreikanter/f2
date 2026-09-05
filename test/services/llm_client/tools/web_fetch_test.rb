@@ -81,7 +81,9 @@ class LlmClient::Tools::WebFetchTest < ActiveSupport::TestCase
     url = "https://example.com/page"
     stub_request(:get, url).to_return(status: 302, headers: { "Location" => "http://127.0.0.1/metadata" })
 
-    result = JSON.parse(tool.execute(url: url))
+    result = Socket.stub(:getaddrinfo, [["AF_INET", 0, "example.com", "93.184.216.34"]]) do
+      JSON.parse(tool.execute(url: url))
+    end
 
     assert result["error"].present?
     assert_not_requested :get, "http://127.0.0.1/metadata"

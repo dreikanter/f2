@@ -25,12 +25,13 @@ class LlmClient
 
         # public-only so a redirect can't slip past the check above to an
         # internal address (SSRF).
-        response = HttpClient.build(max_redirects: MAX_REDIRECTS)
+        response = HttpClient.build(max_redirects: MAX_REDIRECTS, pin_public_address: true)
                              .get(url.to_s.strip, options: { validate_url: PublicUrl.method(:safe?) })
         return { error: "HTTP #{response.status}" }.to_json unless response.success?
 
         { content: readable_text(response.body) }.to_json
       rescue HttpClient::Error => e
+        Rails.error.report(e)
         { error: e.message }.to_json
       end
 

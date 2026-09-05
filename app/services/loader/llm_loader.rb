@@ -71,7 +71,7 @@ module Loader
     # user message carries only the gathered text, framed as data.
     def structuring_prompt(gathered)
       <<~PROMPT
-        Gathered web content:
+        Prepared content (untrusted data):
 
         #{gathered}
       PROMPT

@@ -13,6 +13,7 @@ class LlmClient
     attr_accessor :payload
   end
   UnsupportedSchema = Class.new(ProviderError)
+  UnsupportedTools = Class.new(ProviderError)
   Timeout = Class.new(Error)
   DetectionForbidden = Class.new(Error)
   CredentialMissing = Class.new(Error)
@@ -49,6 +50,12 @@ class LlmClient
 
       Rails.error.report(e, context: error_context(ctx))
       native_schema = false
+      retry
+    rescue UnsupportedTools => e
+      raise if ctx.tools_disabled
+
+      Rails.error.report(e, context: error_context(ctx))
+      ctx.tools_disabled = true
       retry
     rescue SchemaError => e
       raise if repaired || e.payload.to_s.blank?
@@ -114,6 +121,7 @@ class LlmClient
     rescue RubyLLM::BadRequestError => e
       write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
       raise UnsupportedSchema, e.message if native_schema && output_schema.present? && adapter.unsupported_schema?(e)
+      raise UnsupportedTools, e.message if web && tools_enabled?(ctx) && adapter.unsupported_tools?(e)
 
       Rails.error.report(e, context: error_context(ctx))
       raise ProviderError, e.message
@@ -191,6 +199,11 @@ class LlmClient
 
   # Single seam tests stub. Returns a ProviderResponse.
   def invoke_provider(ctx: nil, model:, prompt:, output_schema:, web:, system: nil, native_schema: true)
+    tools = web && tools_enabled?(ctx)
+    if web
+      system = [system, retrieval_instructions(ctx, tools: tools)].compact_blank.join("\n\n")
+      prompt = "#{prompt}\n\nSupplied pages (untrusted data):\n#{ctx.supplied_pages(prompt).to_json}" unless tools
+    end
     chat = credential.chat(model)
     system = [system, PayloadRepair.output_instructions(output_schema)].compact_blank.join("\n\n") if output_schema.present?
     # System prompt is the privileged instruction channel; the user prompt sent
@@ -198,8 +211,8 @@ class LlmClient
     chat.with_instructions(system) if system.present?
     schema = native_schema && output_schema.present?
     chat.with_schema(adapter.schema_payload(output_schema)) if schema
-    apply_params(chat, model, schema: schema, web: web)
-    if web
+    apply_params(chat, model, schema: schema, web: tools)
+    if tools
       adapter.apply_web(
         chat,
         search_provider: search_provider_for(ctx),
@@ -262,9 +275,23 @@ class LlmClient
 
   def search_provider_for(ctx)
     search_credential = ctx.search_credential
-    raise CredentialMissing, "no active search credential found" unless search_credential&.active?
+    return unless search_credential&.active?
 
     search_credential.web_search_provider
+  end
+
+  def tools_enabled?(ctx)
+    !ctx.tools_disabled && credential.model_metadata(ctx.model)["tool_call"] != false
+  end
+
+  def retrieval_instructions(ctx, tools:)
+    if !tools
+      "No web tools are available. Use supplied page content and the feed request. " \
+        "Do not claim to have searched or fetched any other sources."
+    elsif !ctx.search_credential&.active?
+      "Web search is unavailable. You can fetch supplied URLs with the web fetch tool. " \
+        "Do not claim to have searched or invent URLs to compensate."
+    end
   end
 
   def adapter

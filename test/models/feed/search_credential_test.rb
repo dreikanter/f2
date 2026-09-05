@@ -10,15 +10,15 @@ class Feed::SearchCredentialTest < ActiveSupport::TestCase
     assert_includes feed.errors[:search_credential], "must belong to the same user"
   end
 
-  test "enabled AI feeds require an active search credential" do
+  test "enabled AI feeds allow a missing or inactive search credential" do
     feed = build_ai_feed(search_credential: nil)
 
-    assert_not feed.valid?
-    assert_includes feed.errors[:search_credential], "must be selected for AI-backed feeds"
+    assert feed.valid?, feed.errors.full_messages.to_sentence
+    assert feed.can_be_previewed?
 
     feed.search_credential = create(:search_credential, :inactive, user: feed.user)
-    assert_not feed.valid?
-    assert_includes feed.errors[:search_credential], "must be active (currently inactive)"
+    assert feed.valid?, feed.errors.full_messages.to_sentence
+    assert feed.can_be_previewed?
   end
 
   test "non-AI feeds do not require a search credential" do
@@ -35,7 +35,7 @@ class Feed::SearchCredentialTest < ActiveSupport::TestCase
     assert feed.can_be_enabled?
 
     feed.search_credential = nil
-    assert_not feed.can_be_enabled?
+    assert feed.can_be_enabled?
   end
 
   private

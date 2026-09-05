@@ -80,7 +80,8 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
       ["moonshot", "new-kimi-model", "https://api.moonshot.ai/v1/chat/completions"],
       ["openrouter", "vendor/new-model", "https://openrouter.ai/api/v1/chat/completions"]
     ].each do |provider, model, endpoint|
-      key = create(:ai_credential, :active, provider: provider)
+      key = create(:ai_credential, :active, provider: provider,
+                   available_models: [{ "id" => model, "metadata" => { "tool_call" => false } }])
       ctx = LlmClient::CallContext.new(feed: nil, profile_key: "llm", stage: :loader, model: model)
       response = completion('{"items":[]}')
       if provider == "anthropic"
@@ -93,7 +94,7 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
         true
       end.to_return(response)
 
-      result = LlmClient.new(key).call(ctx, prompt: "Empty list", output_schema: SCHEMA, native_schema: false)
+      result = LlmClient.new(key).call(ctx, prompt: "Empty list", output_schema: SCHEMA, native_schema: false, web: true)
 
       assert_equal({ "items" => [] }, result.payload)
       request = requests.sole
@@ -286,5 +287,90 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     assert_nil @requests.sole["response_format"]
     assert_equal 1_024, @requests.sole["max_completion_tokens"]
     assert_nil LlmUsage.find(result.usage_id).cost_estimate_cents
+  end
+
+  test "#call should offer web fetch without external search credentials" do
+    stub_completions(completion('{"items":[]}'))
+
+    assert_equal({ "items" => [] }, call(web: true).payload)
+
+    assert_equal [LlmClient::Tools::WebFetch.new.name], @requests.sole["tools"].map { |tool| tool.dig("function", "name") }
+    assert_includes @requests.sole["messages"][0]["content"], "Web search is unavailable"
+  end
+
+  test "#call should retry an explicit tool rejection without tools using supplied page evidence" do
+    stub_request(:get, "https://example.com/post").to_return(body: "<p>A retrieved fact.</p>")
+    stub_completions(rejection(param: "tools"), completion('{"items":["A retrieved fact."]}'))
+
+    result = Socket.stub(:getaddrinfo, [["AF_INET", 0, "example.com", "93.184.216.34"]]) do
+      client.call(context, prompt: "Summarize https://example.com/post", output_schema: SCHEMA, web: true)
+    end
+
+    assert_equal ["A retrieved fact."], result.payload["items"]
+    assert @requests[0]["tools"].present?
+    assert_nil @requests[1]["tools"]
+    assert_nil @requests[1]["reasoning_effort"]
+    assert_includes @requests[1]["messages"][1]["content"], "A retrieved fact."
+    assert_includes @requests[1]["messages"][1]["content"], "https://example.com/post"
+    assert_equal [context.model], @requests.pluck("model").uniq
+    assert_equal %w[provider_error success], LlmUsage.order(:created_at).pluck(:outcome)
+    assert_equal 1, context.tool_budget.spent
+    assert_requested :get, "https://example.com/post", times: 1
+  end
+
+  test "#call should use supplied pages for a model with advisory tool support disabled" do
+    credential.update!(available_models: [{ "id" => context.model, "metadata" => { "tool_call" => false } }])
+    stub_request(:get, "https://example.com/post").to_return(body: "<p>A retrieved fact.</p>")
+    stub_completions(rejection, completion('{"items":["A retrieved fact."]}'))
+
+    result = Socket.stub(:getaddrinfo, [["AF_INET", 0, "example.com", "93.184.216.34"]]) do
+      client.call(context, prompt: "Summarize https://example.com/post", output_schema: SCHEMA, web: true)
+    end
+
+    assert_equal ["A retrieved fact."], result.payload["items"]
+    assert @requests.all? { |request| request["tools"].nil? }
+    assert @requests.all? { |request| request["messages"][1]["content"].include?("A retrieved fact.") }
+    assert_requested :get, "https://example.com/post", times: 1
+    assert_equal 1, context.tool_budget.spent
+  end
+
+  test "#call should let the model respond with limited capabilities when no pages are supplied" do
+    stub_completions(rejection(param: "tools"), completion('{"items":[]}'))
+
+    assert_equal({ "items" => [] }, call(web: true).payload)
+    assert_includes @requests[1]["messages"][0]["content"], "No web tools are available"
+    assert_equal 0, context.tool_budget.spent
+  end
+
+  test "#call should not hide malformed tools or provider failures as missing capabilities" do
+    [
+      [rejection(param: "tools", code: "invalid_parameter", message: "Invalid function schema"), LlmClient::ProviderError],
+      [rejection(param: "tools", status: 401), LlmClient::AuthError],
+      [rejection(param: "tools", status: 429), LlmClient::RateLimited],
+      [rejection(param: "tools", status: 500), LlmClient::ProviderError]
+    ].each do |response, error_class|
+      @context = nil
+      stub_completions(response)
+
+      assert_raises(error_class) { call(web: true) }
+      assert_equal 1, @requests.size
+    end
+  end
+
+  test "#call should not retry a repeated tool rejection once tools have been removed" do
+    stub_completions(rejection(param: "tools"))
+
+    assert_raises(LlmClient::ProviderError) { call(web: true) }
+    assert_equal 2, @requests.size
+    assert_nil @requests.last["tools"]
+  end
+
+  test "#call should share the attempt budget across tool schema and correction fallbacks" do
+    stub_completions(rejection(param: "tools"), rejection, completion("not JSON"), completion('{"items":[]}'))
+
+    assert_equal({ "items" => [] }, call(web: true).payload)
+    assert_raises(LlmClient::Timeout) { call }
+    assert_equal 4, @requests.size
+    assert_equal 40, LlmUsage.sum(:input_tokens)
   end
 end
