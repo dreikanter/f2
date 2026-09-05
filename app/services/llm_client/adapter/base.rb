@@ -47,6 +47,10 @@ class LlmClient
         false
       end
 
+      def native_search?
+        false
+      end
+
       # RubyLLM's schema argument; the wrapper form is what carries strictness.
       def schema_payload(schema)
         { "schema" => schema, "strict" => schema_strict? }

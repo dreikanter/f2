@@ -58,4 +58,15 @@ class LlmUsageListItemComponentTest < ViewComponent::TestCase
     result = render_inline(LlmUsageListItemComponent.new(usage: usage))
     assert_equal "Unknown", result.css('[data-key="events.llm_usage.cost"]').first.text
   end
+
+  test "#render should distinguish counted unknown and unavailable native search" do
+    [
+      [{ "mode" => "native", "search_calls" => 2 }, "2 native web calls"],
+      [{ "mode" => "native" }, "native search usage unknown"],
+      [{ "mode" => "limited" }, "web search unavailable"]
+    ].each do |retrieval, label|
+      usage.update!(retrieval: retrieval)
+      assert_includes render_usage.text, label
+    end
+  end
 end

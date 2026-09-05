@@ -5,7 +5,7 @@ class LlmClient
     MAX_ATTEMPTS = 4
 
     attr_reader :feed, :profile_key, :stage, :model, :purpose, :search_credential, :refresh_event
-    attr_accessor :last_response, :tools_disabled
+    attr_accessor :last_response, :tools_disabled, :responses_api, :native_search_disabled, :retrieval
 
     def initialize(feed:, profile_key:, stage:, model:, purpose: :scheduled_run,
                    search_credential: nil, refresh_event: nil)
@@ -30,6 +30,7 @@ class LlmClient
     # Gathering, structuring, and corrections consume the same allowance.
     def within_budget
       self.last_response = nil
+      self.retrieval = {}
       @attempts += 1
       raise LlmClient::Timeout, "AI request attempt budget exceeded" if @attempts > MAX_ATTEMPTS
 

@@ -29,5 +29,12 @@ class LlmClient
 
       RubyLLM::Tool::Halt.new(HALTED)
     end
+
+    # Hosted tools run remotely, so reserve their full allowance before sending.
+    def reserve(limit)
+      count = [limit, [@rounds - @spent, 0].max].min
+      @spent += count
+      count
+    end
   end
 end

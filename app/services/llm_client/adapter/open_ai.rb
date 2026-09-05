@@ -5,14 +5,18 @@ class LlmClient
         { max_completion_tokens: MAX_OUTPUT_TOKENS }
       end
 
+      def native_search?
+        true
+      end
+
       def unsupported_schema?(error)
         body = error.response&.body
         body = JSON.parse(body) if body.is_a?(String)
         detail = body.is_a?(Hash) ? body["error"] : nil
-        return false unless detail.is_a?(Hash) && detail["param"] == "response_format"
+        return false unless detail.is_a?(Hash) && %w[response_format text.format text.format.type].include?(detail["param"])
 
         detail["code"] == "unsupported_parameter" ||
-          detail["message"].to_s.match?(/\AInvalid parameter: 'response_format' of type 'json_schema' is not supported with (?:this )?model\b/i)
+          detail["message"].to_s.match?(/\AInvalid parameter: '(?:response_format|text.format)' of type 'json_schema' is not supported with (?:this )?model\b/i)
       rescue JSON::ParserError
         false
       end

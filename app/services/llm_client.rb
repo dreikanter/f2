@@ -14,6 +14,8 @@ class LlmClient
   end
   UnsupportedSchema = Class.new(ProviderError)
   UnsupportedTools = Class.new(ProviderError)
+  UnsupportedNativeSearch = Class.new(ProviderError)
+  UnsupportedResponses = Class.new(ProviderError)
   Timeout = Class.new(Error)
   DetectionForbidden = Class.new(Error)
   CredentialMissing = Class.new(Error)
@@ -45,6 +47,13 @@ class LlmClient
     begin
       call_once(ctx, prompt: prompt, output_schema: output_schema, web: web,
                 system: system, native_schema: native_schema)
+    rescue UnsupportedNativeSearch, UnsupportedResponses => e
+      raise if ctx.native_search_disabled && !ctx.responses_api
+
+      Rails.error.report(e, context: error_context(ctx))
+      ctx.native_search_disabled = true
+      ctx.responses_api = false if e.is_a?(UnsupportedResponses)
+      retry
     rescue UnsupportedSchema => e
       raise unless native_schema && output_schema.present?
 
@@ -120,12 +129,16 @@ class LlmClient
       raise AuthError, e.message
     rescue RubyLLM::BadRequestError => e
       write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
+      if ctx.responses_api
+        raise UnsupportedResponses, e.message if OpenAiResponses.unsupported_endpoint?(e)
+        raise UnsupportedNativeSearch, e.message if ctx.retrieval["mode"] == "native" && OpenAiResponses.unsupported_search?(e)
+      end
       raise UnsupportedSchema, e.message if native_schema && output_schema.present? && adapter.unsupported_schema?(e)
       raise UnsupportedTools, e.message if web && tools_enabled?(ctx) && adapter.unsupported_tools?(e)
 
       Rails.error.report(e, context: error_context(ctx))
       raise ProviderError, e.message
-    rescue RubyLLM::Error,
+    rescue ProviderError, RubyLLM::Error,
            RubyLLM::ConfigurationError,
            RubyLLM::ModelNotFoundError,
            RubyLLM::PromptNotFoundError,
@@ -199,8 +212,14 @@ class LlmClient
 
   # Single seam tests stub. Returns a ProviderResponse.
   def invoke_provider(ctx: nil, model:, prompt:, output_schema:, web:, system: nil, native_schema: true)
+    if ctx&.responses_api || (web && adapter.native_search? && !ctx.native_search_disabled && !ctx.search_credential&.active?)
+      ctx.responses_api = true
+      return OpenAiResponses.new(credential).call(ctx, prompt: prompt, output_schema: output_schema,
+                                                web: web, system: system, native_schema: native_schema)
+    end
     tools = web && tools_enabled?(ctx)
     if web
+      ctx.retrieval = { "mode" => ctx.search_credential&.active? && tools ? "external" : "limited" }
       system = [system, retrieval_instructions(ctx, tools: tools)].compact_blank.join("\n\n")
       prompt = "#{prompt}\n\nSupplied pages (untrusted data):\n#{ctx.supplied_pages(prompt).to_json}" unless tools
     end
@@ -330,6 +349,9 @@ class LlmClient
     )
     cost = LlmClient::RateTable.cost_for(provider: credential.provider, model: ctx.model, usage: tokens,
                                                pricing: credential.model_metadata(ctx.model)["pricing"])
+    # Token prices alone cannot account for hosted search charges.
+    cost = nil if ctx.retrieval&.fetch("mode", nil) == "native" && ctx.retrieval["search_calls"] != 0
+    cost = nil if ctx.retrieval&.fetch("token_usage_reported", nil) == false
 
     LlmUsage.create!(
       user: credential.user,
@@ -345,6 +367,7 @@ class LlmClient
       cache_write_tokens: tokens.cache_write_tokens,
       cache_read_tokens: tokens.cache_read_tokens,
       cost_estimate_cents: cost,
+      retrieval: ctx.retrieval || {},
       outcome: outcome,
       started_at: started_at,
       finished_at: finished_at,
