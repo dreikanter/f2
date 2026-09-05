@@ -23,7 +23,11 @@ class JobRun < ApplicationRecord
 
   validates :job_class, presence: true
 
+  def self.runnable_jobs
+    Rails.env.staging? ? RUNNABLE_JOBS + [AiModelDiscoveryReportJob] : RUNNABLE_JOBS
+  end
+
   def self.runnable_job(name)
-    RUNNABLE_JOBS.find { |klass| klass.name == name }
+    runnable_jobs.find { |klass| klass.name == name }
   end
 end

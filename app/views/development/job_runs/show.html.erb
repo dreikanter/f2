@@ -27,6 +27,15 @@
           <% end %>
           <% if event.metadata.present? %>
             <% card.with_section(class: "p-4") do %>
+              <div class="flex justify-end">
+                <%= button_tag type: "button", title: "Copy details",
+                               class: "inline-flex size-7 items-center justify-center rounded text-muted hover:bg-surface-sunken focus-visible:ring-2 focus-visible:ring-ring",
+                               data: { controller: "clipboard", clipboard_text_value: JSON.pretty_generate(event.metadata),
+                                       action: "click->clipboard#copy", key: "development.job_runs.copy" } do %>
+                  <%= icon("clipboard", css_class: "size-4") %>
+                  <span class="sr-only">Copy details</span>
+                <% end %>
+              </div>
               <pre class="overflow-x-auto font-mono text-xs text-body"><%= JSON.pretty_generate(event.metadata) %></pre>
             <% end %>
           <% end %>
