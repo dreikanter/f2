@@ -1,6 +1,21 @@
 require "test_helper"
 
 class FeedPreviewTest < ActiveSupport::TestCase
+  test "#valid? should reject attribution to another user's feed" do
+    preview = build(:feed_preview, feed: create(:feed))
+
+    assert_not preview.valid?
+    assert_includes preview.errors[:feed], "must belong to the same user"
+  end
+
+  test "#destroy should remove a saved feed's previews with the feed" do
+    feed = create(:feed)
+    preview = create(:feed_preview, user: feed.user, feed: feed)
+
+    feed.destroy!
+
+    assert_not FeedPreview.exists?(preview.id)
+  end
   include ActiveJob::TestHelper
 
   RUN_ID = "11111111-1111-4111-8111-111111111111"

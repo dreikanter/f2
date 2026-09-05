@@ -8,12 +8,14 @@ class FeedPreview < ApplicationRecord
   PREVIEW_FRESHNESS_WINDOW = 60.minutes
 
   belongs_to :user
+  belongs_to :feed, optional: true
   belongs_to :ai_credential, optional: true
   belongs_to :search_credential, optional: true
 
   enum :status, { pending: 0, processing: 1, ready: 2, failed: 3 }
 
   validates :feed_profile_key, presence: true
+  validate :feed_belongs_to_user
   validates :feed_profile_key, inclusion: { in: ->(_) { FeedProfile.all } }, if: -> { feed_profile_key.present? }
 
   before_validation :assign_params_digest, if: :preview_identity_changed?
@@ -25,12 +27,14 @@ class FeedPreview < ApplicationRecord
   #
   # For AI profiles the chosen credentials + model join the identity, so changing
   # either provider selection doesn't reuse a cached result.
+  # Saved feeds have separate previews so each run retains its cost attribution.
   #
   # JSON-encode the parts before hashing so their boundaries are unambiguous:
   # otherwise ["ab", "c"] and ["a", "bc"] would hash alike.
   def self.digest_for(
     feed_profile_key,
     params,
+    feed_id: nil,
     ai_credential_id: nil,
     ai_model: nil,
     search_credential_id: nil
@@ -39,6 +43,7 @@ class FeedPreview < ApplicationRecord
     # Append only when set, so profiles without options keep their digests.
     options = option_parts_for(feed_profile_key, params)
     parts << options if options.any?
+    parts << ["feed", feed_id] if feed_id.present?
     Digest::SHA256.hexdigest(parts.to_json)
   end
 
@@ -105,8 +110,13 @@ class FeedPreview < ApplicationRecord
 
   private
 
+  def feed_belongs_to_user
+    errors.add(:feed, "must belong to the same user") if feed && feed.user_id != user_id
+  end
+
   def preview_identity_changed?
     new_record? ||
+      will_save_change_to_feed_id? ||
       will_save_change_to_feed_profile_key? ||
       will_save_change_to_params? ||
       will_save_change_to_ai_credential_id? ||
@@ -118,6 +128,7 @@ class FeedPreview < ApplicationRecord
     self[:params_digest] = self.class.digest_for(
       feed_profile_key,
       params,
+      feed_id:,
       ai_credential_id:,
       ai_model:,
       search_credential_id:

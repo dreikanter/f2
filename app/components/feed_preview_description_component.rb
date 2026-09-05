@@ -4,6 +4,7 @@ class FeedPreviewDescriptionComponent < EventDescriptionComponent
   def description_key
     status = event.metadata["status"]
     if %w[started completed failed interrupted].include?(status)
+      status = "feed_#{status}" if event.subject_type == "Feed"
       "events.feed_preview.#{status}_description_html"
     else
       super

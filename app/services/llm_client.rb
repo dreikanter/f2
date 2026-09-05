@@ -374,7 +374,7 @@ class LlmClient
       duration_ms: ((finished_at - started_at) * 1000).round,
       error_message: error_message
     )
-    # Previews have no persisted feed, so each attempt needs an exact reference.
+    # Each preview event links only the attempts made by that run.
     if ctx.purpose.to_s == "preview" && ctx.refresh_event
       ctx.refresh_event.event_references.create!(reference: usage)
     end

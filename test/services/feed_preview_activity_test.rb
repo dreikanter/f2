@@ -21,6 +21,11 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
     }.to_json }
   end
 
+  def saved_feed
+    @saved_feed ||= create(:feed, :draft, user: credential.user, ai_credential: credential,
+                           ai_model: "new-model", feed_profile_key: "llm", params: { "prompt" => "Saved prompt" })
+  end
+
   def stub_native
     stub_request(:post, ENDPOINT).to_return(
       response("Release announcement: https://example.com/release", search: true),
@@ -63,6 +68,7 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
   end
 
   test "#execute should reference failed attempts and keep their unknown cost visible" do
+    preview.update!(feed: saved_feed)
     stub_request(:post, ENDPOINT).to_return(status: 401, headers: { "Content-Type" => "application/json" },
                                            body: { error: { message: "Invalid key" } }.to_json)
 
@@ -74,9 +80,30 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
     assert_equal "provider_error", activity.references.sole.outcome
     assert_equal 1, activity.metadata.dig("stats", "llm_calls")
     assert_nil activity.metadata.dig("stats", "llm_cost_cents")
+    assert_equal saved_feed, activity.subject
+    assert_equal saved_feed, activity.references.sole.feed
+  end
+
+  test "#execute should attribute saved feed preview activity and every attempt without saving form edits" do
+    preview.update!(feed: saved_feed)
+    saved_attributes = saved_feed.attributes
+    stub_native
+
+    assert_no_difference [-> { Post.count }, -> { Feed.count }, -> { FeedEntry.count }] do
+      execute
+    end
+
+    assert_equal saved_feed, activity.subject
+    assert_includes saved_feed.events, activity
+    assert_equal 2, saved_feed.llm_usages.count
+    assert_equal activity.references.grep(LlmUsage).map(&:id).sort, saved_feed.llm_usages.pluck(:id).sort
+    assert saved_feed.llm_usages.all?(&:preview?)
+    assert_equal saved_attributes, saved_feed.reload.attributes
+    assert_requested :post, ENDPOINT, body: /Find one recent release announcement/
   end
 
   test "#execute should retain paid usage for a superseded preview without overwriting its replacement" do
+    preview.update!(feed: saved_feed)
     original_run = preview.run_id
     replacement_run = SecureRandom.uuid
     replies = [response("Original joke"), response('{"items":[]}')]
@@ -92,6 +119,8 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
     assert_nil preview.data
     assert_equal "interrupted", activity.metadata["status"]
     assert_equal 2, activity.references.grep(LlmUsage).size
+    assert_equal saved_feed, activity.subject
+    assert_equal 2, saved_feed.llm_usages.count
   end
 
   test "#execute should not create activity or usage again for an already completed run" do
@@ -123,6 +152,7 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
   end
 
   test "#finish! should retain external search references and known zero cost" do
+    preview.update!(feed: saved_feed)
     record = FeedPreviewActivity.new(preview)
     search = create(:search_credential, :active, user: credential.user)
     search_event = WebSearchUsage.record!(credential: search, refresh_event: record.event)
@@ -132,6 +162,7 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
     record.finish!(status: "completed", stats: { normalized_posts: 1 })
 
     assert_equal [search_event.id], WebSearchUsage.referenced_by(record.event).pluck(:id)
+    assert_equal [search_event.id], WebSearchUsage.for_feed(saved_feed).pluck(:id)
     assert_equal 1, record.event.metadata.dig("stats", "search_calls")
     assert_equal 0, record.event.metadata.dig("stats", "llm_cost_cents")
     assert_equal 1, record.event.metadata.dig("stats", "normalized_posts")

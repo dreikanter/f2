@@ -40,6 +40,7 @@ class FeedFormComponent < ViewComponent::Base
       identification_state: identification_state,
       controller: checking? ? "preview-button polling" : "preview-button",
       preview_button_endpoint_value: helpers.feed_previews_path,
+      preview_button_feed_id_value: feed.persisted? ? feed.id : nil,
       preview_button_source_value: feed.source_input,
       preview_button_source_keys_value: preview_source_keys.to_json,
       preview_button_ai_profiles_value: FeedProfile.ai_profile_keys.to_json,

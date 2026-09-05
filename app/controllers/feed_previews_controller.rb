@@ -74,6 +74,7 @@ class FeedPreviewsController < ApplicationController
     @digest ||= FeedPreview.digest_for(
       profile_key,
       preview_params,
+      feed_id: feed&.id,
       ai_credential_id: ai_credential&.id,
       ai_model: ai_model,
       search_credential_id: search_credential&.id
@@ -114,7 +115,14 @@ class FeedPreviewsController < ApplicationController
   end
 
   def locate_preview
-    previews.find_or_initialize_by(feed_profile_key: profile_key, params_digest: digest)
+    previews.find_or_initialize_by(feed: feed, feed_profile_key: profile_key, params_digest: digest)
+  end
+
+  def feed
+    return preview.feed if preview
+    return if params[:feed_id].blank?
+
+    @feed ||= Current.user.feeds.find(params[:feed_id])
   end
 
   def needs_run?(preview)
@@ -133,7 +141,7 @@ class FeedPreviewsController < ApplicationController
     )
     preview.restart!
   rescue ActiveRecord::RecordNotUnique
-    previews.find_by!(feed_profile_key: profile_key, params_digest: digest)
+    previews.find_by!(feed: feed, feed_profile_key: profile_key, params_digest: digest)
   end
 
   def profile_key

@@ -9,6 +9,7 @@ export default class extends Controller {
   static targets = ["button", "form", "frame", "source", "hint"]
   static values = {
     endpoint: String,
+    feedId: String,
     source: String,
     sourceKeys: Object,
     aiProfiles: Array,
@@ -82,6 +83,7 @@ export default class extends Controller {
   _requestBody(profileKey, sourceKey) {
     const body = new URLSearchParams()
     body.set("profile_key", profileKey)
+    if (this.hasFeedIdValue) body.set("feed_id", this.feedIdValue)
     body.set(`params[${sourceKey}]`, this._currentSource())
     this._optionParams().forEach((value, key) => {
       body.set(`params[${key}]`, value)

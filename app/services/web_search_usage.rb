@@ -34,15 +34,15 @@ class WebSearchUsage
     end
 
     def for_feed(feed, since: STATS_PERIOD.ago)
-      refresh_event_ids = Event.where(
-        type: "feed_refresh",
+      activity_ids = Event.where(
+        type: %w[feed_refresh feed_preview],
         subject: feed,
         created_at: since..
       ).select(:id)
 
       Event.where(
         type: EVENT_TYPE,
-        id: EventReference.where(event_id: refresh_event_ids, reference_type: "Event").select(:reference_id)
+        id: EventReference.where(event_id: activity_ids, reference_type: "Event").select(:reference_id)
       )
     end
 

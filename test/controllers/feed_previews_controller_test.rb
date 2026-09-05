@@ -21,6 +21,61 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
   TURBO_STREAM = { "Accept" => "text/vnd.turbo-stream.html" }.freeze
 
+  test "#create should keep each feed's cached preview separate from unsaved previews" do
+    sign_in_as(user)
+    first_feed = create(:feed, user: user)
+    second_feed = create(:feed, user: user)
+    request_params = { profile_key: "rss", "params" => { url: "https://example.com/same.xml" } }
+    records = [nil, first_feed, second_feed].map do |feed|
+      create(:feed_preview, :completed, user: user, feed: feed,
+             feed_profile_key: "rss", params: request_params.fetch("params").stringify_keys)
+    end
+
+    assert_no_difference [-> { FeedPreview.count }, -> { Event.count }, -> { LlmUsage.count }] do
+      assert_no_enqueued_jobs do
+        [nil, first_feed, second_feed].zip(records).each do |feed, record|
+          post feed_previews_url, params: request_params.merge(feed_id: feed&.id)
+
+          assert_response :success
+          assert_includes response.body, feed_preview_path(record)
+        end
+      end
+    end
+  end
+
+  test "#create should associate an owned feed and preserve that association on refresh" do
+    sign_in_as(user)
+    feed = create(:feed, user: user)
+    other_feed = create(:feed, user: user)
+
+    post feed_previews_url, params: { feed_id: feed.id, profile_key: "rss",
+                                     "params" => { url: "https://example.com/edited.xml" } }
+
+    assert_response :success
+    preview = user.feed_previews.sole
+    assert_equal feed, preview.feed
+    assert_equal "https://example.com/edited.xml", preview.params["url"]
+
+    patch feed_preview_url(preview), params: { feed_id: other_feed.id }
+
+    assert_response :success
+    assert_equal feed, preview.reload.feed
+  end
+
+  test "#create should reject another user's feed without starting a preview" do
+    sign_in_as(user)
+    other_feed = create(:feed)
+
+    assert_no_difference -> { FeedPreview.count } do
+      assert_no_enqueued_jobs do
+        post feed_previews_url, params: { feed_id: other_feed.id, profile_key: "rss",
+                                         "params" => { url: "https://example.com/feed.xml" } }
+      end
+    end
+
+    assert_response :not_found
+  end
+
   test "#show should require authentication" do
     post feed_previews_url, params: { profile_key: "rss", "params" => { url: "http://example.com/feed.xml" } }
     assert_redirected_to new_session_path

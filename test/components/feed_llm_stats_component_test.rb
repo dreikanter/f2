@@ -11,10 +11,10 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
       create(:llm_usage, feed: current_feed, user: current_feed.user,
                          cost_estimate_cents: 25, input_tokens: 10_000, output_tokens: 5_000)
       create(:llm_usage, feed: current_feed, user: current_feed.user,
-                         cost_estimate_cents: 15, input_tokens: 8_000, output_tokens: 2_000)
+                         purpose: :preview, cost_estimate_cents: 15, input_tokens: 8_000, output_tokens: 2_000)
       credential = create(:search_credential, :active, user: current_feed.user)
-      2.times do
-        refresh = Event.create!(type: "feed_refresh", level: :info,
+      %w[feed_refresh feed_preview].each do |type|
+        refresh = Event.create!(type: type, level: :info,
                                 subject: current_feed, user: current_feed.user)
         WebSearchUsage.record!(credential: credential, refresh_event: refresh)
       end
