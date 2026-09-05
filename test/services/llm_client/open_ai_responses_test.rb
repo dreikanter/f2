@@ -88,7 +88,7 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
     assert_equal 1, usages.first.retrieval["search_calls"]
     assert_nil usages.first.cost_estimate_cents
     assert_not_nil usages.last.cost_estimate_cents
-    assert_equal 0, WebSearchUsage.count
+    assert_equal 0, Event.where(type: WebSearchUsage::EVENT_TYPE).count
   end
 
   test "#call should fall back to supplied pages after explicit native search rejection on the same endpoint" do
