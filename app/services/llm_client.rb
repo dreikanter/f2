@@ -131,10 +131,10 @@ class LlmClient
       write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
       if ctx.responses_api
         raise UnsupportedResponses, e.message if OpenAiResponses.unsupported_endpoint?(e)
-        raise UnsupportedNativeSearch, e.message if ctx.retrieval["mode"] == "native" && OpenAiResponses.unsupported_search?(e)
+        raise UnsupportedNativeSearch, e.message if ctx.retrieval["mode"] == "native" && OpenAiResponses.unsupported_search?(e, model: ctx.model)
       end
       raise UnsupportedSchema, e.message if native_schema && output_schema.present? && adapter.unsupported_schema?(e)
-      raise UnsupportedTools, e.message if web && tools_enabled?(ctx) && adapter.unsupported_tools?(e)
+      raise UnsupportedTools, e.message if !ctx.responses_api && web && tools_enabled?(ctx) && adapter.unsupported_tools?(e)
 
       Rails.error.report(e, context: error_context(ctx))
       raise ProviderError, e.message

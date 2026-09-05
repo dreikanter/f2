@@ -44,14 +44,15 @@ class LlmClient
       response.with(payload: content(body))
     end
 
-    def self.unsupported_search?(error)
+    def self.unsupported_search?(error, model:)
       detail = error_detail(error)
       return false unless detail
 
       parameter = detail["param"].to_s
       return true if %w[tools tools[0].type max_tool_calls].include?(parameter) && detail["code"] == "unsupported_parameter"
 
-      detail["message"].to_s.match?(/\A(?:Tool ['"]?web_search['"]?|Web search) is not supported (?:with|for|by) (?:this |the selected )?model\b/i)
+      target = /(?:(?:this |the selected )?model\b|['"]?#{Regexp.escape(model)}['"]?(?:[.\s]|$))/i
+      detail["message"].to_s.match?(/\A(?:Tool ['"]?web_search['"]?|Web search) is not supported (?:with|for|by) #{target}/i)
     end
 
     def self.unsupported_endpoint?(error)
@@ -72,7 +73,9 @@ class LlmClient
     private
 
     def connection
-      RubyLLM::Provider.resolve(:openai).new(@credential.ruby_llm_context.config).connection
+      config = @credential.ruby_llm_context.config
+      config.max_retries = 0
+      RubyLLM::Provider.resolve(:openai).new(config).connection
     end
 
     def output_limit(model)

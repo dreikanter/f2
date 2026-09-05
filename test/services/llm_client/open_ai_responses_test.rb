@@ -70,7 +70,7 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
     items = [{ "body" => "News https://example.com/news", "source_url" => nil }]
     stub_responses(response("News", search: true, annotations: [citation]), response({ items: items }.to_json))
     feed = create(:feed, user: credential.user, ai_credential: credential, ai_model: "future-model",
-                         feed_profile_key: "llm", params: { "prompt" => "Find current news" })
+                         feed_profile_key: "llm", search_credential: nil, params: { "prompt" => "Find current news" })
 
     assert_equal items, Loader::LlmLoader.new(feed, purpose: :preview).load
 
@@ -122,6 +122,21 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
     assert_equal %w[success provider_error schema_error success], LlmUsage.order(:created_at).pluck(:outcome)
     assert_raises(LlmClient::Timeout) { gather }
     assert_equal 4, @requests.size
+  end
+
+  test "#call should recognize a search rejection naming the selected model" do
+    stub_responses(rejection(code: nil, message: "Tool 'web_search' is not supported with future-model."), response("Original joke"))
+
+    assert_equal "Original joke", gather.payload
+    assert_nil @requests[1]["tools"]
+  end
+
+  test "#call should not retry another tool rejection after native tools are removed" do
+    stub_responses(rejection)
+
+    assert_raises(LlmClient::ProviderError) { gather }
+    assert_equal 2, @requests.size
+    assert_nil @requests[1]["tools"]
   end
 
   test "#call should fall back to Chat Completions only for an explicit Responses model rejection" do
@@ -182,7 +197,8 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
 
   test "#load should not turn citation metadata into gathered content" do
     stub_responses(response("", search: true, annotations: [{ type: "url_citation", url: "https://example.com" }]))
-    feed = create(:feed, user: credential.user, ai_credential: credential, feed_profile_key: "llm", params: { "prompt" => "News" })
+    feed = create(:feed, user: credential.user, ai_credential: credential, feed_profile_key: "llm",
+                         search_credential: nil, params: { "prompt" => "News" })
 
     assert_equal [], Loader::LlmLoader.new(feed).load
     assert_equal 1, @requests.size
@@ -230,7 +246,7 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
   end
 
   test "#call should mark hosted search cost unknown when the connection times out" do
-    stub_request(:post, ENDPOINT).to_timeout
+    stub_request(:post, ENDPOINT).to_raise(Faraday::TimeoutError.new("execution expired"))
 
     assert_raises(LlmClient::Timeout) { gather }
 
