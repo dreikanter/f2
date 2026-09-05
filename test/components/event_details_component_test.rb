@@ -42,6 +42,18 @@ class EventDetailsComponentTest < ViewComponent::TestCase
     assert_equal "$2.50", result.css('[data-key="events.stats.llm_cost_cents.value"]').text
   end
 
+  test "#call should show unknown AI spend in owner and admin event details" do
+    event = create(:event, type: "feed_refresh", subject: feed, user: user,
+                   metadata: { "stats" => { "llm_calls" => 1, "llm_cost_cents" => nil } })
+
+    [false, true].each do |admin|
+      result = render_inline(EventDetailsComponent.new(event: event, admin: admin))
+
+      assert_equal "Estimated AI spend", result.css('[data-key="events.stats.llm_cost_cents.label"]').text
+      assert_equal "Unknown", result.css('[data-key="events.stats.llm_cost_cents.value"]').text
+    end
+  end
+
   test "#call should not render a search calls stat row" do
     event = create(:event, type: "owned_event", subject: feed,
                    metadata: { "stats" => { "search_calls" => 2 } })
