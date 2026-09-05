@@ -35,7 +35,7 @@ class Normalizer::LlmNormalizerTest < ActiveSupport::TestCase
   test "#normalize should map raw_data fields onto a Post" do
     post = Normalizer::LlmNormalizer.new(feed_entry).normalize
 
-    assert_equal "Hello world", post.content
+    assert_equal "Hello world - https://example.com/post-1", post.content
     assert_equal "https://example.com/post-1", post.source_url
     assert_equal ["https://example.com/cover.png"], post.attachment_urls
     assert_equal ["A comment"], post.comments
@@ -79,6 +79,26 @@ class Normalizer::LlmNormalizerTest < ActiveSupport::TestCase
 
     assert_operator post.content.length, :<=, Post::MAX_CONTENT_LENGTH
     assert_equal "enqueued", post.status
+    assert post.content.end_with?(post.source_url)
+  end
+
+  test "#normalize should keep an existing source link without duplicating it" do
+    body = "Read this: [source](https://example.com/post-1)."
+    post = Normalizer::LlmNormalizer.new(feed_entry("body" => body)).normalize
+
+    assert_equal body, post.content
+  end
+
+  test "#normalize should not mistake a different URL with the same prefix for its source" do
+    post = Normalizer::LlmNormalizer.new(feed_entry("body" => "Related: https://example.com/post-12")).normalize
+
+    assert post.content.end_with?(" - https://example.com/post-1")
+  end
+
+  test "#normalize should leave original content without a source link unchanged" do
+    post = Normalizer::LlmNormalizer.new(feed_entry("body" => "An original joke", "source_url" => nil)).normalize
+
+    assert_equal "An original joke", post.content
   end
 
   test "#normalize should reject an images-only post whose images were all dropped as unsafe" do
