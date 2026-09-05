@@ -42,4 +42,15 @@ module PublicUrl
 
     EXTRA_BLOCKED.none? { |range| range.include?(ip) }
   end
+
+  # The caller must pin this address to the connection, preserving the hostname
+  # for Host and TLS verification. Validating DNS and then resolving again would
+  # leave a rebinding window.
+  def self.public_address(host)
+    addresses = Socket.getaddrinfo(host, nil, Socket::AF_UNSPEC, Socket::SOCK_STREAM)
+                      .map { |entry| IPAddr.new(entry[3]) }.uniq
+    return unless addresses.any? && addresses.all? { |address| public_ip?(address) }
+
+    addresses.first.to_s
+  end
 end

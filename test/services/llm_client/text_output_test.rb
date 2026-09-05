@@ -302,7 +302,9 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     stub_request(:get, "https://example.com/post").to_return(body: "<p>A retrieved fact.</p>")
     stub_completions(rejection(param: "tools"), completion('{"items":["A retrieved fact."]}'))
 
-    result = client.call(context, prompt: "Summarize https://example.com/post", output_schema: SCHEMA, web: true)
+    result = Socket.stub(:getaddrinfo, [["AF_INET", 0, "example.com", "93.184.216.34"]]) do
+      client.call(context, prompt: "Summarize https://example.com/post", output_schema: SCHEMA, web: true)
+    end
 
     assert_equal ["A retrieved fact."], result.payload["items"]
     assert @requests[0]["tools"].present?
@@ -321,7 +323,9 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     stub_request(:get, "https://example.com/post").to_return(body: "<p>A retrieved fact.</p>")
     stub_completions(rejection, completion('{"items":["A retrieved fact."]}'))
 
-    result = client.call(context, prompt: "Summarize https://example.com/post", output_schema: SCHEMA, web: true)
+    result = Socket.stub(:getaddrinfo, [["AF_INET", 0, "example.com", "93.184.216.34"]]) do
+      client.call(context, prompt: "Summarize https://example.com/post", output_schema: SCHEMA, web: true)
+    end
 
     assert_equal ["A retrieved fact."], result.payload["items"]
     assert @requests.all? { |request| request["tools"].nil? }

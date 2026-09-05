@@ -53,4 +53,22 @@ class PublicUrlTest < ActiveSupport::TestCase
     assert PublicUrl.safe?("https://10.example.com/")
     assert PublicUrl.safe?("https://localhost.example.com/")
   end
+
+  test ".public_address should reject private and mixed public-private DNS answers" do
+    ["127.0.0.1", "10.0.0.1", "169.254.169.254", "::1", "fd00::1", "::ffff:127.0.0.1"].each do |private_ip|
+      [[private_ip], ["93.184.216.34", private_ip]].each do |addresses|
+        answers = addresses.map { |address| [nil, nil, nil, address] }
+        Socket.stub(:getaddrinfo, answers) do
+          assert_nil PublicUrl.public_address("controlled.example"), addresses.inspect
+        end
+      end
+    end
+  end
+
+  test ".public_address should return a validated public address and reject empty DNS answers" do
+    Socket.stub(:getaddrinfo, [[nil, nil, nil, "93.184.216.34"]]) do
+      assert_equal "93.184.216.34", PublicUrl.public_address("example.com")
+    end
+    Socket.stub(:getaddrinfo, []) { assert_nil PublicUrl.public_address("example.com") }
+  end
 end

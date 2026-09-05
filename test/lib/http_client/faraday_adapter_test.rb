@@ -316,6 +316,55 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     { validate_url: PublicUrl.method(:safe?) }
   end
 
+  test "pinned public requests reject private DNS targets before making a request" do
+    Socket.stub(:getaddrinfo, [[nil, nil, nil, "127.0.0.1"]]) do
+      assert_raises(HttpClient::BlockedUrlError) do
+        client.get("https://controlled.example/", options: public_only.merge(pin_public_address: true))
+      end
+    end
+    assert_not_requested :get, "https://controlled.example/"
+  end
+
+  test "pinned public requests validate each redirect hostname's DNS target" do
+    stub_request(:get, "https://example.com/redirect")
+      .to_return(status: 302, headers: { "Location" => "https://controlled.example/secret" })
+    resolver = ->(host, *) { [[nil, nil, nil, host == "example.com" ? "93.184.216.34" : "169.254.169.254"]] }
+
+    Socket.stub(:getaddrinfo, resolver) do
+      assert_raises(HttpClient::BlockedUrlError) do
+        client.get("https://example.com/redirect", options: public_only.merge(pin_public_address: true))
+      end
+    end
+    assert_not_requested :get, "https://controlled.example/secret"
+  end
+
+  test "pinned public requests retain the hostname for TLS while pinning the socket and bypassing proxies" do
+    stub_request(:get, "https://example.com/page").to_return(body: "ok")
+    connections = []
+    constructor = Net::HTTP.method(:new)
+    factory = ->(*args) { constructor.call(*args).tap { |http| connections << http } }
+    resolutions = 0
+    resolver = lambda do |*|
+      resolutions += 1
+      [[nil, nil, nil, resolutions == 1 ? "93.184.216.34" : "127.0.0.1"]]
+    end
+
+    Net::HTTP.stub(:new, factory) do
+      Socket.stub(:getaddrinfo, resolver) do
+        response = client.get("https://example.com/page", options: public_only.merge(pin_public_address: true))
+        assert_equal "ok", response.body
+      end
+    end
+
+    assert_equal 1, resolutions
+    http = connections.sole
+    assert_equal "93.184.216.34", http.ipaddr
+    assert_equal "example.com", http.address
+    assert http.use_ssl?
+    assert_equal OpenSSL::SSL::VERIFY_PEER, http.verify_mode
+    assert_not http.proxy?
+  end
+
   test "public-only mode blocks a non-public initial URL before any request" do
     error = assert_raises(HttpClient::BlockedUrlError) do
       client.get("http://127.0.0.1/secret", options: public_only)
