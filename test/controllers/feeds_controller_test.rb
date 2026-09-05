@@ -1638,6 +1638,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='preview.open']", count: 1
     assert_select "turbo-frame#feed-preview[loading='lazy']", count: 0
     assert_select "turbo-frame#feed-preview[src]", count: 0
+    assert_select "#feed-form[data-preview-button-feed-id-value]", count: 0
   end
 
   test "#edit should render a manual preview button" do
@@ -1652,6 +1653,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='preview.open']", count: 1
     # The preview-button controller must wrap BOTH the profile field and the
     # button, or it can't read the selected feed_profile_key at click time.
+    assert_select "#feed-form[data-preview-button-feed-id-value=?]", feed.id
     assert_select "#feed-form[data-controller~='preview-button'] [data-key='preview.open']", count: 1
     assert_select "#feed-form[data-controller~='preview-button'] input[name='feed[feed_profile_key]']", count: 1
     assert_select "#feed-form[data-controller~='preview-button'] form[data-preview-button-target~='form']", count: 1

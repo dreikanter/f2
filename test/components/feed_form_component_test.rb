@@ -53,13 +53,6 @@ class FeedFormComponentTest < ViewComponent::TestCase
     assert component(create(:feed, user: user)).edit_mode?
   end
 
-  test "#wrapper_data should identify the saved feed for preview accounting" do
-    saved = create(:feed, user: user)
-
-    assert_equal saved.id, component(saved).wrapper_data[:preview_button_feed_id_value]
-    assert_nil component(feed).wrapper_data[:preview_button_feed_id_value]
-  end
-
   test "#show_chooser? should require at least two candidates" do
     assert_not component(feed).show_chooser?
     assert_not component(feed, candidates: [candidate("rss")]).show_chooser?

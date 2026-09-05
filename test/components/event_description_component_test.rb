@@ -12,7 +12,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
       assert_includes result.text, "AI feed preview"
       assert_includes result.text, status
       assert_equal feed.display_name, result.at_css("a").text
-      assert_equal feed_path(feed), result.at_css("a")["href"]
+      assert_equal "/feeds/#{feed.id}", result.at_css("a")["href"]
     end
   end
   def user
