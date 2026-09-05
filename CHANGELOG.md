@@ -4,6 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-05
 
+- AI feeds can create explicitly requested original content, such as jokes, without web search or source links.
+
 - AI page fetching blocks private DNS targets, including redirects.
 
 - External search is optional for AI feeds; missing search credentials and unsupported tools fall back to available content.
