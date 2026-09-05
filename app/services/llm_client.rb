@@ -108,6 +108,9 @@ class LlmClient
                         output_schema: output_schema, web: web, system: system,
                         native_schema: native_schema)
       end
+    rescue UnsupportedNativeSearch
+      write_usage(ctx, outcome: :provider_error, started_at: started_at)
+      raise
     rescue WebSearchProvider::AuthError => e
       write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
       raise
@@ -212,10 +215,12 @@ class LlmClient
 
   # Single seam tests stub. Returns a ProviderResponse.
   def invoke_provider(ctx: nil, model:, prompt:, output_schema:, web:, system: nil, native_schema: true)
-    if ctx&.responses_api || (web && adapter.native_search? && !ctx.native_search_disabled && !ctx.search_credential&.active?)
-      ctx.responses_api = true
-      return OpenAiResponses.new(credential).call(ctx, prompt: prompt, output_schema: output_schema,
-                                                web: web, system: system, native_schema: native_schema)
+    transport = adapter.native_search_transport
+    transport = nil if transport == MoonshotSearch && !tools_enabled?(ctx)
+    if ctx&.responses_api || (web && transport && !ctx.native_search_disabled && !ctx.tools_disabled && !ctx.search_credential&.active?)
+      ctx.responses_api = transport == OpenAiResponses
+      return transport.new(credential).call(ctx, prompt: prompt, output_schema: output_schema,
+                                           web: web, system: system, native_schema: native_schema)
     end
     tools = web && tools_enabled?(ctx)
     if web
@@ -343,6 +348,9 @@ class LlmClient
   end
 
   def write_usage(ctx, outcome:, started_at:, finished_at: nil, response: nil, error_message: nil)
+    # Free tool discovery can fail before any model request is sent.
+    return if ctx.retrieval["completion_calls"] == 0
+
     finished_at ||= Time.current
     tokens = response || ctx.last_response || ProviderResponse.new(
       payload: nil, input_tokens: 0, output_tokens: 0, cache_write_tokens: 0, cache_read_tokens: 0

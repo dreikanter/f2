@@ -5,8 +5,8 @@ class LlmClient
         { max_completion_tokens: MAX_OUTPUT_TOKENS }
       end
 
-      def native_search?
-        true
+      def native_search_transport
+        OpenAiResponses
       end
 
       def unsupported_schema?(error)
