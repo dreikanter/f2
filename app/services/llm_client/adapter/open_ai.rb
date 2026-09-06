@@ -10,7 +10,7 @@ class LlmClient
       end
 
       def transport_for(ctx, web:, tools:)
-        OpenAiResponses if ctx && ctx.responses_api != false && (web || ctx.responses_api)
+        OpenAiResponses if ctx && ctx.responses_api != false
       end
 
       def unsupported_native_search?(error, model:)

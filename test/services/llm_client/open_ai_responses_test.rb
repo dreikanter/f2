@@ -83,6 +83,19 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
     assert_not_nil LlmUsage.sole.cost_estimate_cents
   end
 
+  test "#call should use Responses for standalone formatting without assuming Chat Completions support" do
+    stub_responses(response('{"items":[]}'))
+
+    result = client.call(context, prompt: "Format supplied facts", output_schema: SCHEMA)
+
+    assert_equal({ "items" => [] }, result.payload)
+    assert_equal "future-model", @requests.sole["model"]
+    assert_nil @requests.sole["tools"]
+    assert_nil @requests.sole["reasoning"]
+    assert_equal "json_schema", @requests.sole.dig("text", "format", "type")
+    assert_not_requested :post, "https://api.openai.com/v1/chat/completions"
+  end
+
   test "#call should keep a timed out Responses formatting charge unknown" do
     context.responses_api = true
     stub_request(:post, ENDPOINT).to_raise(Faraday::TimeoutError.new("execution expired"))
@@ -496,5 +509,4 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
     assert_equal 80, LlmUsage.sole.input_tokens
     assert_equal "timeout", LlmUsage.sole.outcome
   end
-
 end

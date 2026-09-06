@@ -100,7 +100,7 @@ Anthropic server web search, or OpenRouter provider-managed search. OpenRouter's
 auto engine prefers native search and can fall back to Exa billed to the same
 OpenRouter account. It does not require a separate search credential.
 
-OpenAI web-enabled calls use Responses for both provider search and external
+OpenAI calls use Responses for plain output, provider search, and external
 function tools, leaving reasoning settings at the model's default. Explicit
 Responses endpoint rejection falls back to Chat Completions on the same model;
 other provider failures remain visible. Function continuations replay response
