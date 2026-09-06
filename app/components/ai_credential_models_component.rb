@@ -26,7 +26,10 @@ class AiCredentialModelsComponent < ViewComponent::Base
     end
     outputs = metadata["output_modalities"]
     parts << "Output: #{outputs.join(', ')}" if outputs.is_a?(Array) && outputs.any?
-    parts << "Source: #{metadata['source']}" if metadata["source"]
+    task = metadata["task"] || {}
+    parts << "Task: #{task['mode'].humanize(capitalize: false)}" if task["mode"].present?
+    sources = [metadata["source"], task["source"]].compact.uniq
+    parts << "Sources: #{sources.join(', ')}" if sources.any?
     parts.join(" · ")
   end
 end
