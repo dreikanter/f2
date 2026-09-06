@@ -5,11 +5,8 @@ class AiModelCatalog
 
     metadata = PublishedModelMetadata.new
     tasks = PublishedModelTasks.new
-    previous = credential.available_models.index_by { |model| model["id"] }
-
     models.map do |model|
-      details = metadata.lookup(credential.provider, model.fetch("id")) || previous.dig(model["id"], "metadata") || {}
-      details = details.except("task")
+      details = metadata.lookup(credential.provider, model.fetch("id")) || {}
       task = tasks.lookup(credential.provider, model.fetch("id"))
       details["task"] = task if task
       model.slice("id", "name").merge("metadata" => details.presence).compact

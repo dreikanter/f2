@@ -74,15 +74,65 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     assert_empty credential.model_metadata("new-model")
   end
 
-  test "#perform should retain previous published metadata during an outage" do
-    credential.update!(available_models: [{ "id" => "new-model", "metadata" => { "source" => "models.dev", "tool_call" => false } }])
+  test "#perform should retain cached published metadata during an outage" do
     stub_models
-    stub_request(:get, PublishedModelMetadata::URL).to_return(status: 503)
+    request = stub_request(:get, PublishedModelMetadata::URL).to_return(body: {
+      openai: { models: { "new-model" => { tool_call: false } } }
+    }.to_json).then.to_return(status: 503)
+
+    Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) do
+      AiModelCatalogRefreshJob.perform_now(refresh_run)
+      travel 25.hours
+      AiModelCatalogRefreshJob.perform_now(credential.refresh_models_async(force: true))
+    end
+
+    assert_equal false, credential.reload.model_metadata("new-model")["tool_call"]
+    assert_requested request, times: 2
+  end
+
+  test "#perform should clear capabilities and prices removed from a successful catalog" do
+    credential.update!(available_models: [{ "id" => "new-model", "metadata" => {
+      "source" => "models.dev", "tool_call" => false, "structured_output" => false,
+      "output_modalities" => ["image"], "pricing" => { "input" => 1 }
+    } }])
+    stub_models
+    stub_request(:get, PublishedModelMetadata::URL).to_return(body: "{}")
+
     Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) do
       AiModelCatalogRefreshJob.perform_now(refresh_run)
     end
 
-    assert_equal false, credential.reload.model_metadata("new-model")["tool_call"]
+    assert_predicate refresh_run.reload, :succeeded?
+    assert credential.reload.supports_model?("new-model")
+    assert_empty credential.model_metadata("new-model")
+  end
+
+  test "#perform should expire cached capabilities during a prolonged outage and preserve saved selections" do
+    feed = create(:feed, user: credential.user, ai_credential: credential, ai_model: "saved-model")
+    stub_models
+    request = stub_request(:get, PublishedModelMetadata::URL).to_return(body: {
+      openai: { models: { "new-model" => {
+        tool_call: false, structured_output: false, modalities: { output: ["image"] }, cost: { input: 1 }
+      } } }
+    }.to_json).then.to_return(status: 503)
+
+    Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) do
+      AiModelCatalogRefreshJob.perform_now(refresh_run)
+      travel 6.days
+      AiModelCatalogRefreshJob.perform_now(credential.refresh_models_async(force: true))
+      assert_equal false, credential.reload.model_metadata("new-model")["tool_call"]
+      assert_empty credential.supported_models
+
+      travel 25.hours
+      AiModelCatalogRefreshJob.perform_now(credential.refresh_models_async(force: true))
+    end
+
+    assert_predicate credential.reload, :active?
+    assert credential.supports_model?("new-model")
+    assert_empty credential.model_metadata("new-model")
+    assert_equal "saved-model", feed.reload.effective_ai_model
+    assert_requested request, times: 3
+    assert_not_requested :post, /./
   end
 
   test "#perform should discard late results after the key changes" do
@@ -174,21 +224,26 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     assert_not_requested :post, /./
   end
 
-  test "#perform should retain capability metadata during its outage while applying fresh task metadata" do
-    credential.update!(available_models: [{ "id" => "new-model", "metadata" => { "source" => "models.dev", "tool_call" => false } }])
+  test "#perform should retain cached capabilities during their outage while applying fresh task metadata" do
     stub_models
-    stub_request(:get, PublishedModelMetadata::URL).to_return(status: 503)
-    stub_request(:get, PublishedModelTasks::URL).to_return(body: {
+    metadata_request = stub_request(:get, PublishedModelMetadata::URL).to_return(body: {
+      openai: { models: { "new-model" => { tool_call: false } } }
+    }.to_json).then.to_return(status: 503)
+    task_request = stub_request(:get, PublishedModelTasks::URL).to_return(body: "{}").then.to_return(body: {
       "new-model" => { litellm_provider: "openai", mode: "embedding" }
     }.to_json)
 
     Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) do
       AiModelCatalogRefreshJob.perform_now(refresh_run)
+      travel 25.hours
+      AiModelCatalogRefreshJob.perform_now(credential.refresh_models_async(force: true))
     end
 
     assert_equal false, credential.reload.model_metadata("new-model")["tool_call"]
     assert_equal "embedding", credential.model_metadata("new-model").dig("task", "mode")
     assert_empty credential.supported_models
+    assert_requested metadata_request, times: 2
+    assert_requested task_request, times: 2
   end
 
   test "#perform should refresh capabilities and keep new models selectable during a task catalog outage" do

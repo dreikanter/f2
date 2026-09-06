@@ -82,7 +82,7 @@ class LlmClient
   # The provider's available models, as plain hashes for the credential snapshot.
   # Listing makes no inference requests and does not create usage rows.
   def available_models
-    fetch_provider_models.map { |model| serialize_model(model) }
+    fetch_provider_models.map { |model| { "id" => model.id, "name" => model.name } }
   rescue RubyLLM::UnauthorizedError, RubyLLM::ForbiddenError, RubyLLM::PaymentRequiredError => e
     raise AuthError, e.message
   rescue RubyLLM::RateLimitError => e
@@ -188,27 +188,6 @@ class LlmClient
     end
 
     provider_class.new(credential.ruby_llm_context.config).list_models
-  end
-
-  # Map RubyLLM's Model::Info to a compact, stable hash. We keep only the
-  # fields worth showing or selecting on later; provider-specific noise
-  # (metadata warnings, timestamps) is dropped. String keys so the shape
-  # round-trips through jsonb unchanged.
-  #
-  # Models outside the gem's registry come back with invented limits, so those
-  # providers keep only what the provider itself reported. The credential page
-  # already hides missing fields.
-  def serialize_model(model)
-    return { "id" => model.id, "name" => model.name } if credential.llm_provider.minimal_model_metadata?
-
-    {
-      "id" => model.id,
-      "name" => model.name,
-      "family" => model.family,
-      "context_window" => model.context_window,
-      "max_output_tokens" => model.max_output_tokens,
-      "capabilities" => Array(model.capabilities)
-    }
   end
 
   # Single seam tests stub. Returns a ProviderResponse.
