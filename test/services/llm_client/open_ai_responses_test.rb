@@ -67,7 +67,7 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
 
   test "#call should keep a timed out Responses formatting charge unknown" do
     context.responses_api = true
-    stub_request(:post, ENDPOINT).to_timeout
+    stub_request(:post, ENDPOINT).to_raise(Faraday::TimeoutError.new("execution expired"))
 
     assert_raises(LlmClient::Timeout) do
       client.call(context, prompt: "Format supplied facts", output_schema: SCHEMA, web: false)

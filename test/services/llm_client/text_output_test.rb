@@ -341,10 +341,22 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
 
   test "#call should record unknown cost once when a model request times out" do
     credential.update!(available_models: [{ "id" => context.model, "metadata" => { "pricing" => { "input" => 1, "output" => 2 } } }])
-    stub_request(:post, ENDPOINT).to_timeout
+    stub_request(:post, ENDPOINT).to_raise(Faraday::TimeoutError.new("execution expired"))
 
     assert_raises(LlmClient::Timeout) { call }
 
+    assert_nil LlmUsage.sole.cost_estimate_cents
+    assert_equal false, LlmUsage.sole.retrieval["token_usage_reported"]
+    assert_requested :post, ENDPOINT, times: 1
+  end
+
+  test "#call should keep a failed connection charge unknown" do
+    credential.update!(available_models: [{ "id" => context.model, "metadata" => { "pricing" => { "input" => 1, "output" => 2 } } }])
+    stub_request(:post, ENDPOINT).to_timeout
+
+    assert_raises(LlmClient::ProviderError) { call }
+
+    assert_equal "provider_error", LlmUsage.sole.outcome
     assert_nil LlmUsage.sole.cost_estimate_cents
     assert_equal false, LlmUsage.sole.retrieval["token_usage_reported"]
     assert_requested :post, ENDPOINT, times: 1
