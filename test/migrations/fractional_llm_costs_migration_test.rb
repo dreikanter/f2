@@ -23,7 +23,7 @@ class FractionalLlmCostsMigrationTest < ActiveSupport::TestCase
     assert column.null
     assert_nil column.default
     assert_equal original, usages.map { |usage| usage.reload.cost_estimate_cents }
-    fractional.first.update!(cost_estimate_cents: "0.0000000001")
+    fractional.first.reload.update!(cost_estimate_cents: "0.0000000001")
     assert_equal "0.0000000001".to_d, fractional.first.reload.cost_estimate_cents
   ensure
     LlmUsage.reset_column_information
