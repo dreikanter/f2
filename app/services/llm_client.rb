@@ -108,8 +108,8 @@ class LlmClient
                         output_schema: output_schema, web: web, system: system,
                         native_schema: native_schema)
       end
-    rescue UnsupportedNativeSearch
-      write_usage(ctx, outcome: :provider_error, started_at: started_at)
+    rescue UnsupportedNativeSearch => e
+      write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
       raise
     rescue WebSearchProvider::AuthError => e
       write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
@@ -133,7 +133,7 @@ class LlmClient
     rescue RubyLLM::BadRequestError => e
       write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
       raise UnsupportedResponses, e.message if ctx.responses_api && OpenAiResponses.unsupported_endpoint?(e)
-      raise UnsupportedNativeSearch, e.message if ctx.retrieval["mode"] == "native" && adapter.unsupported_native_search?(e, model: ctx.model)
+      raise UnsupportedNativeSearch, e.message if %w[native provider].include?(ctx.retrieval["mode"]) && adapter.unsupported_native_search?(e, model: ctx.model)
       raise UnsupportedSchema, e.message if native_schema && output_schema.present? && adapter.unsupported_schema?(e)
       raise UnsupportedTools, e.message if !ctx.responses_api && web && tools_enabled?(ctx) && adapter.unsupported_tools?(e)
 
@@ -356,8 +356,11 @@ class LlmClient
     cost = LlmClient::RateTable.cost_for(provider: credential.provider, model: ctx.model, usage: tokens,
                                                pricing: credential.model_metadata(ctx.model)["pricing"])
     # Token prices alone cannot account for hosted search charges.
-    cost = nil if ctx.retrieval&.fetch("mode", nil) == "native" && ctx.retrieval["search_calls"] != 0
+    cost = nil if %w[native provider].include?(ctx.retrieval["mode"]) && ctx.retrieval["search_calls"] != 0
     cost = nil if ctx.retrieval&.fetch("token_usage_reported", nil) == false
+    # A reported total already includes hosted search. nil explicitly means
+    # the provider could not supply a complete charge (including BYOK).
+    cost = ctx.retrieval["reported_cost_cents"] if ctx.retrieval.key?("reported_cost_cents")
 
     usage = LlmUsage.create!(
       user: credential.user,
