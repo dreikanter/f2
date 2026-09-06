@@ -48,7 +48,11 @@ class LlmClient
       end
 
       def native_search?
-        false
+        native_search_transport.present?
+      end
+
+      def native_search_transport
+        nil
       end
 
       # RubyLLM's schema argument; the wrapper form is what carries strictness.

@@ -4,6 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-05
 
+- Kimi feeds use Moonshot's built-in search by default, with bounded requests and a fallback when search is unavailable.
+
 - Previews opened while editing a saved feed appear in its activity and contribute to its AI and search spending totals.
 
 - Labels and values in detail lists wrap onto separate rows when space is limited, with values aligned right.

@@ -4,6 +4,10 @@ class Loader::OriginalContentTest < ActiveSupport::TestCase
   JOKE = "Why did the programmer bring a ladder? To reach a higher level of abstraction.".freeze
 
   test "#load should carry requested original content through Kimi preparation and local validation without search" do
+    stub_request(:get, "https://api.moonshot.ai/v1/formulas/moonshot/web-search:latest/tools")
+      .to_return(status: 200, headers: { "Content-Type" => "application/json" }, body: {
+        tools: [{ type: "function", function: { name: "web_search", parameters: { type: "object" } } }]
+      }.to_json)
     [true, false].each do |tool_call|
       credential = create(:ai_credential, :active, provider: "moonshot", available_models: [
         { "id" => "future-kimi", "metadata" => { "tool_call" => tool_call, "structured_output" => false } }
@@ -41,7 +45,7 @@ class Loader::OriginalContentTest < ActiveSupport::TestCase
       status: 200,
       headers: { "Content-Type" => "application/json" },
       body: {
-        choices: [{ message: { role: "assistant", content: content } }],
+        choices: [{ message: { role: "assistant", content: content }, finish_reason: "stop" }],
         usage: { prompt_tokens: 100, completion_tokens: 25 }
       }.to_json
     }
