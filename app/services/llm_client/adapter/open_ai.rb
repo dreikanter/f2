@@ -2,7 +2,7 @@ class LlmClient
   module Adapter
     class OpenAi < Base
       def output_params
-        { max_completion_tokens: MAX_OUTPUT_TOKENS }
+        { max_completion_tokens: OutputLimit::DEFAULT }
       end
 
       def native_search_transport
@@ -10,19 +10,28 @@ class LlmClient
       end
 
       def unsupported_native_search?(error, model:)
-        OpenAiResponses.unsupported_search?(error, model: model)
+        detail = error_detail(error)
+        return false unless detail
+
+        parameter = detail["param"].to_s
+        return true if %w[tools tools[0].type max_tool_calls].include?(parameter) && detail["code"] == "unsupported_parameter"
+
+        target = /(?:(?:this |the selected )?model\b|['"]?#{Regexp.escape(model)}['"]?(?:[.\s]|$))/i
+        detail["message"].to_s.match?(/\A(?:Tool ['"]?web_search['"]?|Web search) is not supported (?:with|for|by) #{target}/i)
+      end
+
+      def unsupported_responses?(error)
+        detail = error_detail(error)
+        detail && detail["param"] == "model" &&
+          detail["message"].to_s.match?(/\A(?:The |This )?model\b.*\b(?:is not supported|does not support)\b.*\b(?:Responses|v1\/responses)\b/i)
       end
 
       def unsupported_schema?(error)
-        body = error.response&.body
-        body = JSON.parse(body) if body.is_a?(String)
-        detail = body.is_a?(Hash) ? body["error"] : nil
+        detail = error_detail(error)
         return false unless detail.is_a?(Hash) && %w[response_format text.format text.format.type].include?(detail["param"])
 
         detail["code"] == "unsupported_parameter" ||
           detail["message"].to_s.match?(/\AInvalid parameter: '(?:response_format|text.format)' of type 'json_schema' is not supported with (?:this )?model\b/i)
-      rescue JSON::ParserError
-        false
       end
 
       # OpenAI reports every billing stop as a 429, the status it also uses for

@@ -6,7 +6,14 @@ class LlmClient
       end
 
       def unsupported_native_search?(error, model:)
-        AnthropicSearch.unsupported_search?(error, model: model)
+        detail = error_detail(error)
+        return false unless detail.is_a?(Hash) && detail["type"] == "invalid_request_error"
+
+        message = detail["message"].to_s
+        return true if message.match?(/\AWeb search is (?:not enabled|disabled)(?:[.\s]|$)/i)
+
+        target = /(?:(?:this |the selected )?model\b|['"]?#{Regexp.escape(model)}['"]?(?:[.\s]|$))/i
+        message.match?(/\A(?:Tool ['"]?web_search['"]?|Web search) is not supported (?:with|for|by) #{target}/i)
       end
 
       def unsupported_schema?(error)

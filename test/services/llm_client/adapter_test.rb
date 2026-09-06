@@ -206,6 +206,34 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     end
   end
 
+  test "#capability_error_status? should consider router 404s without relaxing other provider statuses" do
+    [400, 401, 403, 404, 429, 500].each do |status|
+      error_class = status == 400 ? RubyLLM::BadRequestError : RubyLLM::Error
+      error = error_class.new(Struct.new(:status, :body).new(status, {}), "Provider error")
+
+      LlmClient::Adapter::REGISTRY.each_key do |provider|
+        expected = status == 400 || (provider == "openrouter" && status == 404)
+        assert_equal expected, LlmClient::Adapter.for(provider).capability_error_status?(error), "#{provider}: #{status}"
+      end
+    end
+  end
+
+  test "#unsupported_tools? should recognize router routing failures without hiding unrelated 404s" do
+    adapter = LlmClient::Adapter::OpenRouter.new
+    assert adapter.unsupported_tools?(schema_error(message: "No endpoints found that support tool use."))
+    assert adapter.unsupported_tools?(schema_error(message: "No endpoints found that support the requested tools."))
+    assert_not adapter.unsupported_tools?(schema_error(message: "No endpoints found for vendor/model"))
+    assert_not adapter.unsupported_tools?(schema_error(message: "No endpoints found that support the requested server tools."))
+    assert_not adapter.unsupported_tools?(RubyLLM::Error.new(Struct.new(:body).new("invalid JSON"), "error"))
+    assert_not LlmClient::Adapter::OpenAi.new.unsupported_tools?(schema_error(message: "No endpoints found that support tool use."))
+  end
+
+  test "#dead_key? should accept an already parsed provider error body" do
+    error = rate_limit_error({ "error" => { "code" => "insufficient_quota" } })
+
+    assert LlmClient::Adapter::OpenAi.new.dead_key?(error)
+  end
+
   test "#combined_extraction? should be true only for providers verified for one-call web+schema" do
     assert LlmClient::Adapter::Anthropic.new.combined_extraction?
     assert LlmClient::Adapter::OpenAi.new.combined_extraction?

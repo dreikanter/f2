@@ -18,7 +18,7 @@ class LlmClient
       end
       system = [system, PayloadRepair.output_instructions(output_schema)].compact_blank.join("\n\n") if output_schema.present?
       params = { model: ctx.model, input: prompt, instructions: system, store: false,
-                 max_output_tokens: output_limit(ctx.model) }.compact
+                 max_output_tokens: OutputLimit.for(@credential, ctx.model) }.compact
       if limit.positive?
         params.merge!(tools: [{ type: "web_search" }], max_tool_calls: limit, tool_choice: "auto")
       end
@@ -45,44 +45,12 @@ class LlmClient
       response.with(payload: content(body))
     end
 
-    def self.unsupported_search?(error, model:)
-      detail = error_detail(error)
-      return false unless detail
-
-      parameter = detail["param"].to_s
-      return true if %w[tools tools[0].type max_tool_calls].include?(parameter) && detail["code"] == "unsupported_parameter"
-
-      target = /(?:(?:this |the selected )?model\b|['"]?#{Regexp.escape(model)}['"]?(?:[.\s]|$))/i
-      detail["message"].to_s.match?(/\A(?:Tool ['"]?web_search['"]?|Web search) is not supported (?:with|for|by) #{target}/i)
-    end
-
-    def self.unsupported_endpoint?(error)
-      detail = error_detail(error)
-      detail && detail["param"] == "model" &&
-        detail["message"].to_s.match?(/\A(?:The |This )?model\b.*\b(?:is not supported|does not support)\b.*\b(?:Responses|v1\/responses)\b/i)
-    end
-
-    def self.error_detail(error)
-      body = error.response&.body
-      body = JSON.parse(body) if body.is_a?(String)
-      detail = body.is_a?(Hash) ? body["error"] : nil
-      detail if detail.is_a?(Hash)
-    rescue JSON::ParserError
-      nil
-    end
-
     private
 
     def connection
       config = @credential.ruby_llm_context.config
       config.max_retries = 0
       RubyLLM::Provider.resolve(:openai).new(config).connection
-    end
-
-    def output_limit(model)
-      advisory = @credential.model_metadata(model)["max_output_tokens"]
-      limit = Adapter::Base::MAX_OUTPUT_TOKENS
-      advisory.is_a?(Numeric) && advisory.positive? ? [advisory.to_i, limit].min : limit
     end
 
     def tokens(body)

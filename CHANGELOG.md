@@ -4,6 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-06
 
+- AI feeds using external search can continue with limited capabilities when OpenRouter reports that the model cannot use tools.
+
 - AI spending totals include small charges accurately, and missing cache prices keep estimates unknown.
 
 - Model choices and capabilities update when published metadata is removed or expires.

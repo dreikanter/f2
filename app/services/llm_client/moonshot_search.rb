@@ -59,7 +59,7 @@ class LlmClient
       @ctx.retrieval["token_usage_reported"] = false
       @ctx.retrieval["completion_calls"] += 1
       params = { model: @ctx.model, messages: messages, tools: [tool],
-                 tool_choice: final ? "none" : "auto", max_tokens: output_limit }
+                 tool_choice: final ? "none" : "auto", max_tokens: OutputLimit.for(@credential, @ctx.model) }
       body = connection.post("chat/completions", params).body
       raise ProviderError, "Invalid Moonshot response" unless body.is_a?(Hash)
 
@@ -128,12 +128,6 @@ class LlmClient
         config.max_retries = 0
         RubyLLM::Provider.resolve(:openai).new(config).connection
       end
-    end
-
-    def output_limit
-      advisory = @credential.model_metadata(@ctx.model)["max_output_tokens"]
-      limit = Adapter::Base::MAX_OUTPUT_TOKENS
-      advisory.is_a?(Numeric) && advisory.positive? ? [advisory.to_i, limit].min : limit
     end
   end
 end

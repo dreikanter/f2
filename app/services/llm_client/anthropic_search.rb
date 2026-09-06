@@ -20,7 +20,7 @@ class LlmClient
 
       system = [system, "If search is unavailable, use available content without inventing current sources."]
       system << PayloadRepair.output_instructions(output_schema) if output_schema.present?
-      params = { model: ctx.model, max_tokens: output_limit, system: system.compact_blank.join("\n\n"),
+      params = { model: ctx.model, max_tokens: OutputLimit.for(@credential, ctx.model), system: system.compact_blank.join("\n\n"),
                  messages: [{ role: "user", content: prompt }],
                  tools: [{ type: "web_search_20250305", name: "web_search", max_uses: limit }] }
       blocks = []
@@ -39,21 +39,6 @@ class LlmClient
         params[:messages] << { role: "assistant", content: body.fetch("content") }
       end
       raise ProviderError, "Anthropic search continuation limit exceeded"
-    end
-
-    def self.unsupported_search?(error, model:)
-      body = error.response&.body
-      body = JSON.parse(body) if body.is_a?(String)
-      detail = body.is_a?(Hash) ? body["error"] : nil
-      return false unless detail.is_a?(Hash) && detail["type"] == "invalid_request_error"
-
-      message = detail["message"].to_s
-      return true if message.match?(/\AWeb search is (?:not enabled|disabled)(?:[.\s]|$)/i)
-
-      target = /(?:(?:this |the selected )?model\b|['"]?#{Regexp.escape(model)}['"]?(?:[.\s]|$))/i
-      message.match?(/\A(?:Tool ['"]?web_search['"]?|Web search) is not supported (?:with|for|by) #{target}/i)
-    rescue JSON::ParserError
-      false
     end
 
     private
@@ -138,12 +123,6 @@ class LlmClient
         config.max_retries = 0
         RubyLLM::Provider.resolve(:anthropic).new(config).connection
       end
-    end
-
-    def output_limit
-      advisory = @credential.model_metadata(@ctx.model)["max_output_tokens"]
-      limit = Adapter::Base::MAX_OUTPUT_TOKENS
-      advisory.is_a?(Numeric) && advisory.positive? ? [advisory.to_i, limit].min : limit
     end
   end
 end
