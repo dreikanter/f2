@@ -14,8 +14,9 @@ class FeedPreviewActivity
                          .pluck(:cost_estimate_cents)
     totals = stats.dup
     if usage_costs.present?
+      # Keep the JSON snapshot numeric; Rails encodes BigDecimal as a string.
       totals.merge!(llm_calls: usage_costs.size,
-                    llm_cost_cents: usage_costs.any?(&:nil?) ? nil : usage_costs.sum)
+                    llm_cost_cents: usage_costs.any?(&:nil?) ? nil : usage_costs.sum.to_f)
     end
     search_count = event.event_references.where(reference_type: "Event").count
     totals[:search_calls] = search_count if search_count.positive?

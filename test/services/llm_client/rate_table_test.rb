@@ -96,4 +96,32 @@ class LlmClient::RateTableTest < ActiveSupport::TestCase
     assert_nil LlmClient::RateTable.cost_for(provider: "anthropic", model: "claude-sonnet-4-6",
       usage: usage(input: 1_000_000, cache_read: 10), pricing: { "input" => 1 })
   end
+
+  test "#cost_for should preserve missing fallback cache rates as unknown only when those tokens were used" do
+    options = { provider: "openrouter", model: "anthropic/claude-sonnet-4-6" }
+    rate = LlmClient::RateTable.rate_for(**options)
+    assert_nil rate.cache_read_per_million
+    assert_nil rate.cache_write_per_million
+
+    assert_nil LlmClient::RateTable.cost_for(**options, usage: usage(cache_read: 10))
+    assert_nil LlmClient::RateTable.cost_for(**options, usage: usage(cache_write: 10))
+    assert_equal "0.0003".to_d, LlmClient::RateTable.cost_for(**options, usage: usage(input: 1))
+  end
+
+  test "#cost_for should preserve fractional cents with decimal arithmetic" do
+    assert_equal "0.01035".to_d, LlmClient::RateTable.cost_for(
+      provider: "openai", model: "new-model", usage: usage(input: 123, output: 456),
+      pricing: { "input" => 0.1, "output" => 0.2 }
+    )
+  end
+
+  test "#cost_for should accept an explicitly free cache rate and reject nonfinite prices" do
+    assert_equal 0, LlmClient::RateTable.cost_for(provider: "openrouter", model: "new-model",
+      usage: usage(cache_read: 10), pricing: { "cache_read" => 0 })
+
+    [Float::INFINITY, Float::NAN].each do |price|
+      assert_nil LlmClient::RateTable.cost_for(provider: "openai", model: "new-model",
+        usage: usage(input: 1), pricing: { "input" => price })
+    end
+  end
 end

@@ -167,4 +167,18 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
     assert_equal 0, record.event.metadata.dig("stats", "llm_cost_cents")
     assert_equal 1, record.event.metadata.dig("stats", "normalized_posts")
   end
+
+  test "#finish! should sum fractional costs before serializing the event total as a JSON number" do
+    record = FeedPreviewActivity.new(preview)
+    2.times do
+      usage = create(:llm_usage, user: credential.user, purpose: :preview, cost_estimate_cents: "0.4")
+      record.event.event_references.create!(reference: usage)
+    end
+
+    record.finish!(status: "completed", stats: {})
+
+    stats = record.event.reload.metadata.fetch("stats")
+    assert_equal 2, stats["llm_calls"]
+    assert_equal 0.8, stats["llm_cost_cents"]
+  end
 end

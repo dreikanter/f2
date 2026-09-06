@@ -88,7 +88,7 @@ class FeedRefreshWorkflow
     if usage_rows.any?
       stats_updates.merge!(
         "llm_calls" => usage_rows.size,
-        "llm_cost_cents" => usage_rows.any? { |_id, cents| cents.nil? } ? nil : usage_rows.sum { |_id, cents| cents }
+        "llm_cost_cents" => usage_rows.any? { |_id, cents| cents.nil? } ? nil : usage_rows.sum { |_id, cents| cents }.to_f
       )
     end
     stats_updates["search_calls"] = search_event_ids.size if search_event_ids.any?
@@ -363,12 +363,13 @@ class FeedRefreshWorkflow
   end
 
   # No calls, no stat — keeps deterministic feeds' events free of a noisy $0.
+  # Decimal sums become numbers at the JSON snapshot boundary.
   def record_llm_usage_stats(usage_rows)
     return if usage_rows.empty?
 
     record_stats(
       llm_calls: usage_rows.size,
-      llm_cost_cents: usage_rows.any? { |_id, cents| cents.nil? } ? nil : usage_rows.sum { |_id, cents| cents }
+      llm_cost_cents: usage_rows.any? { |_id, cents| cents.nil? } ? nil : usage_rows.sum { |_id, cents| cents }.to_f
     )
   end
 

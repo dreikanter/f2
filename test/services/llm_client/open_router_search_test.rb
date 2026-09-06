@@ -76,7 +76,7 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
     assert_equal 30, usage.output_tokens
     assert_equal 20, usage.cache_read_tokens
     assert_equal 10, usage.cache_write_tokens
-    assert_equal 2, usage.cost_estimate_cents
+    assert_equal "1.7".to_d, usage.cost_estimate_cents
   end
 
   test "#execute should retain citations and associate all preview usage with the saved feed" do
@@ -104,9 +104,9 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
     assert_equal 2, usages.count
     assert_equal usages.pluck(:id).sort, event.references.grep(LlmUsage).map(&:id).sort
     assert_equal ["example/future-model"], usages.pluck(:model).uniq
-    assert_equal 2, usages.first.cost_estimate_cents
+    assert_equal "1.7".to_d, usages.first.cost_estimate_cents
     assert_equal({ "token_usage_reported" => true }, usages.last.retrieval)
-    assert_equal 0, usages.last.cost_estimate_cents
+    assert_equal "0.01445".to_d, usages.last.cost_estimate_cents
   end
 
   test "#call should keep missing malformed and BYOK costs unknown even when no search was used" do
@@ -131,7 +131,16 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
     usage = LlmUsage.sole
     assert_equal false, usage.retrieval["token_usage_reported"]
     assert_nil usage.retrieval["search_calls"]
-    assert_equal 2, usage.cost_estimate_cents
+    assert_equal "1.7".to_d, usage.cost_estimate_cents
+  end
+
+  test "#call should retain sub-cent reported charges in usage and JSON telemetry" do
+    stub_chat(reply(usage: { cost: 0.00004 }))
+
+    usage = LlmUsage.find(gather.usage_id)
+
+    assert_equal "0.004".to_d, usage.cost_estimate_cents
+    assert_equal 0.004, usage.retrieval["reported_cost_cents"]
   end
 
   test "#call should honor an explicit zero charge but preserve entirely missing usage as unknown" do
@@ -286,7 +295,7 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
       usage = LlmUsage.order(:created_at).last
       assert_equal "provider_error", usage.outcome
       assert_equal 70, usage.input_tokens
-      assert_equal 2, usage.cost_estimate_cents
+      assert_equal "1.7".to_d, usage.cost_estimate_cents
     end
   end
 
@@ -298,7 +307,7 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
     assert_equal [], Loader::LlmLoader.new(feed).load
 
     assert_equal 1, @requests.size
-    assert_equal 2, LlmUsage.sole.cost_estimate_cents
+    assert_equal "1.7".to_d, LlmUsage.sole.cost_estimate_cents
   end
 
   test "#call should ignore malformed and non-web citations without losing the answer" do
@@ -356,7 +365,7 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
     assert_includes @requests.last["messages"].first["content"], "No web tools are available"
     usages = LlmUsage.order(:created_at)
     assert_equal %w[schema_error success], usages.pluck(:outcome)
-    assert_equal [2, 0], usages.pluck(:cost_estimate_cents)
+    assert_equal ["1.7".to_d, "0.01445".to_d], usages.pluck(:cost_estimate_cents)
     assert_equal({ "token_usage_reported" => true }, usages.last.retrieval)
   end
 end

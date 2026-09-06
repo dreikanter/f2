@@ -15,10 +15,10 @@ class LlmClient::RateTable
       return nil unless entry
 
       Rate.new(
-        input_per_million: entry["input_per_million"].to_f,
-        output_per_million: entry["output_per_million"].to_f,
-        cache_write_per_million: entry["cache_write_per_million"].to_f,
-        cache_read_per_million: entry["cache_read_per_million"].to_f
+        input_per_million: entry["input_per_million"],
+        output_per_million: entry["output_per_million"],
+        cache_write_per_million: entry["cache_write_per_million"],
+        cache_read_per_million: entry["cache_read_per_million"]
       )
     end
 
@@ -33,17 +33,17 @@ class LlmClient::RateTable
         }
       end
 
-      dollars_per_million = 0.0
+      dollars_per_million = 0.to_d
       %w[input output cache_write cache_read].each do |kind|
         count = usage.public_send("#{kind}_tokens").to_i
         next if count.zero?
 
         price = pricing[kind]
-        return unless price.is_a?(Numeric) && price >= 0
+        return unless price.is_a?(Numeric) && price.finite? && price >= 0
 
-        dollars_per_million += count * price
+        dollars_per_million += count * price.to_d
       end
-      ((dollars_per_million / 1_000_000.0) * 100).round
+      dollars_per_million / 10_000
     end
 
     def reload!

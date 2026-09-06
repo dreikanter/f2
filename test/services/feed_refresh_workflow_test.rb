@@ -540,9 +540,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     loader = Object.new
     loader.define_singleton_method(:load) do
       FactoryBot.create(:llm_usage, user: test_feed.user, feed: test_feed,
-                         started_at: Time.current, finished_at: Time.current, cost_estimate_cents: 2)
+                         started_at: Time.current, finished_at: Time.current, cost_estimate_cents: "0.4")
       FactoryBot.create(:llm_usage, user: test_feed.user, feed: test_feed,
-                         started_at: Time.current, finished_at: Time.current, cost_estimate_cents: 5)
+                         started_at: Time.current, finished_at: Time.current, cost_estimate_cents: "0.4")
       rss
     end
 
@@ -553,7 +553,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     event = Event.find_by!(subject: test_feed, type: "feed_refresh")
 
     assert_equal 2, event.metadata.dig("stats", "llm_calls")
-    assert_equal 7, event.metadata.dig("stats", "llm_cost_cents")
+    assert_equal 0.8, event.metadata.dig("stats", "llm_cost_cents")
     assert_equal test_feed.llm_usages.to_a, event.references
   end
 

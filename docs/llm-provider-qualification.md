@@ -128,9 +128,10 @@ categories, and unpriced native search charges produce an unknown estimate.
 OpenRouter search uses its reported total only when it covers the complete charge;
 missing totals and BYOK charges stay unknown. Other calls use token-rate estimates.
 Prices do not model every provider pricing tier or billing adjustment. Estimates
-are rounded to whole cents per attempt, so small charges can display `$0.00` and
-their aggregate can understate the provider bill. The provider's bill remains the
-source of actual spending.
+retain fractional cents and are summed before rounding for display. Small charges
+can display `$0.00` individually while contributing to the total. Historical
+estimates retain their original precision. The provider's bill remains the source
+of actual spending.
 
 ## Optional diagnostics
 
