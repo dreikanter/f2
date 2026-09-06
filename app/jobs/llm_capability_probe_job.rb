@@ -1,11 +1,5 @@
-# Base for the per-provider capability probe jobs. Subclasses pin one
-# (provider, model) pair via PROVIDER/MODEL. Everything the research needs
-# lands in JobRun events: one event per check with full evidence, plus a
-# summary verdict — no files to chase afterwards.
-#
-# The key comes from an AiCredential named after the job and owned by whoever
-# launched the run. Without that record the run says which credential to create
-# and ends.
+# Optional diagnostics use an operator-owned credential and record each check
+# in JobRun events. Subclasses provide a default provider and model pair.
 class LlmCapabilityProbeJob < ApplicationJob
   include RecordsJobRun
   include DescribesWithMarkup
@@ -33,10 +27,11 @@ class LlmCapabilityProbeJob < ApplicationJob
 
   def self.description
     helpers.safe_join([
-      "Runs the capability checks for #{self::MODEL} against the live #{self::PROVIDER} API. " \
+      "Runs optional, billable SDK diagnostics for #{self::MODEL} against the live #{self::PROVIDER} API. " \
+      "Results do not determine model availability or test built-in search. " \
       "Needs an AI credential named ",
       helpers.tag.code(credential_name),
-      " on your own account."
+      " on your own account. Diagnostic spending is not included in feed usage."
     ])
   end
 

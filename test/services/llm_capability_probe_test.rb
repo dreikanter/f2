@@ -242,8 +242,7 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_equal "PASS", outcome[:results].first[:status]
   end
 
-  # The probe must qualify a model under exactly the root repairs production
-  # applies (LlmClient::PayloadRepair), or a usable model gets blocked.
+  # Apply the same root repairs used for feed output.
   test "#run should pass the schema check on a bare items array the app repairs" do
     outcome = run_checks(JSON.generate(valid_payload["items"]), ["schema"])
 
@@ -366,7 +365,6 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
                  credential.chats.first.schema
   end
 
-  # The probe drives a paid API, and an unqualified model is the likeliest to loop.
   test "#run should bound the client tools loop with one budget shared by both tools" do
     credential = FakeCredential.new("The main heading reads: Example Domain", tool_rounds: full_tool_loop)
     LlmCapabilityProbe::Runner.new(credential: credential, model: "test-model", checks: ["client_tools"]).run
@@ -399,6 +397,17 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     LlmCapabilityProbe::Runner.new(credential: credential, model: "test-model", checks: ["plain"]).run
 
     assert_nil credential.chats.first.instructions
+  end
+
+  test "#run should cap output on plain and system prompt diagnostics" do
+    %w[plain system_prompt].each do |check|
+      credential = FakeCredential.new("pong")
+      LlmCapabilityProbe::Runner.new(credential: credential, model: "test-model", checks: [check]).run
+
+      assert_equal 8_192, credential.chats.sole.params[:max_tokens]
+      assert_nil credential.chats.sole.schema
+      assert_empty credential.chats.sole.tools
+    end
   end
 
   test "#run should leave the plain client tools check unstructured" do
@@ -447,7 +456,7 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_match(/RuntimeError: boom/, outcome[:results].first[:note])
   end
 
-  test "checks should cover only what production calls" do
+  test "checks should isolate listing and SDK request features" do
     assert_equal %w[models plain system_prompt schema client_tools client_tools_schema],
                  LlmCapabilityProbe::Runner::CHECKS
   end

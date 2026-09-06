@@ -1,8 +1,6 @@
 # Optional diagnostics for investigating provider behavior.
 module LlmCapabilityProbe
-  # Production's schema verbatim: a simplified copy qualifies a shape the app
-  # never sends. The nullable `source_url` union is the part strict
-  # structured-output modes reject.
+  # Keep nullable links and optional fields in the diagnostic request.
   PROBE_SCHEMA = FeedProfile::UNIVERSAL_OUTPUT_SCHEMA
 
   # Stands in for production's stage system prompts (Loader::LlmPrompts). The
@@ -94,10 +92,7 @@ module LlmCapabilityProbe
       @results = []
     end
 
-    # Returns { results:, passed: }. Every check is attempted; failures are
-    # recorded, never raised — the job is to report what a provider does, not
-    # to crash on it. `passed` is a summary; the per-check results are the
-    # verdict (see docs/llm-provider-qualification.md).
+    # Each check reports independently so one failure does not hide the rest.
     def run
       @checks.each { |check| record(check) { send("check_#{check}") } }
       { results: @results, passed: @results.none? { |r| r[:status] == "FAIL" } }
@@ -111,6 +106,7 @@ module LlmCapabilityProbe
       @results << { check: check, status: outcome[:status], note: outcome[:note],
                     evidence: outcome[:evidence], seconds: (Time.current - started).round(1) }
     rescue StandardError => e
+      Rails.error.report(e, context: { provider: @credential.provider, model: @model, check: check })
       @results << { check: check, status: "FAIL", note: "#{e.class}: #{e.message.to_s[0, 300]}",
                     evidence: nil, seconds: (Time.current - started).round(1) }
     end
@@ -128,12 +124,14 @@ module LlmCapabilityProbe
 
     def check_plain
       chat = @credential.chat(@model)
+      apply_params(chat, schema: false, web: false)
       text = chat.ask("Reply with the single word: pong").content.to_s
       pass(text.match?(/pong/i), "expected 'pong'", text) { "plain round trip" }
     end
 
     def check_system_prompt
       chat = @credential.chat(@model)
+      apply_params(chat, schema: false, web: false)
       chat.with_instructions(SYSTEM_CHECK_INSTRUCTIONS)
       text = chat.ask(SYSTEM_CHECK_PROMPT).content.to_s
       pass(honors_system_prompt?(text), "system instructions not honored verbatim", text) { "system prompt honored" }
@@ -158,16 +156,12 @@ module LlmCapabilityProbe
       validate_items(response, expect_null_source_url: true)
     end
 
-    # Production's gather step: system prompt plus the client-side tools driven
-    # through a real multi-round loop.
+    # Exercise the SDK's client-tool loop with canned search and a real fetch.
     def check_client_tools
       client_tools_loop
     end
 
-    # Production's combined shape: schema on the same chat as the tools. Schema
-    # and tools can each work alone yet break together. A FAIL means the pair
-    # needs two-step extraction (Adapter#combined_extraction?), not that it
-    # fails qualification.
+    # Schema and tools can each work alone yet fail in the same request.
     def check_client_tools_schema
       client_tools_loop(schema: PROBE_SCHEMA)
     end
@@ -186,9 +180,7 @@ module LlmCapabilityProbe
       { status: "PASS", note: "#{rounds.size} tool calls, answer grounded in fetched page", evidence: evidence }
     end
 
-    # Instances sharing one budget, as production builds them
-    # (LlmClient::Adapter::Base#apply_web): the probe drives a paid API, and an
-    # unqualified model is the likeliest to loop on a tool.
+    # Both tools share a budget because each additional round can be billed.
     def client_tools_chat(schema)
       chat = @credential.chat(@model)
       chat.with_instructions(PROBE_INSTRUCTIONS)
@@ -200,8 +192,7 @@ module LlmCapabilityProbe
       chat
     end
 
-    # The params production sends for the shape being probed, so a model is
-    # qualified on the request the loader actually makes.
+    # Keep provider parameters and output caps on each diagnostic request.
     def apply_params(chat, schema:, web:)
       params = adapter.params_for(@model, schema: schema, web: web)
       chat.with_params(**params) if params.present?
@@ -262,8 +253,7 @@ module LlmCapabilityProbe
       elsif items.empty?
         { status: "FAIL", note: "valid but empty items", evidence: evidence }
       elsif LlmCapabilityProbe.refusal?(JSON.generate(items))
-        # A refusal wearing the schema would otherwise qualify a model for
-        # gathering it never did.
+        # A schema-valid refusal is still missing the requested evidence.
         { status: "FAIL", note: "schema-valid but the items are a refusal", evidence: evidence }
       elsif expect_null_source_url && items.none? { |item| item["source_url"].nil? }
         # Accepting the union in the schema is not the same as emitting it, and

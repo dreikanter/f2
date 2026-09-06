@@ -6,6 +6,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 - AI spending stays unknown when a response omits token usage or a later tool round fails; requests stopped before reaching the model no longer count as AI calls.
 
+- AI settings explain provider search, limited fallback, and saved models that are no longer offered for new feeds.
+
 - AI credential pages show each model's published task and metadata sources.
 
 - AI model pickers exclude known embedding, image, audio, and other non-conversational models using free task metadata; unknown and saved models remain available.

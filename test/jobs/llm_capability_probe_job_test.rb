@@ -30,12 +30,10 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
     assert_equal %w[openai gpt-5.6-luna], [OpenAiCapabilityProbeJob::PROVIDER, OpenAiCapabilityProbeJob::MODEL]
   end
 
-  test "every probe should pin a model its provider can actually be configured for" do
+  test "every probe should use a configured provider" do
     JobRun::RUNNABLE_JOBS.select { |job| job < LlmCapabilityProbeJob }.each do |job|
       assert_includes LlmProvider.names, job::PROVIDER,
                       "#{job.name} pins unregistered provider #{job::PROVIDER}"
-      assert LlmClient::RateTable.rate_for(provider: job::PROVIDER, model: job::MODEL),
-             "#{job.name} pins #{job::MODEL}, which has no rate entry to price a run"
     end
   end
 
@@ -67,6 +65,8 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
     assert_includes KimiCapabilityProbeJob.description, "<code>KimiCapabilityProbe</code>"
     assert_includes OpenAiCapabilityProbeJob.description, "<code>OpenAiCapabilityProbe</code>"
     assert_predicate AnthropicCapabilityProbeJob.description, :html_safe?
+    assert_includes AnthropicCapabilityProbeJob.description, "optional, billable SDK diagnostics"
+    assert_includes AnthropicCapabilityProbeJob.description, "Diagnostic spending is not included in feed usage."
   end
 
   test ".runnable_arguments should ask the dev area for the user who pressed Run" do
