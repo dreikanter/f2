@@ -22,6 +22,7 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     @context ||= LlmClient::CallContext.new(feed: nil, profile_key: "llm", stage: :loader,
                                            model: "new-unregistered-model", purpose: :preview).tap do |ctx|
       ctx.native_search_disabled = true
+      ctx.responses_api = false
     end
   end
 
@@ -54,6 +55,7 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
   end
 
   def call(**options)
+    context.responses_api = false
     client.call(context, prompt: "Return an empty list", output_schema: SCHEMA, **options)
   end
 

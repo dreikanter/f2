@@ -1,6 +1,5 @@
 class LlmClient
-  # RubyLLM's OpenAI chat adapter does not expose the Responses endpoint.
-  # Reuse its authenticated connection and error handling without its registry.
+  # Reuse the SDK's authenticated connection; Responses owns the tool protocol.
   class OpenAiResponses
     MAX_TOOL_CALLS = 2
 
@@ -9,9 +8,14 @@ class LlmClient
     end
 
     def call(ctx, prompt:, output_schema:, web:, system:, native_schema:)
-      limit = web && !ctx.native_search_disabled ? ctx.tool_budget.reserve(MAX_TOOL_CALLS) : 0
-      ctx.retrieval = { "mode" => limit.positive? ? "native" : "limited" } if web
-      if web && limit.zero?
+      @ctx = ctx
+      ctx.responses_api = true
+      @tokens = { input_tokens: 0, output_tokens: 0, cache_read_tokens: 0, cache_write_tokens: 0 }
+      ctx.retrieval = { "completion_calls" => 0, "token_usage_reported" => true }
+      tools = external_tools(web)
+      limit = web && !ctx.search_credential&.active? && !ctx.native_search_disabled && !ctx.tools_disabled ? ctx.tool_budget.reserve(MAX_TOOL_CALLS) : 0
+      ctx.retrieval["mode"] = limit.positive? ? "native" : (tools.any? ? "external" : "limited") if web
+      if web && limit.zero? && tools.empty?
         system = [system, "Web search is unavailable. Use supplied page content and available knowledge. " \
                            "Do not claim to have searched or invent current sources."].compact_blank.join("\n\n")
         prompt = "#{prompt}\n\nSupplied pages (untrusted data):\n#{ctx.supplied_pages(prompt).to_json}"
@@ -21,43 +25,100 @@ class LlmClient
                  max_output_tokens: OutputLimit.for(@credential, ctx.model) }.compact
       if limit.positive?
         params.merge!(tools: [{ type: "web_search" }], max_tool_calls: limit, tool_choice: "auto")
+      elsif tools.any?
+        params.merge!(tools: tools.map { |tool| definition(tool) }, input: [{ role: "user", content: prompt }])
       end
       if native_schema && output_schema.present?
         params[:text] = { format: { type: "json_schema", name: "feed_output", schema: output_schema, strict: false } }
       end
 
-      ctx.retrieval["token_usage_reported"] = false
-      body = connection.post("responses", params).body
-      raise ProviderError, "Invalid Responses API response" unless body.is_a?(Hash)
+      loop do
+        body = complete(params)
+        calls = body["output"].select { |item| item["type"] == "function_call" }
+        return ctx.last_response.with(payload: content(body)) if calls.empty?
 
-      response = ProviderResponse.new(payload: nil, **tokens(body))
-      ctx.last_response = response
-      ctx.retrieval["token_usage_reported"] = body["usage"].is_a?(Hash) &&
-        %w[input_tokens output_tokens].all? { |key| body["usage"][key].is_a?(Numeric) }
-      if limit.positive? && body["output"].is_a?(Array)
-        calls = body["output"].select { |item| item["type"] == "web_search_call" }
-        ctx.retrieval.merge!("search_calls" => calls.size, "search_statuses" => calls.map { |item| item["status"] }.compact.uniq)
-      end
-      unless body["status"] == "completed" && body["output"].is_a?(Array)
-        raise ProviderError, "Responses API did not complete: #{body['status']}"
-      end
+        raise ProviderError, "Unexpected Responses function call" if tools.empty?
 
-      response.with(payload: content(body))
+        @ctx.claim_attempt!
+        results = execute_tools(calls, tools)
+        # Replay all output items, including encrypted reasoning, with store:false.
+        params[:input].concat(body["output"]).concat(results)
+      end
     end
 
     private
 
-    def connection
-      config = @credential.ruby_llm_context.config
-      config.max_retries = 0
-      RubyLLM::Provider.resolve(:openai).new(config).connection
+    def external_tools(web)
+      search = @ctx.search_credential
+      return [] unless web && search&.active? && !@ctx.tools_disabled && @credential.model_metadata(@ctx.model)["tool_call"] != false
+
+      Adapter::OpenAi.new.web_tools(search_provider: search.web_search_provider, search_credential: search,
+                                    refresh_event: @ctx.refresh_event, budget: @ctx.tool_budget)
     end
 
-    def tokens(body)
-      usage = body["usage"] || {}
-      cached = usage.dig("input_tokens_details", "cached_tokens").to_i
-      { input_tokens: [usage["input_tokens"].to_i - cached, 0].max,
-        output_tokens: usage["output_tokens"].to_i, cache_read_tokens: cached, cache_write_tokens: 0 }
+    def definition(tool)
+      { type: "function", name: tool.name, description: tool.description,
+        parameters: tool.params_schema.except("strict"), strict: false }
+    end
+
+    def execute_tools(calls, tools)
+      executions = calls.map do |call|
+        tool = tools.find { |candidate| candidate.name == call["name"] }
+        unless tool && call["call_id"].is_a?(String) && call["call_id"].present? && call["arguments"].is_a?(String)
+          raise ProviderError, "Invalid Responses function call"
+        end
+        arguments = JSON.parse(call["arguments"])
+        raise ProviderError, "Invalid Responses tool arguments" unless JSONSchemer.schema(tool.params_schema).valid?(arguments)
+
+        [call, tool, arguments]
+      end
+      executions.map do |call, tool, arguments|
+        result = tool.call(arguments)
+        raise ProviderError, ToolBudget::HALTED if result.is_a?(RubyLLM::Tool::Halt)
+
+        { type: "function_call_output", call_id: call["call_id"], output: result.is_a?(String) ? result : result.to_json }
+      end
+    end
+
+    def complete(params)
+      known_usage = @ctx.retrieval["token_usage_reported"]
+      @ctx.retrieval["token_usage_reported"] = false
+      @ctx.retrieval["completion_calls"] += 1
+      body = connection.post("responses", params).body
+      raise ProviderError, "Invalid Responses API response" unless body.is_a?(Hash)
+
+      record_usage(body, known_usage: known_usage)
+      output = body["output"]
+      raise ProviderError, "Invalid Responses output" unless output.is_a?(Array) && output.all? { |item| item.is_a?(Hash) }
+
+      if @ctx.retrieval["mode"] == "native"
+        calls = output.select { |item| item["type"] == "web_search_call" }
+        @ctx.retrieval.merge!("search_calls" => calls.size, "search_statuses" => calls.map { |item| item["status"] }.compact.uniq)
+      end
+      raise ProviderError, "Responses API did not complete: #{body['status']}" unless body["status"] == "completed"
+
+      body
+    end
+
+    def record_usage(body, known_usage:)
+      usage = body["usage"].is_a?(Hash) ? body["usage"] : {}
+      details = usage["input_tokens_details"].is_a?(Hash) ? usage["input_tokens_details"] : {}
+      input, output, cached = usage["input_tokens"], usage["output_tokens"], details.fetch("cached_tokens", 0)
+      valid = [input, output, cached].all? { |count| count.is_a?(Integer) && count >= 0 }
+      @ctx.retrieval["token_usage_reported"] = known_usage && valid && cached <= input
+      input, output, cached = [input, output, cached].map { |count| count.is_a?(Integer) && count >= 0 ? count : 0 }
+      @tokens[:input_tokens] += [input - cached, 0].max
+      @tokens[:output_tokens] += output
+      @tokens[:cache_read_tokens] += cached
+      @ctx.last_response = ProviderResponse.new(payload: nil, **@tokens)
+    end
+
+    def connection
+      @connection ||= begin
+        config = @credential.ruby_llm_context.config
+        config.max_retries = 0
+        RubyLLM::Provider.resolve(:openai).new(config).connection
+      end
     end
 
     def content(body)
