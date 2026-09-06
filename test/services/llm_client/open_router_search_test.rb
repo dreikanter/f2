@@ -246,6 +246,87 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
     assert_not LlmUsage.sole.retrieval.key?("reported_cost_cents")
   end
 
+  test "#call should fall back from external tools on explicit router rejections and retain supplied evidence" do
+    search = create(:search_credential, :active, user: credential.user)
+    [
+      rejection("No endpoints found that support tool use.", status: 404),
+      rejection("No endpoints found that support the requested tools.", status: 404),
+      rejection("No endpoints found that support tool use."),
+      rejection("Unsupported tools", param: "tools", code: "unsupported_parameter")
+    ].each do |response|
+      @context = LlmClient::CallContext.new(feed: nil, profile_key: "llm", stage: :loader,
+                                           model: "example/future-model", search_credential: search)
+      stub_chat(response, reply("Supplied fact"))
+      stub_request(:get, SOURCE).to_return(body: "<p>Supplied fact</p>")
+
+      assert_difference -> { LlmUsage.count }, 2 do
+        result = Socket.stub(:getaddrinfo, [["AF_INET", 0, "example.com", "93.184.216.34"]]) do
+          gather("Summarize #{SOURCE}")
+        end
+        assert_equal "Supplied fact", result.payload
+      end
+
+      assert_equal 2, @requests.size
+      assert_equal [context.model], @requests.pluck("model").uniq
+      assert_equal 2, @requests.first["tools"].size
+      assert @requests.first["tools"].all? { |tool| tool["type"] == "function" }
+      assert_nil @requests.last["tools"]
+      assert_nil @requests.last["max_tool_calls"]
+      assert_includes @requests.last["messages"].to_json, "Supplied fact"
+      assert_includes @requests.last["messages"].to_json, "No web tools are available"
+      assert_equal 1, context.tool_budget.spent
+      usages = LlmUsage.order(:created_at).last(2)
+      assert_equal %w[provider_error success], usages.map(&:outcome)
+      assert_equal %w[external limited], usages.map { |usage| usage.retrieval["mode"] }
+      assert_nil usages.first.cost_estimate_cents
+      assert usages.first.error_message.present?
+      assert credential.reload.active?
+    end
+  end
+
+  test "#call should stop after a repeated external tool rejection and keep later calls within the shared budget" do
+    search = create(:search_credential, :active, user: credential.user)
+    @context = LlmClient::CallContext.new(feed: nil, profile_key: "llm", stage: :loader,
+                                         model: "example/future-model", search_credential: search)
+    response = rejection("No endpoints found that support tool use.", status: 404)
+    stub_chat(response, response, reply, reply)
+
+    assert_raises(LlmClient::ProviderError) { gather }
+    assert_equal 2, @requests.size
+    assert_nil @requests.last["tools"]
+    assert_equal %w[provider_error provider_error], LlmUsage.order(:created_at).pluck(:outcome)
+
+    2.times { assert_equal "An original joke", gather.payload }
+    assert_raises(LlmClient::Timeout) { gather }
+    assert_equal 4, @requests.size
+    assert_equal 4, LlmUsage.count
+    assert_equal 0, context.tool_budget.spent
+  end
+
+  test "#call should keep unrelated external search failures visible without retrying" do
+    search = create(:search_credential, :active, user: credential.user)
+    [
+      [rejection("No endpoints found for example/future-model", status: 404), LlmClient::ProviderError],
+      [rejection("No endpoints found that support the requested server tools.", status: 404), LlmClient::ProviderError],
+      [rejection("Invalid function schema", param: "tools", code: "invalid_parameter"), LlmClient::ProviderError],
+      [rejection("No endpoints found that support tool use.", status: 401), LlmClient::AuthError],
+      [rejection("No endpoints found that support tool use.", status: 429), LlmClient::RateLimited],
+      [rejection("No endpoints found that support tool use.", status: 500), LlmClient::ProviderError]
+    ].each do |response, error_class|
+      @context = LlmClient::CallContext.new(feed: nil, profile_key: "llm", stage: :loader,
+                                           model: "example/future-model", search_credential: search)
+      stub_chat(response)
+
+      assert_difference -> { LlmUsage.count }, 1 do
+        assert_raises(error_class) { gather }
+      end
+      assert_equal 1, @requests.size
+      assert_nil LlmUsage.order(:created_at).last.cost_estimate_cents
+      assert_not context.tools_disabled
+      assert_not context.native_search_disabled
+    end
+  end
+
   test "#call should offer hosted search with inactive external credentials regardless of client tool metadata" do
     search = create(:search_credential, :inactive, user: credential.user)
     @context = LlmClient::CallContext.new(feed: nil, profile_key: "llm", stage: :loader,

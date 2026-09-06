@@ -2,10 +2,8 @@ class LlmClient
   module Adapter
     # Basic abstraction for an LLM provider adapter.
     class Base
-      MAX_OUTPUT_TOKENS = 8_192
-
       def output_params
-        { max_tokens: MAX_OUTPUT_TOKENS }
+        { max_tokens: OutputLimit::DEFAULT }
       end
 
       # Provider-specific request params that remain necessary alongside the
@@ -79,20 +77,24 @@ class LlmClient
         false
       end
 
+      def capability_error_status?(error)
+        error.is_a?(RubyLLM::BadRequestError)
+      end
+
+      def unsupported_responses?(_error)
+        false
+      end
+
       def unsupported_schema?(_error)
         false
       end
 
       def unsupported_tools?(error)
-        body = error.response&.body
-        body = JSON.parse(body) if body.is_a?(String)
-        detail = body.is_a?(Hash) ? body["error"] : nil
+        detail = error_detail(error)
         return false unless detail.is_a?(Hash)
         return true if detail["param"] == "tools" && detail["code"] == "unsupported_parameter"
 
         detail["message"].to_s.match?(/\A(?:Tools?|Tool use|Function calling) (?:is|are) not supported (?:for|with|by|on) (?:this |the selected )?model\b/i)
-      rescue JSON::ParserError
-        false
       end
 
       # Repairs structured-output text before JSON parsing. Default trusts clean
@@ -103,19 +105,21 @@ class LlmClient
 
       private
 
+      def error_detail(error)
+        body = error.response&.body
+        body = JSON.parse(body) if body.is_a?(String)
+        detail = body.is_a?(Hash) ? body["error"] : nil
+        detail if detail.is_a?(Hash)
+      rescue JSON::ParserError
+        nil
+      end
+
       # The vendor's own identifiers for a failure, read from the raw response
       # body a RubyLLM error carries. Vendors put the machine-readable name in
       # `type` or in `code` and not consistently the same one, so both are
       # returned rather than one being preferred.
       def error_codes(error)
-        body = error.try(:response).try(:body)
-        json = JSON.parse(body.to_s)
-        reported = json.is_a?(Hash) ? json["error"] : nil
-        return [] unless reported.is_a?(Hash)
-
-        reported.values_at("type", "code").compact
-      rescue JSON::ParserError
-        []
+        (error_detail(error) || {}).values_at("type", "code").compact
       end
     end
   end

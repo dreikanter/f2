@@ -16,7 +16,7 @@ class LlmClient
 
       instructions = [system, "If search is unavailable, use available content without inventing current sources."]
       instructions << PayloadRepair.output_instructions(output_schema) if output_schema.present?
-      params = { model: ctx.model, max_tokens: output_limit(ctx.model),
+      params = { model: ctx.model, max_tokens: OutputLimit.for(@credential, ctx.model),
                  messages: [{ role: "system", content: instructions.compact_blank.join("\n\n") }, { role: "user", content: prompt }],
                  provider: { require_parameters: true, allow_fallbacks: false },
                  tools: [{ type: "openrouter:web_search", parameters: {
@@ -33,37 +33,6 @@ class LlmClient
       end
 
       ctx.last_response.with(payload: content(choice.fetch("message")))
-    rescue RubyLLM::Error => e
-      # Router capability failures can be 404s, unlike unknown model errors.
-      feature = self.class.unsupported_feature(e, model: ctx.model) if [400, 404].include?(e.response&.status)
-      if feature
-        ctx.tools_disabled = true if feature == :tools
-        raise UnsupportedNativeSearch, e.message
-      end
-
-      raise
-    end
-
-    def self.unsupported_feature(error, model:)
-      body = error.response&.body
-      body = JSON.parse(body) if body.is_a?(String)
-      detail = body.is_a?(Hash) ? body["error"] : nil
-      return unless detail.is_a?(Hash)
-      if detail["code"] == "unsupported_parameter"
-        return :tools if detail["param"] == "tools"
-        return :search if detail["param"] == "max_tool_calls"
-      end
-
-      message = detail["message"].to_s
-      return :tools if message.match?(/\ANo endpoints found that support (?:tool use|the requested tools)\b/i)
-      return :tools if message.match?(/\A(?:Tools?|Tool use|Function calling) (?:is|are) not supported (?:for|with|by|on) (?:this |the selected )?model\b/i)
-      return :search if message.match?(/\ANo endpoints found that support the requested server tools\b/i)
-      return :search if message.match?(/\A(?:Web search|Server tools?) (?:is|are) (?:disabled|not enabled)\b/i)
-
-      target = /(?:(?:this |the selected )?model\b|['"]?#{Regexp.escape(model)}['"]?(?:[.\s]|$))/i
-      :search if message.match?(/\A(?:Web search|Server tools?|Tool ['"]?openrouter:web_search['"]?) (?:is|are) not supported (?:with|for|by) #{target}/i)
-    rescue JSON::ParserError
-      nil
     end
 
     private
@@ -127,12 +96,6 @@ class LlmClient
       config = @credential.ruby_llm_context.config
       config.max_retries = 0
       RubyLLM::Provider.resolve(:openrouter).new(config).connection
-    end
-
-    def output_limit(model)
-      advisory = @credential.model_metadata(model)["max_output_tokens"]
-      limit = Adapter::Base::MAX_OUTPUT_TOKENS
-      advisory.is_a?(Numeric) && advisory.positive? ? [advisory.to_i, limit].min : limit
     end
   end
 end

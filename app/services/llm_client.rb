@@ -130,16 +130,21 @@ class LlmClient
     rescue RubyLLM::UnauthorizedError, RubyLLM::ForbiddenError, RubyLLM::PaymentRequiredError => e
       write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
       raise AuthError, e.message
-    rescue RubyLLM::BadRequestError => e
+    rescue RubyLLM::Error => e
       write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
-      raise UnsupportedResponses, e.message if ctx.responses_api && OpenAiResponses.unsupported_endpoint?(e)
-      raise UnsupportedNativeSearch, e.message if %w[native provider].include?(ctx.retrieval["mode"]) && adapter.unsupported_native_search?(e, model: ctx.model)
-      raise UnsupportedSchema, e.message if native_schema && output_schema.present? && adapter.unsupported_schema?(e)
-      raise UnsupportedTools, e.message if !ctx.responses_api && web && tools_enabled?(ctx) && adapter.unsupported_tools?(e)
+      if adapter.capability_error_status?(e)
+        raise UnsupportedResponses, e.message if ctx.responses_api && adapter.unsupported_responses?(e)
+        if %w[native provider].include?(ctx.retrieval["mode"]) && adapter.unsupported_native_search?(e, model: ctx.model)
+          ctx.tools_disabled = true if adapter.unsupported_tools?(e)
+          raise UnsupportedNativeSearch, e.message
+        end
+        raise UnsupportedSchema, e.message if native_schema && output_schema.present? && adapter.unsupported_schema?(e)
+        raise UnsupportedTools, e.message if !ctx.responses_api && web && tools_enabled?(ctx) && adapter.unsupported_tools?(e)
+      end
 
       Rails.error.report(e, context: error_context(ctx))
       raise ProviderError, e.message
-    rescue ProviderError, RubyLLM::Error,
+    rescue ProviderError,
            RubyLLM::ConfigurationError,
            RubyLLM::ModelNotFoundError,
            RubyLLM::PromptNotFoundError,
@@ -238,11 +243,9 @@ class LlmClient
   # call that has none, and its routing is what decides the reply's shape.
   def apply_params(chat, model, schema:, web:)
     params = adapter.params_for(model, schema: schema, web: web)
-    limit = credential.model_metadata(model)["max_output_tokens"]
-    if limit.is_a?(Numeric) && limit.positive?
-      %i[max_tokens max_completion_tokens].each do |key|
-        params[key] = [params[key], limit.to_i].min if params[key]
-      end
+    limit = OutputLimit.for(credential, model)
+    %i[max_tokens max_completion_tokens].each do |key|
+      params[key] = [params[key], limit].min if params[key]
     end
     chat.with_params(**params) if params.present?
   end
