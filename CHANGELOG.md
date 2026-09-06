@@ -4,6 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-06
 
+- Failed AI requests remain visible in usage history when a provider returns an unreadable error; any reported tokens are retained and the total cost stays unknown.
+
 - AI feed prompts distinguish requests for source posts from requests for direct answers, including when both are phrased as questions.
 
 - AI feeds preserve short answers and uncertainty; blank responses and unfinished tool runs now appear as errors instead of no posts found.
