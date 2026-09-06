@@ -7,7 +7,8 @@ class AiCredentialModelsComponentTest < ViewComponent::TestCase
       {
         "id" => "claude-sonnet-4-6",
         "name" => "Claude Sonnet 4.6",
-        "metadata" => { "context_window" => 200_000, "tool_call" => true, "structured_output" => false, "source" => "models.dev" }
+        "metadata" => { "context_window" => 200_000, "tool_call" => true, "structured_output" => false, "source" => "models.dev",
+                        "task" => { "source" => "litellm", "mode" => "chat" } }
       }
     ]
   end
@@ -29,7 +30,8 @@ class AiCredentialModelsComponentTest < ViewComponent::TestCase
     assert_includes text, "200,000 token context"
     assert_includes text, "Tools: yes"
     assert_includes text, "Structured output: no"
-    assert_includes text, "models.dev"
+    assert_includes text, "Task: chat"
+    assert_includes text, "Sources: models.dev, litellm"
   end
 
   test "#render should fall back to the id when name is blank" do
@@ -66,5 +68,17 @@ class AiCredentialModelsComponentTest < ViewComponent::TestCase
     result = render_inline(AiCredentialModelsComponent.new(ai_credential: credential))
     assert_includes result.text, "Tools: unknown"
     assert_includes result.text, "Structured output: unknown"
+  end
+
+  test "#render should retain specialized models in the credential catalog with their task explanation" do
+    credential = create(:ai_credential, :active, available_models: [{ "id" => "image-model", "metadata" => {
+      "task" => { "source" => "litellm", "mode" => "image_generation" }, "output_modalities" => ["text", "image"]
+    } }])
+
+    result = render_inline(AiCredentialModelsComponent.new(ai_credential: credential))
+
+    assert_includes result.text, "image-model"
+    assert_includes result.text, "Task: image generation"
+    assert_includes result.text, "Sources: litellm"
   end
 end

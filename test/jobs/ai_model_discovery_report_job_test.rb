@@ -3,6 +3,7 @@ require "test_helper"
 class AiModelDiscoveryReportJobTest < ActiveJob::TestCase
   setup do
     stub_request(:get, PublishedModelMetadata::URL).to_return(body: "{}")
+    stub_request(:get, PublishedModelTasks::URL).to_return(body: "{}")
   end
 
   def job
@@ -111,5 +112,23 @@ class AiModelDiscoveryReportJobTest < ActiveJob::TestCase
     assert_predicate job_run.reload, :failed?
     assert_empty job_run.events
     assert_not_requested :any, /./
+  end
+
+  test "#perform should report task metadata without pruning the provider listing or changing the credential" do
+    credential
+    original = credential.attributes
+    stub_models
+    stub_request(:get, PublishedModelTasks::URL).to_return(body: {
+      "new-model" => { litellm_provider: "openai", mode: "embedding" }
+    }.to_json)
+
+    report = Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) { run_report }
+
+    result = report.fetch("results").find { |entry| entry["provider"] == "openai" }
+    assert_equal "PASS", result["status"]
+    assert_equal 0, result["models_without_task_metadata"]
+    assert_equal "embedding", result.fetch("models").sole.dig("metadata", "task", "mode")
+    assert_equal original, credential.reload.attributes
+    assert_not_requested :post, /./
   end
 end

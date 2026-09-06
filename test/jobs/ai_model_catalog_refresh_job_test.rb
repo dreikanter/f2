@@ -1,6 +1,10 @@
 require "test_helper"
 
 class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
+  setup do
+    stub_request(:get, PublishedModelTasks::URL).to_return(body: "{}")
+  end
+
   def credential
     @credential ||= create(:ai_credential, :active, provider: "openai",
                             available_models: [{ "id" => "saved-model" }],
@@ -137,5 +141,83 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     AiModelCatalogRefreshJob.perform_now(refresh_run)
     assert_predicate refresh_run.reload, :failed?
     assert_equal ["saved-model"], credential.reload.available_models.pluck("id")
+  end
+
+  test "#perform should enrich a provider listing with free task metadata while preserving saved models" do
+    feed = create(:feed, user: credential.user, ai_credential: credential, ai_model: "gpt-image-1.5")
+    ids = %w[text-embedding-3-small gpt-image-1.5 gpt-realtime-2.1 future-model]
+    stub_models(ids: ids)
+    stub_request(:get, PublishedModelMetadata::URL).to_return(body: {
+      openai: { models: ids.to_h { |id| [id, { modalities: { output: ["text", "image"] } }] } }
+    }.to_json)
+    task_request = stub_request(:get, PublishedModelTasks::URL).to_return(body: {
+      "text-embedding-3-small" => { litellm_provider: "openai", mode: "embedding" },
+      "gpt-image-1.5" => { litellm_provider: "openai", mode: "image_generation" },
+      "gpt-realtime-2.1" => { litellm_provider: "openai", mode: "realtime" },
+      "not-listed" => { litellm_provider: "openai", mode: "chat" }
+    }.to_json)
+
+    Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) do
+      assert_no_difference -> { LlmUsage.count } do
+        AiModelCatalogRefreshJob.perform_now(refresh_run)
+      end
+    end
+
+    assert_predicate refresh_run.reload, :succeeded?
+    assert credential.reload.active?
+    assert_equal ids, credential.available_models.pluck("id")
+    assert_equal ["future-model"], credential.supported_models.pluck("id")
+    assert_equal "gpt-image-1.5", feed.reload.effective_ai_model
+    assert_equal "models.dev", credential.model_metadata("gpt-image-1.5")["source"]
+    assert_equal "litellm", credential.model_metadata("gpt-image-1.5").dig("task", "source")
+    assert_requested task_request, times: 1
+    assert_not_requested :post, /./
+  end
+
+  test "#perform should retain capability metadata during its outage while applying fresh task metadata" do
+    credential.update!(available_models: [{ "id" => "new-model", "metadata" => { "source" => "models.dev", "tool_call" => false } }])
+    stub_models
+    stub_request(:get, PublishedModelMetadata::URL).to_return(status: 503)
+    stub_request(:get, PublishedModelTasks::URL).to_return(body: {
+      "new-model" => { litellm_provider: "openai", mode: "embedding" }
+    }.to_json)
+
+    Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) do
+      AiModelCatalogRefreshJob.perform_now(refresh_run)
+    end
+
+    assert_equal false, credential.reload.model_metadata("new-model")["tool_call"]
+    assert_equal "embedding", credential.model_metadata("new-model").dig("task", "mode")
+    assert_empty credential.supported_models
+  end
+
+  test "#perform should refresh capabilities and keep new models selectable during a task catalog outage" do
+    stub_models
+    stub_request(:get, PublishedModelMetadata::URL).to_return(body: {
+      openai: { models: { "new-model" => { tool_call: false } } }
+    }.to_json)
+    stub_request(:get, PublishedModelTasks::URL).to_timeout
+
+    Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) do
+      AiModelCatalogRefreshJob.perform_now(refresh_run)
+    end
+
+    assert_predicate refresh_run.reload, :succeeded?
+    assert_equal false, credential.reload.model_metadata("new-model")["tool_call"]
+    assert_nil credential.model_metadata("new-model")["task"]
+    assert credential.supports_model?("new-model")
+  end
+
+  test "#perform should clear task classifications removed from a successful catalog" do
+    credential.update!(available_models: [{ "id" => "new-model", "metadata" => { "task" => { "source" => "litellm", "mode" => "embedding" } } }])
+    stub_models
+    stub_request(:get, PublishedModelMetadata::URL).to_return(body: "{}")
+
+    Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) do
+      AiModelCatalogRefreshJob.perform_now(refresh_run)
+    end
+
+    assert credential.reload.supports_model?("new-model")
+    assert_nil credential.model_metadata("new-model")["task"]
   end
 end

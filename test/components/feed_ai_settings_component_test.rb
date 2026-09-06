@@ -125,4 +125,18 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
     feed = build(:feed, user: user, feed_profile_key: "rss", ai_credential: credential, ai_model: "removed-model")
     assert_not component(feed).model_unavailable?
   end
+
+  test "#models_by_credential should omit specialized tasks from new choices while retaining a saved selection" do
+    credential.update!(available_models: [
+      { "id" => "image-model", "metadata" => { "task" => { "mode" => "image_generation" } } },
+      { "id" => "future-model" }
+    ])
+    fresh = component(ai_feed(ai_credential: credential))
+    saved = component(ai_feed(ai_credential: credential, ai_model: "image-model"))
+
+    assert_equal ["future-model"], fresh.models_by_credential.fetch(credential.id.to_s).pluck("id")
+    assert_equal ["future-model", "image-model"], saved.models_by_credential.fetch(credential.id.to_s).pluck("id")
+    assert_equal "image-model", saved.selected_model_id
+    assert saved.model_unavailable?
+  end
 end

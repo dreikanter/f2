@@ -7,8 +7,21 @@ New IDs require no qualification entry, SDK registry update, or paid probe.
 Published metadata from [models.dev](https://models.dev) is advisory and matched
 by exact provider and model ID. Moonshot uses the international `moonshotai`
 catalog, matching the configured `api.moonshot.ai` endpoint. Synthesized SDK
-capabilities are not treated as evidence. Missing capability values stay unknown;
-only explicit non-text output modalities exclude a listed model from the picker.
+capabilities are not treated as evidence. Missing capability values stay unknown.
+
+Task metadata comes from [LiteLLM's free JSON catalog](https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json),
+matched by provider and exact model ID. Only its published task mode is used;
+no LiteLLM SDK or runtime dependency is added. Known embedding, image, video,
+audio-only, realtime, moderation, ranking, search, and legacy completion tasks
+are excluded from new feed selections, along with explicit non-text outputs.
+Chat, Responses, unknown task modes, and missing metadata remain selectable.
+No model-name patterns, family allowlists, or qualification probes are involved.
+Existing saved selections remain visible and are never silently replaced.
+
+The two metadata sources refresh independently and retain their last cached
+catalog for up to seven days during outages, with a one-hour retry backoff.
+Task entries removed from a successful catalog become unknown on refresh;
+stale task classifications are not retained indefinitely in credential snapshots.
 
 Catalog refresh runs daily, when a stale picker or credential page opens, and
 when **Refresh models** is clicked on the credential page. It has its own tracked
