@@ -165,6 +165,24 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     end
   end
 
+  test "#call should record a blank unstructured response as an error without spending a repair attempt" do
+    [nil, "", " \n\t"].each do |content|
+      @context = nil
+      stub_completions(completion(content))
+
+      error = assert_raises(LlmClient::SchemaError) do
+        client.call(context, prompt: "Answer the question", output_schema: nil)
+      end
+
+      assert_equal "AI provider returned an empty response", error.message
+      assert_equal 1, @requests.size
+      usage = LlmUsage.order(:created_at).last
+      assert_equal "schema_error", usage.outcome
+      assert_equal 20, usage.input_tokens
+      assert_equal 10, usage.output_tokens
+    end
+  end
+
   test "#call should not spend a correction attempt on a missing or whitespace-only response" do
     [nil, "", " \n\t"].each do |content|
       @context = nil

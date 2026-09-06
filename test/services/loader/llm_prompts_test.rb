@@ -76,4 +76,11 @@ class Loader::LlmPromptsTest < ActiveSupport::TestCase
     assert_match(/with a null source_url and no published_at/, prompt)
     assert_match(/nothing\s+publishable beyond refusals, errors, or capability notices/, prompt)
   end
+  test "answer prompts should preserve uncertainty without weakening source grounding" do
+    [Loader::LlmPrompts::COMBINED_SYSTEM, Loader::LlmPrompts::GATHER_SYSTEM, Loader::LlmPrompts::STRUCTURE_SYSTEM].each do |prompt|
+      assert_includes prompt, Loader::LlmPrompts::ANSWERS
+      assert_match(/Never invent retrieved posts/, prompt)
+      assert_match(/Without evidence for requested source posts, return no posts/, prompt)
+    end
+  end
 end

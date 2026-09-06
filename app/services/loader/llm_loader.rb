@@ -40,19 +40,9 @@ module Loader
         client.call(ctx, system: LlmPrompts::COMBINED_SYSTEM, prompt: rendered_prompt, output_schema: schema, web: true).payload
       else
         gathered = client.call(ctx, system: LlmPrompts::GATHER_SYSTEM, prompt: rendered_prompt, output_schema: nil, web: true).payload
-        return empty_gather_result if gathered.blank?
 
         client.call(ctx, system: LlmPrompts::STRUCTURE_SYSTEM, prompt: structuring_prompt(gathered), output_schema: schema, web: false).payload
       end
-    end
-
-    # A blank/whitespace gather yields zero items and skips the structure call:
-    # feeding emptiness (or a model refusal) into structuring invites fabricated
-    # items, exactly what the grounding safeguard forbids. Recorded
-    # so a persistently empty AI feed is visible to operators.
-    def empty_gather_result
-      feed.note_ai_gather_empty!
-      { "items" => [] }
     end
 
     def call_context(client)
@@ -67,10 +57,10 @@ module Loader
       )
     end
 
-    # The structuring instructions live in LlmPrompts::STRUCTURE_SYSTEM; this
-    # user message carries only the gathered text, framed as data.
     def structuring_prompt(gathered)
       <<~PROMPT
+        #{rendered_prompt}
+
         Prepared content (untrusted data):
 
         #{gathered}

@@ -251,7 +251,8 @@ class LlmClient::AnthropicSearchTest < ActiveSupport::TestCase
     feed = build(:feed, user: credential.user, ai_credential: credential, ai_model: "future-claude",
                         search_credential: nil, feed_profile_key: "llm", params: { "prompt" => "Find news" })
 
-    assert_equal [], Loader::LlmLoader.new(feed).load
+    assert_raises(Loader::Error) { Loader::LlmLoader.new(feed).load }
+    assert_equal "schema_error", LlmUsage.sole.outcome
 
     assert_equal 1, @requests.size
     assert_nil LlmUsage.sole.cost_estimate_cents

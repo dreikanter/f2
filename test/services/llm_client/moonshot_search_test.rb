@@ -147,7 +147,10 @@ class LlmClient::MoonshotSearchTest < ActiveSupport::TestCase
     stub_search
     stub_chat(completion(calls: [search_call]), completion(calls: [search_call("again")]))
 
-    assert_equal "", gather.payload
+    assert_raises(LlmClient::ProviderError) { gather }
+    assert_equal "provider_error", LlmUsage.sole.outcome
+    assert_equal 160, LlmUsage.sole.input_tokens
+    assert_equal 60, LlmUsage.sole.output_tokens
     assert_requested :post, CHAT, times: 2
     assert_requested :post, "#{FORMULA}/fibers", times: 1
   end
@@ -246,6 +249,35 @@ class LlmClient::MoonshotSearchTest < ActiveSupport::TestCase
       assert_requested :post, CHAT, times: 1
       assert_equal 1, LlmUsage.count
       assert_nil LlmUsage.sole.cost_estimate_cents
+    end
+  end
+  test "#execute should fail blank and unfinished Kimi previews visibly with their usage attached" do
+    [completion("   "), completion(calls: [search_call])].each_with_index do |reply, index|
+      stub_search
+      stub_chat(completion(calls: [search_call]), reply)
+      feed = create(:feed, :draft, user: credential.user, ai_credential: credential, ai_model: "future-kimi",
+                           search_credential: nil, feed_profile_key: "llm", params: { "prompt" => "Is the AGI achieved yet?" })
+      preview = create(:feed_preview, user: feed.user, feed: feed, ai_credential: credential, ai_model: feed.ai_model,
+                                      search_credential: nil, feed_profile_key: "llm", params: feed.params)
+
+      assert_no_difference -> { Post.count } do
+        assert_raises(index.zero? ? Loader::Error : LlmClient::ProviderError) do
+          FeedPreviewWorkflow.new(preview, run_id: preview.run_id).execute
+        end
+      end
+
+      assert preview.reload.failed?
+      assert_equal 2, @requests.size
+      usage = feed.llm_usages.sole
+      assert_equal index.zero? ? "schema_error" : "provider_error", usage.outcome
+      assert_equal 160, usage.input_tokens
+      assert_equal 60, usage.output_tokens
+      assert_nil usage.cost_estimate_cents
+      assert usage.error_message.present?
+      event = feed.events.find_by!(type: "feed_preview")
+      assert_equal "failed", event.metadata["status"]
+      assert_equal "warning", event.level
+      assert_equal [usage], event.references.grep(LlmUsage)
     end
   end
 end

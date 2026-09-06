@@ -87,6 +87,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     Loader::LlmLoader.new(openrouter_feed, llm_client: client).load
 
     assert_match "GATHERED-XYZ", client.calls[1][:prompt]
+    assert_includes client.calls[1][:prompt], client.calls[0][:prompt]
   end
 
   test "#load should send the combined system prompt on the single call" do
@@ -111,19 +112,6 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     user_prompt = client.calls[0][:prompt]
     assert_match "https://example.com", user_prompt
     assert_match(/Feed request/, user_prompt)
-  end
-
-  test "#load should skip the structure call and return no items when the gather is empty" do
-    client = fake_client(structured: { "items" => [{ "body" => "x", "source_url" => "https://e.com/a" }] },
-                         gathered: "   ", credential: openrouter_credential)
-
-    result = nil
-    assert_difference -> { openrouter_feed.events.where(type: "feed_refresh_ai_empty").count }, 1 do
-      result = Loader::LlmLoader.new(openrouter_feed, llm_client: client).load
-    end
-
-    assert_equal [], result
-    assert_equal 1, client.calls.size, "structure call must be skipped on an empty gather"
   end
 
   test "#load should carry the purpose option onto the call context" do
