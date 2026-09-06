@@ -96,10 +96,10 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_equal({ max_tokens: 8_192, provider: { require_parameters: true } }, params)
   end
 
-  test "OpenAI should opt out of reasoning on tool-enabled calls" do
+  test "OpenAI should leave reasoning settings to the model on tool-enabled calls" do
     adapter = LlmClient::Adapter::OpenAi.new
 
-    assert_equal({ max_completion_tokens: 8_192, reasoning_effort: "none" }, adapter.params_for("gpt-5.6-luna", schema: false, web: true))
+    assert_equal({ max_completion_tokens: 8_192 }, adapter.params_for("gpt-5.6-luna", schema: false, web: true))
   end
 
   # Structuring keeps its reasoning: no tool is there to collide with it.

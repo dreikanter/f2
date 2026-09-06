@@ -31,6 +31,14 @@ class LlmClient
     def within_budget
       self.last_response = nil
       self.retrieval = { "completion_calls" => 0 }
+      remaining = claim_attempt!
+
+      self.retrieval = {}
+      ::Timeout.timeout(remaining) { yield }
+    end
+
+    # Responses tool continuations consume the same allowance as fallbacks.
+    def claim_attempt!
       @attempts += 1
       raise LlmClient::Timeout, "AI request attempt budget exceeded" if @attempts > MAX_ATTEMPTS
 
@@ -39,8 +47,7 @@ class LlmClient
       remaining = @deadline - now
       raise LlmClient::Timeout, "AI request time budget exceeded" unless remaining.positive?
 
-      self.retrieval = {}
-      ::Timeout.timeout(remaining) { yield }
+      remaining
     end
   end
 end

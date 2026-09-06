@@ -9,6 +9,10 @@ class LlmClient
         OpenAiResponses
       end
 
+      def transport_for(ctx, web:, tools:)
+        OpenAiResponses if ctx && ctx.responses_api != false && (web || ctx.responses_api)
+      end
+
       def unsupported_native_search?(error, model:)
         detail = error_detail(error)
         return false unless detail
@@ -48,13 +52,6 @@ class LlmClient
 
       def dead_key?(error)
         error_codes(error).intersect?(SPENT_KEY_CODES)
-      end
-
-      # OpenAI's reasoning models reason by default, and OpenAI rejects function
-      # tools alongside reasoning on the chat-completions endpoint RubyLLM
-      # speaks. Scoped to tool-enabled calls, so structuring keeps its reasoning.
-      def web_params(_model)
-        { reasoning_effort: "none" }
       end
 
       # OpenAI completes a structured extraction while driving function tools,

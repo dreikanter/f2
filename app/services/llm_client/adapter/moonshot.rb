@@ -7,6 +7,10 @@ class LlmClient
         MoonshotSearch
       end
 
+      def transport_for(ctx, web:, tools:)
+        super if tools
+      end
+
       def unsupported_schema?(error)
         OpenAi.new.unsupported_schema?(error)
       end

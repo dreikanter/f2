@@ -132,14 +132,14 @@ class LlmClient
       raise AuthError, e.message
     rescue RubyLLM::Error => e
       write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
-      if adapter.capability_error_status?(e)
+      if adapter.capability_error_status?(e) && (!ctx.responses_api || ctx.retrieval["completion_calls"] == 1)
         raise UnsupportedResponses, e.message if ctx.responses_api && adapter.unsupported_responses?(e)
         if %w[native provider].include?(ctx.retrieval["mode"]) && adapter.unsupported_native_search?(e, model: ctx.model)
           ctx.tools_disabled = true if adapter.unsupported_tools?(e)
           raise UnsupportedNativeSearch, e.message
         end
         raise UnsupportedSchema, e.message if native_schema && output_schema.present? && adapter.unsupported_schema?(e)
-        raise UnsupportedTools, e.message if !ctx.responses_api && web && tools_enabled?(ctx) && adapter.unsupported_tools?(e)
+        raise UnsupportedTools, e.message if web && tools_enabled?(ctx) && adapter.unsupported_tools?(e)
       end
 
       Rails.error.report(e, context: error_context(ctx))
@@ -197,14 +197,12 @@ class LlmClient
 
   # Single seam tests stub. Returns a ProviderResponse.
   def invoke_provider(ctx: nil, model:, prompt:, output_schema:, web:, system: nil, native_schema: true)
-    transport = adapter.native_search_transport
-    transport = nil if transport == MoonshotSearch && !tools_enabled?(ctx)
-    if ctx&.responses_api || (web && transport && !ctx.native_search_disabled && !ctx.tools_disabled && !ctx.search_credential&.active?)
-      ctx.responses_api = transport == OpenAiResponses
+    tools = web && tools_enabled?(ctx)
+    transport = adapter.transport_for(ctx, web: web, tools: tools)
+    if transport
       return transport.new(credential).call(ctx, prompt: prompt, output_schema: output_schema,
                                            web: web, system: system, native_schema: native_schema)
     end
-    tools = web && tools_enabled?(ctx)
     if web
       ctx.retrieval = { "mode" => ctx.search_credential&.active? && tools ? "external" : "limited" }
       system = [system, retrieval_instructions(ctx, tools: tools)].compact_blank.join("\n\n")

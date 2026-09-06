@@ -28,15 +28,19 @@ class LlmClient
 
       # Search is optional; both tools share one allowance.
       def apply_web(chat, search_provider:, search_credential:, refresh_event: nil, budget: LlmClient::ToolBudget.new)
-        chat.with_tool(
-          LlmClient::Tools::WebSearch.new(
-            provider: search_provider,
-            credential: search_credential,
-            refresh_event: refresh_event,
-            budget: budget
-          )
-        ) if search_provider
-        chat.with_tool(LlmClient::Tools::WebFetch.new(budget: budget))
+        web_tools(search_provider: search_provider, search_credential: search_credential,
+                  refresh_event: refresh_event, budget: budget).each { |tool| chat.with_tool(tool) }
+      end
+
+      def web_tools(search_provider:, search_credential:, refresh_event: nil, budget:)
+        tools = []
+        tools << Tools::WebSearch.new(provider: search_provider, credential: search_credential,
+                                      refresh_event: refresh_event, budget: budget) if search_provider
+        tools << Tools::WebFetch.new(budget: budget)
+      end
+
+      def transport_for(ctx, web:, tools:)
+        native_search_transport if web && !ctx.native_search_disabled && !ctx.tools_disabled && !ctx.search_credential&.active?
       end
 
       # True when one web+schema call returns grounded, schema-valid JSON; false
