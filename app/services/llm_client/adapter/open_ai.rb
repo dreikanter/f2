@@ -9,6 +9,10 @@ class LlmClient
         OpenAiResponses
       end
 
+      def unsupported_native_search?(error, model:)
+        OpenAiResponses.unsupported_search?(error, model: model)
+      end
+
       def unsupported_schema?(error)
         body = error.response&.body
         body = JSON.parse(body) if body.is_a?(String)

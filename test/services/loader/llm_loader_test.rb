@@ -62,7 +62,8 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal items, loader.load
   end
 
-  test "#load should use one combined web+schema call for a combined-extraction provider" do
+  test "#load should use one combined web+schema call with explicit external search" do
+    feed.update!(search_credential: create(:search_credential, :active, user: user))
     client = fake_client(structured: { "items" => [] })
     Loader::LlmLoader.new(feed, llm_client: client).load
 
@@ -90,6 +91,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
   end
 
   test "#load should send the combined system prompt on the single call" do
+    feed.update!(search_credential: create(:search_credential, :active, user: user))
     client = fake_client(structured: { "items" => [] })
     Loader::LlmLoader.new(feed, llm_client: client).load
 
@@ -130,14 +132,14 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     client = fake_client(structured: { "items" => [] })
     Loader::LlmLoader.new(feed, llm_client: client, purpose: :preview).load
 
-    assert_equal [:preview], client.calls.map { |c| c[:purpose] }
+    assert_equal [:preview], client.calls.map { |c| c[:purpose] }.uniq
   end
 
   test "#load should default the call purpose to scheduled_run" do
     client = fake_client(structured: { "items" => [] })
     Loader::LlmLoader.new(feed, llm_client: client).load
 
-    assert_equal [:scheduled_run], client.calls.map { |c| c[:purpose] }
+    assert_equal [:scheduled_run], client.calls.map { |c| c[:purpose] }.uniq
   end
 
   def schema_failing_client
@@ -193,7 +195,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     client = fake_client(structured: { "items" => [] }, credential: supported)
     Loader::LlmLoader.new(supported_feed, llm_client: client).load
 
-    assert_equal ["claude-sonnet-4-6"], client.calls.map { |c| c[:model] }
+    assert_equal ["claude-sonnet-4-6"], client.calls.map { |c| c[:model] }.uniq
   end
 
   test "#load should keep the selected model when it disappears" do
@@ -206,7 +208,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
       Loader::LlmLoader.new(dropped_feed, llm_client: client).load
     end
 
-    assert_equal ["removed-model"], client.calls.map { |c| c[:model] }
+    assert_equal ["removed-model"], client.calls.map { |c| c[:model] }.uniq
   end
 
   test "#load should keep the selected model when the snapshot becomes empty" do
@@ -219,7 +221,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
       Loader::LlmLoader.new(orphaned, llm_client: client).load
     end
 
-    assert_equal ["claude-opus-4-7"], client.calls.map { |c| c[:model] }
+    assert_equal ["claude-opus-4-7"], client.calls.map { |c| c[:model] }.uniq
   end
 
   test "#load should fall back to the provider default model when no override" do
