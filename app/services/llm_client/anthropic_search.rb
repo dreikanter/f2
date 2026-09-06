@@ -61,7 +61,7 @@ class LlmClient
       @ctx.retrieval["token_usage_reported"] = false
       @ctx.retrieval["search_calls"] = nil
       @ctx.retrieval["completion_calls"] += 1
-      body = connection.post("messages", params).body
+      body = connection.post("v1/messages", params).body
       raise ProviderError, "Invalid Anthropic response" unless body.is_a?(Hash)
 
       record_usage(body, known_usage: known_usage)

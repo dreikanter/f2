@@ -90,7 +90,7 @@ class LlmClient::AnthropicSearchTest < ActiveSupport::TestCase
     stub_messages(reply(blocks: search_blocks + [text_block("Release facts", citations: [citation])], searches: 1),
                   reply('{"items":[{"body":"Release facts","source_url":"https://example.com/release"}]}'))
     feed = create(:feed, :draft, user: credential.user, ai_credential: credential, ai_model: "future-claude",
-                         feed_profile_key: "llm", params: { "prompt" => "Find a recent release" })
+                         search_credential: nil, feed_profile_key: "llm", params: { "prompt" => "Find a recent release" })
     preview = create(:feed_preview, user: feed.user, feed: feed, ai_credential: credential, ai_model: feed.ai_model,
                                     feed_profile_key: "llm", params: feed.params)
 
@@ -225,7 +225,7 @@ class LlmClient::AnthropicSearchTest < ActiveSupport::TestCase
   test "#load should not turn search planning or citation metadata into feed items" do
     stub_messages(reply(blocks: [text_block("I will search now")] + search_blocks + [text_block("")], searches: 1))
     feed = build(:feed, user: credential.user, ai_credential: credential, ai_model: "future-claude",
-                        feed_profile_key: "llm", params: { "prompt" => "Find news" })
+                        search_credential: nil, feed_profile_key: "llm", params: { "prompt" => "Find news" })
 
     assert_equal [], Loader::LlmLoader.new(feed).load
 
