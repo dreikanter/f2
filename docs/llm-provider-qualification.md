@@ -92,6 +92,12 @@ exhaustion before a request is sent creates no usage row.
 
 The HTTP tests exercise these request shapes without paid calls.
 
+A blank model reply is an explicit response error, not an empty feed. Unfinished
+Kimi searches and halted client-tool loops fail visibly while retaining usage.
+A valid empty `items` array remains allowed for source searches with no matches.
+Question-answer feeds preserve the original request through structuring and
+instruct the model to retain short or uncertain answers without inventing evidence.
+
 ## Optional search
 
 Without an active external search override, the feed uses its AI credential for

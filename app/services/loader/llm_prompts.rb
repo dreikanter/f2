@@ -14,6 +14,17 @@ module Loader
   # Hard guarantees (uid minting, attachment/host validation, body truncation)
   # live in the deterministic layers, not here — the prompt is defense in depth.
   module LlmPrompts
+    ANSWERS = <<~TEXT.strip
+      When the feed request asks a question, produce an answer, not a list of
+      source posts. Use available retrieval for questions needing current evidence.
+      If the evidence does not establish an answer, state that
+      uncertainty instead of returning nothing or guessing yes or no. A substantive
+      answer expressing uncertainty is content, not a capability notice.
+      Follow the requested brevity and formatting in the body, including any
+      character limit. Use verified links when available; never invent a link
+      to satisfy the request. Do not add an original-content label to an answer.
+    TEXT
+
     TASK = <<~TEXT.strip
       Produce the content requested for a feed reader. The feed request may ask
       you to retrieve existing posts, transform supplied content, or create
@@ -25,7 +36,9 @@ module Loader
       Missing search access is not a reason to return an empty result for these
       requests. Use retrieval only if the request also needs external evidence.
 
-      When asked for existing source posts or current information, use available
+      #{ANSWERS}
+
+      When asked to retrieve existing source posts, use available
       retrieval and supplied page content. Return only results supported by that
       evidence, newest first. Missing evidence is a reason to return no source
       posts, never a reason to invent current updates. Return at most 10 items.
@@ -40,9 +53,9 @@ module Loader
         feed request.
       - Report source posts only from retrieved evidence, including supplied
         page content. Never invent retrieved posts or their source metadata.
-        Without evidence for a request that needs current information or source
-        posts, return no posts. Original content and general knowledge may be
-        used when explicitly requested without a need for current sources;
+        Without evidence for requested source posts, return no posts. Questions
+        still need an answer, expressing uncertainty when evidence is missing.
+        Original content and general knowledge may be used when requested;
         use a null source_url and omit publication dates for such content.
       - Refusals, retrieval errors, and explanations of missing capabilities are
         not feed items. Do not publish them as posts or summaries.
@@ -108,13 +121,19 @@ module Loader
     # along here too.
     STRUCTURE_SYSTEM = <<~TEXT.strip
       Convert the prepared content in the message into structured items. It may
-      contain retrieved posts, transformed content, or requested original content.
+      contain retrieved posts, transformed content, requested original content,
+      or answers to questions. Use the feed request to interpret this content
+      and preserve its requested formatting.
+
+      #{ANSWERS}
 
       #{OUTPUT_CONTRACT}
 
       Preserve supplied original content, including jokes and stories, as items
       with a null source_url and no published_at. A missing source link is not
-      a reason to discard original content. Do not generate additional content.
+      a reason to discard original content or a prepared answer. Preserve short
+      answers, including "No" or "Not sure", rather than treating uncertainty
+      as an error or capability notice. Do not generate additional content.
       Use only what is present in the prepared content; if it contains nothing
       publishable beyond refusals, errors, or capability notices,
       return the object with an empty items array.

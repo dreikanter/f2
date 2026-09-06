@@ -229,8 +229,10 @@ class LlmClient
     ctx.retrieval["token_usage_reported"] = false if ctx
     response = chat.ask(prompt)
     ctx.retrieval["token_usage_reported"] = usage_reported?(chat, response) if ctx
+    raise ProviderError, ToolBudget::HALTED if response.is_a?(RubyLLM::Tool::Halt)
+
     ProviderResponse.new(
-      payload: response_content(recover_halted(chat, response)),
+      payload: response_content(response),
       **usage_totals(chat, response)
     )
   ensure
@@ -246,18 +248,6 @@ class LlmClient
       params[key] = [params[key], limit].min if params[key]
     end
     chat.with_params(**params) if params.present?
-  end
-
-  # A halted tool loop returns the halt notice in place of the model's message.
-  # Recover what the model had already said; a degraded run beats an empty one.
-  # With nothing said the answer is empty — the notice is our own text, and a
-  # caller would otherwise read it as content the model gathered.
-  def recover_halted(chat, response)
-    return response unless response.is_a?(RubyLLM::Tool::Halt)
-
-    Array(chat.try(:messages)).reverse.find do |message|
-      message.try(:role) == :assistant && message.content.is_a?(String) && message.content.present?
-    end
   end
 
   # A web-enabled call is several billed completions — one per tool round —
@@ -324,6 +314,8 @@ class LlmClient
   end
 
   def parse_payload(raw, output_schema)
+    raise SchemaError, "AI provider returned an empty response" if raw.nil? || (raw.is_a?(String) && raw.blank?)
+
     return raw if output_schema.blank? || raw.is_a?(Hash)
 
     PayloadRepair.repair(JSON.parse(PayloadRepair.unwrap(adapter.unwrap_json(raw))), output_schema)

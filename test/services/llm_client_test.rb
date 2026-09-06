@@ -575,27 +575,30 @@ class LlmClientTest < ActiveSupport::TestCase
              cache_write_tokens: 0, cache_read_tokens: 0)
   end
 
-  test "#invoke_provider should keep what the model gathered when the tool loop halts" do
+  test "#call should fail a halted tool loop and retain partial usage instead of publishing planning text" do
     client = LlmClient.new(credential)
-    chat = FakeHaltedChat.new([assistant_message("gathered so far"), assistant_message(nil)])
+    chat = FakeHaltedChat.new([assistant_message("I will search now"), assistant_message(nil)])
+    ctx = LlmClient::CallContext.new(feed: nil, profile_key: "llm", stage: :loader, model: "claude-sonnet-4-6")
 
-    response = stub_chat(client, chat) do
-      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "p", output_schema: nil, web: false, system: nil)
+    stub_chat(client, chat) do
+      assert_raises(LlmClient::ProviderError) { client.call(ctx, prompt: "p", output_schema: nil) }
     end
 
-    assert_equal "gathered so far", response.payload
+    assert_equal "provider_error", LlmUsage.sole.outcome
+    assert_equal 2, LlmUsage.sole.input_tokens
+    assert_includes LlmUsage.sole.error_message, "tool loop was stopped"
   end
 
-  # The notice is our own text; a caller would read it as gathered content.
-  test "#invoke_provider should return nothing when a halted loop gathered nothing" do
+  test "#call should fail a halted tool loop that gathered nothing" do
     client = LlmClient.new(credential)
     chat = FakeHaltedChat.new([])
+    ctx = LlmClient::CallContext.new(feed: nil, profile_key: "llm", stage: :loader, model: "claude-sonnet-4-6")
 
-    response = stub_chat(client, chat) do
-      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "p", output_schema: nil, web: false, system: nil)
+    stub_chat(client, chat) do
+      assert_raises(LlmClient::ProviderError) { client.call(ctx, prompt: "p", output_schema: nil) }
     end
 
-    assert_predicate response.payload, :blank?
+    assert_equal "provider_error", LlmUsage.sole.outcome
   end
 
   # Returns a response carrying distinct cache counts, so a swap between the

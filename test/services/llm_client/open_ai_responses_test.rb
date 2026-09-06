@@ -247,7 +247,8 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
     feed = create(:feed, user: credential.user, ai_credential: credential, feed_profile_key: "llm",
                          search_credential: nil, params: { "prompt" => "News" })
 
-    assert_equal [], Loader::LlmLoader.new(feed).load
+    assert_raises(Loader::Error) { Loader::LlmLoader.new(feed).load }
+    assert_equal "schema_error", LlmUsage.sole.outcome
     assert_equal 1, @requests.size
     assert_nil LlmUsage.sole.cost_estimate_cents
   end

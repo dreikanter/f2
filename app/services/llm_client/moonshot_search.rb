@@ -30,7 +30,12 @@ class LlmClient
         choice = complete(messages, tool: tool, final: true)
       end
       # A provider ignoring tool_choice must not start another paid tool round.
-      content = tool_calls(choice).empty? ? choice.dig("message", "content").to_s : ""
+      unless choice["finish_reason"] == "stop" && tool_calls(choice).empty?
+        raise ProviderError, "Moonshot did not finish answering after the final search round"
+      end
+      content = choice.dig("message", "content")
+      raise ProviderError, "Invalid Moonshot text content" unless content.nil? || content.is_a?(String)
+
       ctx.last_response.with(payload: content)
     end
 
