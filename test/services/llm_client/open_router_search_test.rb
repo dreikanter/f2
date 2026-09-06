@@ -308,4 +308,24 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
     assert_equal false, usage.retrieval["token_usage_reported"]
     assert_requested :post, ENDPOINT, times: 1
   end
+
+  test "#call should validate and repair JSON locally without repeating search or its reported cost" do
+    schema = { "type" => "object", "properties" => { "items" => { "type" => "array", "items" => { "type" => "string" } } },
+               "required" => ["items"], "additionalProperties" => false }
+    stub_chat(reply('{"items":["Available fact"],}'), reply('{"items":["Available fact"]}'))
+
+    result = LlmClient.new(credential).call(context, prompt: "Find a fact", output_schema: schema, web: true)
+
+    assert_equal({ "items" => ["Available fact"] }, result.payload)
+    assert_equal 2, @requests.size
+    assert_includes @requests.first["messages"].first["content"], schema.to_json
+    assert_nil @requests.last["tools"]
+    assert_nil @requests.last["max_tool_calls"]
+    assert_nil @requests.last["response_format"]
+    assert_includes @requests.last["messages"].first["content"], "No web tools are available"
+    usages = LlmUsage.order(:created_at)
+    assert_equal %w[schema_error success], usages.pluck(:outcome)
+    assert_equal [2, 0], usages.pluck(:cost_estimate_cents)
+    assert_equal({}, usages.last.retrieval)
+  end
 end
