@@ -10,10 +10,8 @@ module Loader
   # not part of the profile config: it comes from the feed's override or
   # the provider default (see `#model_for`).
   class LlmLoader < Base
-    # Extraction is one call where the provider can carry web + schema together
-    # (Anthropic), and two otherwise — gather with web access, then structure
-    # the gathered text under the schema. The adapter owns which (see
-    # `#combined_extraction?`).
+    # Native citations need a separate gathering step before JSON extraction.
+    # External tools can share extraction where the adapter supports it.
     def load
       client = options.fetch(:llm_client) { LlmClient.for(feed) }
       ctx = call_context(client)

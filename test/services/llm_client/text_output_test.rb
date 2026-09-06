@@ -85,6 +85,7 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
       key = create(:ai_credential, :active, provider: provider,
                    available_models: [{ "id" => model, "metadata" => { "tool_call" => false } }])
       ctx = LlmClient::CallContext.new(feed: nil, profile_key: "llm", stage: :loader, model: model)
+      ctx.native_search_disabled = true
       response = completion('{"items":[]}')
       if provider == "anthropic"
         response[:body] = { content: [{ type: "text", text: '{"items":[]}' }],

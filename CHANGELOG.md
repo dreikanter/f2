@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-06
+
+- Claude feeds use built-in web search by default, retain source citations, and continue with limited access when search is disabled.
+
 ## 2026-09-05
 
 - Kimi feeds use Moonshot's built-in search by default, with bounded requests and a fallback when search is unavailable.

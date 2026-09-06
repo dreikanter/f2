@@ -55,6 +55,10 @@ class LlmClient
         nil
       end
 
+      def unsupported_native_search?(_error, model:)
+        false
+      end
+
       # RubyLLM's schema argument; the wrapper form is what carries strictness.
       def schema_payload(schema)
         { "schema" => schema, "strict" => schema_strict? }
