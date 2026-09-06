@@ -99,7 +99,7 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
     assert_equal activity.references.grep(LlmUsage).map(&:id).sort, saved_feed.llm_usages.pluck(:id).sort
     assert saved_feed.llm_usages.all?(&:preview?)
     assert_equal saved_attributes, saved_feed.reload.attributes
-    assert_requested :post, ENDPOINT, body: /Find one recent release announcement/
+    assert_requested :post, ENDPOINT, body: /Find one recent release announcement/, times: 2
   end
 
   test "#execute should retain paid usage for a superseded preview without overwriting its replacement" do
@@ -137,10 +137,11 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
 
   test "#execute should replace the started event with a fresh terminal event for polling" do
     started_id = nil
+    replies = [response("No matching source posts were found."), response('{"items":[]}')]
     stub_request(:post, ENDPOINT).to_return do
       started_id = activity.id
       assert_equal "started", activity.metadata["status"]
-      response("")
+      replies.shift
     end
 
     execute
@@ -148,7 +149,7 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
     assert_not_equal started_id, activity.id
     assert_not Event.exists?(started_id)
     assert_equal "completed", activity.metadata["status"]
-    assert_equal 1, activity.references.grep(LlmUsage).size
+    assert_equal 2, activity.references.grep(LlmUsage).size
   end
 
   test "#finish! should retain external search references and known zero cost" do
