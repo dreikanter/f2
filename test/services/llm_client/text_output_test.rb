@@ -339,6 +339,38 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     end
   end
 
+  test "#call should store and sum small estimates without rounding each call" do
+    credential.update!(available_models: [{ "id" => context.model, "metadata" => { "pricing" => { "input" => 1, "output" => 2 } } }])
+    stub_completions(completion('{"items":[]}', input: 2_000, output: 1_000))
+
+    2.times do
+      @context = nil
+      usage = LlmUsage.find(call.usage_id)
+      assert_equal "0.4".to_d, usage.cost_estimate_cents
+    end
+
+    assert_equal "0.8".to_d, LlmUsage.sum(:cost_estimate_cents)
+    assert_equal 2, @requests.size
+  end
+
+  test "#call should keep an unpriced fallback cache category unknown" do
+    key = create(:ai_credential, :active, provider: "openrouter")
+    ctx = LlmClient::CallContext.new(feed: nil, profile_key: "llm", stage: :loader,
+                                    model: "anthropic/claude-sonnet-4-6")
+    body = JSON.parse(completion('{"items":[]}')[:body])
+    body["usage"]["prompt_tokens_details"] = { "cached_tokens" => 10 }
+    stub_request(:post, "https://openrouter.ai/api/v1/chat/completions")
+      .to_return(body: body.to_json, headers: { "Content-Type" => "application/json" })
+
+    result = LlmClient.new(key).call(ctx, prompt: "Empty list", output_schema: SCHEMA, native_schema: false)
+    usage = LlmUsage.find(result.usage_id)
+
+    assert_equal({ "items" => [] }, result.payload)
+    assert_equal 10, usage.cache_read_tokens
+    assert_equal true, usage.retrieval["token_usage_reported"]
+    assert_nil usage.cost_estimate_cents
+  end
+
   test "#call should record unknown cost once when a model request times out" do
     credential.update!(available_models: [{ "id" => context.model, "metadata" => { "pricing" => { "input" => 1, "output" => 2 } } }])
     stub_request(:post, ENDPOINT).to_raise(Faraday::TimeoutError.new("execution expired"))

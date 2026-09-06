@@ -4,6 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-06
 
+- AI spending totals include small charges accurately, and missing cache prices keep estimates unknown.
+
 - Model choices and capabilities update when published metadata is removed or expires.
 
 - AI spending stays unknown when a response omits token usage or a later tool round fails; requests stopped before reaching the model no longer count as AI calls.

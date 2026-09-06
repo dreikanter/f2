@@ -1,12 +1,12 @@
 # Per-model token rates (USD per million tokens).
 #
-# Used by LlmClient::RateTable to compute LlmUsage#cost_usd from the token
-# counts reported by ruby_llm. Update whenever a provider rate changes.
+# Fallback prices when published model pricing is unavailable. Used to estimate
+# LlmUsage#cost_estimate_cents from token counts reported by ruby_llm.
 #
-# Cache rates apply to Anthropic prompt caching:
+# Cache rates apply to prompt caching:
 #   - cache_write: tokens that *populated* a cache entry on this call
 #   - cache_read:  tokens served from an existing cache entry
-# Models without prompt caching can omit those keys.
+# Omitted rates stay unknown when the response reports tokens in that category.
 
 anthropic:
   claude-opus-4-7:
@@ -49,9 +49,7 @@ openrouter:
     output_per_million: 0.40
 
 # OpenAI. Verified 2026-08-15 against openai.com/api/pricing. Standard-context
-# rates: OpenAI bills long context higher, which this flat table cannot
-# express. cache_write is omitted because RubyLLM never reports a cache-write
-# count for OpenAI, so a rate would price nothing.
+# rates: OpenAI bills long context higher, which this flat table cannot express.
 openai:
   gpt-5.6-luna:
     input_per_million: 0.20

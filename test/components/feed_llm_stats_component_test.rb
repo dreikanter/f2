@@ -37,6 +37,22 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
     assert_equal "$0.40", value.text.strip
   end
 
+  test "#render should sum fractional preview and scheduled costs before formatting and preserve unknown totals" do
+    create(:llm_usage, feed: feed, user: feed.user, purpose: :preview, cost_estimate_cents: "0.4")
+    create(:llm_usage, feed: feed, user: feed.user, purpose: :scheduled_run, cost_estimate_cents: "0.4")
+
+    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+
+    assert_equal "2", result.css('[data-key="llm_stats.ai_calls.value"]').first.text.strip
+    assert_equal "$0.01", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
+
+    create(:llm_usage, feed: feed, user: feed.user, cost_estimate_cents: nil)
+    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+
+    assert_equal "Unknown", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
+    assert_includes result.css('[data-key="llm_stats.cost_note"]').text, "Available estimates total $0.01."
+  end
+
   test "#render should display search calls and fractional estimated spend" do
     result = render_inline(FeedLlmStatsComponent.new(feed: feed_with_usages))
 

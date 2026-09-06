@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_05_190000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_06_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -227,7 +227,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_05_190000) do
     t.integer "output_tokens", default: 0, null: false
     t.integer "cache_read_tokens", default: 0, null: false
     t.integer "cache_write_tokens", default: 0, null: false
-    t.integer "cost_estimate_cents"
+    t.decimal "cost_estimate_cents", precision: 20, scale: 10
     t.integer "outcome", null: false
     t.datetime "started_at", null: false
     t.datetime "finished_at", null: false

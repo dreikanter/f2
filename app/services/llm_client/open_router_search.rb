@@ -91,8 +91,8 @@ class LlmClient
       # information cannot establish a complete total.
       return unless usage["is_byok"] == false && dollars.is_a?(Numeric) && dollars.finite? && dollars >= 0
 
-      cents = (dollars.to_d * 100).round.to_i
-      cents if cents <= 2_147_483_647
+      cents = dollars.to_d * 100
+      cents.to_f if cents <= 2_147_483_647
     end
 
     def token_count?(value)
