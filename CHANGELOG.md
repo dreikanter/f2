@@ -4,6 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-06
 
+- AI feed prompts distinguish requests for source posts from requests for direct answers, including when both are phrased as questions.
+
 - AI feeds preserve short answers and uncertainty; blank responses and unfinished tool runs now appear as errors instead of no posts found.
 
 - OpenAI feeds can use external search with reasoning models through the Responses API.

@@ -15,8 +15,9 @@ module Loader
   # live in the deterministic layers, not here — the prompt is defense in depth.
   module LlmPrompts
     ANSWERS = <<~TEXT.strip
-      When the feed request asks a question, produce an answer, not a list of
-      source posts. Use available retrieval for questions needing current evidence.
+      Follow the requested result: requests to find or list existing source posts
+      remain source retrieval even when phrased as questions. When asked for a
+      direct answer, produce one. Use available retrieval when it needs current evidence.
       If the evidence does not establish an answer, state that
       uncertainty instead of returning nothing or guessing yes or no. A substantive
       answer expressing uncertainty is content, not a capability notice.
@@ -53,8 +54,8 @@ module Loader
         feed request.
       - Report source posts only from retrieved evidence, including supplied
         page content. Never invent retrieved posts or their source metadata.
-        Without evidence for requested source posts, return no posts. Questions
-        still need an answer, expressing uncertainty when evidence is missing.
+        Without evidence for requested source posts, return no posts. Requests for
+        a direct answer still need one, expressing uncertainty when evidence is missing.
         Original content and general knowledge may be used when requested;
         use a null source_url and omit publication dates for such content.
       - Refusals, retrieval errors, and explanations of missing capabilities are
