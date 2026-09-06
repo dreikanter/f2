@@ -121,7 +121,7 @@ class LlmClient::AnthropicSearchTest < ActiveSupport::TestCase
     paused = [text_block("I will search"), { type: "thinking", thinking: "Reasoning", signature: "signed-reasoning" }] + search_blocks
     stub_messages(reply(blocks: paused, stop: "pause_turn", searches: 1), reply("Found facts", searches: 1))
 
-    assert_equal "Found facts", gather.payload
+    assert_equal "I will search\n\nFound facts", gather.payload
 
     assert_equal 2, @requests.size
     assert_equal @requests.first["tools"], @requests.last["tools"]
@@ -136,6 +136,30 @@ class LlmClient::AnthropicSearchTest < ActiveSupport::TestCase
     assert_equal 2, usage.retrieval["search_calls"]
     assert_nil usage.cost_estimate_cents
     assert_equal 4, context.tool_budget.spent
+  end
+
+  test "#load should preserve cited partial answers before a paused search into extraction" do
+    citation = { type: "web_search_result_location", url: SOURCE, title: "Release", cited_text: "First fact" }
+    paused = search_blocks + [text_block("First fact", citations: [citation]), text_block("Additional detail"),
+                              { type: "server_tool_use", id: "search-2", name: "web_search", input: { query: "follow-up" } }]
+    continued = [{ type: "web_search_tool_result", tool_use_id: "search-2", content: [] }, text_block("Second fact")]
+    stub_messages(reply(blocks: paused, stop: "pause_turn", searches: 1), reply(blocks: continued, searches: 1),
+                  reply('{"items":[{"body":"First fact and second fact","source_url":"https://example.com/release"}]}'))
+    feed = build(:feed, user: credential.user, ai_credential: credential, ai_model: "future-claude",
+                        search_credential: nil, feed_profile_key: "llm", params: { "prompt" => "Find news" })
+
+    assert_equal SOURCE, Loader::LlmLoader.new(feed).load.sole["source_url"]
+
+    assert_equal 3, @requests.size
+    prompt = @requests.last["messages"].to_json
+    assert_includes prompt, "First fact"
+    assert_includes prompt, "Additional detail"
+    assert_includes prompt, "Second fact"
+    assert_includes prompt, SOURCE
+    assert_not_includes prompt, "opaque search evidence"
+    assert_equal JSON.parse(paused.to_json), @requests[1]["messages"].last["content"]
+    assert_nil @requests.last["tools"]
+    assert_equal [200, 100], LlmUsage.order(:created_at).pluck(:input_tokens)
   end
 
   test "#call should stop a repeatedly paused turn without an unbounded continuation" do

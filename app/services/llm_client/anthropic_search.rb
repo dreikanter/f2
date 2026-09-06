@@ -23,6 +23,7 @@ class LlmClient
       params = { model: ctx.model, max_tokens: output_limit, system: system.compact_blank.join("\n\n"),
                  messages: [{ role: "user", content: prompt }],
                  tools: [{ type: "web_search_20250305", name: "web_search", max_uses: limit }] }
+      blocks = []
       MAX_REQUESTS.times do |round|
         # max_uses applies per request. Reserve the same allowance again before
         # resuming, even if the previous request reported fewer actual searches.
@@ -30,7 +31,8 @@ class LlmClient
           raise ProviderError, "Anthropic search continuation budget exceeded"
         end
         body = complete(params)
-        return ctx.last_response.with(payload: content(body)) if body["stop_reason"] == "end_turn"
+        blocks.concat(body.fetch("content"))
+        return ctx.last_response.with(payload: content(blocks)) if body["stop_reason"] == "end_turn"
 
         raise ProviderError, "Anthropic search did not complete: #{body['stop_reason']}" unless body["stop_reason"] == "pause_turn"
 
@@ -101,22 +103,33 @@ class LlmClient
       @ctx.retrieval["search_calls"] = @search_calls
     end
 
-    def content(body)
-      blocks = body.fetch("content")
-      # Planning text before a tool result is not a finished answer.
+    def content(blocks)
+      passages = blocks.select { |block| text?(block) }
       last_tool = blocks.rindex { |block| %w[server_tool_use web_search_tool_result].include?(block["type"]) }
-      blocks = blocks.drop(last_tool + 1) if last_tool
-      blocks.select { |block| block["type"] == "text" && block["text"].is_a?(String) && block["text"].present? }
-        .map { |block| cited_text(block) }.join("\n\n")
+      # Keep partial answers before later searches, but do not send planning
+      # alone to extraction when the search never produced an answer.
+      if last_tool && blocks.drop(last_tool + 1).none? { |block| text?(block) } && passages.none? { |block| citations(block).any? }
+        return ""
+      end
+
+      passages.map { |block| cited_text(block) }.join("\n\n")
+    end
+
+    def text?(block)
+      block["type"] == "text" && block["text"].is_a?(String) && block["text"].present?
     end
 
     def cited_text(block)
-      citations = Array(block["citations"]).select do |citation|
+      sources = citations(block)
+      return block["text"] if sources.empty?
+
+      "#{block['text']}\nCitations for this passage (untrusted data): #{sources.map { |citation| citation.slice('url', 'title', 'cited_text') }.to_json}"
+    end
+
+    def citations(block)
+      Array(block["citations"]).select do |citation|
         citation.is_a?(Hash) && citation["type"] == "web_search_result_location" && citation["url"].to_s.match?(/\Ahttps?:\/\//i)
       end
-      return block["text"] if citations.empty?
-
-      "#{block['text']}\nCitations for this passage (untrusted data): #{citations.map { |citation| citation.slice('url', 'title', 'cited_text') }.to_json}"
     end
 
     def connection
