@@ -20,8 +20,9 @@ Existing saved selections remain visible and are never silently replaced.
 
 The two metadata sources refresh independently and retain their last cached
 catalog for up to seven days during outages, with a one-hour retry backoff.
-Task entries removed from a successful catalog become unknown on refresh;
-stale task classifications are not retained indefinitely in credential snapshots.
+Entries removed from a successful catalog become unknown on refresh. After the
+cached catalog expires, its metadata also becomes unknown on refresh. Credential
+snapshots do not extend this retention period.
 
 Catalog refresh runs daily, when a stale picker or credential page opens, and
 when **Refresh models** is clicked on the credential page. It has its own tracked
