@@ -105,7 +105,7 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
     assert_equal usages.pluck(:id).sort, event.references.grep(LlmUsage).map(&:id).sort
     assert_equal ["example/future-model"], usages.pluck(:model).uniq
     assert_equal 2, usages.first.cost_estimate_cents
-    assert_equal({}, usages.last.retrieval)
+    assert_equal({ "token_usage_reported" => true }, usages.last.retrieval)
     assert_equal 0, usages.last.cost_estimate_cents
   end
 
@@ -357,6 +357,6 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
     usages = LlmUsage.order(:created_at)
     assert_equal %w[schema_error success], usages.pluck(:outcome)
     assert_equal [2, 0], usages.pluck(:cost_estimate_cents)
-    assert_equal({}, usages.last.retrieval)
+    assert_equal({ "token_usage_reported" => true }, usages.last.retrieval)
   end
 end

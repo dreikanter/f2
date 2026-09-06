@@ -236,6 +236,7 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
   end
 
   test "#call should preserve billed tool rounds when a later request fails" do
+    credential.update!(available_models: [{ "id" => context.model, "metadata" => { "pricing" => { "input" => 1, "output" => 2 } } }])
     search = create(:search_credential, :active, user: credential.user)
     @context = LlmClient::CallContext.new(feed: nil, profile_key: "llm", stage: :loader,
                                           model: "new-unregistered-model", search_credential: search)
@@ -250,6 +251,8 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     assert_equal 51, usage.input_tokens
     assert_equal 12, usage.output_tokens
     assert_equal "provider_error", usage.outcome
+    assert_nil usage.cost_estimate_cents
+    assert_equal false, usage.retrieval["token_usage_reported"]
     assert_equal 2, @requests.size
     assert_equal 1, context.tool_budget.spent
   end
@@ -262,6 +265,7 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     assert_raises(LlmClient::Timeout) { call }
 
     assert_equal 4, @requests.size
+    assert_equal 4, LlmUsage.count
   end
 
   test "#call should preserve the original deadline across calls on the same context" do
@@ -276,8 +280,102 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     end
 
     assert_equal 1, @requests.size
-    assert_equal %w[success timeout], LlmUsage.order(:created_at).pluck(:outcome)
-    assert_equal 0, LlmUsage.order(:created_at).last.input_tokens
+    assert_equal ["success"], LlmUsage.pluck(:outcome)
+  end
+
+  test "#call should keep missing token usage unknown even with published prices" do
+    credential.update!(available_models: [{ "id" => context.model, "metadata" => { "pricing" => { "input" => 1, "output" => 2 } } }])
+    [nil, {}, { prompt_tokens: 20 }, { completion_tokens: 10 }].each do |usage|
+      @context = nil
+      response = completion('{"items":[]}')
+      response[:body] = JSON.parse(response[:body]).merge("usage" => usage).to_json
+      stub_completions(response)
+
+      result = call
+      recorded = LlmUsage.find(result.usage_id)
+
+      assert_equal({ "items" => [] }, result.payload)
+      assert_nil recorded.cost_estimate_cents
+      assert_equal false, recorded.retrieval["token_usage_reported"]
+    end
+  end
+
+  test "#call should price explicit zero usage and complete token reports" do
+    credential.update!(available_models: [{ "id" => context.model, "metadata" => { "pricing" => { "input" => 1, "output" => 2 } } }])
+    [[0, 0, 0], [10_000, 5_000, 2]].each do |input, output, cost|
+      @context = nil
+      stub_completions(completion('{"items":[]}', input: input, output: output))
+
+      usage = LlmUsage.find(call.usage_id)
+
+      assert_equal cost, usage.cost_estimate_cents
+      assert_equal true, usage.retrieval["token_usage_reported"]
+    end
+  end
+
+  test "#call should preserve unknown usage across the other SDK transports" do
+    [
+      ["anthropic", "https://api.anthropic.com/v1/messages"],
+      ["moonshot", "https://api.moonshot.ai/v1/chat/completions"],
+      ["openrouter", "https://openrouter.ai/api/v1/chat/completions"]
+    ].each do |provider, endpoint|
+      key = create(:ai_credential, :active, provider: provider, available_models: [
+        { "id" => "new-model", "metadata" => { "pricing" => { "input" => 1, "output" => 2 } } }
+      ])
+      ctx = LlmClient::CallContext.new(feed: nil, profile_key: "llm", stage: :loader, model: "new-model")
+      body = if provider == "anthropic"
+        { content: [{ type: "text", text: '{"items":[]}' }] }
+      else
+        JSON.parse(completion('{"items":[]}')[:body]).except("usage")
+      end
+      stub_request(:post, endpoint).to_return(body: body.to_json, headers: { "Content-Type" => "application/json" })
+
+      result = LlmClient.new(key).call(ctx, prompt: "Empty list", output_schema: SCHEMA, native_schema: false)
+      usage = LlmUsage.find(result.usage_id)
+
+      assert_equal({ "items" => [] }, result.payload)
+      assert_nil usage.cost_estimate_cents
+      assert_equal false, usage.retrieval["token_usage_reported"]
+    end
+  end
+
+  test "#call should record unknown cost once when a model request times out" do
+    credential.update!(available_models: [{ "id" => context.model, "metadata" => { "pricing" => { "input" => 1, "output" => 2 } } }])
+    stub_request(:post, ENDPOINT).to_raise(Faraday::TimeoutError.new("execution expired"))
+
+    assert_raises(LlmClient::Timeout) { call }
+
+    assert_nil LlmUsage.sole.cost_estimate_cents
+    assert_equal false, LlmUsage.sole.retrieval["token_usage_reported"]
+    assert_requested :post, ENDPOINT, times: 1
+  end
+
+  test "#call should keep a failed connection charge unknown" do
+    credential.update!(available_models: [{ "id" => context.model, "metadata" => { "pricing" => { "input" => 1, "output" => 2 } } }])
+    stub_request(:post, ENDPOINT).to_timeout
+
+    assert_raises(LlmClient::ProviderError) { call }
+
+    assert_equal "provider_error", LlmUsage.sole.outcome
+    assert_nil LlmUsage.sole.cost_estimate_cents
+    assert_equal false, LlmUsage.sole.retrieval["token_usage_reported"]
+    assert_requested :post, ENDPOINT, times: 1
+  end
+
+  test "#call should retain partial tokens when an earlier tool round omits usage" do
+    credential.update!(available_models: [{ "id" => context.model, "metadata" => { "pricing" => { "input" => 1, "output" => 2 } } }])
+    tool = { id: "fetch-1", type: "function",
+             function: { name: LlmClient::Tools::WebFetch.new.name, arguments: { url: "ftp://example.com" }.to_json } }
+    stub_completions(completion(nil, input: nil, output: nil, tool_calls: [tool]),
+                     completion('{"items":[]}', input: 10_000, output: 5_000))
+
+    usage = LlmUsage.find(call(web: true).usage_id)
+
+    assert_equal 10_000, usage.input_tokens
+    assert_equal 5_000, usage.output_tokens
+    assert_nil usage.cost_estimate_cents
+    assert_equal false, usage.retrieval["token_usage_reported"]
+    assert_equal 2, @requests.size
   end
   test "#call should use advisory schema and output limits while validating output and tracking unknown spend" do
     credential.update!(available_models: [{ "id" => context.model,

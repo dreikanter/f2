@@ -244,7 +244,9 @@ class LlmClient
       )
     end
 
+    ctx.retrieval["token_usage_reported"] = false if ctx
     response = chat.ask(prompt)
+    ctx.retrieval["token_usage_reported"] = usage_reported?(chat, response) if ctx
     ProviderResponse.new(
       payload: response_content(recover_halted(chat, response)),
       **usage_totals(chat, response)
@@ -284,8 +286,7 @@ class LlmClient
   # the single usage row. Falls back to the response when the chat doesn't
   # retain messages.
   def usage_totals(chat, response)
-    rounds = Array(chat.try(:messages)).select { |message| message.try(:role) == :assistant }
-    rounds = [response] if rounds.empty?
+    rounds = usage_rounds(chat, response)
 
     {
       input_tokens: rounds.sum { |message| message.try(:input_tokens).to_i },
@@ -293,6 +294,20 @@ class LlmClient
       cache_write_tokens: rounds.sum { |message| message.try(:cache_write_tokens).to_i },
       cache_read_tokens: rounds.sum { |message| message.try(:cache_read_tokens).to_i }
     }
+  end
+
+  def usage_rounds(chat, response)
+    rounds = Array(chat.try(:messages)).select { |message| message.try(:role) == :assistant }
+    rounds.presence || [response]
+  end
+
+  def usage_reported?(chat, response)
+    usage_rounds(chat, response).all? do |message|
+      %i[input_tokens output_tokens].all? do |field|
+        count = message.try(field)
+        count.is_a?(Integer) && count >= 0
+      end
+    end
   end
 
   def search_provider_for(ctx)
@@ -346,7 +361,7 @@ class LlmClient
   end
 
   def write_usage(ctx, outcome:, started_at:, finished_at: nil, response: nil, error_message: nil)
-    # Free tool discovery can fail before any model request is sent.
+    # Budget checks and free tool discovery can fail before a model request.
     return if ctx.retrieval["completion_calls"] == 0
 
     finished_at ||= Time.current
@@ -355,6 +370,7 @@ class LlmClient
     )
     cost = LlmClient::RateTable.cost_for(provider: credential.provider, model: ctx.model, usage: tokens,
                                                pricing: credential.model_metadata(ctx.model)["pricing"])
+    cost = nil unless response || ctx.last_response
     # Token prices alone cannot account for hosted search charges.
     cost = nil if %w[native provider].include?(ctx.retrieval["mode"]) && ctx.retrieval["search_calls"] != 0
     cost = nil if ctx.retrieval&.fetch("token_usage_reported", nil) == false
