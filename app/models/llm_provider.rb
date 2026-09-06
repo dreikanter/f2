@@ -15,24 +15,16 @@ class LlmProvider
   # @param default_model [String]
   # @param api_base [String, nil] set when the provider rides another's runtime
   #   at its own URL; native providers leave it nil
-  # @param minimal_model_metadata [Boolean] retain only listing IDs and names
-  #   when SDK-enriched capability and limit fields are unreliable
   # @param pin_system_role [Boolean] set when the provider rejects RubyLLM's
   #   default "developer" system role and needs "system"
-  def initialize(name:, display_name:, ruby_llm_provider:, default_model:, api_base: nil,
-                 minimal_model_metadata: false, pin_system_role: false)
+  def initialize(name:, display_name:, ruby_llm_provider:, default_model:, api_base: nil, pin_system_role: false)
     @name = name
     @display_name = display_name
     @ruby_llm_provider = ruby_llm_provider
     @default_model = default_model
     @api_base = api_base
-    @minimal_model_metadata = minimal_model_metadata
     @pin_system_role = pin_system_role
     freeze
-  end
-
-  def minimal_model_metadata?
-    @minimal_model_metadata
   end
 
   def pin_system_role?
@@ -67,8 +59,7 @@ class LlmProvider
       name: "openai",
       display_name: "OpenAI",
       ruby_llm_provider: :openai,
-      default_model: "gpt-5.6-luna",
-      minimal_model_metadata: true
+      default_model: "gpt-5.6-luna"
     ),
     "moonshot" => new(
       name: "moonshot",
@@ -76,7 +67,6 @@ class LlmProvider
       ruby_llm_provider: :openai,
       default_model: "kimi-k2.6",
       api_base: "https://api.moonshot.ai/v1",
-      minimal_model_metadata: true,
       pin_system_role: true
     )
   }.freeze

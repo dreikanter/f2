@@ -220,49 +220,30 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal "preview", usage.purpose
   end
 
-  def fake_model(**attrs)
-    defaults = {
-      id: "claude-sonnet-4-6",
-      name: "Claude Sonnet 4.6",
-      family: "claude",
-      context_window: 200_000,
-      max_output_tokens: 8_192,
-      capabilities: ["function_calling"]
-    }
+  {
+    "anthropic" => ["https://api.anthropic.com/v1/models", "Future model"],
+    "openrouter" => ["https://openrouter.ai/api/v1/models", "Future model"],
+    "openai" => ["https://api.openai.com/v1/models", "future-model"],
+    "moonshot" => ["https://api.moonshot.ai/v1/models", "future-model"]
+  }.each do |provider_name, (endpoint, model_name)|
+    test "#available_models should retain only IDs and names from #{provider_name} without inference" do
+      current = create(:ai_credential, user: user, provider: provider_name,
+                                       credential_data: { "api_key" => "listing-test-key" })
+      headers = provider_name == "anthropic" ? { "x-api-key" => "listing-test-key" } : { "Authorization" => "Bearer listing-test-key" }
+      request = stub_request(:get, endpoint).with(headers: headers).to_return(
+        headers: { "Content-Type" => "application/json" },
+        body: { data: [{ id: "future-model", name: "Future model", display_name: "Future model",
+                        created_at: "2026-09-01T00:00:00Z", context_length: 200_000,
+                        supported_parameters: ["tools", "response_format"],
+                        top_provider: { max_completion_tokens: 8_192 } }] }.to_json
+      )
 
-    Struct.new(*defaults.keys, keyword_init: true).new(**defaults.merge(attrs))
-  end
-
-  test "#available_models should return the provider models as compact hashes" do
-    client = LlmClient.new(credential)
-    model = fake_model
-    stub_provider_models(client) { [model] }
-
-    models = client.available_models
-
-    assert_equal(
-      [{
-        "id" => "claude-sonnet-4-6",
-        "name" => "Claude Sonnet 4.6",
-        "family" => "claude",
-        "context_window" => 200_000,
-        "max_output_tokens" => 8_192,
-        "capabilities" => ["function_calling"]
-      }],
-      models
-    )
-    assert_equal 0, LlmUsage.count
-  end
-
-  # The invented limits would otherwise be persisted and rendered as fact.
-  test "#available_models should keep only provider-supplied fields for unregistered models" do
-    moonshot = create(:ai_credential, user: user, provider: "moonshot",
-                                      credential_data: { "api_key" => "sk-moon" })
-    client = LlmClient.new(moonshot)
-    model = fake_model(id: "kimi-k2.6", name: "Kimi K2.6", context_window: 4_096)
-    stub_provider_models(client) { [model] }
-
-    assert_equal [{ "id" => "kimi-k2.6", "name" => "Kimi K2.6" }], client.available_models
+      assert_no_difference -> { LlmUsage.count } do
+        assert_equal [{ "id" => "future-model", "name" => model_name }], LlmClient.new(current).available_models
+      end
+      assert_requested request, times: 1
+      assert_not_requested :post, /./
+    end
   end
 
   test "#available_models should map a TLS failure to a provider error" do

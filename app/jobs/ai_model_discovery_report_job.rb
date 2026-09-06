@@ -38,7 +38,6 @@ class AiModelDiscoveryReportJob < ApplicationJob
       status: models.empty? ? "FAIL" : "PASS",
       note: models.empty? ? "Models listing was empty" : "Models listing completed",
       sdk_provider: provider.ruby_llm_provider.to_s,
-      minimal_model_metadata: provider.minimal_model_metadata?,
       model_count: models.size,
       models_without_capability_metadata: models.count { |model| !model.fetch("metadata", {}).key?("structured_output") && !model.fetch("metadata", {}).key?("tool_call") },
       models_without_task_metadata: models.count { |model| !model.fetch("metadata", {}).key?("task") },
