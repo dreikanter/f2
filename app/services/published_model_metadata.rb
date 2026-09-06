@@ -2,7 +2,6 @@
 class PublishedModelMetadata
   URL = "https://models.dev/api.json".freeze
   CACHE_KEY = "published-model-metadata/v1".freeze
-  MAX_BYTES = 32.megabytes
 
   def lookup(provider, model_id)
     provider_id = provider == "moonshot" ? "moonshotai" : provider
@@ -34,29 +33,9 @@ class PublishedModelMetadata
   private
 
   def catalog
-    @catalog ||= cached_catalog
-  end
-
-  def cached_catalog
-    previous = Rails.cache.read(CACHE_KEY) || {}
-    return previous if Rails.cache.read("#{CACHE_KEY}/fresh")
-
-    response = HttpClient.build(timeout: 15, follow_redirects: false).get(URL)
-    raise HttpClient::Error, "Model metadata HTTP #{response.status}" unless response.success?
-    raise HttpClient::Error, "Model metadata is too large" if response.body.bytesize > MAX_BYTES
-
-    data = JSON.parse(response.body)
-    unless data.is_a?(Hash) && data.values.all? { |provider| provider.is_a?(Hash) && provider["models"].is_a?(Hash) }
-      raise HttpClient::Error, "Invalid model metadata catalog"
+    @catalog ||= PublishedModelCatalog.fetch(URL, CACHE_KEY) do |data|
+      data.values.all? { |provider| provider.is_a?(Hash) && provider["models"].is_a?(Hash) }
     end
-
-    Rails.cache.write(CACHE_KEY, data, expires_in: 7.days)
-    Rails.cache.write("#{CACHE_KEY}/fresh", true, expires_in: 1.day)
-    data
-  rescue HttpClient::Error, JSON::ParserError => e
-    Rails.error.report(e)
-    Rails.cache.write("#{CACHE_KEY}/fresh", true, expires_in: 1.hour)
-    previous
   end
 
   def positive_number(value)

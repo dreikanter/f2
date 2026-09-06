@@ -4,6 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-06
 
+- AI model pickers exclude known embedding, image, audio, and other non-conversational models using free task metadata; unknown and saved models remain available.
+
 - OpenRouter feeds use provider-managed search without a separate search credential, retain citations, and show reported charges when available.
 
 - Claude feeds use built-in web search by default, retain source citations, and continue with limited access when search is disabled.

@@ -41,7 +41,8 @@ class AiModelDiscoveryReportJob < ApplicationJob
       minimal_model_metadata: provider.minimal_model_metadata?,
       model_count: models.size,
       models_without_capability_metadata: models.count { |model| !model.fetch("metadata", {}).key?("structured_output") && !model.fetch("metadata", {}).key?("tool_call") },
-      metadata_source: "Provider listing with advisory models.dev metadata matched by provider and exact model ID",
+      models_without_task_metadata: models.count { |model| !model.fetch("metadata", {}).key?("task") },
+      metadata_source: "Provider listing with advisory models.dev capabilities and LiteLLM tasks matched by provider and exact model ID",
       models: models
     }
   rescue StandardError => e

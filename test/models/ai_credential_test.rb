@@ -225,4 +225,26 @@ class AiCredentialTest < ActiveSupport::TestCase
     ])
     assert_equal ["text", "unknown"], credential.supported_models.pluck("id")
   end
+
+  test "#supported_models should use task metadata even when specialized models advertise text output" do
+    models = {
+      "text-embedding-3-small" => "embedding", "gpt-image-1.5" => "image_generation",
+      "gpt-realtime-2.1" => "realtime", "new-transcriber" => "audio_transcription",
+      "new-speaker" => "audio_speech", "new-video" => "video_generation", "legacy-model" => "completion"
+    }.map do |id, mode|
+      { "id" => id, "metadata" => { "task" => { "mode" => mode }, "output_modalities" => ["text", "image", "audio"] } }
+    end
+    models += [
+      { "id" => "chat", "metadata" => { "task" => { "mode" => "chat" }, "tool_call" => false, "structured_output" => false } },
+      { "id" => "responses", "metadata" => { "task" => { "mode" => "responses" } } },
+      { "id" => "future", "metadata" => { "task" => { "mode" => "future_task" } } },
+      { "id" => "unknown" }, { "id" => "text-embedding-unclassified" }
+    ]
+    credential = build(:ai_credential, available_models: models)
+
+    assert_equal %w[chat responses future unknown text-embedding-unclassified], credential.supported_models.pluck("id")
+    assert_equal "chat", credential.default_supported_model
+    assert_equal models, credential.available_models
+    assert_not_requested :any, /./
+  end
 end
