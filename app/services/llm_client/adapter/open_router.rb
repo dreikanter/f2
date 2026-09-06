@@ -1,6 +1,14 @@
 class LlmClient
   module Adapter
     class OpenRouter < Base
+      def native_search_transport
+        OpenRouterSearch
+      end
+
+      def unsupported_native_search?(error, model:)
+        OpenRouterSearch.unsupported_search?(error, model: model)
+      end
+
       def unsupported_schema?(error)
         OpenAi.new.unsupported_schema?(error)
       end
@@ -9,8 +17,7 @@ class LlmClient
       # parameter drops it silently. This restricts routing to upstreams that
       # honor what the request carries: the schema when structuring, the tools
       # when gathering. Without it a structuring call can land where
-      # `response_format` is ignored and reply with prose. Web access still
-      # comes from the shared client-side tools, not an OpenRouter plugin.
+      # `response_format` is ignored and reply with prose.
       ROUTING = { provider: { require_parameters: true } }.freeze
 
       def web_params(_model)

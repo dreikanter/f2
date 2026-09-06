@@ -63,6 +63,8 @@ class LlmUsageListItemComponentTest < ViewComponent::TestCase
     [
       [{ "mode" => "native", "search_calls" => 2 }, "2 native web calls"],
       [{ "mode" => "native" }, "native search usage unknown"],
+      [{ "mode" => "provider", "search_calls" => 2 }, "2 provider web calls"],
+      [{ "mode" => "provider" }, "provider search usage unknown"],
       [{ "mode" => "limited" }, "web search unavailable"]
     ].each do |retrieval, label|
       usage.update!(retrieval: retrieval)

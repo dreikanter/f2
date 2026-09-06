@@ -4,6 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-06
 
+- OpenRouter feeds use provider-managed search without a separate search credential, retain citations, and show reported charges when available.
+
 - Claude feeds use built-in web search by default, retain source citations, and continue with limited access when search is disabled.
 
 ## 2026-09-05

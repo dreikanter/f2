@@ -55,9 +55,10 @@ class LlmUsageListItemComponent < ListItemComponent
     ]
     cached = usage.cache_read_tokens + usage.cache_write_tokens
     parts << "#{helpers.number_with_delimiter(cached)} cached" if cached.positive?
-    if usage.retrieval["mode"] == "native"
+    if %w[native provider].include?(usage.retrieval["mode"])
       calls = usage.retrieval["search_calls"]
-      parts << (calls.nil? ? "native search usage unknown" : "#{calls} native web calls")
+      kind = usage.retrieval["mode"]
+      parts << (calls.nil? ? "#{kind} search usage unknown" : "#{calls} #{kind} web calls")
     elsif usage.retrieval["mode"] == "limited"
       parts << "web search unavailable"
     end
