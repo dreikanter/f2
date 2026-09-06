@@ -26,6 +26,7 @@ class LlmClient
         params[:text] = { format: { type: "json_schema", name: "feed_output", schema: output_schema, strict: false } }
       end
 
+      ctx.retrieval["token_usage_reported"] = false
       body = connection.post("responses", params).body
       raise ProviderError, "Invalid Responses API response" unless body.is_a?(Hash)
 

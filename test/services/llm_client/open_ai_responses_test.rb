@@ -65,6 +65,20 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
     assert_not_nil LlmUsage.sole.cost_estimate_cents
   end
 
+  test "#call should keep a timed out Responses formatting charge unknown" do
+    context.responses_api = true
+    stub_request(:post, ENDPOINT).to_timeout
+
+    assert_raises(LlmClient::Timeout) do
+      client.call(context, prompt: "Format supplied facts", output_schema: SCHEMA, web: false)
+    end
+
+    assert_equal "timeout", LlmUsage.sole.outcome
+    assert_equal false, LlmUsage.sole.retrieval["token_usage_reported"]
+    assert_nil LlmUsage.sole.cost_estimate_cents
+    assert_requested :post, ENDPOINT, times: 1
+  end
+
   test "#load should carry native citations into a separate structure request and account for both calls" do
     citation = { type: "url_citation", url: "https://example.com/news", title: "News", start_index: 0, end_index: 4 }
     items = [{ "body" => "News https://example.com/news", "source_url" => nil }]

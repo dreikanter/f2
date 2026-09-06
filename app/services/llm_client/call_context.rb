@@ -30,7 +30,7 @@ class LlmClient
     # Gathering, structuring, and corrections consume the same allowance.
     def within_budget
       self.last_response = nil
-      self.retrieval = {}
+      self.retrieval = { "completion_calls" => 0 }
       @attempts += 1
       raise LlmClient::Timeout, "AI request attempt budget exceeded" if @attempts > MAX_ATTEMPTS
 
@@ -39,6 +39,7 @@ class LlmClient
       remaining = @deadline - now
       raise LlmClient::Timeout, "AI request time budget exceeded" unless remaining.positive?
 
+      self.retrieval = {}
       ::Timeout.timeout(remaining) { yield }
     end
   end
