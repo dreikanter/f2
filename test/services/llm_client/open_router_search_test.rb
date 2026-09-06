@@ -153,9 +153,8 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
   test "#call should use limited execution once after an explicit search capability rejection" do
     [
       rejection("Web search is not supported for example/future-model."),
-      rejection("Unsupported tools", param: "tools", code: "unsupported_parameter"),
       rejection("Unsupported limit", param: "max_tool_calls", code: "unsupported_parameter"),
-      rejection("No endpoints found that support tool use.", status: 404)
+      rejection("No endpoints found that support the requested server tools.", status: 404)
     ].each do |response|
       @context = nil
       stub_chat(response, reply)
@@ -171,6 +170,38 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
       assert usages.first.error_message.present?
       assert_equal "limited", usages.last.retrieval["mode"]
       assert_not usages.last.retrieval.key?("reported_cost_cents")
+      assert credential.reload.active?
+    end
+  end
+
+  test "#call should disable all tools after generic tool rejection and fetch supplied pages independently" do
+    [
+      rejection("No endpoints found that support tool use.", status: 404),
+      rejection("No endpoints found that support the requested tools.", status: 404),
+      rejection("No endpoints found that support tool use."),
+      rejection("Unsupported tools", param: "tools", code: "unsupported_parameter"),
+      rejection("Tools are not supported for this model")
+    ].each do |response|
+      @context = nil
+      @requests = []
+      stub_request(:post, ENDPOINT).to_return do |request|
+        body = JSON.parse(request.body)
+        @requests << body
+        body["tools"].present? ? response : reply("Supplied fact")
+      end
+      stub_request(:get, SOURCE).to_return(body: "<p>Supplied fact</p>")
+
+      result = Socket.stub(:getaddrinfo, [["AF_INET", 0, "example.com", "93.184.216.34"]]) do
+        gather("Summarize #{SOURCE}")
+      end
+
+      assert_equal "Supplied fact", result.payload
+      assert_equal 2, @requests.size
+      assert_nil @requests.last["tools"]
+      assert_includes @requests.last["messages"].to_json, "Supplied fact"
+      usages = LlmUsage.order(:created_at).last(2)
+      assert_equal %w[provider_error success], usages.map(&:outcome)
+      assert_equal "limited", usages.last.retrieval["mode"]
       assert credential.reload.active?
     end
   end

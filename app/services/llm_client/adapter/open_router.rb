@@ -6,7 +6,7 @@ class LlmClient
       end
 
       def unsupported_native_search?(error, model:)
-        OpenRouterSearch.unsupported_search?(error, model: model)
+        OpenRouterSearch.unsupported_feature(error, model: model).present?
       end
 
       def unsupported_schema?(error)
