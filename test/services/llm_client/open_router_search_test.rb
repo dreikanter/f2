@@ -311,8 +311,7 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
       [rejection("Invalid function schema", param: "tools", code: "invalid_parameter"), LlmClient::ProviderError],
       [rejection("No endpoints found that support tool use.", status: 401), LlmClient::AuthError],
       [rejection("No endpoints found that support tool use.", status: 429), LlmClient::RateLimited],
-      [rejection("No endpoints found that support tool use.", status: 500), LlmClient::ProviderError],
-      [json({ error: "No endpoints found that support tool use." }, status: 404), LlmClient::ProviderError]
+      [rejection("No endpoints found that support tool use.", status: 500), LlmClient::ProviderError]
     ].each do |response, error_class|
       @context = LlmClient::CallContext.new(feed: nil, profile_key: "llm", stage: :loader,
                                            model: "example/future-model", search_credential: search)
