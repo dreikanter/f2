@@ -1,6 +1,6 @@
 require "test_helper"
 
-# The feed form's AI Settings section: AI provider, search provider, and model
+# The feed form's AI Settings section: AI provider, model, and search provider
 # selectors for AI-backed profiles. The dependent model dropdown is wired
 # client-side from an embedded models map, so these tests assert the
 # server-rendered contract the Stimulus controller relies on.
@@ -50,6 +50,15 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     assert_select "select[name='feed[search_credential_id]'][data-key='form.search-credential']"
     assert_select "select[name='feed[ai_model]'][data-key='form.ai-model']"
     assert_select "[data-key='form.ai-model-unavailable']", false
+  end
+
+  test "#edit should show the model directly after the AI provider" do
+    sign_in_as(user)
+
+    get edit_feed_path(ai_feed)
+
+    labels = css_select("[data-key='form.ai-settings'] label").map { _1.text.strip }
+    assert_equal ["AI provider", "Model", "External search (optional)"], labels
   end
 
   test "#edit should warn when the feed's saved model is no longer available" do

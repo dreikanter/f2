@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-07
+
+- Feed model selection now appears directly below the AI provider.
+
 ## 2026-09-06
 
 - Failed AI requests remain visible in usage history when a provider returns an unreadable error; any reported tokens are retained and the total cost stays unknown.
