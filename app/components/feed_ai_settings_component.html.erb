@@ -35,19 +35,6 @@
 
       <%= render PanelComponent.new do %>
         <div class="space-y-2">
-          <%= form.label :search_credential_id, "External search (optional)", class: "block font-semibold text-heading" %>
-          <%= form.select :search_credential_id, search_credential_options, { selected: selected_search_credential_id },
-                          class: helpers.input_field_classes, disabled: !section_visible?,
-                          data: { ai_settings_target: "searchCredentialSelect", key: "form.search-credential" } %>
-          <p class="text-sm text-muted">Your AI provider handles search when available. Without search, the model uses supplied pages and available knowledge. Select an external search provider to use it instead.</p>
-          <% if form.object.errors[:search_credential].any? %>
-            <p class="text-sm text-danger"><%= form.object.errors[:search_credential].first %></p>
-          <% end %>
-        </div>
-      <% end %>
-
-      <%= render PanelComponent.new do %>
-        <div class="space-y-2">
           <%= form.label :ai_model, "Model", class: "block font-semibold text-heading" %>
           <%= form.select :ai_model, model_select_options, { selected: selected_model_id },
                           class: helpers.input_field_classes, disabled: !section_visible?,
@@ -56,6 +43,19 @@
             <p class="text-sm text-danger"><%= form.object.errors[:ai_model].first %></p>
           <% else %>
             <p class="text-sm text-muted">New models appear automatically. <%= link_to "Manage model lists", ai_credentials_path, class: "underline" %>.</p>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%= render PanelComponent.new do %>
+        <div class="space-y-2">
+          <%= form.label :search_credential_id, "External search (optional)", class: "block font-semibold text-heading" %>
+          <%= form.select :search_credential_id, search_credential_options, { selected: selected_search_credential_id },
+                          class: helpers.input_field_classes, disabled: !section_visible?,
+                          data: { ai_settings_target: "searchCredentialSelect", key: "form.search-credential" } %>
+          <p class="text-sm text-muted">Your AI provider handles search when available. Without search, the model uses supplied pages and available knowledge. Select an external search provider to use it instead.</p>
+          <% if form.object.errors[:search_credential].any? %>
+            <p class="text-sm text-danger"><%= form.object.errors[:search_credential].first %></p>
           <% end %>
         </div>
       <% end %>
