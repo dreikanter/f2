@@ -56,6 +56,42 @@ class FeedListItemComponentTest < ViewComponent::TestCase
     assert_includes result.text, "@testgroup"
   end
 
+  test "#render should mark a feed posting to candy with an orange badge after the group" do
+    result = render_inline FeedListItemComponent.new(feed: feed)
+
+    badge = result.at_css("[data-key='feed.#{feed.id}.instance']")
+    assert_not_nil badge
+    assert_equal "candy", badge.text
+    assert_includes badge["class"], "bg-candy-subtle"
+    assert_equal "@testgroup", badge.previous_element.text.strip
+  end
+
+  test "#render should mark a feed posting to beta with a blue badge" do
+    beta_token = create(:access_token, :active, user: user, host: "https://beta.freefeed.net")
+    beta_feed = create(:feed, :disabled, user: user, access_token: beta_token)
+    result = render_inline FeedListItemComponent.new(feed: beta_feed)
+
+    badge = result.at_css("[data-key='feed.#{beta_feed.id}.instance']")
+    assert_not_nil badge
+    assert_equal "beta", badge.text
+    assert_includes badge["class"], "bg-beta-subtle"
+  end
+
+  test "#render should not mark a feed posting to the main FreeFeed instance" do
+    main_token = create(:access_token, :active, user: user, host: "https://freefeed.net")
+    main_feed = create(:feed, :disabled, user: user, access_token: main_token)
+    result = render_inline FeedListItemComponent.new(feed: main_feed)
+
+    assert_empty result.css("[data-key='feed.#{main_feed.id}.instance']")
+  end
+
+  test "#render should not mark a feed without an access token" do
+    draft_feed = create(:feed, :without_access_token, :draft, user: user)
+    result = render_inline FeedListItemComponent.new(feed: draft_feed)
+
+    assert_empty result.css("[data-key='feed.#{draft_feed.id}.instance']")
+  end
+
   test "#render should lead with Continue setup and hide Details for draft feeds" do
     draft_feed = create(:feed, :draft, user: user)
 

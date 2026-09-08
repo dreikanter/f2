@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-08
+
+- Feeds that post to the candy or beta FreeFeed instance now show a badge in the feed list.
+
 ## 2026-09-07
 
 - Feed model selection now appears directly below the AI provider.
