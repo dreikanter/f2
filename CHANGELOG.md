@@ -4,6 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-08
 
+- Model and group refresh buttons are smaller and stay beside their section headings while status messages change below.
+
 - Feeds that post to the candy or beta FreeFeed instance now show a badge in the feed list.
 
 ## 2026-09-07

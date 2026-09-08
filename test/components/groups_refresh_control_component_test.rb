@@ -24,12 +24,13 @@ class GroupsRefreshControlComponentTest < ViewComponent::TestCase
 
   test "#render should show a disabled spinning button while refreshing" do
     result = render_inline(GroupsRefreshControlComponent.new(key_prefix: "access_token", refreshing: true,
-                                                            type: "submit"))
+                                                            compact: true, type: "submit"))
 
     spinning, trigger = result.css("button").to_a
     assert_equal "content", spinning["data-polling-target"]
     assert_equal "access_token.groups-refreshing", spinning["data-key"]
     assert_equal "disabled", spinning["disabled"]
+    assert_includes spinning["class"], "size-8"
     assert_not_nil spinning.at_css("svg.animate-spin")
 
     # same classes as the trigger, so swapping states can't move the layout

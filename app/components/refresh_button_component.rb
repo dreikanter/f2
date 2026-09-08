@@ -1,6 +1,6 @@
 class RefreshButtonComponent < ViewComponent::Base
-  BUTTON_CLASSES = "inline-flex shrink-0 items-center justify-center rounded-md border border-border bg-surface p-3 " \
-    "text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring " \
+  BUTTON_CLASSES = "inline-flex shrink-0 items-center justify-center rounded-md " \
+    "transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring " \
     "focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50".freeze
 
   # An icon refresh button with a spinner loading state.
@@ -28,9 +28,10 @@ class RefreshButtonComponent < ViewComponent::Base
   # or a form submit, where the form hosts the loading-button controller:
   #
   #   render RefreshButtonComponent.new(title: "Refresh now", type: "submit")
-  def initialize(title: "Refresh", loading: false, **attrs)
+  def initialize(title: "Refresh", loading: false, compact: false, **attrs)
     @title = title
     @loading = loading
+    @compact = compact
     @attrs = attrs
   end
 
@@ -44,9 +45,13 @@ class RefreshButtonComponent < ViewComponent::Base
       type: attrs.delete(:type) || "button",
       title: @title,
       disabled: disabled,
-      class: [BUTTON_CLASSES, attrs.delete(:class)],
+      class: [BUTTON_CLASSES, appearance_classes, attrs.delete(:class)],
       data: @loading ? data : { loading_button_target: "button" }.merge(data)
     }.merge(attrs)
+  end
+
+  def appearance_classes
+    @compact ? "size-8 text-muted hover:text-body" : "border border-border bg-surface p-3 text-body shadow-sm"
   end
 
   def icon_attributes(target, hidden:)

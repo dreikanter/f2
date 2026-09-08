@@ -1,11 +1,20 @@
 <%# locals: (ai_credential:) %>
 <% refreshing = ai_credential.models_refreshing? %>
 <%= tag.div class: "space-y-3", data: { model_catalog_done: refreshing ? nil : true } do %>
-  <div class="flex flex-wrap items-center gap-3">
-    <%= button_to "Refresh models", ai_credential_model_catalog_path(ai_credential),
-                  disabled: refreshing, class: "text-sm text-brand hover:underline disabled:opacity-50",
-                  data: { key: "ai_credential.refresh-models" } %>
-    <span class="text-sm text-muted">
+  <div class="space-y-1">
+    <div class="flex items-center justify-between gap-3">
+      <h2 class="text-lg font-semibold text-heading">Available models</h2>
+      <%= form_with url: ai_credential_model_catalog_path(ai_credential),
+                    class: "flex shrink-0",
+                    data: {
+                      controller: "loading-button",
+                      action: "turbo:submit-start->loading-button#start turbo:submit-end->loading-button#end"
+                    } do %>
+        <%= render RefreshButtonComponent.new(title: "Refresh models", loading: refreshing, compact: true, type: "submit",
+                                              data: { key: "ai_credential.refresh-models" }) %>
+      <% end %>
+    </div>
+    <p class="min-h-5 text-sm text-muted" data-key="ai_credential.models-refresh-status">
       <% if refreshing %>
         Refreshing models. Your credential and saved list remain usable.
       <% elsif ai_credential.latest_operation_run(:models_refresh)&.status.in?(%w[failed timed_out]) %>
@@ -13,7 +22,7 @@
       <% elsif ai_credential.models_refreshed_at %>
         Updated <%= time_ago_in_words(ai_credential.models_refreshed_at) %> ago.
       <% end %>
-    </span>
+    </p>
   </div>
   <%= render AiCredentialModelsComponent.new(ai_credential: ai_credential) %>
 <% end %>
