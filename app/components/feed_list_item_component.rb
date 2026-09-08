@@ -33,7 +33,7 @@ class FeedListItemComponent < ListItemComponent
   end
 
   def primary_element
-    helpers.tag.div(helpers.safe_join([title_link, group_element].compact),
+    helpers.tag.div(helpers.safe_join([title_link, group_element, instance_badge].compact),
                     class: "flex min-w-0 flex-1 items-baseline gap-2")
   end
 
@@ -55,6 +55,10 @@ class FeedListItemComponent < ListItemComponent
     else
       helpers.tag.span(target_group_label, class: "truncate text-sm text-muted")
     end
+  end
+
+  def instance_badge
+    render(FreefeedInstanceBadgeComponent.new(access_token: feed.access_token, key: "feed.#{feed.id}.instance"))
   end
 
   def meta_segments

@@ -58,6 +58,14 @@
   --color-success-subtle: var(--color-emerald-100);
   --color-info:           var(--color-cyan-600);
 
+  /* FreeFeed instances: tints that tell candy and beta apart at a glance */
+  --color-candy:          var(--color-orange-500);
+  --color-candy-strong:   var(--color-orange-800);
+  --color-candy-subtle:   var(--color-orange-100);
+  --color-beta:           var(--color-blue-500);
+  --color-beta-strong:    var(--color-blue-800);
+  --color-beta-subtle:    var(--color-blue-100);
+
   /* Flowbite's datepicker injects its calendar markup at runtime and references
      these specific token names. We alias them onto the palette above instead of
      pulling in Flowbite's whole theme (which would override global radius/font
