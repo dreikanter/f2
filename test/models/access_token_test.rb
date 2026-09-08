@@ -36,6 +36,24 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "my.freefeed.example", create(:access_token, host: "https://my.freefeed.example").freefeed_instance
   end
 
+  test "#instance_label should name a non-production FreeFeed instance" do
+    assert_equal "candy", create(:access_token, host: "https://candy.freefeed.net").instance_label
+    assert_equal "beta", create(:access_token, host: "https://beta.freefeed.net").instance_label
+  end
+
+  test "#instance_label should be nil for the main FreeFeed instance" do
+    assert_nil create(:access_token, host: "https://freefeed.net").instance_label
+  end
+
+  test "#instance_label should be nil for a host outside freefeed.net" do
+    assert_nil create(:access_token, host: "https://my.freefeed.example").instance_label
+    assert_nil create(:access_token, host: "https://notfreefeed.net").instance_label
+  end
+
+  test "#instance_label should ignore host case and a trailing dot" do
+    assert_equal "candy", create(:access_token, host: "https://Candy.FreeFeed.NET.").instance_label
+  end
+
   test "#rate_limit_subject is stable across equivalent host spellings" do
     a = create(:access_token, host: "https://freefeed.net", freefeed_user_id: "u-7")
     b = create(:access_token, host: "https://FREEFEED.NET", freefeed_user_id: "u-7")

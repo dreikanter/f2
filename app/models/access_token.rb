@@ -145,12 +145,21 @@ class AccessToken < ApplicationRecord
   end
 
   # Stable id for the targeted FreeFeed instance: the known-host key
-  # (production/staging/beta), else the host domain. Canonicalized (DNS is
-  # case-insensitive) so equivalent spellings don't fragment the account bucket.
+  # (production/staging/beta), else the host domain. Canonicalized so
+  # equivalent spellings don't fragment the account bucket.
   def freefeed_instance
-    domain = host_domain.to_s.downcase.delete_suffix(".")
+    domain = canonical_host_domain
     known = FREEFEED_HOSTS.find { |_key, config| config[:domain] == domain }
     known ? known.first.to_s : domain
+  end
+
+  # Third-level label of a non-production FreeFeed instance ("candy", "beta"),
+  # for marking feeds and tokens that don't target the main site. Nil for
+  # freefeed.net itself, and for hosts outside it.
+  def instance_label
+    parent = ".#{FREEFEED_HOSTS[:production][:domain]}"
+    domain = canonical_host_domain
+    domain.delete_suffix(parent) if domain.end_with?(parent)
   end
 
   def host_domain
@@ -211,6 +220,11 @@ class AccessToken < ApplicationRecord
   end
 
   private
+
+  # DNS is case-insensitive, so equivalent host spellings collapse onto one form.
+  def canonical_host_domain
+    host_domain.to_s.downcase.delete_suffix(".")
+  end
 
   def schedule_validation_timeout(run)
     AccessTokenValidationTimeoutJob.set(wait_until: run.deadline_at).perform_later(run)
