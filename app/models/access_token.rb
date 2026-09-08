@@ -153,9 +153,6 @@ class AccessToken < ApplicationRecord
     known ? known.first.to_s : domain
   end
 
-  # Third-level label of a non-production FreeFeed instance ("candy", "beta"),
-  # for marking feeds and tokens that don't target the main site. Nil for
-  # freefeed.net itself, and for hosts outside it.
   def instance_label
     parent = ".#{FREEFEED_HOSTS[:production][:domain]}"
     domain = canonical_host_domain
