@@ -24,6 +24,36 @@ class BadgeComponentTest < ViewComponent::TestCase
     assert_includes result.at_css("span")["class"], "bg-surface-muted"
   end
 
+  test "#call should style candy and beta with their instance colors" do
+    candy = render_inline(BadgeComponent.new(text: "candy", color: :candy)).at_css("span")
+    beta = render_inline(BadgeComponent.new(text: "beta", color: :beta)).at_css("span")
+
+    assert_includes candy["class"], "bg-candy-subtle"
+    assert_includes candy["class"], "text-candy-strong"
+    assert_includes beta["class"], "bg-beta-subtle"
+    assert_includes beta["class"], "text-beta-strong"
+  end
+
+  test "#call should default to the regular size" do
+    result = render_inline(BadgeComponent.new(text: "Enabled"))
+
+    assert_includes result.at_css("span")["class"], "px-2 py-1"
+  end
+
+  test "#call should render the small size without the regular padding" do
+    result = render_inline(BadgeComponent.new(text: "candy", size: :sm))
+
+    badge = result.at_css("span")
+    assert_includes badge["class"], "px-1.5 py-0.5"
+    assert_not_includes badge["class"], "py-1 "
+  end
+
+  test "#call should fall back to the regular size for unknown size" do
+    result = render_inline(BadgeComponent.new(text: "Enabled", size: :huge))
+
+    assert_includes result.at_css("span")["class"], "px-2 py-1"
+  end
+
   test "#call should set data-key when key is given" do
     result = render_inline(BadgeComponent.new(text: "Enabled", color: :success, key: "feed.1.enabled_badge"))
 

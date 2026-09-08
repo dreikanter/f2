@@ -316,7 +316,16 @@
         <%= render BadgeComponent.new(text: "Error", color: :danger) %>
         <%= render BadgeComponent.new(text: "Syncing", color: :info) %>
         <%= render BadgeComponent.new(text: "Pending", color: :warning) %>
+        <%= render BadgeComponent.new(text: "candy", color: :candy) %>
+        <%= render BadgeComponent.new(text: "beta", color: :beta) %>
       </div>
+      <p class="text-body">The small size sits inside a line of text without changing its height.</p>
+      <p class="flex items-baseline gap-2 text-base text-heading">
+        Tech News Daily
+        <span class="text-sm text-muted">@technews</span>
+        <%= render BadgeComponent.new(text: "candy", color: :candy, size: :sm) %>
+        <%= render BadgeComponent.new(text: "beta", color: :beta, size: :sm) %>
+      </p>
     </section>
 
     <%# Card %>
