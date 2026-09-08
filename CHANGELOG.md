@@ -5,7 +5,6 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-09-08
 
 - Model and group refresh buttons are smaller and stay beside their section headings while status messages change below.
-
 - Feeds that post to the candy or beta FreeFeed instance now show a badge in the feed list.
 
 ## 2026-09-07
@@ -15,55 +14,32 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-09-06
 
 - Failed AI requests remain visible in usage history when a provider returns an unreadable error; any reported tokens are retained and the total cost stays unknown.
-
 - AI feed prompts distinguish requests for source posts from requests for direct answers, including when both are phrased as questions.
-
 - AI feeds preserve short answers and uncertainty; blank responses and unfinished tool runs now appear as errors instead of no posts found.
-
 - OpenAI feeds can use external search with reasoning models through the Responses API.
-
 - AI feeds using external search can continue with limited capabilities when OpenRouter reports that the model cannot use tools.
-
 - AI spending totals include small charges accurately, and missing cache prices keep estimates unknown.
-
 - Model choices and capabilities update when published metadata is removed or expires.
-
 - AI spending stays unknown when a response omits token usage or a later tool round fails; requests stopped before reaching the model no longer count as AI calls.
-
 - AI settings explain provider search, limited fallback, and saved models that are no longer offered for new feeds.
-
 - AI credential pages show each model's published task and metadata sources.
-
 - AI model pickers exclude known embedding, image, audio, and other non-conversational models using free task metadata; unknown and saved models remain available.
-
 - OpenRouter feeds use provider-managed search without a separate search credential, retain citations, and show reported charges when available.
-
 - Claude feeds use built-in web search by default, retain source citations, and continue with limited access when search is disabled.
 
 ## 2026-09-05
 
 - Kimi feeds use Moonshot's built-in search by default, with bounded requests and a fallback when search is unavailable.
-
 - Previews opened while editing a saved feed appear in its activity and contribute to its AI and search spending totals.
-
 - Labels and values in detail lists wrap onto separate rows when space is limited, with values aligned right.
-
 - Incomplete AI cost totals show “Unknown” with an explanation and any available estimate separately.
-
 - AI previews appear in recent activity with usage details, including failed attempts.
-
 - AI posts consistently include their source URL in the body.
-
 - OpenAI feeds use built-in web search by default, with bounded requests and a fallback when search is unsupported.
-
 - AI feeds can create explicitly requested original content, such as jokes, without web search or source links.
-
 - AI page fetching blocks private DNS targets, including redirects.
-
 - External search is optional for AI feeds; missing search credentials and unsupported tools fall back to available content.
-
 - Pick newly listed AI models without qualification, refresh model lists for free, and keep saved choices when listings change.
-
 - AI feeds now attempt to correct an empty JSON object instead of immediately failing the run.
 - AI feeds can recover from unsupported response formatting and make one correction attempt when a response cannot be read.
 - Event details show unknown AI costs as “Unknown” instead of $0.00.
