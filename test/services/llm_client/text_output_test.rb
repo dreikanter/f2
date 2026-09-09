@@ -111,6 +111,20 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     end
   end
 
+  test "#call should roll back usage when linking its run fails" do
+    run_feed = create(:feed, user: credential.user, ai_credential: credential)
+    event = Event.create!(type: "feed_refresh", level: :info, subject: run_feed, user: credential.user)
+    @context = LlmClient::CallContext.new(feed: run_feed, profile_key: "llm", stage: :loader,
+                                         model: "new-unregistered-model", refresh_event: event)
+    stub_completions(completion('{"items":[]}'))
+
+    event.event_references.stub(:create!, ->(*) { raise ActiveRecord::RecordNotSaved, "Cannot link usage" }) do
+      assert_no_difference("LlmUsage.count") do
+        assert_raises(ActiveRecord::RecordNotSaved) { call(native_schema: false) }
+      end
+    end
+  end
+
   test "#call should send text JSON requests through the other provider transports" do
     [
       ["anthropic", "new-anthropic-model", "https://api.anthropic.com/v1/messages"],
