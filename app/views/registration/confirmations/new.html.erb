@@ -2,7 +2,7 @@
 
 <%= render ModalCardComponent.new do %>
   <div class="space-y-6">
-    <h1 class="text-4xl font-semibold mb-6 text-heading">Resend Confirmation</h1>
+    <%= h1 "Resend Confirmation" %>
     <p class="text-body">Enter your email. We'll send a new confirmation link.</p>
 
     <%= form_with url: registration_confirmations_path, method: :post, local: true do |form| %>

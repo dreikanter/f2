@@ -28,7 +28,7 @@
 
     <% if @access_token.access_token_detail.present? %>
       <div class="space-y-4">
-        <h2 class="text-2xl font-semibold mb-3 text-heading">Publisher</h2>
+        <%= h2 "Publisher" %>
         <p class="text-body mb-4">
           FreeFeed posts will appear on behalf of the token owner.
         </p>
@@ -36,7 +36,7 @@
       </div>
 
       <div class="space-y-4">
-        <h2 class="text-2xl font-semibold mb-3 text-heading">Available Groups</h2>
+        <%= h2 "Available Groups" %>
         <p class="text-body">
           This access token can create new posts in the following groups:
         </p>
@@ -55,7 +55,7 @@
     <% end %>
 
     <div class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Associated Feeds</h2>
+      <%= h2 "Associated Feeds" %>
       <% if @access_token.feeds.any? %>
         <%= render FeedsListComponent.new(feeds: @access_token.feeds, admin: true) %>
       <% else %>

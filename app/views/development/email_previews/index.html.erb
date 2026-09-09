@@ -9,10 +9,10 @@
     <% @previews.each do |preview| %>
       <%= render LinkedCardComponent.new(href: development_email_preview_path(preview[:id])) do %>
         <div class="space-y-4">
-          <h2 class="text-2xl font-semibold mb-3 text-heading flex items-start gap-2">
+          <%= h2 class: "flex items-start gap-2" do %>
             <%= icon("mail", css_class: "mt-1 size-5") %>
             <span><%= preview[:label] %></span>
-          </h2>
+          <% end %>
           <p class="text-body"><%= preview[:description] %></p>
         </div>
       <% end %>

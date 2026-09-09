@@ -60,7 +60,7 @@
 
   <% if access_token.access_token_detail.present? %>
     <div class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Publisher</h2>
+      <%= h2 "Publisher" %>
       <p class="text-body mb-4">
         FreeFeed posts will appear on behalf of the token owner.
       </p>
@@ -72,7 +72,7 @@
 
   <% if access_token.feeds.any? %>
     <div class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Associated Feeds</h2>
+      <%= h2 "Associated Feeds" %>
       <%= render FeedsListComponent.new(feeds: access_token.feeds) %>
     </div>
   <% end %>

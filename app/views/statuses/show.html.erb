@@ -56,7 +56,7 @@
     <%= render PostsHeatmapComponent.new(user: @user) %>
 
     <section class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Recent Activity</h2>
+      <%= h2 "Recent Activity" %>
       <%= render(EventsListComponent.new(
         events: @recent_events,
         endpoint: events_path(format: :turbo_stream, display: :brief, filter: @filter.to_h.presence),

@@ -9,7 +9,7 @@
       polling_max_polls_value: polling_max_polls
     } : {} do %>
   <div class="flex flex-wrap items-start gap-x-2">
-    <h2 class="text-2xl font-semibold mb-3 text-heading">Available Groups</h2>
+    <%= h2 "Available Groups" %>
     <%# The form is transparent to the layout, so the control lines up with the
         heading and its timeout note wraps onto a line of its own. %>
     <%= form_with url: access_token_groups_refresh_path(access_token),

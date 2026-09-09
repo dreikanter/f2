@@ -3,7 +3,7 @@
 <%= tag.div class: "space-y-3", data: { model_catalog_done: refreshing ? nil : true } do %>
   <div>
     <div class="flex items-start gap-2">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Available models</h2>
+      <%= h2 "Available models" %>
       <%= form_with url: ai_credential_model_catalog_path(ai_credential),
                     class: "flex shrink-0",
                     data: {

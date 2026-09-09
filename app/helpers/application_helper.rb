@@ -1,4 +1,14 @@
 module ApplicationHelper
+  def h1(content = nil, **options, &block)
+    options[:class] = class_names("text-4xl font-semibold mb-6 text-heading", options[:class])
+    tag.h1(content, **options, &block)
+  end
+
+  def h2(content = nil, **options, &block)
+    options[:class] = class_names("text-2xl font-semibold mb-3 text-heading", options[:class])
+    tag.h2(content, **options, &block)
+  end
+
   def post_content_preview(content, length = 120)
     return "" unless content.present?
 

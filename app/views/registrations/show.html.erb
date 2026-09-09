@@ -3,7 +3,7 @@
 <% if @invite.nil? %>
   <%= render ModalCardComponent.new do %>
     <div class="space-y-6">
-      <h1 class="text-4xl font-semibold mb-6 text-heading">This invite link doesn't look right</h1>
+      <%= h1 "This invite link doesn't look right" %>
       <p class="text-body">We couldn't find an invitation with that code. It might have been removed or copied incorrectly.</p>
 
       <div class="space-y-2">
@@ -23,7 +23,7 @@
 <% elsif @invite.used? %>
   <%= render ModalCardComponent.new do %>
     <div class="space-y-6">
-      <h1 class="text-4xl font-semibold mb-6 text-heading">This invite was already used</h1>
+      <%= h1 "This invite was already used" %>
       <p class="text-body">This link has already been used to create an account.</p>
 
       <div class="space-y-4">
@@ -51,7 +51,7 @@
   <%= render ModalCardComponent.new do %>
     <div class="space-y-6">
       <div class="space-y-4">
-        <h1 class="text-4xl font-semibold mb-6 text-heading">Create your account</h1>
+        <%= h1 "Create your account" %>
         <% if @invite&.created_by_user %>
           <p class="text-body">
             <%= @invite.created_by_user.name.presence || "Somebody" %> invited you to join Feeder.

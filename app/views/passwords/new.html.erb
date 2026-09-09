@@ -2,7 +2,7 @@
 
 <%= render ModalCardComponent.new do %>
   <div class="space-y-6">
-    <h1 class="text-4xl font-semibold mb-6 text-heading">Forgot your password?</h1>
+    <%= h1 "Forgot your password?" %>
     <p class="text-body">Enter your email. We'll send a reset link.</p>
 
     <% if flash[:alert] %>

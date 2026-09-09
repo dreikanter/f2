@@ -2,7 +2,7 @@
 
 <%= render ModalCardComponent.new do %>
   <div class="space-y-6">
-    <h1 class="text-4xl font-semibold mb-6 text-heading">Choose a new password</h1>
+    <%= h1 "Choose a new password" %>
     <p class="text-sm text-body">Enter and confirm a new password to finish resetting your account.</p>
 
     <% if flash[:alert] %>

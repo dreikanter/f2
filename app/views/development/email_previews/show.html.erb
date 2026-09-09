@@ -22,7 +22,7 @@
 
     <% if @html_body.present? %>
       <div class="space-y-2">
-        <h2 class="text-2xl font-semibold mb-3 text-heading">HTML</h2>
+        <%= h2 "HTML" %>
         <div class="overflow-hidden rounded-lg border border-border bg-surface">
           <iframe srcdoc="<%= h(@html_body) %>"
                   class="w-full"
@@ -34,7 +34,7 @@
 
     <% if @text_body.present? %>
       <div class="space-y-2">
-        <h2 class="text-2xl font-semibold mb-3 text-heading">Plain text</h2>
+        <%= h2 "Plain text" %>
         <pre class="overflow-auto rounded-lg border border-border bg-surface-muted p-4 text-sm text-heading whitespace-pre-wrap"><%= @text_body %></pre>
       </div>
     <% end %>

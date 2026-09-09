@@ -32,21 +32,21 @@
 
   <% if @referenced_posts.any? %>
     <section class="space-y-4" data-key="events.imported_posts">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Posts</h2>
+      <%= h2 "Posts" %>
       <%= render PostsListComponent.new(posts: @referenced_posts) %>
     </section>
   <% end %>
 
   <% if @referenced_llm_usages.any? %>
     <section class="space-y-4" data-key="events.ai_usage">
-      <h2 class="text-2xl font-semibold mb-3 text-heading"><%= t("events.llm_usage.section_title") %></h2>
+      <%= h2 t("events.llm_usage.section_title") %>
       <%= render LlmUsagesListComponent.new(usages: @referenced_llm_usages) %>
     </section>
   <% end %>
 
   <% if @referenced_web_searches.any? %>
     <section class="space-y-4" data-key="events.web_search_usage">
-      <h2 class="text-2xl font-semibold mb-3 text-heading"><%= t("events.web_search_usage.section_title") %></h2>
+      <%= h2 t("events.web_search_usage.section_title") %>
       <%= render ListComponent.new do |list| %>
         <% list.with_item(StatListItemComponent.new(
           label: t("events.web_search_usage.calls"),
