@@ -3,18 +3,18 @@ require "test_helper"
 class ApplicationHelperTest < ActionView::TestCase
   attr_accessor :policy_override
 
-  PolicyStub = Struct.new(:allowed) do
-    def index?
-      allowed
+  PolicyStub = Struct.new(:admin, :dev) do
+    def admin?
+      admin
     end
 
     def dev?
-      allowed
+      dev
     end
   end
 
   def policy(record)
-    (policy_override || ->(_record) { PolicyStub.new(false) }).call(record)
+    (policy_override || ->(_record) { PolicyStub.new(false, false) }).call(record)
   end
 
   teardown do
@@ -163,7 +163,7 @@ class ApplicationHelperTest < ActionView::TestCase
 
     self.stub(:current_page?, current_page_stub) do
       self.stub(:controller_path, "admin/dashboard") do
-        self.policy_override = ->(record) { PolicyStub.new(record == Event) }
+        self.policy_override = ->(record) { PolicyStub.new(record == :access, false) }
 
         items = navbar_items
         admin_item = items.find { |item| item[:name] == "Admin Panel" }
@@ -195,7 +195,7 @@ class ApplicationHelperTest < ActionView::TestCase
 
     self.stub(:current_page?, current_page_stub) do
       self.stub(:controller_path, "developments") do
-        self.policy_override = ->(record) { PolicyStub.new(record == :access) }
+        self.policy_override = ->(record) { PolicyStub.new(false, record == :access) }
 
         items = navbar_items
         dev_item = items.find { |item| item[:name] == "Dev Tools" }

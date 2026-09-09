@@ -173,7 +173,7 @@ module ApplicationHelper
       active: current_page?(posts_path) || controller_path.start_with?("posts")
     }
 
-    if policy(Event).index?
+    if policy(:access).admin?
       items << {
         name: "Admin Panel",
         path: admin_path,
