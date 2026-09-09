@@ -101,10 +101,7 @@ export default class extends Controller {
     if (options.force) url.searchParams.set("force", "1")
 
     const response = await fetch(url.toString(), {
-      headers: {
-        Accept: "text/vnd.turbo-stream.html",
-        "X-Requested-With": "XMLHttpRequest"
-      },
+      headers: { Accept: "text/vnd.turbo-stream.html" },
       credentials: "same-origin",
       signal: this._abort.signal
     })
