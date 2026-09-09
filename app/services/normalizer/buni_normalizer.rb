@@ -12,7 +12,7 @@ module Normalizer
     def normalize_attachment_urls
       image_url = comic_image&.[]("src")
 
-      if image_url.blank? && page_fetched_ok?
+      if image_url.blank? && !page.nil?
         url = raw_data.dig("link")
         Rails.error.report(
           StandardError.new("buni: page #{url} fetched but comic image missing — markup changed?"),
@@ -51,37 +51,7 @@ module Normalizer
       return @page if defined?(@page)
 
       url = raw_data.dig("link")
-      @page = fetch_page(url)
-    end
-
-    # Returns true when the page fetch completed with an HTTP 2xx response,
-    # regardless of whether a comic image was found in the body.
-    def page_fetched_ok?
-      @page_fetched_ok
-    end
-
-    def fetch_page(url)
-      @page_fetched_ok = false
-      return nil if url.blank?
-
-      response = HttpClient.build.get(url)
-
-      unless response.success?
-        Rails.logger.warn(
-          "buni: skipping comic image — HTTP #{response.status} fetching page " \
-          "(feed_id=#{feed_entry.feed&.id} uid=#{feed_entry.uid} url=#{url})"
-        )
-        return nil
-      end
-
-      @page_fetched_ok = true
-      response.body
-    rescue HttpClient::Error => e
-      Rails.logger.warn(
-        "buni: skipping comic image — network error fetching page: #{e.message} " \
-        "(feed_id=#{feed_entry.feed&.id} uid=#{feed_entry.uid} url=#{url})"
-      )
-      nil
+      @page = page_fetcher.fetch(url)
     end
 
     def webtoons?

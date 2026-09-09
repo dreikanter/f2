@@ -49,7 +49,7 @@ module Normalizer
       next_url = raw_data.dig("link")
 
       while next_url && pages.size < MAX_PAGES
-        html = fetch_page(next_url)
+        html = page_fetcher.fetch(next_url)
         break if html.nil?
 
         page = Nokogiri::HTML(html)
@@ -66,19 +66,6 @@ module Normalizer
 
       URI.join(SITE_URL, href).to_s
     rescue URI::InvalidURIError
-      nil
-    end
-
-    def fetch_page(url)
-      response = HttpClient.build.get(url)
-      if response.success?
-        response.body
-      else
-        Rails.logger.warn("oglaf: skipping page #{url} for entry #{feed_entry.uid} (feed #{feed_entry.feed&.id}) — HTTP #{response.status}")
-        nil
-      end
-    rescue HttpClient::Error => e
-      Rails.logger.warn("oglaf: skipping page #{url} for entry #{feed_entry.uid} (feed #{feed_entry.feed&.id}) — #{e.message}")
       nil
     end
   end

@@ -19,7 +19,7 @@ module Normalizer
 
     def normalize_attachment_urls
       url = raw_data.dig("link")
-      page = fetch_page(url)
+      page = page_fetcher.fetch(url)
       return [] if page.nil?
 
       doc = Nokogiri::HTML(page)
@@ -43,28 +43,6 @@ module Normalizer
         "(feed_id=#{feed_entry.feed&.id}, uid=#{feed_entry.uid})"
       )
       []
-    end
-
-    def fetch_page(url)
-      return nil if url.blank?
-
-      response = HttpClient.build.get(url)
-
-      unless response.success?
-        Rails.logger.warn(
-          "elementy: skipping cover image — HTTP #{response.status} fetching #{url} " \
-          "(feed_id=#{feed_entry.feed&.id}, uid=#{feed_entry.uid})"
-        )
-        return nil
-      end
-
-      response.body
-    rescue HttpClient::Error => e
-      Rails.logger.warn(
-        "elementy: skipping cover image — #{e.class}: #{e.message} fetching #{url} " \
-        "(feed_id=#{feed_entry.feed&.id}, uid=#{feed_entry.uid})"
-      )
-      nil
     end
   end
 end

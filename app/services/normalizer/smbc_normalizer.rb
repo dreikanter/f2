@@ -45,18 +45,7 @@ module Normalizer
     def page
       return @page if defined?(@page)
 
-      @page = fetch_page(raw_data.dig("link"))
-    end
-
-    def fetch_page(url)
-      return nil if url.blank?
-
-      response = HttpClient.build.get(url)
-      return nil unless response.success?
-
-      response.body
-    rescue HttpClient::Error
-      nil
+      @page = page_fetcher.fetch(raw_data.dig("link"))
     end
   end
 end

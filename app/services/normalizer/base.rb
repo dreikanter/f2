@@ -30,6 +30,12 @@ module Normalizer
     attr_reader :feed_entry
     delegate :raw_data, to: :feed_entry
 
+    def page_fetcher
+      @page_fetcher ||= PageFetcher.new(context: {
+        normalizer: self.class.name, feed_id: feed_entry.feed_id, uid: feed_entry.uid
+      })
+    end
+
     def build_post
       Post.new(**extract_post_attributes.merge(default_post_attributes))
     end

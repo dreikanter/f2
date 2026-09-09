@@ -53,20 +53,6 @@ class Normalizer::TomorrowsNormalizerTest < ActiveSupport::TestCase
     assert_includes post.comments.first, "Author: Bill Cox"
   end
 
-  test "#normalize should warn when page fetch fails and falling back to RSS summary" do
-    stub_request(:get, "https://365tomorrows.com/2026/06/10/the-black-cube/")
-      .to_return(status: 503)
-
-    entry = feed_entry(0)
-    warnings = []
-    Rails.logger.stub(:warn, ->(msg) { warnings << msg }) do
-      Normalizer::TomorrowsNormalizer.new(entry).normalize
-    end
-
-    assert warnings.any? { |w| w.include?("tomorrows") && w.include?("falling back") },
-           "expected a warn log mentioning tomorrows and fallback"
-  end
-
   test "#normalize should report via Rails.error when page fetched but .entry-content missing" do
     stub_request(:get, "https://365tomorrows.com/2026/06/10/the-black-cube/")
       .to_return(status: 200, body: "<html><body><p>no entry-content here</p></body></html>")

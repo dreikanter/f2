@@ -26,7 +26,7 @@ module Normalizer
       link = raw_data.dig("link") || raw_data.dig("url")
       return nil if link.blank?
 
-      html = fetch_page(link)
+      html = page_fetcher.fetch(link)
       return nil if html.blank?
 
       doc = Nokogiri::HTML(html)
@@ -40,15 +40,6 @@ module Normalizer
       uri = URI.parse(src)
       uri.is_a?(URI::HTTPS) ? src : nil
     rescue URI::InvalidURIError
-      nil
-    end
-
-    def fetch_page(url)
-      response = HttpClient.build.get(url)
-      return nil unless response.success?
-
-      response.body
-    rescue HttpClient::Error
       nil
     end
   end

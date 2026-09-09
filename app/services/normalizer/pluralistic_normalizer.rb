@@ -19,7 +19,7 @@ module Normalizer
 
     def cover_image_url
       url = raw_data.dig("link") || ""
-      page = fetch_page(url)
+      page = page_fetcher.fetch(url)
       return nil if page.nil?
 
       doc = Nokogiri::HTML(page)
@@ -51,28 +51,6 @@ module Normalizer
 
       direct = "https://#{real_host}#{remaining_path}"
       uri.query.present? ? "#{direct}?#{uri.query}" : direct
-    end
-
-    def fetch_page(url)
-      return nil if url.blank?
-
-      response = HttpClient.build.get(url)
-
-      unless response.success?
-        Rails.logger.warn(
-          "pluralistic: page fetch failed (HTTP #{response.status}), skipping images " \
-          "[feed_id=#{feed_entry.feed&.id} uid=#{feed_entry.uid} url=#{url}]"
-        )
-        return nil
-      end
-
-      response.body
-    rescue HttpClient::Error => e
-      Rails.logger.warn(
-        "pluralistic: page fetch error (#{e.class}: #{e.message}), skipping images " \
-        "[feed_id=#{feed_entry.feed&.id} uid=#{feed_entry.uid} url=#{url}]"
-      )
-      nil
     end
   end
 end
