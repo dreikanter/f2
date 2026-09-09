@@ -27,9 +27,5 @@ FactoryBot.define do
     trait :inactive do
       state { :inactive }
     end
-
-    trait :recently_used do
-      last_used_at { 1.hour.ago }
-    end
   end
 end

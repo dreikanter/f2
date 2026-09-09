@@ -36,27 +36,5 @@ FactoryBot.define do
     trait :processing do
       status { :processing }
     end
-
-    trait :with_multiple_posts do
-      status { :ready }
-      data do
-        {
-          posts: 3.times.map do |i|
-            {
-              content: "Sample post content #{i + 1}",
-              source_url: "https://example.com/post/#{i + 1}",
-              published_at: (i + 1).hours.ago.iso8601,
-              attachments: [],
-              uid: "sample-uid-#{i + 1}"
-            }
-          end,
-          stats: {
-            total_entries: 3,
-            preview_entries: 3,
-            normalized_posts: 3
-          }
-        }
-      end
-    end
   end
 end
