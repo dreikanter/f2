@@ -1,5 +1,5 @@
 <%# locals: (feed:) %>
-<% action_button = "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
+<% action_button = class_names(secondary_button_classes(compact: true), "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50") %>
 <div id="<%= dom_id(feed, :header) %>" class="space-y-5">
   <%= render PageHeaderComponent.new(title: feed.display_name) do |header| %>
     <% header.with_breadcrumb(label: "Feeds", url: feeds_path) %>

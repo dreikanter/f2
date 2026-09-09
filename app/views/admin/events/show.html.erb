@@ -6,7 +6,7 @@
     <% header.with_breadcrumb(label: "Events Log", url: admin_events_path) %>
     <% if @previous_event %>
       <% header.with_action_button do %>
-        <%= link_to "← Previous", admin_event_path(@previous_event), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+        <%= link_to "← Previous", admin_event_path(@previous_event), class: secondary_button_classes(compact: true) %>
       <% end %>
     <% else %>
       <% header.with_action_button do %>
@@ -15,7 +15,7 @@
     <% end %>
     <% if @next_event %>
       <% header.with_action_button do %>
-        <%= link_to "Next →", admin_event_path(@next_event), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+        <%= link_to "Next →", admin_event_path(@next_event), class: secondary_button_classes(compact: true) %>
       <% end %>
     <% else %>
       <% header.with_action_button do %>
@@ -32,21 +32,21 @@
 
   <% if @referenced_posts.any? %>
     <section class="space-y-4" data-key="events.imported_posts">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Imported Posts</h2>
+      <%= h2 "Imported Posts" %>
       <%= render PostsListComponent.new(posts: @referenced_posts, show_feed: true) %>
     </section>
   <% end %>
 
   <% if @referenced_llm_usages.any? %>
     <section class="space-y-4" data-key="events.ai_usage">
-      <h2 class="text-2xl font-semibold mb-3 text-heading"><%= t("events.llm_usage.section_title") %></h2>
+      <%= h2 t("events.llm_usage.section_title") %>
       <%= render LlmUsagesListComponent.new(usages: @referenced_llm_usages) %>
     </section>
   <% end %>
 
   <% if @referenced_web_searches.any? %>
     <section class="space-y-4" data-key="events.web_search_usage">
-      <h2 class="text-2xl font-semibold mb-3 text-heading"><%= t("events.web_search_usage.section_title") %></h2>
+      <%= h2 t("events.web_search_usage.section_title") %>
       <%= render ListComponent.new do |list| %>
         <% list.with_item(StatListItemComponent.new(
           label: t("events.web_search_usage.calls"),

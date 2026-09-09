@@ -1,14 +1,20 @@
 module ApplicationHelper
+  def h1(content = nil, **options, &block)
+    options[:class] = class_names("text-4xl font-semibold mb-6 text-heading", options[:class])
+    tag.h1(content, **options, &block)
+  end
+
+  def h2(content = nil, **options, &block)
+    options[:class] = class_names("text-2xl font-semibold mb-3 text-heading", options[:class])
+    tag.h2(content, **options, &block)
+  end
+
   def post_content_preview(content, length = 120)
     return "" unless content.present?
 
     truncate(content.strip, length: length, omission: "…")
   end
 
-  # Shared Tailwind class strings for form controls, so a focus-ring or
-  # padding change doesn't mean a many-file find-and-replace. Some older
-  # markup still carries inline copies and is migrated as it's touched
-  # (same posture as the color-token migration).
   def input_field_classes(disabled: false, icon_padding: false)
     padding = icon_padding ? "py-2 ps-10 pe-3" : "px-3 py-2"
     classes = "w-full rounded-md border border-border-strong bg-surface #{padding} text-lg leading-normal " \
@@ -18,21 +24,31 @@ module ApplicationHelper
     "#{classes} disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed"
   end
 
-  def primary_button_classes
-    "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base " \
+  def primary_button_classes(compact: false)
+    padding = compact ? "px-4 py-2" : "px-6 py-3"
+    "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand #{padding} text-base " \
       "font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none " \
       "focus:ring-2 focus:ring-ring focus:ring-offset-1"
   end
 
-  def secondary_button_classes
+  def secondary_button_classes(compact: false)
+    padding = compact ? "px-4 py-2" : "px-6 py-3"
     "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface " \
-      "px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted " \
+      "#{padding} text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted " \
       "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
   end
 
   def icon_button_classes
     "inline-flex size-7 shrink-0 items-center justify-center rounded text-muted transition " \
       "hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+  end
+
+  def text_link_classes
+    "text-brand underline underline-offset-4 transition hover:text-brand-hover"
+  end
+
+  def form_label_classes
+    "block font-semibold text-heading"
   end
 
   # Copy-to-clipboard icon button. The label serves as both the tooltip and

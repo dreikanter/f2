@@ -20,7 +20,7 @@ module FeedHelper
     return feed.target_group unless url
 
     link_to "#{feed.access_token.host_domain}/#{feed.target_group}", url,
-            class: "text-brand underline underline-offset-4 transition hover:text-brand-hover",
+            class: text_link_classes,
             target: "_blank", rel: "noopener"
   end
 

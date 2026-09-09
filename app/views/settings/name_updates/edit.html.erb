@@ -6,14 +6,14 @@
   <div class="max-w-2xl">
     <%= form_with model: @user, url: settings_name_update_path, method: :patch, local: true do |form| %>
       <div class="space-y-2">
-        <%= form.label :name, "Your real name or a nickname", class: "block font-semibold text-heading" %>
-        <%= form.text_field :name, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", placeholder: "Enter your name", maxlength: User::NAME_MAX_LENGTH, autofocus: true, autocomplete: "name" %>
+        <%= form.label :name, "Your real name or a nickname", class: form_label_classes %>
+        <%= form.text_field :name, class: input_field_classes, placeholder: "Enter your name", maxlength: User::NAME_MAX_LENGTH, autofocus: true, autocomplete: "name" %>
         <p class="text-sm text-muted" data-key="name_update.hint">Optional. Set a name so people getting an invite can see who sent it. Leave it blank and they'll just see "Somebody".</p>
       </div>
 
       <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
-        <%= form.submit "Save Name", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
-        <%= link_to "Cancel", settings_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1") %>
+        <%= form.submit "Save Name", class: primary_button_classes %>
+        <%= link_to "Cancel", settings_path, class: secondary_button_classes %>
       </div>
     <% end %>
   </div>

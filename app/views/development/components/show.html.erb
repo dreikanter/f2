@@ -68,17 +68,17 @@
 
     <%# Buttons %>
     <section id="buttons" class="scroll-mt-6 space-y-4" data-key="section.buttons">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Buttons</h2>
+      <%= h2 "Buttons" %>
       <p class="text-body">Used for primary actions, secondary choices, and destructive operations. Disabled buttons keep their shape but drop their emphasis.</p>
 
       <div class="flex flex-wrap items-start gap-6">
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Primary</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Save changes</button>
+          <button type="button" class="<%= class_names(primary_button_classes(compact: true), "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50") %>">Save changes</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Secondary</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Cancel</button>
+          <button type="button" class="<%= class_names(secondary_button_classes(compact: true), "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50") %>">Cancel</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger</p>
@@ -86,11 +86,11 @@
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Primary disabled</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Save changes</button>
+          <button type="button" class="<%= class_names(primary_button_classes(compact: true), "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50") %>" disabled>Save changes</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Secondary disabled</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Cancel</button>
+          <button type="button" class="<%= class_names(secondary_button_classes(compact: true), "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50") %>" disabled>Cancel</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger disabled</p>
@@ -101,21 +101,21 @@
 
     <%# Text input %>
     <section id="text-input" class="scroll-mt-6 space-y-4" data-key="section.text-input">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Text input</h2>
+      <%= h2 "Text input" %>
       <p class="text-body">The standard single-line field. Shown empty, filled, disabled, and in an error state.</p>
 
       <div class="grid gap-6 sm:grid-cols-2">
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Empty (with placeholder)</p>
-          <%= text_field_tag :feed_name, nil, placeholder: "e.g. Ruby Weekly", class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= text_field_tag :feed_name, nil, placeholder: "e.g. Ruby Weekly", class: input_field_classes %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Filled</p>
-          <%= text_field_tag :feed_name_filled, "Ruby Weekly", class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= text_field_tag :feed_name_filled, "Ruby Weekly", class: input_field_classes %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Disabled</p>
-          <%= text_field_tag :feed_name_disabled, "Locked while syncing", disabled: true, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= text_field_tag :feed_name_disabled, "Locked while syncing", disabled: true, class: input_field_classes %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Error</p>
@@ -127,28 +127,28 @@
 
     <%# Select %>
     <section id="select" class="scroll-mt-6 space-y-4" data-key="section.select">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Select</h2>
+      <%= h2 "Select" %>
       <p class="text-body">A dropdown for choosing one option from a known set.</p>
 
       <div class="grid gap-6 sm:grid-cols-2">
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Default</p>
-          <%= select_tag :frequency, options_for_select(["Every 30 minutes", "Every hour", "Every 6 hours", "Daily at midnight"]), class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= select_tag :frequency, options_for_select(["Every 30 minutes", "Every hour", "Every 6 hours", "Daily at midnight"]), class: input_field_classes %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">With selection</p>
-          <%= select_tag :frequency_selected, options_for_select(["Every 30 minutes", "Every hour", "Every 6 hours", "Daily at midnight"], "Every hour"), class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= select_tag :frequency_selected, options_for_select(["Every 30 minutes", "Every hour", "Every 6 hours", "Daily at midnight"], "Every hour"), class: input_field_classes %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Disabled</p>
-          <%= select_tag :frequency_disabled, options_for_select(["Every hour"]), disabled: true, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= select_tag :frequency_disabled, options_for_select(["Every hour"]), disabled: true, class: input_field_classes %>
         </div>
       </div>
     </section>
 
     <%# Date & time %>
     <section id="date-time" class="scroll-mt-6 space-y-4" data-key="section.date-time">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Date & time</h2>
+      <%= h2 "Date & time" %>
       <p class="text-body">A calendar picker for dates and the native time input for clock times. The date input mounts the Flowbite datepicker through the <code>datepicker</code> Stimulus controller, so it also works in markup injected via Turbo Streams.</p>
 
       <div class="grid gap-6 sm:grid-cols-2">
@@ -158,7 +158,7 @@
             <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
               <%= icon("calendar", css_class: "size-5 text-muted") %>
             </div>
-            <%= text_field_tag :demo_date, nil, placeholder: "Pick a date", autocomplete: "off", class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", data: { controller: "datepicker" } %>
+            <%= text_field_tag :demo_date, nil, placeholder: "Pick a date", autocomplete: "off", class: input_field_classes(icon_padding: true), data: { controller: "datepicker" } %>
           </div>
         </div>
         <div class="space-y-2">
@@ -167,7 +167,7 @@
             <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
               <%= icon("calendar", css_class: "size-5 text-muted") %>
             </div>
-            <%= text_field_tag :demo_date_filled, Date.current.iso8601, autocomplete: "off", class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", data: { controller: "datepicker" } %>
+            <%= text_field_tag :demo_date_filled, Date.current.iso8601, autocomplete: "off", class: input_field_classes(icon_padding: true), data: { controller: "datepicker" } %>
           </div>
         </div>
         <div class="space-y-2">
@@ -176,7 +176,7 @@
             <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
               <%= icon("clock", css_class: "size-5 text-muted") %>
             </div>
-            <%= time_field_tag :demo_time, "09:30", class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+            <%= time_field_tag :demo_time, "09:30", class: input_field_classes(icon_padding: true) %>
           </div>
         </div>
         <div class="space-y-2">
@@ -185,7 +185,7 @@
             <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
               <%= icon("clock", css_class: "size-5 text-muted") %>
             </div>
-            <%= time_field_tag :demo_time_disabled, "09:30", disabled: true, class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed" %>
+            <%= time_field_tag :demo_time_disabled, "09:30", disabled: true, class: input_field_classes(disabled: true, icon_padding: true) %>
           </div>
         </div>
       </div>
@@ -193,7 +193,7 @@
 
     <%# Checkbox %>
     <section id="checkbox" class="scroll-mt-6 space-y-4" data-key="section.checkbox">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Checkbox</h2>
+      <%= h2 "Checkbox" %>
       <p class="text-body">A labeled checkbox for a single on/off choice. The <code>label_tag</code> targets the checkbox id, so clicking the label toggles it.</p>
 
       <div class="space-y-4">
@@ -214,11 +214,11 @@
 
     <%# Radio group %>
     <section id="radio-group" class="scroll-mt-6 space-y-4" data-key="section.radio-group">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Radio group</h2>
+      <%= h2 "Radio group" %>
       <p class="text-body">A set of mutually exclusive options sharing one name. One is selected by default; unavailable options are disabled. Each label targets its radio's id.</p>
 
       <fieldset class="space-y-3">
-        <legend class="block font-semibold text-heading">Refresh frequency</legend>
+        <legend class="<%= form_label_classes %>">Refresh frequency</legend>
         <div class="flex items-start gap-3">
           <%= radio_button_tag :refresh_frequency, "30m", true, class: "mt-1 h-4 w-4 border-border-strong text-info focus:ring-ring" %>
           <%= label_tag :refresh_frequency_30m, "Every 30 minutes", class: "text-base text-heading" %>
@@ -240,24 +240,24 @@
 
     <%# Form group %>
     <section id="form-group" class="scroll-mt-6 space-y-4" data-key="section.form-group">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Form group</h2>
+      <%= h2 "Form group" %>
       <p class="text-body">The standard composition: a label bound to its control, plus optional help or error text, stacked with consistent spacing.</p>
 
       <div class="max-w-xl space-y-8">
         <div class="space-y-2">
-          <%= label_tag :group_feed_name, "Feed name", class: "block font-semibold text-heading" %>
-          <%= text_field_tag :group_feed_name, nil, placeholder: "e.g. Ruby Weekly", class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= label_tag :group_feed_name, "Feed name", class: form_label_classes %>
+          <%= text_field_tag :group_feed_name, nil, placeholder: "e.g. Ruby Weekly", class: input_field_classes %>
           <p class="text-sm text-muted">Shown in your feed list and on FreeFeed posts.</p>
         </div>
 
         <div class="space-y-2">
-          <%= label_tag :group_frequency, "Refresh frequency", class: "block font-semibold text-heading" %>
-          <%= select_tag :group_frequency, options_for_select(["Every 30 minutes", "Every hour", "Daily at midnight"], "Every hour"), class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= label_tag :group_frequency, "Refresh frequency", class: form_label_classes %>
+          <%= select_tag :group_frequency, options_for_select(["Every 30 minutes", "Every hour", "Daily at midnight"], "Every hour"), class: input_field_classes %>
           <p class="text-sm text-muted">How often Feeder checks the source for new posts.</p>
         </div>
 
         <div class="space-y-2">
-          <%= label_tag :group_source_url, "Source URL", class: "block font-semibold text-heading" %>
+          <%= label_tag :group_source_url, "Source URL", class: form_label_classes %>
           <%= text_field_tag :group_source_url, "not-a-valid-url", class: "w-full rounded-md border border-danger bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-danger-hover transition focus:border-danger-hover focus:outline-none focus:ring-2" %>
           <p class="text-sm text-danger">Enter a valid feed URL, like https://example.com/feed.xml.</p>
         </div>
@@ -266,7 +266,7 @@
 
     <%# Page header %>
     <section id="page-header" class="scroll-mt-6 space-y-4" data-key="section.page-header">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Page header</h2>
+      <%= h2 "Page header" %>
       <p class="text-body">Opens a page with a title and optional context and actions. Pair it with <code>space-y-8</code> to keep a steady gap before the page content.</p>
 
       <div class="space-y-2">
@@ -278,10 +278,10 @@
                 Manage the sources Feeder reposts to FreeFeed.
               <% end %>
               <% header.with_action_button do %>
-                <%= link_to "Import", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+                <%= link_to "Import", "#", class: secondary_button_classes(compact: true) %>
               <% end %>
               <% header.with_action_button do %>
-                <%= link_to "New feed", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+                <%= link_to "New feed", "#", class: primary_button_classes(compact: true) %>
               <% end %>
             <% end %>
 
@@ -308,7 +308,7 @@
 
     <%# Badge %>
     <section id="badge" class="scroll-mt-6 space-y-4" data-key="section.badge">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Badge</h2>
+      <%= h2 "Badge" %>
       <p class="text-body">Small status labels. Color carries meaning — green for healthy, red for problems, gray for neutral.</p>
       <div class="flex flex-wrap gap-2">
         <%= render BadgeComponent.new(text: "Active", color: :success) %>
@@ -330,7 +330,7 @@
 
     <%# Card %>
     <section id="card" class="scroll-mt-6 space-y-4" data-key="section.card">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Card</h2>
+      <%= h2 "Card" %>
       <p class="text-body">A padded container that groups related content on a clean surface.</p>
       <%= render CardComponent.new do %>
         <div class="space-y-2">
@@ -406,7 +406,7 @@
 
     <%# Panel %>
     <section id="panel" class="scroll-mt-6 space-y-4" data-key="section.panel">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Panel</h2>
+      <%= h2 "Panel" %>
       <p class="text-body">A borderless container on a light gray surface. Use it to set a block of related content apart with less weight than a bordered card.</p>
       <%= render PanelComponent.new do %>
         <div class="space-y-2">
@@ -418,7 +418,7 @@
 
     <%# Alert %>
     <section id="alert" class="scroll-mt-6 space-y-4" data-key="section.alert">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Alert</h2>
+      <%= h2 "Alert" %>
       <p class="text-body">Inline messages that call out information, success, warnings, or errors.</p>
       <div class="space-y-3">
         <%= render AlertComponent.new(variant: :info) do %>
@@ -441,14 +441,14 @@
 
     <%# Empty state %>
     <section id="empty-state" class="scroll-mt-6 space-y-4" data-key="section.empty-state">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Empty state</h2>
+      <%= h2 "Empty state" %>
       <p class="text-body">Shown when there's nothing to display yet.</p>
       <%= render EmptyStateComponent.new("No feeds yet — add your first source to get started") %>
     </section>
 
     <%# Collapsible section %>
     <section id="collapsible-section" class="scroll-mt-6 space-y-4" data-key="section.collapsible-section">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Collapsible section</h2>
+      <%= h2 "Collapsible section" %>
       <p class="text-body">A borderless expandable region for secondary content. The header toggles a chevron and reveals a body separated by a top border. Built on native <code>&lt;details&gt;</code>, so it works without JavaScript even in markup injected via Turbo Streams.</p>
 
       <div class="space-y-2">
@@ -468,14 +468,14 @@
 
     <%# Spinner %>
     <section id="spinner" class="scroll-mt-6 space-y-4" data-key="section.spinner">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Spinner</h2>
+      <%= h2 "Spinner" %>
       <p class="text-body">Indicates a short, indeterminate wait.</p>
       <%= render SpinnerComponent.new %>
     </section>
 
     <%# Stats bar %>
     <section id="stats-bar" class="scroll-mt-6 space-y-4" data-key="section.stats-bar">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Stats bar</h2>
+      <%= h2 "Stats bar" %>
       <p class="text-body">A compact row of headline numbers. Pass <code>tooltip:</code> to spell out a shortened label on hover.</p>
       <% stats_bar = StatsBarComponent.new %>
       <% stats_bar.with_item(StatBarItemComponent.new(label: "Total feeds", value: "42")) %>
@@ -487,7 +487,7 @@
 
     <%# List %>
     <section id="list" class="scroll-mt-6 space-y-4" data-key="section.list">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">List</h2>
+      <%= h2 "List" %>
       <p class="text-body">A grouped list for collections of items, with linked titles and metadata, or simple label/value rows.</p>
 
       <div class="space-y-2">
@@ -522,14 +522,14 @@
 
     <%# Pagination %>
     <section id="pagination" class="scroll-mt-6 space-y-4" data-key="section.pagination">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Pagination</h2>
+      <%= h2 "Pagination" %>
       <p class="text-body">Moves between pages of a long collection.</p>
       <%= render PaginationComponent.new(collection_name: "posts", path_helper: ->(page) { "#page-#{page}" }, current_page: 3, total_pages: 10) %>
     </section>
 
     <%# Confirmation modal %>
     <section id="confirmation-modal" class="scroll-mt-6 space-y-4" data-key="section.confirmation-modal">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Confirmation modal</h2>
+      <%= h2 "Confirmation modal" %>
       <p class="text-body">Asks the user to confirm a destructive action. It stays hidden until a trigger opens it, so nothing shows here by default.</p>
       <%= render ConfirmationModalComponent.new(title: "Delete feed", action: "Delete", url: "#", method: :delete) do %>
         Are you sure you want to delete this feed? This can't be undone.
@@ -538,7 +538,7 @@
 
     <%# Event description %>
     <section id="event-description" class="scroll-mt-6 space-y-4" data-key="section.event-description">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Event description</h2>
+      <%= h2 "Event description" %>
       <p class="text-body">Renders a human-readable summary of a system event, usually inside an alert that matches its severity.</p>
 
       <% sample_feed = Feed.first || Feed.new(id: SecureRandom.uuid, name: "Sample Feed") %>
@@ -571,7 +571,7 @@
 
     <%# Feed profile chooser %>
     <section id="feed-profile-chooser" class="scroll-mt-6 space-y-4" data-key="section.feed-profile-chooser">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Feed profile chooser</h2>
+      <%= h2 "Feed profile chooser" %>
       <p class="text-body">The "How should we fetch posts?" radio group shown when two or more ways to fetch a source both work. Each option carries its post-count verdict, and the suggested default is preselected. One working option is shown as a read-only annotation instead of a chooser.</p>
 
       <%

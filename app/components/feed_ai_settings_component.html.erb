@@ -8,7 +8,7 @@
         key: "form.ai-settings"
       }
     ) do %>
-  <h2 class="text-2xl font-semibold mb-3 text-heading">AI Settings</h2>
+  <%= helpers.h2 "AI Settings" %>
 
   <div class="space-y-6">
     <% if credentials? %>
@@ -23,7 +23,7 @@
 
       <%= render PanelComponent.new do %>
         <div class="space-y-2">
-          <%= form.label :ai_credential_id, "AI provider", class: "block font-semibold text-heading" %>
+          <%= form.label :ai_credential_id, "AI provider", class: helpers.form_label_classes %>
           <%= form.select :ai_credential_id, credential_options, { selected: selected_credential_id },
                           class: helpers.input_field_classes, disabled: !section_visible?,
                           data: { ai_settings_target: "credentialSelect", action: "change->ai-settings#refreshModels", key: "form.ai-credential" } %>
@@ -35,7 +35,7 @@
 
       <%= render PanelComponent.new do %>
         <div class="space-y-2">
-          <%= form.label :ai_model, "Model", class: "block font-semibold text-heading" %>
+          <%= form.label :ai_model, "Model", class: helpers.form_label_classes %>
           <%= form.select :ai_model, model_select_options, { selected: selected_model_id },
                           class: helpers.input_field_classes, disabled: !section_visible?,
                           data: { ai_settings_target: "modelSelect", key: "form.ai-model" } %>
@@ -49,7 +49,7 @@
 
       <%= render PanelComponent.new do %>
         <div class="space-y-2">
-          <%= form.label :search_credential_id, "External search (optional)", class: "block font-semibold text-heading" %>
+          <%= form.label :search_credential_id, "External search (optional)", class: helpers.form_label_classes %>
           <%= form.select :search_credential_id, search_credential_options, { selected: selected_search_credential_id },
                           class: helpers.input_field_classes, disabled: !section_visible?,
                           data: { ai_settings_target: "searchCredentialSelect", key: "form.search-credential" } %>

@@ -7,9 +7,9 @@
     <%= form_with model: @access_token do |form| %>
       <div class="space-y-10">
         <div class="space-y-2">
-          <%= form.label :name, "Token Name", class: "block font-semibold text-heading" %>
+          <%= form.label :name, "Token Name", class: form_label_classes %>
           <%= form.text_field :name,
-                              class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
+                              class: input_field_classes,
                               placeholder: "e.g., My FreeFeed Token",
                               autocomplete: "off",
                               autofocus: true %>
@@ -19,14 +19,14 @@
         </div>
 
         <div class="space-y-2">
-          <%= form.label :host, "FreeFeed Instance", class: "block font-semibold text-heading" %>
-          <%= form.text_field :host, disabled: true, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed" %>
+          <%= form.label :host, "FreeFeed Instance", class: form_label_classes %>
+          <%= form.text_field :host, disabled: true, class: input_field_classes(disabled: true) %>
         </div>
 
         <div class="space-y-2">
-          <%= form.label :token, "New Token Value", class: "block font-semibold text-heading" %>
+          <%= form.label :token, "New Token Value", class: form_label_classes %>
           <%= form.text_field :token,
-                              class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
+                              class: input_field_classes,
                               placeholder: "Paste a new token here to replace the current one",
                               autocomplete: "off" %>
           <p class="text-sm text-muted">Leave blank to keep the existing token. Entering a new value will trigger re-validation.</p>
@@ -37,8 +37,8 @@
       </div>
 
       <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
-        <%= form.submit "Save Changes", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
-        <%= link_to "Cancel", access_token_path(@access_token), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+        <%= form.submit "Save Changes", class: primary_button_classes %>
+        <%= link_to "Cancel", access_token_path(@access_token), class: secondary_button_classes %>
       </div>
     <% end %>
   </div>

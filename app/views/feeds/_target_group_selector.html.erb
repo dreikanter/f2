@@ -11,7 +11,7 @@
       polling_max_polls_value: polling_max_polls
     } : {} do %>
   <div class="space-y-2">
-    <%= label_tag "feed[target_group]", "Target Group", class: "block font-semibold text-heading" %>
+    <%= label_tag "feed[target_group]", "Target Group", class: form_label_classes %>
 
     <%# The refresh control shares the picker's row and stretches to its height;
         its timeout note wraps onto a line of its own. %>
@@ -54,7 +54,7 @@
       <p class="text-sm text-muted">
         Need a new group?
         <%= link_to "#{token.host}/groups/create", target: "_blank", rel: "noopener noreferrer",
-                    class: "inline-flex items-center gap-1 font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" do %>
+                    class: class_names(text_link_classes, "inline-flex items-center gap-1 font-medium") do %>
           Create one on FreeFeed <%= icon("external-link", css_class: "size-3") %>
         <% end %>
       </p>
@@ -70,14 +70,14 @@
           <% elsif token_error == :empty %>
             This account doesn't manage any groups yet.
             <%= link_to "#{token.host}/groups/create", target: "_blank", rel: "noopener noreferrer",
-                        class: "inline-flex items-center gap-1 font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" do %>
+                        class: class_names(text_link_classes, "inline-flex items-center gap-1 font-medium") do %>
               Create a new group on FreeFeed <%= icon("external-link", css_class: "size-3") %>
             <% end %>
           <% else %>
             Could not load groups for this account.
             <%= link_to "Retry", access_token_groups_path(token, feed_id: feed.id, retry: 1),
                         data: { turbo_stream: true },
-                        class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+                        class: class_names(text_link_classes, "font-medium") %>
           <% end %>
         </p>
       <% end %>

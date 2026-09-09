@@ -13,10 +13,10 @@
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
     <%= render LinkedCardComponent.new(href: edit_settings_name_update_path) do %>
       <div class="space-y-4">
-        <h2 class="text-2xl font-semibold mb-3 text-heading flex items-center gap-2">
+        <%= h2 class: "flex items-center gap-2" do %>
           <%= icon("user", css_class: "size-5") %>
           <span>Your Name</span>
-        </h2>
+        <% end %>
         <p class="text-body" data-key="settings.name">
           <% if @user.name.present? %>
             People you invite will see <%= @user.name %>
@@ -29,20 +29,20 @@
 
     <%= render LinkedCardComponent.new(href: edit_settings_email_update_path) do %>
       <div class="space-y-4">
-        <h2 class="text-2xl font-semibold mb-3 text-heading flex items-center gap-2">
+        <%= h2 class: "flex items-center gap-2" do %>
           <%= icon("mail", css_class: "size-5") %>
           <span>Change Email</span>
-        </h2>
+        <% end %>
         <p class="text-body" data-key="settings.email">Your current email is <%= @user.email_address %></p>
       </div>
     <% end %>
 
     <%= render LinkedCardComponent.new(href: edit_settings_password_update_path) do %>
       <div class="space-y-4">
-        <h2 class="text-2xl font-semibold mb-3 text-heading flex items-center gap-2">
+        <%= h2 class: "flex items-center gap-2" do %>
           <%= icon("lock", css_class: "size-5") %>
           <span>Change Password</span>
-        </h2>
+        <% end %>
         <p class="text-body" data-key="settings.password">Last changed <%= time_ago_in_words(@user.password_updated_at || @user.created_at) %> ago</p>
       </div>
     <% end %>
@@ -51,40 +51,40 @@
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
     <%= render LinkedCardComponent.new(href: access_tokens_path) do %>
       <div class="space-y-4">
-        <h2 class="text-2xl font-semibold mb-3 text-heading flex items-center gap-2">
+        <%= h2 class: "flex items-center gap-2" do %>
           <%= icon("key-square", css_class: "size-5") %>
           <span>Freefeed Access Tokens</span>
-        </h2>
+        <% end %>
         <p class="text-body">Manage the tokens used for reposting to FreeFeed</p>
       </div>
     <% end %>
 
     <%= render LinkedCardComponent.new(href: ai_credentials_path) do %>
       <div class="space-y-4">
-        <h2 class="text-2xl font-semibold mb-3 text-heading flex items-center gap-2">
+        <%= h2 class: "flex items-center gap-2" do %>
           <%= icon("sparkles", css_class: "size-5") %>
           <span>AI Credentials</span>
-        </h2>
+        <% end %>
         <p class="text-body">Connect AI provider keys for AI-backed feed extraction</p>
       </div>
     <% end %>
 
     <%= render LinkedCardComponent.new(href: search_credentials_path) do %>
       <div class="space-y-4">
-        <h2 class="text-2xl font-semibold mb-3 text-heading flex items-center gap-2">
+        <%= h2 class: "flex items-center gap-2" do %>
           <%= icon("search", css_class: "size-5") %>
           <span>Search Credentials</span>
-        </h2>
+        <% end %>
         <p class="text-body">Connect search-provider keys for AI feeds that search the web</p>
       </div>
     <% end %>
 
     <%= render LinkedCardComponent.new(href: invites_path) do %>
       <div class="space-y-4">
-        <h2 class="text-2xl font-semibold mb-3 text-heading flex items-center gap-2">
+        <%= h2 class: "flex items-center gap-2" do %>
           <%= icon("mail", css_class: "size-5") %>
           <span>Invites</span>
-        </h2>
+        <% end %>
         <p class="text-body">Invite people to join Feeder</p>
       </div>
     <% end %>

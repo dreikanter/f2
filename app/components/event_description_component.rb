@@ -18,10 +18,6 @@ class EventDescriptionComponent < ViewComponent::Base
     "feed_search_credential_removed" => "FeedCredentialRemovedDescriptionComponent"
   }.freeze
 
-  # Shared styling for every entity link a description interpolates, so the
-  # subject and the metadata feed list read as the same kind of link.
-  ENTITY_LINK_CLASSES = "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover".freeze
-
   def self.for(event)
     klass = SUBCLASSES[event.type]&.constantize || self
     klass.new(event: event)
@@ -80,7 +76,7 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def entity_link(label, path)
-    helpers.link_to(label, path, class: ENTITY_LINK_CLASSES)
+    helpers.link_to(label, path, class: class_names(helpers.text_link_classes, "font-medium"))
   end
 
   # A recorded subject_type with no loadable subject means the record was

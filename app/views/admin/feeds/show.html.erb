@@ -5,7 +5,7 @@
 
   <% if @recent_posts.any? %>
     <section class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Stats</h2>
+      <%= h2 "Stats" %>
       <%= render FeedStatsComponent.new(feed: @feed) %>
       <%= render PostsHeatmapComponent.new(feed: @feed) %>
     </section>
@@ -13,21 +13,21 @@
 
   <% if @has_llm_usages %>
     <section class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">AI Usage</h2>
+      <%= h2 "AI Usage" %>
       <%= render FeedLlmStatsComponent.new(feed: @feed) %>
     </section>
   <% end %>
 
   <% if @recent_events.any? %>
     <section class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Recent Activity</h2>
+      <%= h2 "Recent Activity" %>
       <%= render Admin::EventsListComponent.new(events: @recent_events, view_all_url: admin_events_path(filter: { subject_type: "Feed", subject_id: @feed.id })) %>
     </section>
   <% end %>
 
   <% if @recent_posts.any? %>
     <section class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Recent Posts</h2>
+      <%= h2 "Recent Posts" %>
       <%= render PostsListComponent.new(posts: @recent_posts, show_feed: false, item_component: ReadonlyPostListItemComponent) %>
     </section>
   <% end %>

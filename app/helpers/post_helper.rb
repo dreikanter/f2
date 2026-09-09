@@ -50,7 +50,7 @@ module PostHelper
       result << ERB::Util.html_escape(text[last_end...match_start])
 
       escaped_url = ERB::Util.html_escape(url)
-      result << %(<a href="#{escaped_url}" target="_blank" rel="noopener" class="font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover">#{escaped_url}</a>)
+      result << %(<a href="#{escaped_url}" target="_blank" rel="noopener" class="font-medium #{text_link_classes}">#{escaped_url}</a>)
 
       last_end = match_end
     end

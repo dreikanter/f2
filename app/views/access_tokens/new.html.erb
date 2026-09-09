@@ -7,12 +7,12 @@
     <%= form_with model: @access_token, url: access_tokens_path(feed_id: @feed&.id), data: { controller: "token-host", token_host_hosts_value: AccessToken::FREEFEED_HOSTS.to_json } do |form| %>
       <div class="space-y-10">
         <div class="space-y-2">
-          <%= form.label :host, "FreeFeed Instance", class: "block font-semibold text-heading" %>
+          <%= form.label :host, "FreeFeed Instance", class: form_label_classes %>
           <%= form.select :host,
                           AccessToken.host_options_for_select,
                           { selected: AccessToken::FREEFEED_HOSTS[:production][:url] },
                           {
-                            class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
+                            class: input_field_classes,
                             autofocus: true,
                             data: {
                               token_host_target: "hostSelect",
@@ -27,7 +27,7 @@
             <%= link_to AccessToken::FREEFEED_HOSTS[:production][:token_url],
                         target: "_blank",
                         rel: "noopener",
-                        class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover",
+                        class: class_names(text_link_classes, "font-medium"),
                         data: { token_host_target: "link" } do %>
               <span data-token-host-target="linkText"><%= AccessToken::FREEFEED_HOSTS[:production][:domain] %> settings</span>
             <% end %>
@@ -44,9 +44,9 @@
         <% end %>
 
         <div class="space-y-2">
-          <%= form.label :token, "Access Token", class: "block font-semibold text-heading" %>
+          <%= form.label :token, "Access Token", class: form_label_classes %>
           <%= form.text_field :token,
-                              class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
+                              class: input_field_classes,
                               placeholder: "Paste your FreeFeed access token here",
                               required: true,
                               autocomplete: "off" %>
@@ -56,9 +56,9 @@
         </div>
 
         <div class="space-y-2">
-          <%= form.label :name, "Token Name (optional)", class: "block font-semibold text-heading" %>
+          <%= form.label :name, "Token Name (optional)", class: form_label_classes %>
           <%= form.text_field :name,
-                              class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
+                              class: input_field_classes,
                               placeholder: "e.g., My FreeFeed Token",
                               autocomplete: "off" %>
           <p class="text-sm text-muted">
@@ -71,8 +71,8 @@
       </div>
 
       <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
-        <%= form.submit "Validate and Save", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
-        <%= link_to "Cancel", (@feed ? edit_feed_path(@feed) : access_tokens_path), class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1") %>
+        <%= form.submit "Validate and Save", class: primary_button_classes %>
+        <%= link_to "Cancel", (@feed ? edit_feed_path(@feed) : access_tokens_path), class: secondary_button_classes %>
       </div>
     <% end %>
   </div>

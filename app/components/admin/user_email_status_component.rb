@@ -1,7 +1,4 @@
 class Admin::UserEmailStatusComponent < ViewComponent::Base
-  REACTIVATE_CLASSES = "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50".freeze
-  VIEW_EVENTS_CLASSES = "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1".freeze
-
   def initialize(user:)
     @user = user
   end
@@ -35,8 +32,10 @@ class Admin::UserEmailStatusComponent < ViewComponent::Base
 
   def actions_value
     helpers.safe_join([
-      helpers.button_to("Reactivate Email", helpers.admin_user_email_reactivation_path(@user), method: :post, class: REACTIVATE_CLASSES),
-      helpers.link_to("View Email Events", helpers.admin_events_path(filter: { user_id: @user.id, type: helpers.mail_event_types }), class: VIEW_EVENTS_CLASSES)
+      helpers.button_to("Reactivate Email", helpers.admin_user_email_reactivation_path(@user), method: :post,
+                        class: class_names(helpers.primary_button_classes(compact: true), "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50")),
+      helpers.link_to("View Email Events", helpers.admin_events_path(filter: { user_id: @user.id, type: helpers.mail_event_types }),
+                      class: helpers.secondary_button_classes(compact: true))
     ], " ")
   end
 end

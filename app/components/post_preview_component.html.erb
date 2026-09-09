@@ -23,7 +23,7 @@
         <span class="w-20 shrink-0 text-muted">URL:</span>
         <span class="min-w-0 truncate">
           <%= link_to source_url, source_url, target: "_blank", rel: "noopener",
-                class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+                class: class_names(helpers.text_link_classes, "font-medium") %>
         </span>
       </div>
     <% end %>

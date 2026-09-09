@@ -7,7 +7,7 @@
   <% if feed.user %>
     <% header.with_context_paragraph do %>
       Owner:
-      <%= link_to feed.user.email_address, admin_user_path(feed.user), class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+      <%= link_to feed.user.email_address, admin_user_path(feed.user), class: text_link_classes %>
     <% end %>
   <% end %>
   <% if feed.target_group.present? %>

@@ -8,7 +8,7 @@
     <% end %>
     <% header.with_action_button do %>
       <%= button_to "Run", development_job_job_runs_path(@job_class.name),
-            class: "inline-flex items-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer",
+            class: class_names(primary_button_classes(compact: true), "cursor-pointer"),
             data: { key: "development.job_runs.run" } %>
     <% end %>
   <% end %>

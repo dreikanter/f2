@@ -11,7 +11,7 @@
         <%= render SortDropdownComponent.new(presenter: @sortable_presenter, menu_id: "feed-sort-menu") %>
       <% end %>
       <% header.with_action_button do %>
-        <%= link_to "New Feed", new_feed_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1", "w-full sm:w-auto") %>
+        <%= link_to "New Feed", new_feed_path, class: class_names(primary_button_classes(compact: true), "w-full sm:w-auto") %>
       <% end %>
     <% else %>
       <% header.with_context_paragraph("No feeds yet. Create one and Feeder will start reposting new content to FreeFeed for you.") %>
@@ -35,7 +35,7 @@
     <%= render_pagination { |pagination| feeds_path(pagination) } %>
   <% else %>
     <div>
-      <%= link_to "New Feed", new_feed_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1", data: { key: "feeds.empty.new-feed" } %>
+      <%= link_to "New Feed", new_feed_path, class: primary_button_classes, data: { key: "feeds.empty.new-feed" } %>
     </div>
   <% end %>
 </div>

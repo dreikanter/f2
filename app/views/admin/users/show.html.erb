@@ -15,7 +15,7 @@
   <%= render Admin::UserDetailsComponent.new(user: @user) %>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-heading">Permissions</h2>
+    <%= h2 "Permissions" %>
     <%= form_with url: admin_user_permissions_path(@user), method: :patch do |f| %>
       <div class="space-y-3 mb-6">
         <% Permission::AVAILABLE_PERMISSIONS.each do |perm| %>
@@ -40,37 +40,37 @@
           </div>
         <% end %>
       </div>
-      <%= f.submit "Save permissions", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+      <%= f.submit "Save permissions", class: primary_button_classes(compact: true) %>
     <% end %>
   </section>
 
   <% if @user.email_deactivated? %>
     <section class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Email Status</h2>
+      <%= h2 "Email Status" %>
       <%= render Admin::UserEmailStatusComponent.new(user: @user) %>
     </section>
   <% end %>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-heading">Statistics</h2>
+    <%= h2 "Statistics" %>
     <%= render Admin::UserStatisticsComponent.new(stats: @stats) %>
   </section>
 
   <% if @recent_events.any? %>
     <section class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Recent Activity</h2>
+      <%= h2 "Recent Activity" %>
       <%= render Admin::EventsListComponent.new(events: @recent_events, view_all_url: admin_events_path(filter: { user_id: @user.id })) %>
     </section>
   <% end %>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-heading">Invitations</h2>
+    <%= h2 "Invitations" %>
     <%= render Admin::UserInvitationsComponent.new(user: @user, stats: @stats) %>
   </section>
 
   <section class="space-y-4">
     <div>
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Active Sessions</h2>
+      <%= h2 "Active Sessions" %>
       <p class="mt-1 text-muted">Sessions inactive for <%= Session::INACTIVITY_TIMEOUT.in_days.to_i %> days are signed out automatically.</p>
     </div>
 
