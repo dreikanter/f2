@@ -100,4 +100,36 @@ class Normalizer::TheycantalkNormalizerTest < ActiveSupport::TestCase
     assert_match(/feed_id=#{entry.feed_id}/, log_output)
     assert_match(/uid=#{entry.uid}/, log_output)
   end
+
+  test "#normalize should preserve the destination of a current TinyView link post" do
+    entry = Processor::RssProcessor.new(feed, file_fixture("#{fixture_dir}/current.xml").read).process.entries.first
+
+    post = Normalizer::TheycantalkNormalizer.new(entry).normalize
+
+    assert_equal "murmuration (https://tinyview.com/they-can-talk/2026/08/29/murmuration) - https://theycantalk.com/post/826489748348698624", post.content
+    assert_equal ["new one on tinyview: https://tinyview.com/they-can-talk/2026/08/29/murmuration"], post.comments
+    assert_empty post.attachment_urls
+    assert post.enqueued?
+  end
+
+  test "#normalize should preserve named and shortened links without expanding hashtags" do
+    entry = build(:feed_entry, feed: feed, raw_data: {
+      "link" => "https://theycantalk.com/post/123",
+      "summary" => <<~HTML
+        <header>Announcement</header>
+        <p>Visit the <a href="https://example.com/store?a=1&amp;b=2">print shop</a>.</p>
+        <p><a href="https://example.com/full-comic">https://example.com/full…</a></p>
+        <p><a href="https://theycantalk.com/tagged/comic">#comic</a> <a>unlinked text</a></p>
+      HTML
+    })
+
+    post = Normalizer::TheycantalkNormalizer.new(entry).normalize
+
+    assert_equal "Announcement - https://theycantalk.com/post/123", post.content
+    assert_equal [
+      "Visit the print shop (https://example.com/store?a=1&b=2).",
+      "https://example.com/full-comic",
+      "#comic unlinked text"
+    ], post.comments
+  end
 end
