@@ -3,6 +3,75 @@ require "test_helper"
 class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 
+  test "#create should detect Wumo again after its profile is added" do
+    sign_in_as(user)
+    url = "https://wumo.com/wumo?view=rss"
+    stub_request(:get, url).to_return(status: 200, body: file_fixture("feeds/wumo/current.xml").read)
+
+    stub_const(FeedProfile, :PROFILES, FeedProfile::PROFILES.except("wumo")) do
+      perform_enqueued_jobs(only: FeedIdentificationJob) do
+        post feed_identifications_path, params: { url: url }
+      end
+      assert_equal "rss", user.feed_identifications.sole.suggested_candidate.profile_key
+    end
+
+    assert_no_difference -> { FeedIdentification.count } do
+      perform_enqueued_jobs(only: FeedIdentificationJob) do
+        post feed_identifications_path, params: { url: url }
+      end
+    end
+
+    identification = user.feed_identifications.sole
+    assert_equal "wumo", identification.suggested_candidate.profile_key
+    assert_predicate identification, :current_configuration?
+
+    get feed_identifications_path, params: { url: url }
+    assert_response :success
+    assert_select "input[name='feed[feed_profile_key]'][value='wumo']"
+  end
+
+  test "#create should restart a legacy result without a configuration digest" do
+    sign_in_as(user)
+    identification = create(:feed_identification, :working, user: user, configuration_digest: nil)
+
+    assert_enqueued_with(job: FeedIdentificationJob) do
+      post feed_identifications_path, params: { url: identification.input }
+    end
+    assert_predicate identification.reload, :processing?
+    assert_predicate identification, :current_configuration?
+    assert_empty identification.candidates
+  end
+
+  test "#create should restart an in-flight identification from an outdated configuration" do
+    sign_in_as(user)
+    identification = create(:feed_identification, user: user, started_at: Time.current,
+                            configuration_digest: "previous configuration")
+    old_run_id = identification.run_id
+
+    assert_enqueued_with(job: FeedIdentificationJob) do
+      post feed_identifications_path, params: { url: identification.input }
+    end
+
+    assert_not_equal old_run_id, identification.reload.run_id
+    assert_predicate identification, :current_configuration?
+    assert_response :success
+    assert_includes response.body, 'data-identification-state="checking"'
+  end
+
+  test "#show should reject an outdated result without changing it" do
+    sign_in_as(user)
+    identification = create(:feed_identification, :working, user: user, configuration_digest: nil)
+    attributes = identification.attributes
+
+    assert_no_enqueued_jobs do
+      get feed_identifications_path, params: { url: identification.input }
+    end
+
+    assert_response :success
+    assert_includes response.body, "That check expired"
+    assert_equal attributes, identification.reload.attributes
+  end
+
   setup do
     clear_enqueued_jobs
   end
@@ -31,7 +100,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil feed_identification.started_at
     assert_kind_of ActiveSupport::TimeWithZone, feed_identification.started_at
     assert_not_nil feed_identification.run_id
-    assert_enqueued_with(job: FeedIdentificationJob, args: [feed_identification.id, feed_identification.run_id])
+    assert_enqueued_with(job: FeedIdentificationJob,
+                         args: [feed_identification.id, feed_identification.run_id, FeedProfile.configuration_digest])
     assert_enqueued_with(job: FeedIdentificationTimeoutJob,
                          args: [feed_identification.id, feed_identification.run_id],
                          at: feed_identification.started_at + FeedIdentification::TIMEOUT_AFTER)
@@ -545,7 +615,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     create(:access_token, :active, user: user)
     url = "http://example.com/feed.xml"
-    FeedIdentification.create!(
+    create(:feed_identification,
       user: user,
       input: url,
       status: :working,
@@ -568,7 +638,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     first_token = create(:access_token, :active, user: user, host: "https://aaa.freefeed.net")
     create(:access_token, :active, user: user, host: "https://zzz.freefeed.net")
     url = "http://example.com/feed.xml"
-    FeedIdentification.create!(
+    create(:feed_identification,
       user: user,
       input: url,
       status: :working,
@@ -589,7 +659,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
   test "#show should replace the access token field with the token prompt when no token exists" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
-    FeedIdentification.create!(
+    create(:feed_identification,
       user: user,
       input: url,
       status: :working,
@@ -614,7 +684,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     create(:access_token, :active, user: user)
     url = "http://example.com/feed.xml"
-    FeedIdentification.create!(
+    create(:feed_identification,
       user: user,
       input: url,
       status: :working,
@@ -810,7 +880,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
     long_title = "A" * (Feed::NAME_MAX_LENGTH + 10)
-    FeedIdentification.create!(
+    create(:feed_identification,
       user: user,
       input: url,
       status: :working,

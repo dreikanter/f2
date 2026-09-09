@@ -1,6 +1,7 @@
 class FeedIdentification < ApplicationRecord
   POLLING_INTERVAL_MS = 2500
   TIMEOUT_AFTER = 85.seconds
+  RETENTION = 7.days
 
   belongs_to :user
 
@@ -16,6 +17,16 @@ class FeedIdentification < ApplicationRecord
   enum :status, { processing: 0, working: 1, unreachable: 2, no_feed: 3, timed_out: 4 }
 
   validates :input, presence: true
+
+  scope :obsolete, -> {
+    where(configuration_digest: nil)
+      .or(where.not(configuration_digest: FeedProfile.configuration_digest))
+      .or(where(updated_at: ..RETENTION.ago))
+  }
+
+  def current_configuration?
+    configuration_digest == FeedProfile.configuration_digest
+  end
 
   def invalid_processing?
     processing? && (started_at.nil? || run_id.blank?)
@@ -33,12 +44,13 @@ class FeedIdentification < ApplicationRecord
     started_at = Time.current
     run_id = SecureRandom.uuid
     begin
-      update!(status: :processing, started_at: started_at, candidates: [], run_id: run_id)
+      update!(status: :processing, started_at: started_at, candidates: [], run_id: run_id,
+              configuration_digest: FeedProfile.configuration_digest)
     rescue ActiveRecord::RecordNotUnique
       return false
     end
 
-    FeedIdentificationJob.perform_later(id, run_id)
+    FeedIdentificationJob.perform_later(id, run_id, configuration_digest)
     FeedIdentificationTimeoutJob.set(wait_until: started_at + TIMEOUT_AFTER).perform_later(id, run_id)
     true
   end
@@ -48,7 +60,7 @@ class FeedIdentification < ApplicationRecord
   # @param run_id [String] run token captured by the worker
   # @return [Boolean] whether the matching run was settled
   def settle_detection(status:, candidates:, run_id:)
-    self.class.where(id: id, status: :processing, run_id: run_id)
+    self.class.where(id: id, status: :processing, run_id: run_id, configuration_digest: FeedProfile.configuration_digest)
               .update_all(status: status, candidates: candidates, updated_at: Time.current)
               .positive?
   end
@@ -104,9 +116,9 @@ class FeedIdentification < ApplicationRecord
     return nil if url.blank?
 
     direct = find_by(user: user, input: url)
-    return direct if direct&.working?
+    return direct if direct&.working? && direct.current_configuration?
 
-    resolved_to(user, url)
+    resolved_to(user, url, current: true)
   end
 
   # Retire the rows behind a created feed's source: the row keyed by the
@@ -118,8 +130,10 @@ class FeedIdentification < ApplicationRecord
     [find_by(user: user, input: url), resolved_to(user, url)].compact.each(&:destroy)
   end
 
-  def self.resolved_to(user, url)
-    where(user: user, status: :working).detect do |identification|
+  def self.resolved_to(user, url, current: false)
+    identifications = where(user: user, status: :working)
+    identifications = identifications.where(configuration_digest: FeedProfile.configuration_digest) if current
+    identifications.detect do |identification|
       identification.working_candidates.any? { |c| c.resolved_url == url }
     end
   end

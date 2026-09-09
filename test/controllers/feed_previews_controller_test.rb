@@ -3,6 +3,54 @@ require "test_helper"
 class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 
+  test "#update should refresh the current configuration when an old preview URL is used" do
+    sign_in_as(user)
+    url = "https://wumo.com/wumo?view=rss"
+    old_profiles = FeedProfile::PROFILES.deep_dup
+    old_profiles["wumo"][:processor] = old_profiles["rss"][:processor]
+    old_preview = nil
+    stub_const(FeedProfile, :PROFILES, old_profiles) do
+      old_preview = create(:feed_preview, :completed, user: user, feed_profile_key: "wumo", params: { "url" => url })
+    end
+    current = create(:feed_preview, :completed, user: user, feed_profile_key: "wumo", params: { "url" => url })
+
+    assert_no_difference -> { FeedPreview.count } do
+      assert_enqueued_with(job: FeedPreviewJob) do
+        patch feed_preview_url(old_preview)
+      end
+    end
+
+    assert_response :success
+    assert_predicate current.reload, :pending?
+    assert_nil current.data
+    assert_includes response.body, feed_preview_path(current)
+  end
+
+  test "#create should replace a cached preview when its profile configuration changes" do
+    sign_in_as(user)
+    url = "https://wumo.com/wumo?view=rss"
+    old_profiles = FeedProfile::PROFILES.deep_dup
+    old_profiles["wumo"][:processor] = old_profiles["rss"][:processor]
+    old_preview = nil
+    stub_const(FeedProfile, :PROFILES, old_profiles) do
+      old_preview = create(:feed_preview, :completed, user: user, feed_profile_key: "wumo", params: { "url" => url })
+    end
+
+    assert_difference -> { FeedPreview.count }, 1 do
+      assert_enqueued_with(job: FeedPreviewJob) do
+        post feed_previews_url, params: { profile_key: "wumo", params: { url: url } }
+      end
+    end
+
+    assert_response :success
+    preview = user.feed_previews.where.not(id: old_preview.id).sole
+    assert_predicate preview, :pending?
+    assert_not_equal old_preview.params_digest, preview.params_digest
+    assert_nil preview.data
+
+    assert_includes response.body, feed_preview_path(preview)
+  end
+
   setup do
     clear_enqueued_jobs
     create(:search_credential, :active, user: user)
