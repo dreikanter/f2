@@ -122,19 +122,16 @@ class User < ApplicationRecord
     @last_email_change_event ||= Event.where(user: self, type: "email_changed").order(created_at: :desc).first
   end
 
-  # Returns the count of all feeds created by this user
   # @return [Integer] total number of feeds
   def total_feeds_count
     feeds.count
   end
 
-  # Returns the count of all imported posts across all user's feeds
   # @return [Integer] total number of imported posts
   def total_imported_posts_count
     imported_posts.count
   end
 
-  # Returns the count of published posts across all user's feeds
   # @return [Integer] total number of published posts
   def total_published_posts_count
     published_posts.count
