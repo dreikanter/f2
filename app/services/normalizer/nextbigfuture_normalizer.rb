@@ -42,14 +42,5 @@ module Normalizer
     rescue URI::InvalidURIError
       nil
     end
-
-    def fetch_page(url)
-      response = HttpClient.build.get(url)
-      return nil unless response.success?
-
-      response.body
-    rescue HttpClient::Error
-      nil
-    end
   end
 end

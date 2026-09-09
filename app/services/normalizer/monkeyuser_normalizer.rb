@@ -47,16 +47,5 @@ module Normalizer
 
       @page = fetch_page(page_url)
     end
-
-    def fetch_page(url)
-      return nil if url.blank?
-
-      response = HttpClient.build.get(url)
-      return nil unless response.success?
-
-      response.body
-    rescue HttpClient::Error
-      nil
-    end
   end
 end

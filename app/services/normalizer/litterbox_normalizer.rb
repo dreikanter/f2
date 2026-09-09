@@ -58,25 +58,15 @@ module Normalizer
     end
 
     def fetch_article_page
-      @article_page ||= begin
-        response = HttpClient.build.get(source_url)
-        response.success? ? response.body : nil
-      rescue HttpClient::Error
-        nil
-      end
+      @article_page ||= fetch_page(source_url)
     end
 
     def bonus_panel_image_url
-      bonus_url = bonus_panel_url
-      return nil if bonus_url.blank?
+      page = fetch_page(bonus_panel_url)
+      return nil if page.nil?
 
-      response = HttpClient.build.get(bonus_url)
-      return nil unless response.success?
-
-      doc = Nokogiri::HTML(response.body)
+      doc = Nokogiri::HTML(page)
       doc.at_css('meta[property="og:image"]')&.[]("content")
-    rescue HttpClient::Error
-      nil
     end
 
     def bonus_panel_url

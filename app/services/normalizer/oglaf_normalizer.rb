@@ -68,18 +68,5 @@ module Normalizer
     rescue URI::InvalidURIError
       nil
     end
-
-    def fetch_page(url)
-      response = HttpClient.build.get(url)
-      if response.success?
-        response.body
-      else
-        Rails.logger.warn("oglaf: skipping page #{url} for entry #{feed_entry.uid} (feed #{feed_entry.feed&.id}) — HTTP #{response.status}")
-        nil
-      end
-    rescue HttpClient::Error => e
-      Rails.logger.warn("oglaf: skipping page #{url} for entry #{feed_entry.uid} (feed #{feed_entry.feed&.id}) — #{e.message}")
-      nil
-    end
   end
 end

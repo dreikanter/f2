@@ -72,18 +72,22 @@ class Normalizer::PluralisticNormalizerTest < ActiveSupport::TestCase
 
     log = capture_log { Normalizer::PluralisticNormalizer.new(entry).normalize }
 
-    assert_match(/pluralistic: page fetch failed \(HTTP 503\)/, log)
+    assert_match(/PluralisticNormalizer: page fetch failed \(HTTP 503\)/, log)
   end
 
-  test "#normalize should warn when page fetch raises a network error" do
+  test "#normalize should report a network error and omit the cover image" do
     stub_request(:get, "https://pluralistic.net/2026/06/11/lapsarianism/")
       .to_raise(HttpClient::ConnectionError.new("connection refused"))
-
     entry = feed_entry(0)
+    reported = []
 
-    log = capture_log { Normalizer::PluralisticNormalizer.new(entry).normalize }
+    Rails.error.stub(:report, ->(error, **) { reported << error }) do
+      post = Normalizer::PluralisticNormalizer.new(entry).normalize
+      assert_empty post.attachment_urls
+    end
 
-    assert_match(/pluralistic: page fetch error.*connection refused/, log)
+    assert_equal 1, reported.size
+    assert_instance_of HttpClient::ConnectionError, reported.first
   end
 
   test "#normalize should report error when page is fetched successfully but has no image" do

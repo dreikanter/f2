@@ -64,8 +64,12 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
       Normalizer::BuniNormalizer.new(entry).normalize
     end
 
-    assert warned.any? { |msg| msg.include?("buni") && msg.include?("503") }, \
-      "expected a logger.warn mentioning buni and HTTP 503"
+    assert_equal 1, warned.size
+    assert_includes warned.first, "Normalizer::BuniNormalizer: page fetch failed (HTTP 503)"
+    assert_includes warned.first, "feed_id=#{entry.feed.id}"
+    assert_includes warned.first, "uid=#{entry.uid}"
+    assert_includes warned.first, "url=#{PAGE_URL}"
+    assert_requested :get, PAGE_URL, times: 1
   end
 
   test "#normalize should reject the post when the comic page fetch raises a network error" do
@@ -78,28 +82,36 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
     assert_includes post.validation_errors, "missing_images"
   end
 
-  test "#normalize should warn when the comic page fetch raises a network error" do
+  test "#normalize should report a network error once with entry context" do
     stub_request(:get, PAGE_URL).to_raise(Faraday::ConnectionFailed.new("connection refused"))
     entry = feed_entry(0)
-    warned = []
-    Rails.logger.stub(:warn, ->(msg) { warned << msg }) do
+    reported = []
+    Rails.error.stub(:report, ->(error, **options) { reported << [error, options] }) do
       Normalizer::BuniNormalizer.new(entry).normalize
     end
 
-    assert warned.any? { |msg| msg.include?("buni") && msg.include?("network error") }, \
-      "expected a logger.warn mentioning buni and network error"
+    assert_equal 1, reported.size
+    error, options = reported.first
+    assert_kind_of HttpClient::Error, error
+    assert_equal :warning, options[:severity]
+    assert_equal({ normalizer: "Normalizer::BuniNormalizer", feed_id: entry.feed.id,
+                   uid: entry.uid, url: PAGE_URL }, options[:context])
+    assert_requested :get, PAGE_URL, times: 1
   end
 
-  test "#normalize should report to Rails.error when page fetched OK but comic image is absent" do
-    stub_request(:get, PAGE_URL).to_return(status: 200, body: "<html><body><div id='comic'></div></body></html>")
+  test "#normalize should report a missing comic image even when a successful page is empty" do
     entry = feed_entry(0)
-    reported = []
-    Rails.error.stub(:report, ->(err, **) { reported << err }) do
-      Normalizer::BuniNormalizer.new(entry).normalize
-    end
+    ["", "<html><body><div id='comic'></div></body></html>"].each do |body|
+      stub_request(:get, PAGE_URL).to_return(status: 200, body: body)
+      reported = []
+      Rails.error.stub(:report, ->(error, **) { reported << error }) do
+        post = Normalizer::BuniNormalizer.new(entry).normalize
+        assert_includes post.validation_errors, "missing_images"
+      end
 
-    assert reported.any? { |err| err.message.include?("buni") && err.message.include?("markup changed") }, \
-      "expected Rails.error.report to flag missing comic image as a structural bug"
+      assert_equal 1, reported.size
+      assert_match(/comic image missing/, reported.first.message)
+    end
   end
 
   test "#normalize should add a Webtoons comment when the entry links to Webtoons" do
