@@ -154,9 +154,9 @@ class FreefeedClient
 
   private
 
-  def get(path, options: {})
+  def get(path)
     url = "#{@host}#{path}"
-    response = @http_client.get(url, headers: auth_headers, options: options)
+    response = @http_client.get(url, headers: auth_headers)
     handle_response(response)
   end
 
