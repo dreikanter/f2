@@ -8,7 +8,7 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     @client = FreefeedClient.new(host: @host, token: @token)
   end
 
-  test "create_attachment_from_io uploads multipart content and returns attachment metadata" do
+  test "#create_attachment_from_io should upload multipart content and returns attachment metadata" do
     request = stub_request(:post, "#{@host}/v1/attachments")
       .with(headers: { "Authorization" => "Bearer #{@token}", "Content-Type" => /multipart\/form-data/ }) do |req|
         req.body.include?('name="file"') && req.body.include?("Content-Type: text/plain") && req.body.include?("sample attachment")
@@ -25,7 +25,7 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
-  test "create_attachment_from_io preserves API errors" do
+  test "#create_attachment_from_io should preserve API errors" do
     stub_request(:post, "#{@host}/v1/attachments")
       .to_return(status: 400, body: { err: "Unsupported attachment" }.to_json)
 
@@ -36,7 +36,7 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     assert_equal "Unsupported attachment", error.message
   end
 
-  test "create_attachment_from_io preserves the server's payload-too-large message" do
+  test "#create_attachment_from_io should preserve the server's payload-too-large message" do
     stub_request(:post, "#{@host}/v1/attachments")
       .to_return(status: 413, body: { err: "File exceeds the 10 MB upload limit" }.to_json)
 
