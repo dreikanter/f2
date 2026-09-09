@@ -1188,7 +1188,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
   test "#execute should preserve unknown AI cost in completed refresh statistics" do
     test_feed = create(:feed, :enabled, feed_profile_key: "rss")
-    test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss, cost_cents: nil)) do
+    test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss, costs: [nil])) do
       FeedRefreshWorkflow.new(test_feed).execute
     end
     event = Event.find_by!(subject: test_feed, type: "feed_refresh")
