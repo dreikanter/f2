@@ -15,9 +15,9 @@
 #
 #     private
 #
-#     def initialize_workflow(input)
+#     def initialize_workflow(_input)
 #       # Return data for next step
-#       { status: :initialized, data: input }
+#       { status: :initialized, data: @initial_input }
 #     end
 #
 #     def load_data(input)
@@ -46,9 +46,9 @@ module Workflow
     end
   end
 
-  def execute(initial_input = nil)
+  def execute
     workflow_start_time = Time.current
-    current_input = initial_input
+    current_input = nil
 
     self.class.workflow_steps.each do |step_name|
       @current_step = step_name
@@ -56,7 +56,6 @@ module Workflow
 
       begin
         logger.info "#{self.class.name}: Starting step: #{step_name}"
-        before_step(current_input)
         current_input = send(step_name, current_input)
         end_step_timer(step_name)
         after_step(current_input)
@@ -91,10 +90,6 @@ module Workflow
   # Call from any step to stop execution cleanly (no on_error, no re-raise).
   def halt!
     raise HaltExecution
-  end
-
-  def before_step(_input)
-    # Override
   end
 
   def after_step(_result)

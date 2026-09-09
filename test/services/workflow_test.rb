@@ -16,14 +16,14 @@ class WorkflowTest < ActiveSupport::TestCase
     end
 
     def run_simple_workflow
-      execute({ value: 1 })
+      execute
     end
 
     private
 
     def step_one(input)
-      @execution_log << "step_one with #{input}"
-      { value: input[:value] * 2, step: :one }
+      @execution_log << "step_one with #{input.inspect}"
+      { value: 2, step: :one }
     end
 
     def step_two(input)
@@ -51,14 +51,14 @@ class WorkflowTest < ActiveSupport::TestCase
     end
 
     def run_workflow_with_callbacks
-      execute({ value: 1 })
+      execute
     end
 
     private
 
     def step_one(input)
-      @execution_log << "step_one with #{input}"
-      { value: input[:value] * 2, step: :one }
+      @execution_log << "step_one with #{input.inspect}"
+      { value: 2, step: :one }
     end
 
     def step_two(input)
@@ -66,14 +66,9 @@ class WorkflowTest < ActiveSupport::TestCase
       { value: input[:value] + 1, step: :two }
     end
 
-    def before_step(input)
-      @execution_log << "before #{current_step}"
-      @step_timings[current_step] = { started_at: Time.current }
-    end
-
     def after_step(output)
       @execution_log << "after #{current_step}"
-      @step_timings[current_step][:completed_at] = Time.current
+      @step_timings[current_step] = Time.current
     end
   end
 
@@ -106,7 +101,7 @@ class WorkflowTest < ActiveSupport::TestCase
     result = service.run_simple_workflow
 
     expected_log = [
-      "step_one with {value: 1}",
+      "step_one with nil",
       "step_two with {value: 2, step: :one}",
       "step_three with {value: 3, step: :two}"
     ]
@@ -115,16 +110,14 @@ class WorkflowTest < ActiveSupport::TestCase
     assert_equal({ value: 9, step: :three, final: true }, result)
   end
 
-  test "#execute should run before and after callbacks" do
+  test "#execute should run after callbacks" do
     service = TestWorkflowWithCallbacks.new
 
     result = service.run_workflow_with_callbacks
 
     expected_log = [
-      "before step_one",
-      "step_one with {value: 1}",
+      "step_one with nil",
       "after step_one",
-      "before step_two",
       "step_two with {value: 2, step: :one}",
       "after step_two"
     ]
@@ -132,8 +125,7 @@ class WorkflowTest < ActiveSupport::TestCase
 
     assert service.step_timings.key?(:step_one)
     assert service.step_timings.key?(:step_two)
-    assert service.step_timings[:step_one][:started_at]
-    assert service.step_timings[:step_one][:completed_at]
+    assert_kind_of Time, service.step_timings[:step_one]
   end
 
   test "#execute should handle workflows without initial input" do
@@ -161,15 +153,15 @@ class WorkflowTest < ActiveSupport::TestCase
     assert_equal ["step_one called"], service.execution_log
   end
 
-  test "#execute should return initial input when no steps defined" do
+  test "#execute should return nil when no steps are defined" do
     empty_service_class = Class.new do
       include Workflow
     end
 
     service = empty_service_class.new
-    result = service.execute("INITIAL")
+    result = service.execute
 
-    assert_equal("INITIAL", result)
+    assert_nil result
   end
 
   test ".workflow_steps should list configured steps" do
@@ -181,7 +173,7 @@ class WorkflowTest < ActiveSupport::TestCase
   test "#step_durations should track durations automatically" do
     service = TestWorkflowWithCallbacks.new
 
-    service.execute({ value: 1 })
+    service.execute
 
     durations = service.step_durations
     assert durations.key?(:step_one)
@@ -198,7 +190,7 @@ class WorkflowTest < ActiveSupport::TestCase
       seen[current_step] = step_durations[current_step]
     end
 
-    service.execute({ value: 1 })
+    service.execute
 
     assert_equal [:step_one, :step_two], seen.keys
     seen.each do |step, duration|
@@ -209,29 +201,16 @@ class WorkflowTest < ActiveSupport::TestCase
   test "#current_step should be accessible in callbacks" do
     service = TestWorkflowWithCallbacks.new
 
-    def service.before_step(input)
-      @captured_steps ||= []
-      @captured_steps << current_step
-    end
+    service.execute
 
-    def service.after_step(output)
-      # Override to prevent timing hash access errors
-    end
-
-    def service.captured_steps
-      @captured_steps || []
-    end
-
-    service.execute({ value: 1 })
-
-    assert_equal [:step_one, :step_two], service.captured_steps
+    assert_equal [:step_one, :step_two], service.step_timings.keys
     assert_equal :step_two, service.current_step
   end
 
   test "#total_duration should aggregate step timings" do
     service = TestWorkflowWithCallbacks.new
 
-    service.execute({ value: 1 })
+    service.execute
 
     total = service.total_duration
     assert_kind_of Float, total
