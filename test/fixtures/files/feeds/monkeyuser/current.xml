@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+  <channel>
+    <title>Monkeyuser</title>
+    <link>https://www.monkeyuser.com/</link>
+    <description>Recent content on Monkeyuser</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 10 Apr 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://www.monkeyuser.com/index.xml" rel="self" type="application/rss+xml"/>
+    <item>
+      <title>Just a button</title>
+      <link>https://www.monkeyuser.com/2025/button/</link>
+      <pubDate>Thu, 10 Apr 2025 00:00:00 +0000</pubDate>
+      <guid>https://www.monkeyuser.com/2025/button/</guid>
+      <description/>
+    </item>
+    <item>
+      <title>10x</title>
+      <link>https://www.monkeyuser.com/2025/10x/</link>
+      <pubDate>Mon, 17 Mar 2025 00:00:00 +0000</pubDate>
+      <guid>https://www.monkeyuser.com/2025/10x/</guid>
+      <description/>
+    </item>
+    <item>
+      <title>Natural Language Instructions</title>
+      <link>https://www.monkeyuser.com/2024/natural-language-queries/</link>
+      <pubDate>Wed, 16 Oct 2024 00:00:00 +0000</pubDate>
+      <guid>https://www.monkeyuser.com/2024/natural-language-queries/</guid>
+      <description/>
+    </item>
+  </channel>
+</rss>

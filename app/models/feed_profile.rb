@@ -122,6 +122,19 @@ class FeedProfile
       normalizer: { class: "Normalizer::XkcdNormalizer", config: {} },
       title_extractor: "TitleExtractor::RssTitleExtractor"
     },
+    "wumo" => {
+      display_name: "Wumo",
+      description: "Wumo comic strips with their original publication dates",
+      input_shape: :url,
+      depends_on_ai: false,
+      scheduled: true,
+      matcher: "ProfileMatcher::WumoProfileMatcher",
+      parameter_schema: URL_PARAMETER_SCHEMA,
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::WumoProcessor", config: {} },
+      normalizer: { class: "Normalizer::WumoNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor"
+    },
     "buni" => {
       display_name: "Buni Comic",
       description: "Wordless Buni comic strips from bunicomic.com",

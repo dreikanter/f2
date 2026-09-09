@@ -8,21 +8,43 @@ module Normalizer
     end
 
     def normalize_attachment_urls
+      return [] if bonus?
+
       page = fetch_article_page
       doc = Nokogiri::HTML(page || "")
 
       if doc.css(".swiper-wrapper").present?
-        doc.css(".swiper-wrapper img").pluck("src").compact_blank
+        doc.css(".swiper-wrapper img").pluck("src").compact_blank.uniq
       else
-        [extract_images(raw_data.dig("content") || "").first].compact
+        inline_images.uniq
       end
     end
 
     def normalize_comments
-      url = bonus_panel_image_url
+      return [] if bonus?
+
+      url = bonus_panel_image_url || bonus_panel_link
       return [] if url.blank?
 
       ["Bonus panel: #{url}"]
+    end
+
+    def validate_content
+      errors = super
+      errors << "bonus" if bonus?
+      errors
+    end
+
+    def bonus?
+      URI.parse(source_url).path.to_s.match?(%r{-bonus/?\z})
+    end
+
+    def bonus_panel_link
+      html = raw_data["content"].presence || raw_data["summary"] || ""
+      link = Nokogiri::HTML::DocumentFragment.parse(html).css("a[href]").find do |anchor|
+        anchor.text.match?(/bonus panel/i) && PublicUrl.safe?(anchor["href"])
+      end
+      link&.[]("href")
     end
 
     def fetch_article_page
@@ -51,8 +73,9 @@ module Normalizer
       link = source_url.to_s
       return nil if link.blank?
 
-      base = link.sub(%r{/+\z}, "")
-      "#{base}-bonus/"
+      URI.parse(link).tap do |uri|
+        uri.path = "#{uri.path.sub(%r{/+\z}, '')}-bonus/"
+      end.to_s
     end
   end
 end

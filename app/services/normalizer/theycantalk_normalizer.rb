@@ -51,10 +51,25 @@ module Normalizer
 
       doc = Nokogiri::HTML::DocumentFragment.parse(summary)
 
-      doc.css("br, p, figure").each { |e| e.after("\n") }
+      doc.css("br, p, header, figure").each { |e| e.after("\n") }
       doc.css("img, figure").each(&:remove)
+      preserve_links(doc)
 
       doc.text.split("\n").map(&:strip).reject(&:blank?)
+    end
+
+    def preserve_links(doc)
+      doc.css("a[href]").each do |link|
+        label = link.text.strip
+        href = link["href"]
+        next if href.blank? || label.start_with?("#")
+
+        link.content = if label.blank? || href.start_with?(label.delete_suffix("…"))
+          href
+        else
+          "#{label} (#{href})"
+        end
+      end
     end
   end
 end
