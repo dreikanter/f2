@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-09
 
+- Litterbox feeds omit bonus panel links that lead to a generic Patreon page.
 - Section headings now use the same style throughout the app, with refresh icons directly after their titles.
 
 ## 2026-09-08

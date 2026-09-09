@@ -101,6 +101,53 @@ class Normalizer::LitterboxNormalizerTest < ActiveSupport::TestCase
     assert_equal 1, post.attachment_urls.size
   end
 
+  test "#normalize should omit generic Patreon bonus links in current posts" do
+    ["Meowing", "Lore Dump"].each do |title|
+      entry = current_entries.find { |item| item.raw_data["title"] == title }
+      url = entry.raw_data.fetch("link")
+      stub_request(:get, url).to_return(body: "<article></article>")
+      stub_request(:get, "#{url.chomp('/')}-bonus/").to_return(status: 404)
+
+      post = Normalizer::LitterboxNormalizer.new(entry).normalize
+
+      assert_empty post.comments, title
+      assert_equal 1, post.attachment_urls.size, title
+      assert post.enqueued?, title
+    end
+  end
+
+  test "#normalize should skip generic Patreon links and find a specific bonus post" do
+    stub_request(:get, "https://www.litterboxcomics.com/sample-comic-one-bonus/").to_return(status: 404)
+    entry = feed_entry(0)
+    bonus_url = "https://www.patreon.com/posts/comic-food-court-167153444?utm_source=rss"
+    entry.raw_data["content"] = <<~HTML
+      <a href="https://www.patreon.com/litterboxcomics">Bonus panel</a>
+      <a href="#{bonus_url}">Bonus panel</a>
+    HTML
+
+    post = Normalizer::LitterboxNormalizer.new(entry).normalize
+
+    assert_equal ["Bonus panel: #{bonus_url}"], post.comments
+  end
+
+  test "#normalize should omit Patreon home and listing pages regardless of URL suffix" do
+    stub_request(:get, "https://www.litterboxcomics.com/sample-comic-one-bonus/").to_return(status: 404)
+
+    %w[
+      https://www.patreon.com/
+      https://patreon.com/litterboxcomics/?utm_source=rss#bonus
+      https://www.patreon.com/litterboxcomics/posts
+      https://www.patreon.com/posts/
+    ].each do |url|
+      entry = feed_entry(0)
+      entry.raw_data["content"] = %(<a href="#{url}">Bonus panel</a>)
+
+      post = Normalizer::LitterboxNormalizer.new(entry).normalize
+
+      assert_empty post.comments, url
+    end
+  end
+
   test "#normalize should reject standalone bonus posts without fetching another bonus" do
     ["https://www.litterboxcomics.com/sample-bonus/", "https://www.litterboxcomics.com/sample-bonus?ref=rss"].each do |url|
       entry = build(:feed_entry, feed: feed, raw_data: { "link" => url, "title" => "Sample Bonus" })
