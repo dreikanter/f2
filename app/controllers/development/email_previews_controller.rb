@@ -7,7 +7,7 @@ class Development::EmailPreviewsController < ApplicationController
   def show
     authorize [:development, :email_preview], :show?
     @preview = EmailPreview.find(params[:id])
-    redirect_to(development_email_previews_path, alert: "Unknown email type.") and return unless @preview
+    return redirect_to(development_email_previews_path, alert: "Unknown email type.") unless @preview
 
     message = EmailPreview.delivery(@preview[:id]).message
     @subject = message.subject
