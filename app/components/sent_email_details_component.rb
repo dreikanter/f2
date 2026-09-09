@@ -4,7 +4,7 @@ class SentEmailDetailsComponent < ViewComponent::Base
   end
 
   def call
-    render(ListComponent.new) do |list|
+    render(DescriptionListComponent.new) do |list|
       list.with_item(StatListItemComponent.new(
         label: "Message ID",
         value: helpers.content_tag(:code, email[:message_id], class: "break-all")

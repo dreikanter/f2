@@ -7,6 +7,6 @@ class ListComponent < SlotListComponent
   private
 
   def container_tag
-    items.all? { _1.is_a?(StatItemComponent) } ? :dl : :ul
+    :ul
   end
 end
