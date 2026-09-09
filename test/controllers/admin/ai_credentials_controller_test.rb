@@ -30,6 +30,7 @@ class Admin::AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
   test "#show should display another user's credential with an owner link" do
     sign_in_as(admin_user)
+    ai_credential.update!(available_models: [{ "id" => "cached-model" }])
 
     get admin_ai_credential_path(ai_credential)
 
@@ -39,6 +40,8 @@ class Admin::AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", admin_path, text: "Admin Panel"
     assert_select "[data-key='ai_credential.state_badge'][data-credential-state='active']", text: "Valid"
     assert_select "[data-key='ai_credential.provider']"
+    assert_select "h2", text: "Available models", count: 1
+    assert_select "[data-key='ai_credential.model.name']", text: "cached-model"
   end
 
   test "#show should not expose the API key or management actions" do

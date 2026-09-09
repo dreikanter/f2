@@ -2,9 +2,13 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-09
+
+- Section headings now use the same style throughout the app, with refresh icons directly after their titles.
+
 ## 2026-09-08
 
-- Model and group refresh buttons are smaller and stay beside their section headings while status messages change below.
+- Model and group refresh buttons are smaller, with status messages below their section headings.
 - Feeds that post to the candy or beta FreeFeed instance now show a badge in the feed list.
 
 ## 2026-09-07
