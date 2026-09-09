@@ -49,10 +49,6 @@ class UserStats
     @created_invites_count ||= user.created_invites.size
   end
 
-  def invited_users_count
-    @invited_users_count ||= user.created_invites.count { |i| i.invited_user_id.present? }
-  end
-
   def invited_users
     @invited_users ||= user.created_invites.includes(:invited_user).where.not(invited_user_id: nil).order(created_at: :desc).to_a
   end
