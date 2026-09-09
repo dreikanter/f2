@@ -377,8 +377,6 @@ class Feed < ApplicationRecord
     disable_with_event!("feed_auto_disabled", { error_count: consecutive_failures })
   end
 
-  # Only touches import_after when the form parts were assigned, so saves that
-  # never saw the checkbox (state flips, background updates) leave it alone.
   # Profile schemas are closed, so params left over from the previous profile
   # would fail validation and strand the feed.
   def drop_params_foreign_to_profile
@@ -394,6 +392,8 @@ class Feed < ApplicationRecord
     self.params = FeedProfile.cast_params(feed_profile_key, params)
   end
 
+  # Only touches import_after when the form parts were assigned, so saves that
+  # never saw the checkbox (state flips, background updates) leave it alone.
   def compose_import_after_from_parts
     return unless @import_after_parts_assigned
 
