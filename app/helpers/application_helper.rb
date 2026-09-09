@@ -148,25 +148,6 @@ module ApplicationHelper
     end
   end
 
-  def post_status_icon(status)
-    case status.to_s
-    when "draft"
-      icon("file", css_class: "size-4 text-muted", title: "Draft")
-    when "enqueued"
-      icon("clock", css_class: "size-4 text-secondary", title: "Enqueued")
-    when "rejected"
-      icon("circle-x", css_class: "size-4 text-danger", title: "Rejected")
-    when "published"
-      icon("circle-check", css_class: "size-4 text-success", title: "Published")
-    when "failed"
-      icon("triangle-alert", css_class: "size-4 text-danger", title: "Failed")
-    when "withdrawn"
-      icon("trash-2", css_class: "size-4 text-secondary", title: "Withdrawn")
-    else
-      content_tag(:span, status.capitalize, class: "text-muted")
-    end
-  end
-
   def navbar_items
     return [] unless Current.user
 
