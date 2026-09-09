@@ -106,7 +106,7 @@ class PostsController < ApplicationController
 
     ActiveRecord::Base.transaction do
       if feed_entry
-        feed_entry.destroy! # cascades to the post via dependent: :destroy
+        feed_entry.destroy!
       else
         post.destroy!
       end
