@@ -542,12 +542,9 @@ class FeedProfile
 
     # @param key [String] the profile key
     # @param stage [Symbol] :loader, :processor, or :normalizer
-    # @return [Hash] the stage's config (frozen empty hash if none)
+    # @return [Hash] the stage's config, empty if none
     def config_for(key, stage)
-      raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)
-
-      entry = PROFILES.fetch(key)
-      raw = entry[stage]
+      raw = stage_entry(key, stage)
 
       case raw
       when Hash then raw[:config] || {}
@@ -604,15 +601,18 @@ class FeedProfile
     # @param stage [Symbol] :loader, :processor, :normalizer, or :title_extractor
     # @return [Class] the stage class
     def class_for(key, stage)
-      raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)
-
-      entry = PROFILES.fetch(key)
-      raw = entry[stage]
+      raw = stage_entry(key, stage)
       class_name = raw.is_a?(Hash) ? raw[:class] : raw
 
       raise ArgumentError, "Profile '#{key}' has no #{stage}" if class_name.nil?
 
       class_name.constantize
+    end
+
+    def stage_entry(key, stage)
+      raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)
+
+      PROFILES.fetch(key)[stage]
     end
   end
 end
