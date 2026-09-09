@@ -49,6 +49,7 @@ module HtmlTextUtils
   end
 
   def post_content_with_url(content, url, max_content_length: Post::MAX_CONTENT_LENGTH, max_url_length: Post::MAX_URL_LENGTH)
+    # Do not include URL to the post content if the URL is too long
     url = nil if url.present? && url.length > max_url_length
     return url.to_s if content.blank?
 
