@@ -29,10 +29,6 @@ class FeedAiSettingsComponent < ViewComponent::Base
     @active_search_credentials ||= @feed.user.search_credentials.active.order(:display_name)
   end
 
-  def credential_setup_complete?
-    credentials?
-  end
-
   def models_by_credential
     @models_by_credential ||= active_credentials.to_h do |credential|
       models = credential.supported_models
