@@ -14,7 +14,7 @@ class FeedPreviewsController < ApplicationController
   # GET /feed_previews/:id, for polling and frame reloads. The row carries its
   # own source and selections, so nothing about the preview travels in the URL.
   def show
-    render_state(preview, inert_while_running: true)
+    render_state(preview)
   end
 
   # POST /feed_previews, asking for a preview of what the form currently holds.
@@ -191,7 +191,7 @@ class FeedPreviewsController < ApplicationController
     )
   end
 
-  def render_state(preview, inert_while_running: false)
+  def render_state(preview)
     respond_to do |format|
       format.html { render :show, locals: { preview: preview } }
       # Swap only the inner body so the polling host (rendered by `show`) stays
@@ -200,7 +200,7 @@ class FeedPreviewsController < ApplicationController
       # the poll stays silent so the spinner keeps its animation instead of
       # being redrawn every cycle.
       format.turbo_stream do
-        if inert_while_running && (preview.pending? || preview.processing?)
+        if preview.pending? || preview.processing?
           head :no_content
         else
           render turbo_stream: turbo_stream.update("feed-preview-body", **state_partial(preview))
