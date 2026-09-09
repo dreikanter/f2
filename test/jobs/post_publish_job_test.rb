@@ -118,9 +118,9 @@ class PostPublishJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should publish a post whose comment exceeds the length limit without wedging" do
-    # Regression: a post that slipped into the queue (via bulk insert) with an
-    # over-long comment used to crash the chain — marking it published, and the
-    # fallback to failed, both re-ran the comment-length validation and raised.
+    # A post that slipped into the queue (via bulk insert) with an over-long
+    # comment must not wedge the chain: marking it published, and the fallback
+    # to failed, both re-run the comment-length validation.
     post = build(:post, :enqueued, feed: feed, comments: ["a" * (Post::MAX_COMMENT_LENGTH + 1)])
     post.save!(validate: false)
     stub_publish_success
