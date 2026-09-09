@@ -94,6 +94,8 @@ gem "faraday-follow_redirects"
 gem "faraday-multipart"
 gem "feedjira"
 gem "fugit"
+# The locked Rails revision passes positional options to JSON.parse.
+gem "json", "< 3"
 gem "json_schemer"
 gem "honeybadger"
 gem "marcel"
