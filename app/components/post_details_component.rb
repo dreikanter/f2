@@ -20,7 +20,7 @@ class PostDetailsComponent < ViewComponent::Base
   def add_feed_item(component)
     component.with_item(StatListItemComponent.new(
       label: "Feed",
-      value: helpers.link_to(@post.feed.display_name, @post.feed, class: "text-brand underline underline-offset-4 transition hover:text-brand-hover"),
+      value: helpers.link_to(@post.feed.display_name, @post.feed, class: helpers.text_link_classes),
       key: "post.feed"
     ))
   end
@@ -44,7 +44,7 @@ class PostDetailsComponent < ViewComponent::Base
 
   def add_source_url_item(component)
     value = if @post.source_url.present?
-      helpers.link_to(@post.source_url, @post.source_url, target: "_blank", rel: "noopener", title: @post.source_url, class: "text-brand underline underline-offset-4 transition hover:text-brand-hover")
+      helpers.link_to(@post.source_url, @post.source_url, target: "_blank", rel: "noopener", title: @post.source_url, class: helpers.text_link_classes)
     else
       content_tag(:span, "None", class: "text-muted")
     end
@@ -85,7 +85,7 @@ class PostDetailsComponent < ViewComponent::Base
   def add_freefeed_post_id_item(component)
     url = @post.freefeed_post_url
     value = if url
-      helpers.link_to(url, target: "_blank", rel: "noopener", class: "text-brand underline underline-offset-4 transition hover:text-brand-hover inline-flex items-center gap-1") do
+      helpers.link_to(url, target: "_blank", rel: "noopener", class: class_names(helpers.text_link_classes, "inline-flex items-center gap-1")) do
         safe_join([
           content_tag(:code, @post.freefeed_post_id, class: "text-sm"),
           helpers.icon("external-link", css_class: "size-3")

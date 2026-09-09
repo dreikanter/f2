@@ -10,7 +10,7 @@
     <% end %>
     <% header.with_context_paragraph do %>
       Owner:
-      <%= link_to @ai_credential.user.email_address, admin_user_path(@ai_credential.user), class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+      <%= link_to @ai_credential.user.email_address, admin_user_path(@ai_credential.user), class: text_link_classes %>
     <% end %>
   <% end %>
 
@@ -31,7 +31,7 @@
 
     <% if @ai_credential.available_models.any? %>
       <section>
-        <h2 class="text-2xl font-semibold mb-3 text-heading">Available models</h2>
+        <%= h2 "Available models" %>
         <%= render AiCredentialModelsComponent.new(ai_credential: @ai_credential) %>
       </section>
     <% end %>

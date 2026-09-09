@@ -1,6 +1,7 @@
 require "test_helper"
 
 class PostHelperTest < ActionView::TestCase
+  include ApplicationHelper
   include PostHelper
 
   test "#format_post_content should return empty string for nil content" do

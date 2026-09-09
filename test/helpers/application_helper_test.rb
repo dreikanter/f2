@@ -22,6 +22,26 @@ class ApplicationHelperTest < ActionView::TestCase
     self.policy_override = nil
   end
 
+  test "#h1 should retain heading styles alongside caller attributes" do
+    render inline: '<%= h1 "Sign in", id: "page-title", class: "break-words" %>'
+
+    assert_select "h1#page-title.text-4xl.font-semibold.mb-6.text-heading.break-words", text: "Sign in"
+  end
+
+  test "#h2 should capture heading content and retain layout classes" do
+    render inline: <<~ERB
+      <%= h2 class: "flex items-center gap-2", data: { key: "settings.heading" } do %>
+        <%= icon("user", css_class: "size-5") %>
+        <span>Your Name</span>
+      <% end %>
+    ERB
+
+    assert_select 'h2[data-key="settings.heading"].text-2xl.font-semibold.mb-3.text-heading.flex.items-center.gap-2' do
+      assert_select 'svg[data-icon="user"]', count: 1
+      assert_select "span", text: "Your Name", count: 1
+    end
+  end
+
   test "#post_content_preview returns empty string for nil content" do
     assert_equal "", post_content_preview(nil)
   end

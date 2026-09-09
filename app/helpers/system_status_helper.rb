@@ -17,6 +17,6 @@ module SystemStatusHelper
     link_to tag.code(revision_short, title: revision),
             "#{Feeder::GITHUB_REPO_URL}/commit/#{revision.presence || revision_short}",
             target: "_blank", rel: "noopener",
-            class: "text-brand underline underline-offset-4 transition hover:text-brand-hover"
+            class: text_link_classes
   end
 end

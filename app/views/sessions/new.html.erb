@@ -2,27 +2,27 @@
 
 <%= render ModalCardComponent.new do %>
   <div class="space-y-6">
-    <h1 class="text-4xl font-semibold mb-6 text-heading">Sign in to Feeder</h1>
+    <%= h1 "Sign in to Feeder" %>
 
     <%= form_with url: session_path, local: true do |form| %>
       <div class="space-y-10">
         <div class="space-y-2">
-          <%= form.label :email_address, "Email", class: "block font-semibold text-heading" %>
-          <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= form.label :email_address, "Email", class: form_label_classes %>
+          <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: input_field_classes %>
         </div>
 
         <div class="space-y-2">
-          <%= form.label :password, "Password", class: "block font-semibold text-heading" %>
-          <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: User::PASSWORD_MAX_LENGTH, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= form.label :password, "Password", class: form_label_classes %>
+          <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: User::PASSWORD_MAX_LENGTH, class: input_field_classes %>
         </div>
       </div>
 
       <div class="mt-6 flex flex-col items-start gap-4 text-body sm:flex-row sm:items-center sm:justify-between">
-        <%= form.submit "Sign in", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 w-full sm:w-auto" %>
+        <%= form.submit "Sign in", class: class_names(primary_button_classes, "w-full sm:w-auto") %>
         <div class="text-muted sm:flex sm:items-center sm:gap-2">
-          <p><%= link_to "Forgot password?", new_password_path, class: "inline-block font-medium leading-loose text-brand underline underline-offset-4 transition hover:text-brand-hover" %></p>
+          <p><%= link_to "Forgot password?", new_password_path, class: class_names(text_link_classes, "inline-block font-medium leading-loose") %></p>
           <span aria-hidden="true" class="hidden sm:inline">·</span>
-          <p><%= link_to "Resend confirmation", new_registration_confirmation_path, class: "inline-block font-medium leading-loose text-brand underline underline-offset-4 transition hover:text-brand-hover" %></p>
+          <p><%= link_to "Resend confirmation", new_registration_confirmation_path, class: class_names(text_link_classes, "inline-block font-medium leading-loose") %></p>
         </div>
       </div>
     <% end %>

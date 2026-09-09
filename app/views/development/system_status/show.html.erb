@@ -16,7 +16,7 @@
   <% end %>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-heading">Integrations</h2>
+    <%= h2 "Integrations" %>
     <p class="text-body">Optional services this deploy talks to.</p>
     <%= render(DescriptionListComponent.new) do |list| %>
       <% @integrations.each do |name, enabled| %>
@@ -31,7 +31,7 @@
   </section>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-heading">Deployed Version</h2>
+    <%= h2 "Deployed Version" %>
     <%= render(DescriptionListComponent.new) do |list| %>
       <% list.with_item(StatListItemComponent.new(
         label: "Revision",
@@ -52,7 +52,7 @@
   </section>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-heading">Configuration</h2>
+    <%= h2 "Configuration" %>
     <%= render(DescriptionListComponent.new) do |list| %>
       <% list.with_item(StatListItemComponent.new(
         label: "From address",
@@ -63,7 +63,7 @@
   </section>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-heading">Disk Usage</h2>
+    <%= h2 "Disk Usage" %>
 
     <%# Visual disk usage bar %>
     <div class="space-y-3">
@@ -96,7 +96,7 @@
   </section>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-heading">Postgres Table Usage</h2>
+    <%= h2 "Postgres Table Usage" %>
     <%= render(DescriptionListComponent.new) do |list| %>
       <% @disk_usage[:table_usage].each do |row| %>
         <% list.with_item(StatListItemComponent.new(

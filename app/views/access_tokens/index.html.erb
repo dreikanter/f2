@@ -6,7 +6,7 @@
     <% header.with_context_paragraph("Manage your FreeFeed API tokens used for reposting content.") %>
     <% if @access_tokens.any? %>
       <% header.with_action_button do %>
-        <%= link_to "New Token", new_access_token_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1") %>
+        <%= link_to "New Token", new_access_token_path, class: primary_button_classes(compact: true) %>
       <% end %>
     <% else %>
       <% header.with_context_paragraph("No tokens yet. Feeder needs an access token to post to FreeFeed on your behalf, and every feed needs a working one before it can go live.") %>
@@ -17,7 +17,7 @@
     <%= render CredentialsListComponent.new(credentials: @access_tokens) %>
   <% else %>
     <div>
-      <%= link_to "New Token", new_access_token_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1", data: { key: "access_tokens.empty.new-token" } %>
+      <%= link_to "New Token", new_access_token_path, class: primary_button_classes, data: { key: "access_tokens.empty.new-token" } %>
     </div>
   <% end %>
 </div>

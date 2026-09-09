@@ -41,7 +41,7 @@ class EventDetailsComponent < ViewComponent::Base
           helpers.short_ref(@event.user_id),
           helpers.admin_user_path(@event.user),
           title: title,
-          class: "font-mono font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover",
+          class: class_names(helpers.text_link_classes, "font-mono font-medium"),
           data: { key: "admin.event.user" }
         )
       else

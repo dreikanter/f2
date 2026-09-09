@@ -10,7 +10,7 @@
         <%# A webhook feed has no source; callers push content to its authenticated
             endpoint, so the whole source block collapses into a note. %>
         <div>
-          <h2 class="text-2xl font-semibold mb-3 text-heading">Source</h2>
+          <%= helpers.h2 "Source" %>
           <%= render AlertComponent.new(variant: :info, data: { key: "form.webhook-note" }) do %>
             <p class="text-sm">This feed doesn't follow anything on its own. It publishes whatever you send to its webhook endpoint with the authorization token. <%= webhook_endpoint_hint %></p>
           <% end %>
@@ -18,12 +18,12 @@
         </div>
       <% else %>
       <div>
-        <h2 class="text-2xl font-semibold mb-3 text-heading">Source</h2>
+        <%= helpers.h2 "Source" %>
 
         <div class="space-y-6">
           <% if ai_prompt_editable? %>
             <div class="space-y-2">
-              <%= label_tag "feed_params_prompt", "What should AI follow?", class: "block font-semibold text-heading" %>
+              <%= label_tag "feed_params_prompt", "What should AI follow?", class: helpers.form_label_classes %>
               <%= text_area_tag "feed[params][prompt]", feed.source_input,
                                 id: "feed_params_prompt",
                                 rows: 3,
@@ -39,7 +39,7 @@
             </div>
           <% elsif source_editable? %>
             <div class="space-y-2">
-              <%= f.label :url, source_label, class: "block font-semibold text-heading" %>
+              <%= f.label :url, source_label, class: helpers.form_label_classes %>
               <%= text_field_tag "feed[params][url]", source_url_value,
                                  id: "feed_params_url",
                                  required: true,
@@ -60,7 +60,7 @@
             </div>
           <% else %>
             <div class="space-y-2">
-              <%= f.label :url, source_label, class: "block font-semibold text-heading" %>
+              <%= f.label :url, source_label, class: helpers.form_label_classes %>
               <%= f.text_field :url_display,
                                value: feed.source_input,
                                disabled: true,
@@ -81,7 +81,7 @@
               <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.source_input, selected: feed.feed_profile_key %>
             <% else %>
               <div class="space-y-2">
-                <%= label_tag nil, "Feed type", class: "block font-semibold text-heading" %>
+                <%= label_tag nil, "Feed type", class: helpers.form_label_classes %>
                 <%= f.text_field :feed_type_display,
                                  value: feed_type_summary,
                                  disabled: true,
@@ -118,7 +118,7 @@
       <% end %>
 
       <div class="space-y-2">
-        <%= f.label :name, "Feed Name", class: "block font-semibold text-heading" %>
+        <%= f.label :name, "Feed Name", class: helpers.form_label_classes %>
         <%= f.text_field :name,
                          placeholder: "Enter a name for this feed",
                          maxlength: Feed::NAME_MAX_LENGTH,
@@ -159,7 +159,7 @@
       <% end %>
 
       <div class="mt-6">
-        <h2 class="text-2xl font-semibold mb-3 text-heading">Reposting Settings</h2>
+        <%= helpers.h2 "Reposting Settings" %>
 
         <div class="space-y-6">
           <% if active_tokens.empty? %>
@@ -172,7 +172,7 @@
           <% else %>
             <%= render PanelComponent.new do %>
               <div class="space-y-2">
-                <%= f.label :access_token_id, "Access Token", class: "block font-semibold text-heading" %>
+                <%= f.label :access_token_id, "Access Token", class: helpers.form_label_classes %>
                 <%= f.select :access_token_id,
                              token_options,
                              {},
@@ -203,7 +203,7 @@
           <% if feed.scheduled? %>
             <%= render PanelComponent.new do %>
               <div class="space-y-2">
-                <%= f.label :schedule_interval, "Check for new posts every", class: "block font-semibold text-heading" %>
+                <%= f.label :schedule_interval, "Check for new posts every", class: helpers.form_label_classes %>
                 <%= f.select :schedule_interval,
                              Feed.schedule_intervals_for_select,
                              { selected: selected_schedule_interval },
@@ -219,7 +219,7 @@
 
       <% unless feed.sourceless? %>
         <div class="mt-6">
-          <h2 class="text-2xl font-semibold mb-3 text-heading">Advanced options</h2>
+          <%= helpers.h2 "Advanced options" %>
 
           <%= render PanelComponent.new(data: { controller: "field-toggle", key: "form.advanced-options" }) do %>
             <div class="flex items-start">
@@ -233,7 +233,7 @@
                                 } %>
               </div>
               <div class="ml-3">
-                <%= f.label :import_after_enabled, "Skip older posts", class: "block font-semibold text-heading mb-0" %>
+                <%= f.label :import_after_enabled, "Skip older posts", class: class_names(helpers.form_label_classes, "mb-0") %>
                 <p class="text-sm text-muted">Only import posts published after a date you pick.</p>
               </div>
             </div>
@@ -293,7 +293,7 @@
                 <%= f.check_box :images_only, data: { key: "form.images-only-checkbox" } %>
               </div>
               <div class="ml-3">
-                <%= f.label :images_only, "Only posts with images", class: "block font-semibold text-heading mb-0" %>
+                <%= f.label :images_only, "Only posts with images", class: class_names(helpers.form_label_classes, "mb-0") %>
                 <p class="text-sm text-muted">Skip posts that don't include any image attachments.</p>
               </div>
             </div>

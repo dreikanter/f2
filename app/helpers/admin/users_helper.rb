@@ -1,8 +1,6 @@
 module Admin::UsersHelper
-  USER_LINK_CLASSES = "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover".freeze
-
   def admin_user_link(user)
-    link_to(user.name.presence || user.email_address, admin_user_path(user), class: USER_LINK_CLASSES)
+    link_to(user.name.presence || user.email_address, admin_user_path(user), class: class_names(text_link_classes, "font-medium"))
   end
 
   def admin_user_actions_menu_items(user, can_suspend:)
