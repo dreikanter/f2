@@ -580,108 +580,108 @@
     "pages": []
   },
   "litterbox": {
-    "feed_url": "https://feeds.feedburner.com/litterboxcomics/yS3QAzAMEMP",
+    "feed_url": "https://litterbox.example/sample-feed/",
     "entries": [
       {
-        "uid": "https://www.litterboxcomics.com/?p=33807",
-        "text": "Baby On Board - https://www.litterboxcomics.com/baby-on-board/",
+        "uid": "https://litterbox.example/?sample=1",
+        "text": "Sample Comic 1 - https://litterbox.example/sample-comic-1/",
         "attachments": [
-          "https://i0.wp.com/www.litterboxcomics.com/wp-content/uploads/2026/09/baby-on-board-all.png?resize=1000%2C2463&ssl=1"
+          "https://images.example/sample-comic-1-panel-1.png?resize=1000%2C2463&ssl=1"
         ],
         "comments": [],
         "published_at": "2026-09-08T16:00:00Z",
         "validation_errors": []
       },
       {
-        "uid": "https://www.litterboxcomics.com/?p=33803",
-        "text": "Objection - https://www.litterboxcomics.com/objection/",
+        "uid": "https://litterbox.example/?sample=2",
+        "text": "Sample Comic 2 - https://litterbox.example/sample-comic-2/",
         "attachments": [
-          "https://i0.wp.com/www.litterboxcomics.com/wp-content/uploads/2026/09/Litterbox-objection-meme.png?resize=1000%2C908&ssl=1"
+          "https://images.example/sample-comic-2-panel-1.png?resize=1000%2C908&ssl=1"
         ],
         "comments": [],
         "published_at": "2026-09-01T16:36:50Z",
         "validation_errors": []
       },
       {
-        "uid": "https://www.litterboxcomics.com/?p=33799",
-        "text": "Food Court (Remastered) - https://www.litterboxcomics.com/food-court2/",
+        "uid": "https://litterbox.example/?sample=3",
+        "text": "Sample Comic 3 - https://litterbox.example/sample-comic-3/",
         "attachments": [
-          "https://i0.wp.com/www.litterboxcomics.com/wp-content/uploads/2026/08/food-court2.png?resize=1000%2C1672&ssl=1"
+          "https://images.example/sample-comic-3-panel-1.png?resize=1000%2C1672&ssl=1"
         ],
         "comments": [
-          "Bonus panel: https://www.patreon.com/litterboxcomics/posts/comic-food-court-167153444"
+          "Bonus panel: https://www.patreon.com/litterboxcomics/posts/sample-bonus-123456"
         ],
         "published_at": "2026-09-01T16:00:00Z",
         "validation_errors": []
       },
       {
-        "uid": "https://www.litterboxcomics.com/?p=33795",
-        "text": "Babe, Wake Up! - https://www.litterboxcomics.com/babe-wake-up/",
+        "uid": "https://litterbox.example/?sample=4",
+        "text": "Sample Comic 4 - https://litterbox.example/sample-comic-4/",
         "attachments": [
-          "https://i0.wp.com/www.litterboxcomics.com/wp-content/uploads/2026/08/wake-up-babe-meme.png?resize=800%2C734&ssl=1"
+          "https://images.example/sample-comic-4-panel-1.png?resize=800%2C734&ssl=1"
         ],
         "comments": [],
         "published_at": "2026-08-25T19:09:17Z",
         "validation_errors": []
       },
       {
-        "uid": "https://www.litterboxcomics.com/?p=33791",
-        "text": "Meowing - https://www.litterboxcomics.com/meowing/",
+        "uid": "https://litterbox.example/?sample=5",
+        "text": "Sample Comic 5 - https://litterbox.example/sample-comic-5/",
         "attachments": [
-          "https://i0.wp.com/www.litterboxcomics.com/wp-content/uploads/2026/08/meowing.png?resize=1000%2C1249&ssl=1"
+          "https://images.example/sample-comic-5-panel-1.png?resize=1000%2C1249&ssl=1"
         ],
         "comments": [],
         "published_at": "2026-08-25T16:00:00Z",
         "validation_errors": []
       },
       {
-        "uid": "https://www.litterboxcomics.com/?p=33785",
-        "text": "Absolute Cinema - https://www.litterboxcomics.com/absolute-cinema-meme/",
+        "uid": "https://litterbox.example/?sample=6",
+        "text": "Sample Gallery - https://litterbox.example/sample-gallery/",
         "attachments": [
-          "https://i0.wp.com/www.litterboxcomics.com/wp-content/uploads/2026/08/litterbox-absolute-cinema-meme.png?resize=1000%2C864&ssl=1",
-          "https://i0.wp.com/www.litterboxcomics.com/wp-content/uploads/2026/08/absolute-parenting-meme.png?resize=1000%2C864&ssl=1",
-          "https://i0.wp.com/www.litterboxcomics.com/wp-content/uploads/2026/08/absolute-litterbox-meme.png?resize=1000%2C864&ssl=1",
-          "https://i0.wp.com/www.litterboxcomics.com/wp-content/uploads/2026/08/absolute-cinema-meme-BLANK.png?resize=1000%2C864&ssl=1"
+          "https://images.example/sample-gallery-panel-1.png?resize=1000%2C864&ssl=1",
+          "https://images.example/sample-gallery-panel-2.png?resize=1000%2C864&ssl=1",
+          "https://images.example/sample-gallery-panel-3.png?resize=1000%2C864&ssl=1",
+          "https://images.example/sample-gallery-panel-4.png?resize=1000%2C864&ssl=1"
         ],
         "comments": [],
         "published_at": "2026-08-18T17:38:15Z",
         "validation_errors": []
       },
       {
-        "uid": "https://www.litterboxcomics.com/?p=33782",
-        "text": "Pop Cat Vincent - https://www.litterboxcomics.com/pop-cat-meme/",
+        "uid": "https://litterbox.example/?sample=7",
+        "text": "Sample Comic 7 - https://litterbox.example/sample-comic-7/",
         "attachments": [
-          "https://i0.wp.com/www.litterboxcomics.com/wp-content/uploads/2026/08/pop-vincent.png?resize=1000%2C500&ssl=1"
+          "https://images.example/sample-comic-7-panel-1.png?resize=1000%2C500&ssl=1"
         ],
         "comments": [],
         "published_at": "2026-08-18T17:34:55Z",
         "validation_errors": []
       },
       {
-        "uid": "https://www.litterboxcomics.com/?p=33779",
-        "text": "Lore Dump - https://www.litterboxcomics.com/lore-dump/",
+        "uid": "https://litterbox.example/?sample=8",
+        "text": "Sample Comic 8 - https://litterbox.example/sample-comic-8/",
         "attachments": [
-          "https://i0.wp.com/www.litterboxcomics.com/wp-content/uploads/2026/08/lore-dump.png?resize=1000%2C1249&ssl=1"
+          "https://images.example/sample-comic-8-panel-1.png?resize=1000%2C1249&ssl=1"
         ],
         "comments": [],
         "published_at": "2026-08-18T16:00:00Z",
         "validation_errors": []
       },
       {
-        "uid": "https://www.litterboxcomics.com/?p=33773",
-        "text": "Locked & Loaded - https://www.litterboxcomics.com/locked-and-loaded/",
+        "uid": "https://litterbox.example/?sample=9",
+        "text": "Sample Comic 9 - https://litterbox.example/sample-comic-9/",
         "attachments": [
-          "https://i0.wp.com/www.litterboxcomics.com/wp-content/uploads/2026/07/locked-and-loaded.png?resize=820%2C1024&ssl=1"
+          "https://images.example/sample-comic-9-panel-1.png?resize=820%2C1024&ssl=1"
         ],
         "comments": [],
         "published_at": "2026-07-28T16:09:45Z",
         "validation_errors": []
       },
       {
-        "uid": "https://www.litterboxcomics.com/?p=33769",
-        "text": "Black & White - https://www.litterboxcomics.com/black-and-white/",
+        "uid": "https://litterbox.example/?sample=10",
+        "text": "Sample Comic 10 - https://litterbox.example/sample-comic-10/",
         "attachments": [
-          "https://i0.wp.com/www.litterboxcomics.com/wp-content/uploads/2026/07/black-and-white.png?resize=1000%2C1249&ssl=1"
+          "https://images.example/sample-comic-10-panel-1.png?resize=1000%2C1249&ssl=1"
         ],
         "comments": [],
         "published_at": "2026-07-21T16:00:00Z",
@@ -690,102 +690,102 @@
     ],
     "pages": [
       {
-        "url": "https://www.litterboxcomics.com/baby-on-board/",
+        "url": "https://litterbox.example/sample-comic-1/",
         "status": 200,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/baby-on-board-bonus/",
+        "url": "https://litterbox.example/sample-comic-1-bonus/",
         "status": 404,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/objection/",
+        "url": "https://litterbox.example/sample-comic-2/",
         "status": 200,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/objection-bonus/",
+        "url": "https://litterbox.example/sample-comic-2-bonus/",
         "status": 404,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/food-court2/",
+        "url": "https://litterbox.example/sample-comic-3/",
         "status": 200,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/food-court2-bonus/",
+        "url": "https://litterbox.example/sample-comic-3-bonus/",
         "status": 404,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/babe-wake-up/",
+        "url": "https://litterbox.example/sample-comic-4/",
         "status": 200,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/babe-wake-up-bonus/",
+        "url": "https://litterbox.example/sample-comic-4-bonus/",
         "status": 404,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/meowing/",
+        "url": "https://litterbox.example/sample-comic-5/",
         "status": 200,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/meowing-bonus/",
+        "url": "https://litterbox.example/sample-comic-5-bonus/",
         "status": 404,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/absolute-cinema-meme-bonus/",
+        "url": "https://litterbox.example/sample-gallery-bonus/",
         "status": 404,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/pop-cat-meme/",
+        "url": "https://litterbox.example/sample-comic-7/",
         "status": 200,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/pop-cat-meme-bonus/",
+        "url": "https://litterbox.example/sample-comic-7-bonus/",
         "status": 404,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/lore-dump/",
+        "url": "https://litterbox.example/sample-comic-8/",
         "status": 200,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/lore-dump-bonus/",
+        "url": "https://litterbox.example/sample-comic-8-bonus/",
         "status": 404,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/locked-and-loaded/",
+        "url": "https://litterbox.example/sample-comic-9/",
         "status": 200,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/locked-and-loaded-bonus/",
+        "url": "https://litterbox.example/sample-comic-9-bonus/",
         "status": 404,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/black-and-white/",
+        "url": "https://litterbox.example/sample-comic-10/",
         "status": 200,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/black-and-white-bonus/",
+        "url": "https://litterbox.example/sample-comic-10-bonus/",
         "status": 404,
         "file": null
       },
       {
-        "url": "https://www.litterboxcomics.com/absolute-cinema-meme/",
+        "url": "https://litterbox.example/sample-gallery/",
         "status": 200,
         "file": null
       }
