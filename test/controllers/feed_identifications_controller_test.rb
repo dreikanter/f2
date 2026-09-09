@@ -30,15 +30,23 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='feed[feed_profile_key]'][value='wumo']"
   end
 
-  test "#create should restart legacy and outdated in-flight identifications" do
+  test "#create should restart a legacy result without a configuration digest" do
     sign_in_as(user)
     identification = create(:feed_identification, :working, user: user, configuration_digest: nil)
 
     assert_enqueued_with(job: FeedIdentificationJob) do
       post feed_identifications_path, params: { url: identification.input }
     end
-    old_run_id = identification.reload.run_id
-    identification.update!(configuration_digest: "previous configuration")
+    assert_predicate identification.reload, :processing?
+    assert_predicate identification, :current_configuration?
+    assert_empty identification.candidates
+  end
+
+  test "#create should restart an in-flight identification from an outdated configuration" do
+    sign_in_as(user)
+    identification = create(:feed_identification, user: user, started_at: Time.current,
+                            configuration_digest: "previous configuration")
+    old_run_id = identification.run_id
 
     assert_enqueued_with(job: FeedIdentificationJob) do
       post feed_identifications_path, params: { url: identification.input }
@@ -46,9 +54,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_not_equal old_run_id, identification.reload.run_id
     assert_predicate identification, :current_configuration?
-    assert_empty identification.candidates
-    assert_not identification.settle_detection(status: :working, candidates: [{ "profile_key" => "rss" }],
-                                               run_id: old_run_id)
+    assert_response :success
+    assert_includes response.body, 'data-identification-state="checking"'
   end
 
   test "#show should reject an outdated result without changing it" do

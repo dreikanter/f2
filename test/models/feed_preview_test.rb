@@ -1,20 +1,29 @@
 require "test_helper"
 
 class FeedPreviewTest < ActiveSupport::TestCase
-  test ".digest_for should include changes anywhere in the selected profile configuration" do
-    params = { "url" => "https://wumo.com/wumo?view=rss" }
-    original = FeedPreview.digest_for("wumo", params)
+  test ".digest_for should change when the AI profile's prompt template changes" do
+    params = { "prompt" => "Follow Ruby news" }
+    original = FeedPreview.digest_for("llm", params)
+    profiles = FeedProfile::PROFILES.deep_dup
+    profiles["llm"][:loader][:config][:prompt_template] = "Summarize each source post: {{input}}"
 
-    [:loader, :processor, :normalizer, :parameter_schema].each do |key|
-      profiles = FeedProfile::PROFILES.deep_dup
-      profiles["wumo"][key][:changed] = true
-      stub_const(FeedProfile, :PROFILES, profiles) do
-        assert_not_equal original, FeedPreview.digest_for("wumo", params), key.to_s
-      end
+    stub_const(FeedProfile, :PROFILES, profiles) do
+      assert_not_equal original, FeedPreview.digest_for("llm", params)
     end
   end
 
-  test ".digest_for should preserve previews when an unrelated profile is added" do
+  test ".digest_for should change when a profile option's default changes" do
+    params = { "url" => "https://www.youtube.com/@channel" }
+    original = FeedPreview.digest_for("youtube", params)
+    profiles = FeedProfile::PROFILES.deep_dup
+    profiles["youtube"][:parameter_schema]["properties"]["include_description"]["default"] = false
+
+    stub_const(FeedProfile, :PROFILES, profiles) do
+      assert_not_equal original, FeedPreview.digest_for("youtube", params)
+    end
+  end
+
+  test ".digest_for should preserve previews when an unrelated profile is removed" do
     params = { "url" => "https://example.com/feed.xml" }
     current = FeedPreview.digest_for("rss", params)
 

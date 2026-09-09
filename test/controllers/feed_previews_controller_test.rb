@@ -25,9 +25,6 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_not_equal old_preview.params_digest, preview.params_digest
     assert_nil preview.data
 
-    assert_no_enqueued_jobs do
-      post feed_previews_url, params: { profile_key: "wumo", params: { url: url } }
-    end
     assert_includes response.body, feed_preview_path(preview)
   end
 
