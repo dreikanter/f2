@@ -72,21 +72,21 @@ class DiskUsageService
   end
 
   def postgres_percentage
-    return 0.0 if accountable_space.zero?
-
-    (postgres_usage.to_f / accountable_space * 100).round(1)
+    percentage_of(postgres_usage)
   end
 
   def other_used_percentage
-    return 0.0 if accountable_space.zero?
-
-    (other_used_space.to_f / accountable_space * 100).round(1)
+    percentage_of(other_used_space)
   end
 
   def free_percentage
+    percentage_of(free_space)
+  end
+
+  def percentage_of(bytes)
     return 0.0 if accountable_space.zero?
 
-    (free_space.to_f / accountable_space * 100).round(1)
+    (bytes.to_f / accountable_space * 100).round(1)
   end
 
   def table_usage
