@@ -342,7 +342,7 @@ class LlmClient
     cost = nil unless response || ctx.last_response
     # Token prices alone cannot account for hosted search charges.
     cost = nil if %w[native provider].include?(ctx.retrieval["mode"]) && ctx.retrieval["search_calls"] != 0
-    cost = nil if ctx.retrieval&.fetch("token_usage_reported", nil) == false
+    cost = nil if ctx.retrieval["token_usage_reported"] == false
     # A reported total already includes hosted search. nil explicitly means
     # the provider could not supply a complete charge (including BYOK).
     cost = ctx.retrieval["reported_cost_cents"] if ctx.retrieval.key?("reported_cost_cents")
@@ -361,7 +361,7 @@ class LlmClient
       cache_write_tokens: tokens.cache_write_tokens,
       cache_read_tokens: tokens.cache_read_tokens,
       cost_estimate_cents: cost,
-      retrieval: ctx.retrieval || {},
+      retrieval: ctx.retrieval,
       outcome: outcome,
       started_at: started_at,
       finished_at: finished_at,
