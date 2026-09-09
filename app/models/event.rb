@@ -47,9 +47,4 @@ class Event < ApplicationRecord
 
     created_at.present? && created_at < DEFAULT_RETENTION.ago
   end
-
-  def expires_in(duration)
-    update!(expires_at: duration.from_now)
-    self
-  end
 end
