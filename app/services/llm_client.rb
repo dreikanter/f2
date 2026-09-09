@@ -368,8 +368,8 @@ class LlmClient
       duration_ms: ((finished_at - started_at) * 1000).round,
       error_message: error_message
     )
-    # Each preview event links only the attempts made by that run.
-    if ctx.purpose.to_s == "preview" && ctx.refresh_event
+    # Link every attempt to its run before completion or interruption.
+    if ctx.refresh_event
       ctx.refresh_event.event_references.create!(reference: usage)
     end
     usage

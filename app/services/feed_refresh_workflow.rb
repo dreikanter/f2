@@ -76,11 +76,10 @@ class FeedRefreshWorkflow
     input
   end
 
-  # Attributes the dead run's spend to its interrupted event — here or never,
-  # since every later run's window starts after these rows. The event's own
-  # started_at stat bounds them exactly.
+  # Existing references retain partial spend from a process that died.
   def interrupt_abandoned_event(event)
-    usage_rows = abandoned_llm_usage_rows(event)
+    link_legacy_llm_usages(event) unless event.metadata["llm_usage_references"]
+    usage_rows = llm_usage_rows(event)
     search_event_ids = event.event_references.where(reference_type: "Event").pluck(:reference_id)
     stats_updates = {}
     metadata = event.metadata.merge("status" => "interrupted")
@@ -95,20 +94,23 @@ class FeedRefreshWorkflow
     metadata["stats"] = metadata.fetch("stats", {}).merge(stats_updates) if stats_updates.any?
 
     event.update!(level: :debug, metadata: metadata)
-    reference_llm_usages(event, usage_rows)
   end
 
-  def abandoned_llm_usage_rows(event)
+  # Only events written before immediate usage linking need the old timestamp
+  # fallback. Never take usage that already belongs to another event.
+  def link_legacy_llm_usages(event)
     run_started_at = begin
       Time.zone.parse(event.metadata.dig("stats", "started_at").to_s)
     rescue ArgumentError
       nil
     end
-    return [] unless run_started_at
+    return unless run_started_at
 
-    feed.llm_usages.scheduled_run
-        .where(started_at: run_started_at..)
-        .pluck(:id, :cost_estimate_cents)
+    linked_ids = EventReference.where(reference_type: "LlmUsage").select(:reference_id)
+    feed.llm_usages.scheduled_run.where(started_at: run_started_at..)
+        .where.not(id: linked_ids).find_each do |usage|
+      event.event_references.create!(reference: usage)
+    end
   end
 
   # The in-flight record is user-visible and ephemeral: completion or failure
@@ -120,7 +122,7 @@ class FeedRefreshWorkflow
       level: :info,
       subject: feed,
       user: feed.user,
-      metadata: { status: "started", stats: stats }
+      metadata: { status: "started", stats: stats, llm_usage_references: true }
     )
   end
 
@@ -303,28 +305,17 @@ class FeedRefreshWorkflow
     record_stats(stats_key => duration)
   end
 
-  # Delete before create: the terminal event's fresh id is what makes open
-  # event pages re-render, and that re-render must no longer include the
-  # started record.
+  # A fresh terminal id makes cursor-based event polling discover the outcome.
   def complete_refresh_event(posts)
     usage_rows = run_llm_usage_rows
     search_event_ids = run_web_search_event_ids
-    @refresh_event.destroy!
     record_llm_usage_stats(usage_rows)
     record_web_search_stats(search_event_ids)
 
-    event = Event.create!(
-      type: "feed_refresh",
-      level: :info,
-      subject: feed,
-      user: feed.user,
-      metadata: { status: "completed", stats: stats }
-    )
+    event = replace_refresh_event(level: :info, metadata: { status: "completed", stats: stats })
 
     @refresh_completed = true
     reference_posts(event, posts)
-    reference_llm_usages(event, usage_rows)
-    reference_web_searches(event, search_event_ids)
   end
 
   def reference_posts(event, posts)
@@ -343,15 +334,13 @@ class FeedRefreshWorkflow
     EventReference.insert_all(references_data)
   end
 
-  # This run's usage rows as [id, cost_cents] pairs. The started_at window is
-  # exact: the advisory lock serializes runs per feed, and every other writer
-  # uses the preview purpose or an unpersisted feed.
   def run_llm_usage_rows
-    return [] unless stats[:started_at]
+    @refresh_event ? llm_usage_rows(@refresh_event) : []
+  end
 
-    feed.llm_usages.scheduled_run
-        .where(started_at: stats[:started_at]..)
-        .pluck(:id, :cost_estimate_cents)
+  def llm_usage_rows(event)
+    usage_ids = event.event_references.where(reference_type: "LlmUsage").select(:reference_id)
+    LlmUsage.where(id: usage_ids).pluck(:id, :cost_estimate_cents)
   end
 
   # No calls, no stat — keeps deterministic feeds' events free of a noisy $0.
@@ -372,22 +361,6 @@ class FeedRefreshWorkflow
     usage_rows.sum { |_id, cents| cents }.to_f
   end
 
-  def reference_llm_usages(event, usage_rows)
-    return if usage_rows.empty?
-
-    references_data = usage_rows.map do |usage_id, _cents|
-      {
-        event_id: event.id,
-        reference_type: "LlmUsage",
-        reference_id: usage_id,
-        created_at: event.created_at,
-        updated_at: event.created_at
-      }
-    end
-
-    EventReference.insert_all(references_data)
-  end
-
   def run_web_search_event_ids
     @refresh_event.event_references.where(reference_type: "Event").pluck(:reference_id)
   end
@@ -396,19 +369,15 @@ class FeedRefreshWorkflow
     record_stats(search_calls: search_event_ids.size) if search_event_ids.any?
   end
 
-  def reference_web_searches(event, search_event_ids)
-    return if search_event_ids.empty?
-
-    references_data = search_event_ids.map do |search_event_id|
-      {
-        event_id: event.id,
-        reference_type: "Event",
-        reference_id: search_event_id,
-        created_at: event.created_at,
-        updated_at: event.created_at
-      }
+  def replace_refresh_event(**attributes)
+    Event.transaction do
+      event = Event.create!(type: "feed_refresh", subject: feed, user: feed.user, **attributes)
+      if @refresh_event
+        @refresh_event.event_references.update_all(event_id: event.id, updated_at: Time.current)
+        @refresh_event.destroy!
+      end
+      event
     end
-    EventReference.insert_all(references_data)
   end
 
   def disable_credentials_on_auth_error(error)
@@ -428,15 +397,11 @@ class FeedRefreshWorkflow
 
     usage_rows = run_llm_usage_rows
     search_event_ids = @refresh_event ? run_web_search_event_ids : []
-    @refresh_event&.destroy!
     record_llm_usage_stats(usage_rows)
     record_web_search_stats(search_event_ids)
 
-    event = Event.create!(
-      type: "feed_refresh",
+    replace_refresh_event(
       level: :error,
-      subject: feed,
-      user: feed.user,
       message: error.message,
       metadata: {
         status: "failed",
@@ -449,9 +414,6 @@ class FeedRefreshWorkflow
         }
       }
     )
-
-    reference_llm_usages(event, usage_rows)
-    reference_web_searches(event, search_event_ids)
   end
 
   # Persist this run's regime so the next scheduled run can skip a redundant
