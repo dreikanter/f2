@@ -1,6 +1,8 @@
 require "test_helper"
 
 class SystemStatusHelperTest < ActionView::TestCase
+  include ApplicationHelper
+
   test "#environment_badge should render production as danger" do
     result = environment_badge("production")
 
