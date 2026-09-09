@@ -42,9 +42,19 @@ module Normalizer
     def bonus_panel_link
       html = raw_data["content"].presence || raw_data["summary"] || ""
       link = Nokogiri::HTML::DocumentFragment.parse(html).css("a[href]").find do |anchor|
-        anchor.text.match?(/bonus panel/i) && PublicUrl.safe?(anchor["href"])
+        anchor.text.match?(/bonus panel/i) && bonus_panel_link?(anchor["href"])
       end
       link&.[]("href")
+    end
+
+    def bonus_panel_link?(url)
+      return false unless PublicUrl.safe?(url)
+
+      uri = URI.parse(url.strip)
+      host = uri.hostname.downcase.chomp(".")
+      return true unless host == "patreon.com" || host.end_with?(".patreon.com")
+
+      uri.path.match?(%r{\A/(?:litterboxcomics/)?posts/(?:[^/]+-)?\d+/?\z})
     end
 
     def fetch_article_page
