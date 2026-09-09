@@ -33,7 +33,7 @@ class Event < ApplicationRecord
   scope :user_relevant, -> { where.not(level: :debug).not_expired }
 
   def alert_variant
-    level == "debug" ? :info : level.to_sym
+    debug? ? :info : level.to_sym
   end
 
   # Records this event points at, with deleted ones dropped. Distinct from
