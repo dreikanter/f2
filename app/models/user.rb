@@ -175,7 +175,7 @@ class User < ApplicationRecord
   end
 
   def published_posts
-    imported_posts.where(posts: { status: :published })
+    imported_posts.published
   end
 
   def imported_posts
