@@ -108,10 +108,7 @@ class LlmClient
                         output_schema: output_schema, web: web, system: system,
                         native_schema: native_schema)
       end
-    rescue UnsupportedNativeSearch => e
-      write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
-      raise
-    rescue WebSearchProvider::AuthError => e
+    rescue UnsupportedNativeSearch, WebSearchProvider::AuthError => e
       write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
       raise
     rescue RubyLLM::RateLimitError => e
