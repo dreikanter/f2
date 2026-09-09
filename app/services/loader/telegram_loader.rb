@@ -10,7 +10,7 @@ module Loader
   # Accepts the channel as a full URL (https://t.me/examplechannel,
   # https://t.me/s/examplechannel), a short form (t.me/examplechannel), an
   # @handle, or a bare username.
-  class TelegramLoader < Base
+  class TelegramLoader < HttpBase
     PREVIEW_BASE = "https://t.me/s".freeze
     HOSTS = %w[t.me telegram.me www.t.me].freeze
     USERNAME = /\A[A-Za-z0-9_]{2,64}\z/

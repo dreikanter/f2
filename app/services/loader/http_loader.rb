@@ -1,5 +1,5 @@
 module Loader
-  class HttpLoader < Base
+  class HttpLoader < HttpBase
     def load
       response = http_get(feed_url)
 

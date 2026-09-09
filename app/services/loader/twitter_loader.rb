@@ -8,7 +8,7 @@ module Loader
   # endpoint: it only exposes a short window of recent tweets, omits protected
   # accounts, and X may change or gate it at any time. Accepts a twitter.com /
   # x.com profile URL, an @handle, or a bare handle.
-  class TwitterLoader < Base
+  class TwitterLoader < HttpBase
     SYNDICATION_BASE = "https://syndication.twitter.com/srv/timeline-profile/screen-name".freeze
     HOSTS = %w[twitter.com www.twitter.com mobile.twitter.com x.com www.x.com].freeze
     HANDLE = /\A[A-Za-z0-9_]{1,15}\z/

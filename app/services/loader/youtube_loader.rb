@@ -1,5 +1,5 @@
 module Loader
-  class YoutubeLoader < Base
+  class YoutubeLoader < HttpBase
     FEED_URL_PATH = "/feeds/videos.xml"
     FEED_BASE_URL = "https://www.youtube.com/feeds/videos.xml"
     YOUTUBE_DOMAINS = %w[youtube.com www.youtube.com].freeze

@@ -4,7 +4,7 @@ module Loader
   # needs no API key or login, and carries full-size image URLs — unlike the
   # profile's native RSS feed, which is text-only. Accepts a full bsky.app
   # profile URL identifying the account by handle or DID.
-  class BlueskyLoader < Base
+  class BlueskyLoader < HttpBase
     API_URL = "https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed".freeze
     HOSTS = %w[bsky.app www.bsky.app].freeze
     # AT Protocol identifiers: a handle is a domain name (two labels minimum),
