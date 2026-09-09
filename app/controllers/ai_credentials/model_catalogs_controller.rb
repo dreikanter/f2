@@ -1,6 +1,4 @@
 class AiCredentials::ModelCatalogsController < ApplicationController
-  include StatePolling
-
   def create
     credential = Current.user.ai_credentials.find(params[:ai_credential_id])
     authorize credential, :update?
