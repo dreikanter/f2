@@ -140,10 +140,11 @@ class PostPublishJob < ApplicationJob
   # Every FreeFeed POST still required by this sequential publication.
   def post_cost(post)
     publication = post.post_publication
-    return 1 + post.comments.count(&:present?) + post.attachment_urls.size unless publication
+    comments = post.comments.count(&:present?)
+    return 1 + comments + post.attachment_urls.size unless publication
 
     remaining_attachments = post.attachment_urls.size - publication.attachments_processed_count
-    remaining_comments = post.comments.count(&:present?) - publication.comments_published_count
+    remaining_comments = comments - publication.comments_published_count
     remote_post = post.freefeed_post_id.present? ? 0 : 1
 
     remote_post + [remaining_attachments, 0].max + [remaining_comments, 0].max
