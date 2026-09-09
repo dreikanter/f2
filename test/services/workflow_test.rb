@@ -195,6 +195,7 @@ class WorkflowTest < ActiveSupport::TestCase
     assert_equal [:step_one, :step_two], seen.keys
     seen.each do |step, duration|
       assert_kind_of Float, duration, "#{step} duration must be recorded before after_step runs"
+      assert_operator duration, :>=, 0
     end
   end
 
