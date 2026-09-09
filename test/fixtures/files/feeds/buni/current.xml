@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:sy="http://purl.org/rss/1.0/modules/syndication/" xmlns:slash="http://purl.org/rss/1.0/modules/slash/" version="2.0">
+
+<channel>
+	<title>Buni</title>
+	<atom:link href="https://www.bunicomic.com/feed/" rel="self" type="application/rss+xml"/>
+	<link>https://www.bunicomic.com</link>
+	<description>Buni is a dark comic which updates Mondays, Wednesdays and Fridays.</description>
+	<lastBuildDate>Mon, 07 Sep 2026 02:47:27 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+
+	<item>
+		<title>Buni</title>
+		<link>https://www.bunicomic.com/comic/buni-2005/</link>
+					<comments>https://www.bunicomic.com/comic/buni-2005/#respond</comments>
+
+		<dc:creator><![CDATA[Ryan Pagelow]]></dc:creator>
+		<pubDate>Mon, 07 Sep 2026 06:00:52 +0000</pubDate>
+				<guid isPermaLink="false">https://www.bunicomic.com/?post_type=comic&amp;p=9216</guid>
+
+					<description><![CDATA[<p><a href="https://www.bunicomic.com/comic/buni-2005/" rel="bookmark" title="Buni"><img width="150" height="150" src="https://www.bunicomic.com/wp-content/uploads/2026/09/2026-09-07-Buni-150x150.jpg" class="attachment-thumbnail size-thumbnail wp-post-image" alt="" decoding="async" /></a>
+</p>]]></description>
+										<content:encoded><![CDATA[<p><a href="https://www.bunicomic.com/comic/buni-2005/" rel="bookmark" title="Buni"><img width="150" height="150" src="https://www.bunicomic.com/wp-content/uploads/2026/09/2026-09-07-Buni-150x150.jpg" class="attachment-thumbnail size-thumbnail wp-post-image" alt="" decoding="async" /></a>
+</p>]]></content:encoded>
+
+					<wfw:commentRss>https://www.bunicomic.com/comic/buni-2005/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+
+
+			</item>
+		<item>
+		<title>Buni</title>
+		<link>https://www.bunicomic.com/comic/buni-2004/</link>
+					<comments>https://www.bunicomic.com/comic/buni-2004/#respond</comments>
+
+		<dc:creator><![CDATA[Ryan Pagelow]]></dc:creator>
+		<pubDate>Wed, 02 Sep 2026 05:08:58 +0000</pubDate>
+				<guid isPermaLink="false">https://www.bunicomic.com/?post_type=comic&amp;p=9213</guid>
+
+					<description><![CDATA[<p><a href="https://www.bunicomic.com/comic/buni-2004/" rel="bookmark" title="Buni"><img width="150" height="150" src="https://www.bunicomic.com/wp-content/uploads/2026/09/2026-09-02-Buni-150x150.jpg" class="attachment-thumbnail size-thumbnail wp-post-image" alt="" decoding="async" /></a>
+</p>]]></description>
+										<content:encoded><![CDATA[<p><a href="https://www.bunicomic.com/comic/buni-2004/" rel="bookmark" title="Buni"><img width="150" height="150" src="https://www.bunicomic.com/wp-content/uploads/2026/09/2026-09-02-Buni-150x150.jpg" class="attachment-thumbnail size-thumbnail wp-post-image" alt="" decoding="async" loading="lazy" /></a>
+</p>]]></content:encoded>
+
+					<wfw:commentRss>https://www.bunicomic.com/comic/buni-2004/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+
+
+			</item>
+		<item>
+		<title>Buni</title>
+		<link>https://www.bunicomic.com/comic/buni-2003/</link>
+					<comments>https://www.bunicomic.com/comic/buni-2003/#respond</comments>
+
+		<dc:creator><![CDATA[Ryan Pagelow]]></dc:creator>
+		<pubDate>Mon, 31 Aug 2026 06:00:48 +0000</pubDate>
+				<guid isPermaLink="false">https://www.bunicomic.com/?post_type=comic&amp;p=9209</guid>
+
+					<description><![CDATA[<p><a href="https://www.bunicomic.com/comic/buni-2003/" rel="bookmark" title="Buni"><img width="150" height="150" src="https://www.bunicomic.com/wp-content/uploads/2026/08/2026-08-31-Buni-150x150.jpg" class="attachment-thumbnail size-thumbnail wp-post-image" alt="" decoding="async" loading="lazy" /></a>
+</p>]]></description>
+										<content:encoded><![CDATA[<p><a href="https://www.bunicomic.com/comic/buni-2003/" rel="bookmark" title="Buni"><img width="150" height="150" src="https://www.bunicomic.com/wp-content/uploads/2026/08/2026-08-31-Buni-150x150.jpg" class="attachment-thumbnail size-thumbnail wp-post-image" alt="" decoding="async" loading="lazy" /></a>
+</p>]]></content:encoded>
+
+					<wfw:commentRss>https://www.bunicomic.com/comic/buni-2003/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+
+
+			</item>
+
+
+
+
+
+
+
+	</channel>
+</rss>
