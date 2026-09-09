@@ -264,7 +264,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     payload = LlmClient::Adapter::OpenAi.new.schema_payload(FeedProfile::UNIVERSAL_OUTPUT_SCHEMA)
 
     assert_equal FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, payload["schema"]
-    assert_equal false, payload["strict"]
+    assert_same false, payload["strict"]
   end
 
   # OpenAI rejects a strict schema whose properties are not all required, and

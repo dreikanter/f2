@@ -225,7 +225,7 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_equal "Skip Shorts", options.first.title
     assert_predicate options.second, :boolean?
     assert_equal "Post video descriptions", options.second.title
-    assert_equal true, options.second.default
+    assert options.second.default
   end
 
   test ".options_for returns nothing for a profile declaring only its source" do

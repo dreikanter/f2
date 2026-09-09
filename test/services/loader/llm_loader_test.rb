@@ -67,7 +67,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     Loader::LlmLoader.new(feed, llm_client: client).load
 
     assert_equal 1, client.calls.size
-    assert_equal true, client.calls[0][:web]
+    assert client.calls[0][:web]
     assert client.calls[0][:output_schema].present?
   end
 
@@ -76,9 +76,9 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     Loader::LlmLoader.new(openrouter_feed, llm_client: client).load
 
     assert_equal 2, client.calls.size
-    assert_equal true, client.calls[0][:web]
+    assert client.calls[0][:web]
     assert_nil client.calls[0][:output_schema]
-    assert_equal false, client.calls[1][:web]
+    assert_not client.calls[1][:web]
     assert client.calls[1][:output_schema].present?
   end
 

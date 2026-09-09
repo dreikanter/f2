@@ -635,7 +635,7 @@ class LlmClientTest < ActiveSupport::TestCase
     end
 
     assert_equal FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, chat.schema["schema"]
-    assert_equal false, chat.schema["strict"]
+    assert_same false, chat.schema["strict"]
   end
 
   test "#invoke_provider should keep strictness on for providers whose strict mode fits the schema" do
@@ -647,7 +647,7 @@ class LlmClientTest < ActiveSupport::TestCase
                   output_schema: FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, web: false, system: nil)
     end
 
-    assert_equal true, chat.schema["strict"]
+    assert_same true, chat.schema["strict"]
   end
 
   test "#invoke_provider should set the system prompt as instructions and ask the user prompt" do

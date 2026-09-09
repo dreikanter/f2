@@ -122,7 +122,7 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
     summary = Event.find_by(subject: job_run, type: "job.llm_capability_probe.completed")
     assert_includes summary.message, "plain=PASS schema=FAIL"
     assert_equal credential.id, summary.metadata["credential_id"]
-    assert_equal false, summary.metadata["passed"]
+    assert_not summary.metadata["passed"]
     assert_predicate summary, :warning?
     runner.verify
   end

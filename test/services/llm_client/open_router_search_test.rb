@@ -129,7 +129,7 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
     gather
 
     usage = LlmUsage.sole
-    assert_equal false, usage.retrieval["token_usage_reported"]
+    assert_same false, usage.retrieval["token_usage_reported"]
     assert_nil usage.retrieval["search_calls"]
     assert_equal "1.7".to_d, usage.cost_estimate_cents
   end
@@ -154,7 +154,7 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
         assert_equal 0, usage.cost_estimate_cents
       else
         assert_nil usage.cost_estimate_cents
-        assert_equal false, usage.retrieval["token_usage_reported"]
+        assert_same false, usage.retrieval["token_usage_reported"]
       end
     end
   end
@@ -427,7 +427,7 @@ class LlmClient::OpenRouterSearchTest < ActiveSupport::TestCase
     usage = LlmUsage.sole
     assert_equal "timeout", usage.outcome
     assert_nil usage.cost_estimate_cents
-    assert_equal false, usage.retrieval["token_usage_reported"]
+    assert_same false, usage.retrieval["token_usage_reported"]
     assert_requested :post, ENDPOINT, times: 1
   end
 

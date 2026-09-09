@@ -20,8 +20,8 @@ class PublishedModelMetadataTest < ActiveSupport::TestCase
     Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) do
       metadata = PublishedModelMetadata.new
       entry = metadata.lookup("openai", "new-model")
-      assert_equal false, entry["tool_call"]
-      assert_equal true, entry["structured_output"]
+      assert_same false, entry["tool_call"]
+      assert_same true, entry["structured_output"]
       assert_equal ["text"], entry["output_modalities"]
       assert_equal 4_096, entry["max_output_tokens"]
       assert_equal({ "input" => 1.5, "output" => 0 }, entry["pricing"])

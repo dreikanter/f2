@@ -204,7 +204,7 @@ class LlmClient::MoonshotSearchTest < ActiveSupport::TestCase
     assert_requested :post, CHAT, times: 2
     assert_equal 80, LlmUsage.sole.input_tokens
     assert_equal 1, LlmUsage.sole.retrieval["search_calls"]
-    assert_equal false, LlmUsage.sole.retrieval["token_usage_reported"]
+    assert_same false, LlmUsage.sole.retrieval["token_usage_reported"]
     assert_nil LlmUsage.sole.cost_estimate_cents
   end
 
@@ -225,7 +225,7 @@ class LlmClient::MoonshotSearchTest < ActiveSupport::TestCase
 
     gather
 
-    assert_equal false, LlmUsage.sole.retrieval["token_usage_reported"]
+    assert_same false, LlmUsage.sole.retrieval["token_usage_reported"]
     assert_nil LlmUsage.sole.cost_estimate_cents
   end
 

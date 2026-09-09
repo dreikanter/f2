@@ -57,7 +57,7 @@ class LlmClient::ErrorMiddlewareTest < ActiveSupport::TestCase
     assert_equal 0, usage.input_tokens
     assert_equal 0, usage.output_tokens
     assert_nil usage.cost_estimate_cents
-    assert_equal false, usage.retrieval["token_usage_reported"]
+    assert_same false, usage.retrieval["token_usage_reported"]
     assert_equal "external", usage.retrieval["mode"]
     assert_not context.tools_disabled
     assert_not context.native_search_disabled
@@ -78,7 +78,7 @@ class LlmClient::ErrorMiddlewareTest < ActiveSupport::TestCase
     assert_equal 40, usage.cache_read_tokens
     assert_equal 20, usage.cache_write_tokens
     assert_nil usage.cost_estimate_cents
-    assert_equal false, usage.retrieval["token_usage_reported"]
+    assert_same false, usage.retrieval["token_usage_reported"]
     assert_equal 2, context.tool_budget.spent
     assert_not context.tools_disabled
     assert_requested request, times: 3

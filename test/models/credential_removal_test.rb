@@ -10,7 +10,7 @@ class CredentialRemovalTest < ActiveSupport::TestCase
 
     assert_respond_to feed, :disable_with_event!
     assert_no_difference("Event.count") do
-      assert_equal false, feed.disable_with_event!("test_disable", {})
+      assert_not feed.disable_with_event!("test_disable", {})
     end
   end
 

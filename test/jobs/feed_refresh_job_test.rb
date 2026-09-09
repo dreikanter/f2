@@ -63,11 +63,11 @@ class FeedRefreshJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should forward manual: true to the workflow" do
-    assert_equal true, captured_manual_flag { FeedRefreshJob.perform_now(feed.id, manual: true) }
+    assert captured_manual_flag { FeedRefreshJob.perform_now(feed.id, manual: true) }
   end
 
   test ".perform_now should default the workflow to a scheduled (non-manual) run" do
-    assert_equal false, captured_manual_flag { FeedRefreshJob.perform_now(feed.id) }
+    assert_same false, captured_manual_flag { FeedRefreshJob.perform_now(feed.id) }
   end
 
   private

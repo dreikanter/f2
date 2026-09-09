@@ -139,7 +139,7 @@ class ApplicationHelperTest < ActionView::TestCase
         assert_equal 1, items.size
         assert_equal "Status", items.first[:name]
         assert_equal status_path, items.first[:path]
-        assert_equal false, items.first[:active]
+        assert_not items.first[:active]
       end
     end
   end
@@ -157,7 +157,7 @@ class ApplicationHelperTest < ActionView::TestCase
         assert_equal ["Status", "Feeds", "Posts"], items.map { |item| item[:name] }
         feeds_item = items.second
         assert_equal feeds_path, feeds_item[:path]
-        assert_equal true, feeds_item[:active]
+        assert feeds_item[:active]
       end
     end
   end
@@ -189,7 +189,7 @@ class ApplicationHelperTest < ActionView::TestCase
         admin_item = items.find { |item| item[:name] == "Admin Panel" }
 
         assert_equal admin_path, admin_item[:path]
-        assert_equal true, admin_item[:active]
+        assert admin_item[:active]
         assert_nil items.find { |item| item[:name] == "Dev Tools" }
       end
     end
@@ -221,7 +221,7 @@ class ApplicationHelperTest < ActionView::TestCase
         dev_item = items.find { |item| item[:name] == "Dev Tools" }
 
         assert_equal development_path, dev_item[:path]
-        assert_equal true, dev_item[:active]
+        assert dev_item[:active]
         assert_nil items.find { |item| item[:name] == "Admin Panel" }
       end
     end

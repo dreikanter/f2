@@ -73,7 +73,7 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
     assert_equal [{ "type" => "web_search" }], request["tools"]
     assert_equal 2, request["max_tool_calls"]
     assert_equal "auto", request["tool_choice"]
-    assert_equal false, request["store"]
+    assert_same false, request["store"]
     assert_equal 1_024, request["max_output_tokens"]
     assert_nil request["reasoning"]
     assert_nil request["text"]
@@ -105,7 +105,7 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
     end
 
     assert_equal "timeout", LlmUsage.sole.outcome
-    assert_equal false, LlmUsage.sole.retrieval["token_usage_reported"]
+    assert_same false, LlmUsage.sole.retrieval["token_usage_reported"]
     assert_nil LlmUsage.sole.cost_estimate_cents
     assert_requested :post, ENDPOINT, times: 1
   end
@@ -272,7 +272,7 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
     gather
 
     assert_nil LlmUsage.sole.cost_estimate_cents
-    assert_equal false, LlmUsage.sole.retrieval["token_usage_reported"]
+    assert_same false, LlmUsage.sole.retrieval["token_usage_reported"]
   end
 
   test "#call should not retry auth rate limit server malformed tool or unknown model errors" do
@@ -323,7 +323,7 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
     assert_equal 160, usage.input_tokens
     assert_equal 60, usage.output_tokens
     assert_equal 40, usage.cache_read_tokens
-    assert_equal true, usage.retrieval["token_usage_reported"]
+    assert_same true, usage.retrieval["token_usage_reported"]
     assert_equal "0.0284".to_d, usage.cost_estimate_cents
   end
 
@@ -336,7 +336,7 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
     assert_equal 2, @requests.size
     assert_equal 80, LlmUsage.sole.input_tokens
     assert_equal 30, LlmUsage.sole.output_tokens
-    assert_equal false, LlmUsage.sole.retrieval["token_usage_reported"]
+    assert_same false, LlmUsage.sole.retrieval["token_usage_reported"]
     assert_nil LlmUsage.sole.cost_estimate_cents
     assert_not context.tools_disabled
   end
@@ -349,7 +349,7 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
 
     assert_equal 80, LlmUsage.sole.input_tokens
     assert_nil LlmUsage.sole.cost_estimate_cents
-    assert_equal false, LlmUsage.sole.retrieval["token_usage_reported"]
+    assert_same false, LlmUsage.sole.retrieval["token_usage_reported"]
   end
 
   test "#call should remove rejected external tools once and use supplied pages without changing endpoint" do
@@ -463,7 +463,7 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
     }.to_json)
 
     assert_equal "Available answer", gather.payload
-    assert_equal false, context.responses_api
+    assert_same false, context.responses_api
     assert_equal %w[provider_error success], LlmUsage.order(:created_at).pluck(:outcome)
     assert_equal %w[external external], LlmUsage.order(:created_at).map { |usage| usage.retrieval["mode"] }
     assert_requested chat, times: 1

@@ -272,7 +272,7 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     assert_equal 12, usage.output_tokens
     assert_equal "provider_error", usage.outcome
     assert_nil usage.cost_estimate_cents
-    assert_equal false, usage.retrieval["token_usage_reported"]
+    assert_same false, usage.retrieval["token_usage_reported"]
     assert_equal 2, @requests.size
     assert_equal 1, context.tool_budget.spent
   end
@@ -316,7 +316,7 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
 
       assert_equal({ "items" => [] }, result.payload)
       assert_nil recorded.cost_estimate_cents
-      assert_equal false, recorded.retrieval["token_usage_reported"]
+      assert_same false, recorded.retrieval["token_usage_reported"]
     end
   end
 
@@ -329,7 +329,7 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
       usage = LlmUsage.find(call.usage_id)
 
       assert_equal cost, usage.cost_estimate_cents
-      assert_equal true, usage.retrieval["token_usage_reported"]
+      assert_same true, usage.retrieval["token_usage_reported"]
     end
   end
 
@@ -355,7 +355,7 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
 
       assert_equal({ "items" => [] }, result.payload)
       assert_nil usage.cost_estimate_cents
-      assert_equal false, usage.retrieval["token_usage_reported"]
+      assert_same false, usage.retrieval["token_usage_reported"]
     end
   end
 
@@ -387,7 +387,7 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
 
     assert_equal({ "items" => [] }, result.payload)
     assert_equal 10, usage.cache_read_tokens
-    assert_equal true, usage.retrieval["token_usage_reported"]
+    assert_same true, usage.retrieval["token_usage_reported"]
     assert_nil usage.cost_estimate_cents
   end
 
@@ -398,7 +398,7 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     assert_raises(LlmClient::Timeout) { call }
 
     assert_nil LlmUsage.sole.cost_estimate_cents
-    assert_equal false, LlmUsage.sole.retrieval["token_usage_reported"]
+    assert_same false, LlmUsage.sole.retrieval["token_usage_reported"]
     assert_requested :post, ENDPOINT, times: 1
   end
 
@@ -410,7 +410,7 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
 
     assert_equal "provider_error", LlmUsage.sole.outcome
     assert_nil LlmUsage.sole.cost_estimate_cents
-    assert_equal false, LlmUsage.sole.retrieval["token_usage_reported"]
+    assert_same false, LlmUsage.sole.retrieval["token_usage_reported"]
     assert_requested :post, ENDPOINT, times: 1
   end
 
@@ -426,7 +426,7 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     assert_equal 10_000, usage.input_tokens
     assert_equal 5_000, usage.output_tokens
     assert_nil usage.cost_estimate_cents
-    assert_equal false, usage.retrieval["token_usage_reported"]
+    assert_same false, usage.retrieval["token_usage_reported"]
     assert_equal 2, @requests.size
   end
   test "#call should use advisory schema and output limits while validating output and tracking unknown spend" do

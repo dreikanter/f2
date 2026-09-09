@@ -155,7 +155,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
          }
 
     assert_response :success
-    assert_equal true, user.feed_previews.last.params["exclude_shorts"]
+    assert_same true, user.feed_previews.last.params["exclude_shorts"]
   end
 
   test "#create should drop params the profile doesn't declare" do

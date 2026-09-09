@@ -150,6 +150,6 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
   test "#value_for should fall back to the schema default" do
     option = FeedProfile::ParamOption.new("fancy", { "type" => "boolean", "default" => true })
 
-    assert_equal true, FeedProfileOptionsComponent.new(feed: feed).value_for(option)
+    assert FeedProfileOptionsComponent.new(feed: feed).value_for(option)
   end
 end
