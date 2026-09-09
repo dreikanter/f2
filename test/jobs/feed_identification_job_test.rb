@@ -1,6 +1,25 @@
 require "test_helper"
 
 class FeedIdentificationJobTest < ActiveJob::TestCase
+  test "#perform should leave detection for a worker with the expected configuration" do
+    url = "https://wumo.com/wumo?view=rss"
+    identification = create(:feed_identification, input: url, started_at: Time.current)
+    attributes = identification.attributes
+    stub_request(:get, url).to_return(status: 200, body: file_fixture("feeds/wumo/current.xml").read)
+
+    stub_const(FeedProfile, :PROFILES, FeedProfile::PROFILES.except("wumo")) do
+      FeedIdentificationJob.perform_now(identification.id, identification.run_id)
+    end
+
+    assert_not_requested :get, url
+    assert_equal attributes, identification.reload.attributes
+
+    FeedIdentificationJob.perform_now(identification.id, identification.run_id)
+
+    assert_predicate identification.reload, :working?
+    assert_equal "wumo", identification.suggested_candidate.profile_key
+  end
+
   def user
     @user ||= create(:user)
   end

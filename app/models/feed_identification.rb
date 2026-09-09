@@ -60,7 +60,7 @@ class FeedIdentification < ApplicationRecord
   # @param run_id [String] run token captured by the worker
   # @return [Boolean] whether the matching run was settled
   def settle_detection(status:, candidates:, run_id:)
-    self.class.where(id: id, status: :processing, run_id: run_id)
+    self.class.where(id: id, status: :processing, run_id: run_id, configuration_digest: FeedProfile.configuration_digest)
               .update_all(status: status, candidates: candidates, updated_at: Time.current)
               .positive?
   end

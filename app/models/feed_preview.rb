@@ -20,6 +20,10 @@ class FeedPreview < ApplicationRecord
 
   before_validation :assign_params_digest, if: :preview_identity_changed?
 
+  def current_configuration?
+    params_digest == calculated_params_digest
+  end
+
   # A preview's identity includes the profile configuration and what the user
   # supplied: the source input and the profile options they set. Params derived
   # later during processing must not change identity, so only declared option
@@ -125,7 +129,11 @@ class FeedPreview < ApplicationRecord
   end
 
   def assign_params_digest
-    self[:params_digest] = self.class.digest_for(
+    self[:params_digest] = calculated_params_digest
+  end
+
+  def calculated_params_digest
+    self.class.digest_for(
       feed_profile_key,
       params,
       feed_id:,

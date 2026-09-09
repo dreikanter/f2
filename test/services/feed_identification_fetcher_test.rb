@@ -1,6 +1,20 @@
 require "test_helper"
 
 class FeedIdentificationFetcherTest < ActiveSupport::TestCase
+  test "#identify should not settle results under another worker configuration" do
+    url = "https://wumo.com/wumo?view=rss"
+    identification = create(:feed_identification, input: url, started_at: Time.current)
+    attributes = identification.attributes
+    stub_request(:get, url).to_return(status: 200, body: file_fixture("feeds/wumo/current.xml").read)
+
+    stub_const(FeedProfile, :PROFILES, FeedProfile::PROFILES.except("wumo")) do
+      FeedIdentificationFetcher.new(feed_identification: identification, run_id: identification.run_id).identify
+    end
+
+    assert_requested :get, url
+    assert_equal attributes, identification.reload.attributes
+  end
+
   setup do
     @logger = ActiveSupport::Logger.new(nil) # Silent logger for tests
   end

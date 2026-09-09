@@ -22,7 +22,9 @@ class FeedPreviewWorkflow
   # Conditional update: only the current run may transition the row. The
   # optional status guard makes the initial pending -> processing claim atomic.
   def transition!(expected_status: nil, **attrs)
-    scope = FeedPreview.where(id: feed_preview.id, run_id: run_id)
+    return false unless feed_preview.current_configuration?
+
+    scope = FeedPreview.where(id: feed_preview.id, run_id: run_id, params_digest: feed_preview.params_digest)
     scope = scope.where(status: expected_status) if expected_status
     updated = scope.update_all(attrs.merge(updated_at: Time.current))
     feed_preview.reload if updated.positive?

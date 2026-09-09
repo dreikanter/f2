@@ -3,6 +3,29 @@ require "test_helper"
 class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 
+  test "#update should refresh the current configuration when an old preview URL is used" do
+    sign_in_as(user)
+    url = "https://wumo.com/wumo?view=rss"
+    old_profiles = FeedProfile::PROFILES.deep_dup
+    old_profiles["wumo"][:processor] = old_profiles["rss"][:processor]
+    old_preview = nil
+    stub_const(FeedProfile, :PROFILES, old_profiles) do
+      old_preview = create(:feed_preview, :completed, user: user, feed_profile_key: "wumo", params: { "url" => url })
+    end
+    current = create(:feed_preview, :completed, user: user, feed_profile_key: "wumo", params: { "url" => url })
+
+    assert_no_difference -> { FeedPreview.count } do
+      assert_enqueued_with(job: FeedPreviewJob) do
+        patch feed_preview_url(old_preview)
+      end
+    end
+
+    assert_response :success
+    assert_predicate current.reload, :pending?
+    assert_nil current.data
+    assert_includes response.body, feed_preview_path(current)
+  end
+
   test "#create should replace a cached preview when its profile configuration changes" do
     sign_in_as(user)
     url = "https://wumo.com/wumo?view=rss"

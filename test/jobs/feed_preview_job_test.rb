@@ -3,6 +3,27 @@ require "test_helper"
 class FeedPreviewJobTest < ActiveJob::TestCase
   RUN_ID = "11111111-1111-4111-8111-111111111111"
 
+  test "#perform should leave a preview for a worker with the expected profile configuration" do
+    url = "https://wumo.com/wumo?view=rss"
+    preview = create(:feed_preview, feed_profile_key: "wumo", params: { "url" => url }, run_id: RUN_ID)
+    attributes = preview.attributes
+    old_profiles = FeedProfile::PROFILES.deep_dup
+    old_profiles["wumo"][:processor] = old_profiles["rss"][:processor]
+    stub_request(:get, url).to_return(status: 200, body: file_fixture("feeds/wumo/current.xml").read)
+
+    stub_const(FeedProfile, :PROFILES, old_profiles) do
+      FeedPreviewJob.perform_now(preview.id, RUN_ID)
+    end
+
+    assert_not_requested :get, url
+    assert_equal attributes, preview.reload.attributes
+
+    FeedPreviewJob.perform_now(preview.id, RUN_ID)
+
+    assert_predicate preview.reload, :ready?
+    assert_not_empty preview.posts_data
+  end
+
   test "#perform should run the workflow and finalize the preview" do
     preview = create(:feed_preview, feed_profile_key: "rss",
                      params: { "url" => "https://example.com/feed.xml" }, run_id: RUN_ID)
