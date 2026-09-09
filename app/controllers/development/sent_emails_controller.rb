@@ -8,7 +8,7 @@ class Development::SentEmailsController < ApplicationController
     authorize :access, :dev?
     id = params[:id]
 
-    unless id =~ /\A[0-9a-f-]{36}\z/
+    unless id.match?(/\A[0-9a-f-]{36}\z/)
       redirect_to development_sent_emails_path, alert: "Invalid email ID"
       return
     end
