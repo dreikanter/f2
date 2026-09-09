@@ -44,9 +44,8 @@ class AccessToken < ApplicationRecord
     where("scopes @> ARRAY[?]::varchar[]", scope)
   }
 
-  # A user can create access token record associated with a known
-  # FreeFeed instances only (see Settings::AccessTokensController).
-  # Though the model allows to define any valid host URL.
+  # Instances offered when creating a token. The model itself accepts any
+  # valid host URL.
   FREEFEED_HOSTS = {
     production: {
       url: "https://freefeed.net",
