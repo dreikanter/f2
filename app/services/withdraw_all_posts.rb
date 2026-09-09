@@ -57,19 +57,13 @@ class WithdrawAllPosts
       delete_remote_post(post)
     end
 
-    mark_withdrawn(post)
-    affected_dates << post.reposted_at.to_date if post.reposted_at?
-
-    true
+    settle(post, affected_dates)
   rescue FreefeedClient::NotFoundError
     Rails.logger.warn(
       "FreeFeed post #{post.freefeed_post_id} not found; syncing local record"
     )
 
-    mark_withdrawn(post)
-    affected_dates << post.reposted_at.to_date if post.reposted_at?
-
-    true
+    settle(post, affected_dates)
   rescue FreefeedClient::Error => e
     Rails.logger.error(
       "Failed to withdraw post #{post.id} from FreeFeed: #{e.message}"
@@ -107,6 +101,13 @@ class WithdrawAllPosts
 
   def delete_remote_post(post)
     client.delete_post(post.freefeed_post_id)
+  end
+
+  def settle(post, affected_dates)
+    mark_withdrawn(post)
+    affected_dates << post.reposted_at.to_date if post.reposted_at?
+
+    true
   end
 
   def mark_withdrawn(post)
