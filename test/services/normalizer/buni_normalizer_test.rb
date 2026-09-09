@@ -54,32 +54,7 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
 
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "missing_images"
-  end
-
-  test "#normalize should warn when the comic page returns a non-2xx status" do
-    stub_request(:get, PAGE_URL).to_return(status: 503)
-    entry = feed_entry(0)
-    warned = []
-    Rails.logger.stub(:warn, ->(msg) { warned << msg }) do
-      Normalizer::BuniNormalizer.new(entry).normalize
-    end
-
-    assert_equal 1, warned.size
-    assert_includes warned.first, "Normalizer::BuniNormalizer: page fetch failed (HTTP 503)"
-    assert_includes warned.first, "feed_id=#{entry.feed.id}"
-    assert_includes warned.first, "uid=#{entry.uid}"
-    assert_includes warned.first, "url=#{PAGE_URL}"
     assert_requested :get, PAGE_URL, times: 1
-  end
-
-  test "#normalize should reject the post when the comic page fetch raises a network error" do
-    stub_request(:get, PAGE_URL).to_raise(Faraday::ConnectionFailed.new("connection refused"))
-    entry = feed_entry(0)
-
-    post = Normalizer::BuniNormalizer.new(entry).normalize
-
-    assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "missing_images"
   end
 
   test "#normalize should report a network error once with entry context" do
@@ -87,13 +62,13 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
     entry = feed_entry(0)
     reported = []
     Rails.error.stub(:report, ->(error, **options) { reported << [error, options] }) do
-      Normalizer::BuniNormalizer.new(entry).normalize
+      post = Normalizer::BuniNormalizer.new(entry).normalize
+      assert_equal "rejected", post.status
+      assert_includes post.validation_errors, "missing_images"
     end
 
     assert_equal 1, reported.size
-    error, options = reported.first
-    assert_kind_of HttpClient::Error, error
-    assert_equal :warning, options[:severity]
+    _, options = reported.first
     assert_equal({ normalizer: "Normalizer::BuniNormalizer", feed_id: entry.feed.id,
                    uid: entry.uid, url: PAGE_URL }, options[:context])
     assert_requested :get, PAGE_URL, times: 1

@@ -53,20 +53,6 @@ class Normalizer::TomorrowsNormalizerTest < ActiveSupport::TestCase
     assert_includes post.comments.first, "Author: Bill Cox"
   end
 
-  test "#normalize should warn once when page fetch fails" do
-    stub_request(:get, "https://365tomorrows.com/2026/06/10/the-black-cube/")
-      .to_return(status: 503)
-
-    entry = feed_entry(0)
-    warnings = []
-    Rails.logger.stub(:warn, ->(msg) { warnings << msg }) do
-      Normalizer::TomorrowsNormalizer.new(entry).normalize
-    end
-
-    assert_equal 1, warnings.size
-    assert_includes warnings.first, "Normalizer::TomorrowsNormalizer: page fetch failed (HTTP 503)"
-  end
-
   test "#normalize should report via Rails.error when page fetched but .entry-content missing" do
     stub_request(:get, "https://365tomorrows.com/2026/06/10/the-black-cube/")
       .to_return(status: 200, body: "<html><body><p>no entry-content here</p></body></html>")

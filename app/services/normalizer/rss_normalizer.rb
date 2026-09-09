@@ -6,24 +6,6 @@ module Normalizer
 
     private
 
-    def fetch_page(url)
-      return nil if url.blank?
-
-      response = HttpClient.build.get(url)
-      return response.body if response.success?
-
-      Rails.logger.warn(
-        "#{self.class.name}: page fetch failed (HTTP #{response.status}) " \
-        "[feed_id=#{feed_entry.feed&.id} uid=#{feed_entry.uid} url=#{url}]"
-      )
-      nil
-    rescue HttpClient::Error => e
-      Rails.error.report(e, severity: :warning, context: {
-        normalizer: self.class.name, feed_id: feed_entry.feed&.id, uid: feed_entry.uid, url: url
-      })
-      nil
-    end
-
     def content
       @content ||= post_content_with_url(text_content, source_url)
     end

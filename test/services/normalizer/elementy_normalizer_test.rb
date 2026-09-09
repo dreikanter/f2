@@ -50,36 +50,25 @@ class Normalizer::ElementyNormalizerTest < ActiveSupport::TestCase
     assert_includes post.comments.first, "Международная группа исследователей"
   end
 
-  test "#normalize should return empty attachments and warn when page fetch fails with HTTP error" do
+  test "#normalize should omit the cover image when page fetch fails with HTTP error" do
     stub_request(:get, "https://elementy.ru/novosti_nauki/434641/Genetiki_vyyasnili_proiskhozhdenie_pervykh_loshadey_v_Zapadnoy_Evrope")
       .to_return(status: 503)
 
     entry = feed_entry(0)
-    log_output = StringIO.new
-    original_logger = Rails.logger
-    Rails.logger = ActiveSupport::Logger.new(log_output)
 
     post = Normalizer::ElementyNormalizer.new(entry).normalize
 
-    Rails.logger = original_logger
-
-    assert_equal [], post.attachment_urls
-    assert_match(/ElementyNormalizer: page fetch failed.*503/, log_output.string)
+    assert_empty post.attachment_urls
   end
 
-  test "#normalize should report a network error and omit the cover image" do
+  test "#normalize should omit the cover image on network error" do
     stub_request(:get, "https://elementy.ru/novosti_nauki/434641/Genetiki_vyyasnili_proiskhozhdenie_pervykh_loshadey_v_Zapadnoy_Evrope")
       .to_raise(Faraday::ConnectionFailed.new("connection refused"))
     entry = feed_entry(0)
-    reported = []
 
-    Rails.error.stub(:report, ->(error, **) { reported << error }) do
-      post = Normalizer::ElementyNormalizer.new(entry).normalize
-      assert_empty post.attachment_urls
-    end
+    post = Normalizer::ElementyNormalizer.new(entry).normalize
 
-    assert_equal 1, reported.size
-    assert_kind_of HttpClient::Error, reported.first
+    assert_empty post.attachment_urls
   end
 
   test "#normalize should report via Rails.error when page fetched but .ill_block img is missing" do

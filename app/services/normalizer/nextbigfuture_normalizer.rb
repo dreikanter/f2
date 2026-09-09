@@ -26,7 +26,7 @@ module Normalizer
       link = raw_data.dig("link") || raw_data.dig("url")
       return nil if link.blank?
 
-      html = fetch_page(link)
+      html = page_fetcher.fetch(link)
       return nil if html.blank?
 
       doc = Nokogiri::HTML(html)

@@ -18,7 +18,7 @@ module Normalizer
 
     def story_text
       url = raw_data.dig("link") || ""
-      page = fetch_page(url)
+      page = page_fetcher.fetch(url)
       if page
         extract_story_from_page(page, url)
       else
