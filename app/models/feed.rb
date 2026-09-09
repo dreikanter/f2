@@ -343,7 +343,7 @@ class Feed < ApplicationRecord
     return false if disabled?
 
     transaction do
-      update_columns(state: self.class.states[:disabled], consecutive_failures: 0)
+      update_columns(state: :disabled, consecutive_failures: 0)
       Event.create!(type: type, level: :warning, subject: self, user: user, metadata: metadata)
     end
   end
