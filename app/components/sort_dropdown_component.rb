@@ -17,7 +17,11 @@ class SortDropdownComponent < ViewComponent::Base
   end
 
   def direction_label
-    presenter.current_direction == "asc" ? "Ascending" : "Descending"
+    direction_label_for(presenter.current_direction)
+  end
+
+  def direction_label_for(direction)
+    direction == "asc" ? "Ascending" : "Descending"
   end
 
   def option_classes(option)
