@@ -78,23 +78,6 @@ class FreefeedClient
     raise Error, "Failed to fetch app token info: #{e.message}"
   end
 
-  # Create attachment
-  # @param file_path [String] path to the file to upload
-  # @param content_type [String, nil] optional MIME type of the file
-  # @return [Hash] attachment data with id
-  def create_attachment(file_path, content_type: nil)
-    content_type ||= Marcel::MimeType.for(name: file_path) || "application/octet-stream"
-
-    payload = {
-      file: Faraday::Multipart::FilePart.new(file_path, content_type)
-    }
-
-    response = post("/v1/attachments", body: payload)
-    parse_attachment_response(response.body)
-  rescue HttpClient::Error => e
-    raise Error, "Failed to upload attachment: #{e.message}"
-  end
-
   # Create attachment from IO object
   # @param io [IO] IO object containing the file data
   # @param content_type [String, nil] optional MIME type of the file

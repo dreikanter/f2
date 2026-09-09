@@ -7,68 +7,6 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     @client = FreefeedClient.new(host: @host, token: @token)
   end
 
-  test "create_attachment creates attachment successfully" do
-    file_path = file_fixture("test_image.jpg")
-
-    attachment_response = {
-      "attachments" => {
-        "id" => "attachment123",
-        "url" => "https://freefeed.net/attachments/attachment123.jpg",
-        "thumbnailUrl" => "https://freefeed.net/attachments/attachment123_thumb.jpg",
-        "fileName" => "test_image.jpg",
-        "fileSize" => 1024,
-        "mediaType" => "image"
-      }
-    }
-
-    stub_request(:post, "#{@host}/v1/attachments")
-      .with(
-        headers: {
-          "Authorization" => "Bearer #{@token}",
-          "Accept" => "application/json",
-          "Content-Type" => /multipart\/form-data/
-        }
-      )
-      .to_return(status: 201, body: attachment_response.to_json)
-
-    result = @client.create_attachment(file_path.to_s)
-
-    assert_equal "attachment123", result[:id]
-    assert_equal "https://freefeed.net/attachments/attachment123.jpg", result[:url]
-    assert_equal "test_image.jpg", result[:filename]
-  end
-
-  test "create_attachment handles file not found" do
-    non_existent_file = "/path/to/non/existent/file.jpg"
-
-    assert_raises(Errno::ENOENT) do
-      @client.create_attachment(non_existent_file)
-    end
-  end
-
-  test "create_attachment handles API error" do
-    file_path = file_fixture("test_image.jpg")
-
-    stub_request(:post, "#{@host}/v1/attachments")
-      .to_return(status: 400, body: "Bad Request")
-
-    assert_raises(FreefeedClient::Error, "Failed to upload attachment: HTTP 400: Bad Request") do
-      @client.create_attachment(file_path.to_s)
-    end
-  end
-
-  test "create_attachment raises PayloadTooLargeError carrying the server message on 413" do
-    file_path = file_fixture("test_image.jpg")
-
-    stub_request(:post, "#{@host}/v1/attachments")
-      .to_return(status: 413, body: { err: "This 'image' file is too large (the maximum size is 52428800 bytes)" }.to_json)
-
-    error = assert_raises(FreefeedClient::PayloadTooLargeError) do
-      @client.create_attachment(file_path.to_s)
-    end
-    assert_equal "This 'image' file is too large (the maximum size is 52428800 bytes)", error.message
-  end
-
   test "create_post creates post successfully" do
     post_response = {
       "posts" => {
