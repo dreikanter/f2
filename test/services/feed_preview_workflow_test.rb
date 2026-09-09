@@ -159,5 +159,6 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal credential.id, captured_feed.ai_credential_id
     assert_equal "claude-sonnet-4-6", captured_context.model
     assert_equal :preview, captured_context.purpose
+    assert_equal 2, preview.reload.data.dig("stats", "content_size")
   end
 end

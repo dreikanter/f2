@@ -84,7 +84,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
           <item>
             <guid>entry-123</guid>
             <title>First Test Entry</title>
-            <description>This is a test entry description</description>
+            <description>Тестовое содержимое</description>
             <link>https://example.com/entry-123</link>
             <pubDate>#{1.hour.ago.rfc822}</pubDate>
           </item>
@@ -124,7 +124,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     assert_equal 2, Post.where(feed: test_feed, status: :published).count
     assert workflow.stats[:started_at]
-    assert workflow.stats[:content_size] > 0
+    assert_equal sample_rss.bytesize, workflow.stats[:content_size]
     assert_equal 2, workflow.stats[:total_entries]
     assert_equal 2, workflow.stats[:new_entries]
     assert_equal 2, workflow.stats[:new_posts]
@@ -395,18 +395,20 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
                                           ai_credential: credential, ai_model: "claude-sonnet-4-6",
                                           params: { "prompt" => "daily roundup" })
 
+    raw_data = [{ "source_url" => nil, "body" => "Сегодня: A, B, C" }]
     loader = Object.new
-    loader.define_singleton_method(:load) { [{ "source_url" => nil, "body" => "Today: A, B, C" }] }
+    loader.define_singleton_method(:load) { raw_data }
+    workflow = FeedRefreshWorkflow.new(digest_feed)
 
-    digest_feed.stub(:loader_instance, loader) do
-      FeedRefreshWorkflow.new(digest_feed).execute
-    end
+    digest_feed.stub(:loader_instance, loader) { workflow.execute }
+
+    assert_equal raw_data.to_json.bytesize, workflow.stats[:content_size]
 
     post = digest_feed.posts.last
     assert_not_nil post, "a digest item should persist a post"
     assert_nil post.source_url
     assert_match(/\Adigest:\d{4}-\d{2}-\d{2}\z/, post.uid)
-    assert_equal "Today: A, B, C", post.content
+    assert_equal "Сегодня: A, B, C", post.content
   end
 
   test "#execute should collapse two digest items in one run into a single period post" do
