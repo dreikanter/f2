@@ -7,7 +7,6 @@ module SnapshotTesting
       FileUtils.mkdir_p(File.dirname(full_path))
       File.write(full_path, actual_json + "\n")
       skip "Generated snapshot: #{snapshot}"
-      return
     end
 
     if File.exist?(full_path)
