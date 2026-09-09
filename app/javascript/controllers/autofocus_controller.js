@@ -1,8 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Autofocus for dynamically loaded form inputs to use when autofocus
-// HTML attribute doe not work.
-//
+// Focuses the first [autofocus] input in markup injected after page load,
+// where the attribute alone does nothing.
 export default class extends Controller {
   connect() {
     const element = this.element.querySelector("[autofocus]")
