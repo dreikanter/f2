@@ -13,10 +13,11 @@ class GroupsRefreshControlComponent < ViewComponent::Base
   # Wiring the trigger stays with the caller — a form submit on the access token
   # page, a Stimulus click inside the feed form — and its attributes are passed
   # through. `key_prefix` namespaces the testing hooks ("access_token", "feed").
-  def initialize(key_prefix:, refreshing: false, available: true, **trigger_attrs)
+  def initialize(key_prefix:, refreshing: false, available: true, compact: false, **trigger_attrs)
     @key_prefix = key_prefix
     @refreshing = refreshing
     @available = available
+    @compact = compact
     @trigger_attrs = trigger_attrs
   end
 
@@ -29,7 +30,7 @@ class GroupsRefreshControlComponent < ViewComponent::Base
   attr_reader :key_prefix, :refreshing, :available
 
   def loading_button
-    RefreshButtonComponent.new(title: TITLE, loading: true,
+    RefreshButtonComponent.new(title: TITLE, loading: true, compact: @compact,
                                data: { polling_target: "content", key: "#{key_prefix}.groups-refreshing" })
   end
 
@@ -40,7 +41,7 @@ class GroupsRefreshControlComponent < ViewComponent::Base
     data = (attrs.delete(:data) || {}).merge(key: "#{key_prefix}.refresh-groups")
     data[:polling_target] = "timeoutMessage" if refreshing
 
-    RefreshButtonComponent.new(title: TITLE, hidden: refreshing, data: data, **attrs)
+    RefreshButtonComponent.new(title: TITLE, compact: @compact, hidden: refreshing, data: data, **attrs)
   end
 
   def timeout_note_attributes

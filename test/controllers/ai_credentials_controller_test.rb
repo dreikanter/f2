@@ -227,13 +227,21 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
   test "#show should render without polling when the active credential catalog is fresh" do
     sign_in_as(user)
-    active = create(:ai_credential, :active, user: user, models_refreshed_at: Time.current)
+    active = create(:ai_credential, :active, user: user, models_refreshed_at: 5.minutes.ago,
+                    available_models: [{ "id" => "cached-model" }])
 
     get ai_credential_url(active)
 
     assert_response :success
     assert_select "[data-controller='polling']", false
     assert_select "[data-key='ai_credential.state_badge'][data-credential-state='active']", text: "Valid"
+    assert_select "#ai-credential-model-catalog" do
+      assert_select "h2", text: "Available models", count: 1
+      assert_select "[data-key='ai_credential.models-refresh-status']", text: /Updated .* ago\./
+      assert_select "form[action=?][data-controller='loading-button']", ai_credential_model_catalog_path(active) do
+        assert_select "button[data-key='ai_credential.refresh-models'][title='Refresh models'][type='submit']:not([disabled])"
+      end
+    end
   end
 
   test "#show should 404 for another user's credential" do

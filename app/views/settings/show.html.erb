@@ -13,7 +13,7 @@
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
     <%= render LinkedCardComponent.new(href: edit_settings_name_update_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
+        <h2 class="text-2xl font-semibold mb-3 text-heading flex items-center gap-2">
           <%= icon("user", css_class: "size-5") %>
           <span>Your Name</span>
         </h2>
@@ -29,7 +29,7 @@
 
     <%= render LinkedCardComponent.new(href: edit_settings_email_update_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
+        <h2 class="text-2xl font-semibold mb-3 text-heading flex items-center gap-2">
           <%= icon("mail", css_class: "size-5") %>
           <span>Change Email</span>
         </h2>
@@ -39,7 +39,7 @@
 
     <%= render LinkedCardComponent.new(href: edit_settings_password_update_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
+        <h2 class="text-2xl font-semibold mb-3 text-heading flex items-center gap-2">
           <%= icon("lock", css_class: "size-5") %>
           <span>Change Password</span>
         </h2>
@@ -51,7 +51,7 @@
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
     <%= render LinkedCardComponent.new(href: access_tokens_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
+        <h2 class="text-2xl font-semibold mb-3 text-heading flex items-center gap-2">
           <%= icon("key-square", css_class: "size-5") %>
           <span>Freefeed Access Tokens</span>
         </h2>
@@ -61,7 +61,7 @@
 
     <%= render LinkedCardComponent.new(href: ai_credentials_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
+        <h2 class="text-2xl font-semibold mb-3 text-heading flex items-center gap-2">
           <%= icon("sparkles", css_class: "size-5") %>
           <span>AI Credentials</span>
         </h2>
@@ -71,7 +71,7 @@
 
     <%= render LinkedCardComponent.new(href: search_credentials_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
+        <h2 class="text-2xl font-semibold mb-3 text-heading flex items-center gap-2">
           <%= icon("search", css_class: "size-5") %>
           <span>Search Credentials</span>
         </h2>
@@ -81,7 +81,7 @@
 
     <%= render LinkedCardComponent.new(href: invites_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
+        <h2 class="text-2xl font-semibold mb-3 text-heading flex items-center gap-2">
           <%= icon("mail", css_class: "size-5") %>
           <span>Invites</span>
         </h2>

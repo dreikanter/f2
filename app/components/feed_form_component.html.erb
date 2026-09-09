@@ -10,7 +10,7 @@
         <%# A webhook feed has no source; callers push content to its authenticated
             endpoint, so the whole source block collapses into a note. %>
         <div>
-          <h2 class="text-xl font-semibold text-heading mb-4">Source</h2>
+          <h2 class="text-2xl font-semibold mb-3 text-heading">Source</h2>
           <%= render AlertComponent.new(variant: :info, data: { key: "form.webhook-note" }) do %>
             <p class="text-sm">This feed doesn't follow anything on its own. It publishes whatever you send to its webhook endpoint with the authorization token. <%= webhook_endpoint_hint %></p>
           <% end %>
@@ -18,7 +18,7 @@
         </div>
       <% else %>
       <div>
-        <h2 class="text-xl font-semibold text-heading mb-4">Source</h2>
+        <h2 class="text-2xl font-semibold mb-3 text-heading">Source</h2>
 
         <div class="space-y-6">
           <% if ai_prompt_editable? %>
@@ -159,7 +159,7 @@
       <% end %>
 
       <div class="mt-6">
-        <h2 class="text-xl font-semibold text-heading mb-4">Reposting Settings</h2>
+        <h2 class="text-2xl font-semibold mb-3 text-heading">Reposting Settings</h2>
 
         <div class="space-y-6">
           <% if active_tokens.empty? %>
@@ -219,7 +219,7 @@
 
       <% unless feed.sourceless? %>
         <div class="mt-6">
-          <h2 class="text-xl font-semibold text-heading mb-4">Advanced options</h2>
+          <h2 class="text-2xl font-semibold mb-3 text-heading">Advanced options</h2>
 
           <%= render PanelComponent.new(data: { controller: "field-toggle", key: "form.advanced-options" }) do %>
             <div class="flex items-start">
