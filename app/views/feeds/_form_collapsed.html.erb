@@ -40,7 +40,7 @@
 
         <%= tag.div class: "ps-7", hidden: mode != "link",
                     data: { key: "entry.panel-link", mode: "link", mode_switch_target: "panel" } do %>
-          <%= form_with url: feed_identifications_path, method: :post, id: "entry-link-form" do |f| %>
+          <%= form_with url: feed_identifications_path, method: :post, id: "entry-link-form", class: "aria-busy:opacity-100" do |f| %>
             <div class="space-y-2">
               <%# The radio label is the group's one visible label; the field
                   keeps its name for assistive tech only. %>
@@ -57,7 +57,7 @@
               <% if checking %>
                 <p class="flex items-center gap-2 text-sm text-muted" role="status" data-key="entry.checking-status">
                   <%= icon "loader-circle", css_class: "size-4 animate-spin" %>
-                  Checking this feed. This usually takes a few seconds.
+                  <span>Checking this feed. This usually takes a few seconds.</span>
                 </p>
               <% elsif error && mode == "link" %>
                 <p class="text-sm text-danger" data-key="entry.error"><%= error %></p>
