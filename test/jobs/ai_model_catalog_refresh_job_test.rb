@@ -41,7 +41,7 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     assert_predicate refresh_run.reload, :succeeded?
     assert_predicate credential.reload, :active?
     assert_equal ["new-model"], credential.supported_models.pluck("id")
-    assert_equal false, credential.model_metadata("new-model")["structured_output"]
+    assert_same false, credential.model_metadata("new-model")["structured_output"]
     assert_not_nil credential.models_refreshed_at
     assert_equal "saved-model", feed.reload.ai_model
     assert_equal "saved-model", feed.effective_ai_model
@@ -86,7 +86,7 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
       AiModelCatalogRefreshJob.perform_now(credential.refresh_models_async(force: true))
     end
 
-    assert_equal false, credential.reload.model_metadata("new-model")["tool_call"]
+    assert_same false, credential.reload.model_metadata("new-model")["tool_call"]
     assert_requested request, times: 2
   end
 
@@ -120,7 +120,7 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
       AiModelCatalogRefreshJob.perform_now(refresh_run)
       travel 6.days
       AiModelCatalogRefreshJob.perform_now(credential.refresh_models_async(force: true))
-      assert_equal false, credential.reload.model_metadata("new-model")["tool_call"]
+      assert_same false, credential.reload.model_metadata("new-model")["tool_call"]
       assert_empty credential.supported_models
 
       travel 25.hours
@@ -239,7 +239,7 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
       AiModelCatalogRefreshJob.perform_now(credential.refresh_models_async(force: true))
     end
 
-    assert_equal false, credential.reload.model_metadata("new-model")["tool_call"]
+    assert_same false, credential.reload.model_metadata("new-model")["tool_call"]
     assert_equal "embedding", credential.model_metadata("new-model").dig("task", "mode")
     assert_empty credential.supported_models
     assert_requested metadata_request, times: 2
@@ -258,7 +258,7 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     end
 
     assert_predicate refresh_run.reload, :succeeded?
-    assert_equal false, credential.reload.model_metadata("new-model")["tool_call"]
+    assert_same false, credential.reload.model_metadata("new-model")["tool_call"]
     assert_nil credential.model_metadata("new-model")["task"]
     assert credential.supports_model?("new-model")
   end

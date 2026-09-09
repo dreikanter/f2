@@ -76,7 +76,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     yt.reload
     assert_equal "https://www.youtube.com/@one", yt.url, "the source waits for a confirmed candidate"
-    assert_equal true, yt.params["exclude_shorts"]
+    assert_same true, yt.params["exclude_shorts"]
   end
 
   test "#update should keep an option declared by a confirmed new profile" do
@@ -96,7 +96,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     rss_feed.reload
     assert_equal "youtube", rss_feed.feed_profile_key
-    assert_equal true, rss_feed.params["exclude_shorts"]
+    assert_same true, rss_feed.params["exclude_shorts"]
   end
 
   test "#update should strip a param the profile doesn't declare" do

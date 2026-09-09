@@ -204,15 +204,15 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_equal "group1", first_group[:id]
     assert_equal "testgroup", first_group[:username]
     assert_equal "Test Group", first_group[:screen_name]
-    assert_equal false, first_group[:is_private]
-    assert_equal true, first_group[:is_restricted]
+    assert_not first_group[:is_private]
+    assert first_group[:is_restricted]
 
     second_group = result[1]
     assert_equal "group2", second_group[:id]
     assert_equal "privategroup", second_group[:username]
     assert_equal "Private Group", second_group[:screen_name]
-    assert_equal true, second_group[:is_private]
-    assert_equal false, second_group[:is_restricted]
+    assert second_group[:is_private]
+    assert_not second_group[:is_restricted]
   end
 
   test "managed_groups raises InvalidTokenError on 401 with inactive or expired token body" do
@@ -392,8 +392,8 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_equal "group1", group[:id]
     assert_equal "testgroup", group[:username]
     assert_nil group[:screen_name]
-    assert_equal false, group[:is_private]  # Default when field is missing
-    assert_equal false, group[:is_restricted]  # Default when field is missing
+    assert_same false, group[:is_private]  # Default when field is missing
+    assert_same false, group[:is_restricted]  # Default when field is missing
   end
 
   # create_post method tests
@@ -447,7 +447,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
       .to_return(status: 200)
 
     result = @client.delete_post(post_id)
-    assert_equal true, result
+    assert result
   end
 
   test "delete_post raises InvalidTokenError on 401 with inactive or expired token body" do

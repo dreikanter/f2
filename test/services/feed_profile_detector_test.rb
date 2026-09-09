@@ -118,7 +118,7 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
       FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: "")
     end
 
-    assert_equal true, captured_flag, "flag should be set while matchers run"
+    assert captured_flag, "flag should be set while matchers run"
     assert_nil Thread.current[:llm_detection_phase], "flag must be cleared after call"
   end
 

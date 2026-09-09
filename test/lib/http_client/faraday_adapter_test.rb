@@ -258,7 +258,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
 
   test "constructor sets default follow_redirects" do
     custom_client = HttpClient::FaradayAdapter.new(follow_redirects: false)
-    assert_equal false, custom_client.options[:follow_redirects]
+    assert_not custom_client.options[:follow_redirects]
   end
 
   test "constructor sets default max_redirects" do

@@ -65,11 +65,11 @@ class PublishedModelTasksTest < ActiveSupport::TestCase
       }.to_json)
       Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) do
         expected = PublishedModelTasks.new.lookup("openai", "new-model")
-        assert_equal true, PublishedModelMetadata.new.lookup("openai", "new-model")["tool_call"]
+        assert_same true, PublishedModelMetadata.new.lookup("openai", "new-model")["tool_call"]
         travel 25.hours
         assert_equal expected, PublishedModelTasks.new.lookup("openai", "new-model")
         assert_equal expected, PublishedModelTasks.new.lookup("openai", "new-model")
-        assert_equal true, PublishedModelMetadata.new.lookup("openai", "new-model")["tool_call"]
+        assert_same true, PublishedModelMetadata.new.lookup("openai", "new-model")["tool_call"]
         travel 7.days
         assert_nil PublishedModelTasks.new.lookup("openai", "new-model")
         assert_nil PublishedModelTasks.new.lookup("openai", "new-model")

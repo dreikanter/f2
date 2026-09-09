@@ -129,7 +129,7 @@ class SearchCapabilityProbeJobTest < ActiveJob::TestCase
 
     summary = Event.find_by(subject: job_run, type: "job.search_capability_probe.completed")
     assert_includes summary.message, "rejection=PASS search=FAIL"
-    assert_equal false, summary.metadata["passed"]
+    assert_not summary.metadata["passed"]
     assert_equal credential.id, summary.metadata["credential_id"]
     assert_predicate summary, :warning?
   end

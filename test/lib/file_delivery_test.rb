@@ -31,7 +31,7 @@ class FileDeliveryTest < ActiveSupport::TestCase
     assert_equal "sender@example.com", loaded[:from]
     assert_equal "recipient@example.com", loaded[:to]
     assert_equal "Test Subject", loaded[:subject]
-    assert_equal false, loaded[:multipart]
+    assert_not loaded[:multipart]
     assert_equal "Test Body", loaded[:body]
   end
 
@@ -57,7 +57,7 @@ class FileDeliveryTest < ActiveSupport::TestCase
     assert_equal 1, emails.size
 
     loaded = email_storage.load_email(emails.first[:id])
-    assert_equal true, loaded[:multipart]
+    assert loaded[:multipart]
     assert_equal "Text version", loaded[:text_part]
     assert_equal "<p>HTML version</p>", loaded[:html_part]
   end

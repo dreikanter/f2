@@ -231,7 +231,7 @@ class LlmClient::AnthropicSearchTest < ActiveSupport::TestCase
     assert_equal %w[provider_error success], usages.pluck(:outcome)
     assert_equal 100, usages.first.input_tokens
     assert_nil usages.first.cost_estimate_cents
-    assert_equal false, usages.first.retrieval["token_usage_reported"]
+    assert_same false, usages.first.retrieval["token_usage_reported"]
     assert_equal 3, @requests.size
   end
 
@@ -276,7 +276,7 @@ class LlmClient::AnthropicSearchTest < ActiveSupport::TestCase
     gather
 
     assert_equal 100, LlmUsage.sole.input_tokens
-    assert_equal false, LlmUsage.sole.retrieval["token_usage_reported"]
+    assert_same false, LlmUsage.sole.retrieval["token_usage_reported"]
     assert_nil LlmUsage.sole.cost_estimate_cents
   end
 
@@ -352,7 +352,7 @@ class LlmClient::AnthropicSearchTest < ActiveSupport::TestCase
     assert_equal 30, usage.output_tokens
     assert_equal "timeout", usage.outcome
     assert_nil usage.retrieval["search_calls"]
-    assert_equal false, usage.retrieval["token_usage_reported"]
+    assert_same false, usage.retrieval["token_usage_reported"]
     assert_nil usage.cost_estimate_cents
   end
 end

@@ -133,7 +133,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     email = storage.load_email(uuid)
     assert_equal "Test Subject", email[:subject]
     assert_equal "Test Body", email[:body]
-    assert_equal false, email[:multipart]
+    assert_not email[:multipart]
     assert_nil email[:text_part]
   end
 
@@ -152,7 +152,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
 
     email = storage.load_email(uuid)
     assert_equal "Multipart", email[:subject]
-    assert_equal true, email[:multipart]
+    assert email[:multipart]
     assert_equal "Text", email[:text_part]
     assert_equal "<p>HTML</p>", email[:html_part]
     assert_equal "", email[:body]

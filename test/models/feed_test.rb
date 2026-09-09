@@ -169,7 +169,7 @@ class FeedTest < ActiveSupport::TestCase
 
     with_typed_options { assert feed.valid?, feed.errors.full_messages.inspect }
 
-    assert_equal true, feed.params["fancy"]
+    assert_same true, feed.params["fancy"]
   end
 
   test "#save should cast an unchecked boolean param to false" do
@@ -177,7 +177,7 @@ class FeedTest < ActiveSupport::TestCase
 
     with_typed_options { assert feed.valid?, feed.errors.full_messages.inspect }
 
-    assert_equal false, feed.params["fancy"]
+    assert_same false, feed.params["fancy"]
   end
 
   test "#save should drop a boolean param that won't cast" do
