@@ -8,6 +8,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-08
 
+- Wumo feeds preserve comic publication dates and skip entries without a comic image.
 - Model and group refresh buttons are smaller, with status messages below their section headings.
 - Feeds that post to the candy or beta FreeFeed instance now show a badge in the feed list.
 
