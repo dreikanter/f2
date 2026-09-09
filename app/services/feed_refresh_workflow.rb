@@ -289,7 +289,6 @@ class FeedRefreshWorkflow
     Metrics.increment("feed_refresh_total", status: "ok", profile: feed.feed_profile_key)
     complete_refresh_event(posts)
 
-    # Record daily metrics (sparse data - only if there's activity)
     posts_count = posts.count { |p| p.enqueued? || p.published? }
     FeedMetric.record(
       feed: feed,
