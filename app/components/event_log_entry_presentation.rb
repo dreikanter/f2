@@ -1,6 +1,4 @@
 # Shared rendering helpers for the user-facing and admin event log entries.
-# The two components keep separate templates because they present different
-# information (the admin log also shows which user an event belongs to).
 module EventLogEntryPresentation
   private
 
