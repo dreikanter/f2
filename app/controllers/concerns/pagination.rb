@@ -5,7 +5,7 @@ module Pagination
   MAX_PER_PAGE = 100
 
   included do
-    helper_method :pagination_total_pages, :pagination_current_page, :pagination_per_page, :pagination_total_count
+    helper_method :pagination_total_pages, :pagination_current_page, :pagination_total_count
   end
 
   private
