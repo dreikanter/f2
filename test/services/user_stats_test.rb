@@ -115,13 +115,21 @@ class UserStatsTest < ActiveSupport::TestCase
     assert_equal 0, stats.remaining_invites_count
   end
 
-  test "#invited_users and its count should include only this user's used invitations" do
+  test "#invited_users_count should count only this user's used invitations" do
+    create(:invite, created_by_user: user, invited_user: create(:user))
+    create(:invite, created_by_user: user, invited_user: create(:user))
+    create(:invite, created_by_user: user, invited_user: nil)
+    create(:invite, invited_user: create(:user))
+
+    assert_equal 2, stats.invited_users_count
+  end
+
+  test "#invited_users should return only this user's used invitations newest first" do
     inv1 = create(:invite, created_by_user: user, invited_user: create(:user), created_at: 2.days.ago)
     inv2 = create(:invite, created_by_user: user, invited_user: create(:user), created_at: 1.hour.ago)
     create(:invite, created_by_user: user, invited_user: nil)
     create(:invite, invited_user: create(:user))
 
-    assert_equal 2, stats.invited_users_count
     assert_equal [inv2, inv1], stats.invited_users.to_a
   end
 end
