@@ -3,6 +3,21 @@ require "test_helper"
 class FeedIdentificationTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
+  test ".working_for_source should reject stale direct and discovered results" do
+    url = "https://example.com/feed.xml"
+    direct = create(:feed_identification, :working, user: user, input: url, configuration_digest: nil)
+    discovered = create(:feed_identification, :working, user: user, configuration_digest: "previous configuration",
+                        candidates: [{ "profile_key" => "rss", "test_status" => "passed", "resolved_url" => url }])
+
+    assert_nil FeedIdentification.working_for_source(user: user, url: url)
+
+    discovered.update!(configuration_digest: FeedProfile.configuration_digest)
+    assert_equal discovered, FeedIdentification.working_for_source(user: user, url: url)
+
+    direct.update!(configuration_digest: FeedProfile.configuration_digest)
+    assert_equal direct, FeedIdentification.working_for_source(user: user, url: url)
+  end
+
   setup { clear_enqueued_jobs }
 
   def user

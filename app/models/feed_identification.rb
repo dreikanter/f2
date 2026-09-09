@@ -17,6 +17,10 @@ class FeedIdentification < ApplicationRecord
 
   validates :input, presence: true
 
+  def current_configuration?
+    configuration_digest == FeedProfile.configuration_digest
+  end
+
   def invalid_processing?
     processing? && (started_at.nil? || run_id.blank?)
   end
@@ -33,7 +37,8 @@ class FeedIdentification < ApplicationRecord
     started_at = Time.current
     run_id = SecureRandom.uuid
     begin
-      update!(status: :processing, started_at: started_at, candidates: [], run_id: run_id)
+      update!(status: :processing, started_at: started_at, candidates: [], run_id: run_id,
+              configuration_digest: FeedProfile.configuration_digest)
     rescue ActiveRecord::RecordNotUnique
       return false
     end
@@ -104,9 +109,9 @@ class FeedIdentification < ApplicationRecord
     return nil if url.blank?
 
     direct = find_by(user: user, input: url)
-    return direct if direct&.working?
+    return direct if direct&.working? && direct.current_configuration?
 
-    resolved_to(user, url)
+    resolved_to(user, url, current: true)
   end
 
   # Retire the rows behind a created feed's source: the row keyed by the
@@ -118,8 +123,10 @@ class FeedIdentification < ApplicationRecord
     [find_by(user: user, input: url), resolved_to(user, url)].compact.each(&:destroy)
   end
 
-  def self.resolved_to(user, url)
-    where(user: user, status: :working).detect do |identification|
+  def self.resolved_to(user, url, current: false)
+    identifications = where(user: user, status: :working)
+    identifications = identifications.where(configuration_digest: FeedProfile.configuration_digest) if current
+    identifications.detect do |identification|
       identification.working_candidates.any? { |c| c.resolved_url == url }
     end
   end

@@ -20,8 +20,8 @@ class FeedPreview < ApplicationRecord
 
   before_validation :assign_params_digest, if: :preview_identity_changed?
 
-  # A preview's identity is what the user supplied: the source input behind the
-  # profile's source key, plus the profile options they set. Params derived
+  # A preview's identity includes the profile configuration and what the user
+  # supplied: the source input and the profile options they set. Params derived
   # later during processing must not change identity, so only declared option
   # keys join it, sorted to survive hash key-ordering and jsonb read-ordering.
   #
@@ -40,7 +40,7 @@ class FeedPreview < ApplicationRecord
     search_credential_id: nil
   )
     parts = [FeedProfile.source_input_for(feed_profile_key, params), ai_credential_id, ai_model, search_credential_id]
-    # Append only when set, so profiles without options keep their digests.
+    parts << FeedProfile.configuration_digest(feed_profile_key)
     options = option_parts_for(feed_profile_key, params)
     parts << options if options.any?
     parts << ["feed", feed_id] if feed_id.present?

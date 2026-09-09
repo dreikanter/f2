@@ -1,6 +1,28 @@
 require "test_helper"
 
 class FeedPreviewTest < ActiveSupport::TestCase
+  test ".digest_for should include changes anywhere in the selected profile configuration" do
+    params = { "url" => "https://wumo.com/wumo?view=rss" }
+    original = FeedPreview.digest_for("wumo", params)
+
+    [:loader, :processor, :normalizer, :parameter_schema].each do |key|
+      profiles = FeedProfile::PROFILES.deep_dup
+      profiles["wumo"][key][:changed] = true
+      stub_const(FeedProfile, :PROFILES, profiles) do
+        assert_not_equal original, FeedPreview.digest_for("wumo", params), key.to_s
+      end
+    end
+  end
+
+  test ".digest_for should preserve previews when an unrelated profile is added" do
+    params = { "url" => "https://example.com/feed.xml" }
+    current = FeedPreview.digest_for("rss", params)
+
+    stub_const(FeedProfile, :PROFILES, FeedProfile::PROFILES.except("wumo")) do
+      assert_equal current, FeedPreview.digest_for("rss", params)
+    end
+  end
+
   test "#valid? should reject attribution to another user's feed" do
     preview = build(:feed_preview, feed: create(:feed))
 

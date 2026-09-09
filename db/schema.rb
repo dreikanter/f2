@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_06_140000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_09_143000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -115,6 +115,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_06_140000) do
     t.string "input", null: false
     t.uuid "user_id", null: false
     t.uuid "run_id"
+    t.string "configuration_digest"
     t.index ["user_id", "input"], name: "index_feed_identifications_on_user_id_and_input", unique: true
   end
 

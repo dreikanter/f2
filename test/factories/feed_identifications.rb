@@ -5,6 +5,7 @@ FactoryBot.define do
     status { :processing }
     candidates { [] }
     run_id { SecureRandom.uuid }
+    configuration_digest { FeedProfile.configuration_digest }
 
     trait :working do
       status { :working }

@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-09
 
+- Feed identification and previews refresh when their feed profile configuration changes.
 - Made keyboard focus indicators consistent on credential forms and action buttons.
 - Section headings now use the same style throughout the app, with refresh icons directly after their titles.
 
