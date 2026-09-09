@@ -99,12 +99,29 @@ class UserStatsTest < ActiveSupport::TestCase
     assert_equal 2, UserStats.new(user).created_invites_count
   end
 
-  test "#invited_users should return invitations with invited user ordered by created_at desc" do
+  test "#remaining_invites_count should subtract both used and unused invitations" do
+    user.update!(available_invites: 5)
+    create(:invite, created_by_user: user)
+    create(:invite, created_by_user: user, invited_user: create(:user))
+    create(:invite)
+
+    assert_equal 3, stats.remaining_invites_count
+  end
+
+  test "#remaining_invites_count should not be negative when the allowance is reduced" do
+    create(:invite, created_by_user: user)
+    user.update!(available_invites: 0)
+
+    assert_equal 0, stats.remaining_invites_count
+  end
+
+  test "#invited_users and its count should include only this user's used invitations" do
     inv1 = create(:invite, created_by_user: user, invited_user: create(:user), created_at: 2.days.ago)
     inv2 = create(:invite, created_by_user: user, invited_user: create(:user), created_at: 1.hour.ago)
-    inv3 = create(:invite, created_by_user: user, invited_user: nil)
+    create(:invite, created_by_user: user, invited_user: nil)
+    create(:invite, invited_user: create(:user))
 
-    invited_users = UserStats.new(user).invited_users
-    assert_equal [inv2, inv1], invited_users
+    assert_equal 2, stats.invited_users_count
+    assert_equal [inv2, inv1], stats.invited_users.to_a
   end
 end

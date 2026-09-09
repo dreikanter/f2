@@ -36,6 +36,20 @@ class InvitesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='invites.empty-note']", count: 1
   end
 
+  test "index should show only the current user's invitation totals" do
+    invite
+    used_invite
+    create(:invite, created_by_user: other_user, invited_user: create(:user))
+    sign_in_as user
+
+    get invites_url
+
+    assert_response :success
+    assert_select "#invite-stats", text: /1 person has joined so far/ do
+      assert_select "strong", text: "3"
+    end
+  end
+
   test "index should skip the empty note when no invites are available" do
     sign_in_as create(:user, available_invites: 0)
     get invites_url
@@ -87,11 +101,15 @@ class InvitesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should create invite when user has available invites" do
+    used_invite
     sign_in_as user
     assert_difference("Invite.count", 1) do
       post invites_url
     end
     assert_response :success
+    assert_select "turbo-stream[target='invite-stats'] template", text: /1 person has joined so far/ do
+      assert_select "strong", text: "3"
+    end
   end
 
   test "should not create invite when user has no available invites" do
@@ -134,11 +152,15 @@ class InvitesControllerTest < ActionDispatch::IntegrationTest
 
   test "should destroy own unused invite" do
     inv = invite # Create invite before signing in
+    used_invite
     sign_in_as user
     assert_difference("Invite.count", -1) do
       delete invite_url(inv)
     end
     assert_response :success
+    assert_select "turbo-stream[target='invite-stats'] template", text: /1 person has joined so far/ do
+      assert_select "strong", text: "4"
+    end
   end
 
   test "should not destroy used invite" do

@@ -49,7 +49,15 @@ class UserStats
     @created_invites_count ||= user.created_invites.size
   end
 
+  def remaining_invites_count
+    [0, user.available_invites - created_invites_count].max
+  end
+
+  def invited_users_count
+    invited_users.size
+  end
+
   def invited_users
-    @invited_users ||= user.created_invites.includes(:invited_user).where.not(invited_user_id: nil).order(created_at: :desc).to_a
+    @invited_users ||= user.created_invites.includes(:invited_user).where.not(invited_user_id: nil).order(created_at: :desc)
   end
 end
