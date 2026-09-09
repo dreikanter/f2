@@ -64,7 +64,7 @@ class FeedPreview < ApplicationRecord
   # @return [FeedPreview] self, persisted and pending
   def restart!
     update!(status: :pending, data: nil, ready_at: nil, run_id: SecureRandom.uuid)
-    FeedPreviewJob.perform_later(id, run_id)
+    FeedPreviewJob.perform_later(id, run_id, params_digest)
     FeedPreviewTimeoutJob.set(wait_until: updated_at + timeout_after).perform_later(id, run_id)
     self
   end

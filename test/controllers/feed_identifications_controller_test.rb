@@ -100,7 +100,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil feed_identification.started_at
     assert_kind_of ActiveSupport::TimeWithZone, feed_identification.started_at
     assert_not_nil feed_identification.run_id
-    assert_enqueued_with(job: FeedIdentificationJob, args: [feed_identification.id, feed_identification.run_id])
+    assert_enqueued_with(job: FeedIdentificationJob,
+                         args: [feed_identification.id, feed_identification.run_id, FeedProfile.configuration_digest])
     assert_enqueued_with(job: FeedIdentificationTimeoutJob,
                          args: [feed_identification.id, feed_identification.run_id],
                          at: feed_identification.started_at + FeedIdentification::TIMEOUT_AFTER)

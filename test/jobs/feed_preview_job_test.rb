@@ -12,13 +12,13 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     stub_request(:get, url).to_return(status: 200, body: file_fixture("feeds/wumo/current.xml").read)
 
     stub_const(FeedProfile, :PROFILES, old_profiles) do
-      FeedPreviewJob.perform_now(preview.id, RUN_ID)
+      FeedPreviewJob.perform_now(preview.id, RUN_ID, preview.params_digest)
     end
 
     assert_not_requested :get, url
     assert_equal attributes, preview.reload.attributes
 
-    FeedPreviewJob.perform_now(preview.id, RUN_ID)
+    FeedPreviewJob.perform_now(preview.id, RUN_ID, preview.params_digest)
 
     assert_predicate preview.reload, :ready?
     assert_not_empty preview.posts_data

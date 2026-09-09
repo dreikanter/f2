@@ -50,7 +50,7 @@ class FeedIdentification < ApplicationRecord
       return false
     end
 
-    FeedIdentificationJob.perform_later(id, run_id)
+    FeedIdentificationJob.perform_later(id, run_id, configuration_digest)
     FeedIdentificationTimeoutJob.set(wait_until: started_at + TIMEOUT_AFTER).perform_later(id, run_id)
     true
   end

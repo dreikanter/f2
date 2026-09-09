@@ -77,7 +77,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
       SecureRandom.stub(:uuid, run_id) do
         assert_enqueued_with(job: FeedIdentificationTimeoutJob, args: [identification.id, run_id],
                              at: FeedIdentification::TIMEOUT_AFTER.from_now) do
-          assert_enqueued_with(job: FeedIdentificationJob, args: [identification.id, run_id]) do
+          assert_enqueued_with(job: FeedIdentificationJob, args: [identification.id, run_id, FeedProfile.configuration_digest]) do
             assert identification.restart_detection
           end
         end

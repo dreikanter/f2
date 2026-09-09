@@ -203,7 +203,7 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert preview.reload.failed?
   end
 
-  test "#restart! should schedule the deterministic timeout for the new run" do
+  test "#restart! should enqueue the expected identity and schedule the deterministic timeout" do
     preview = create(:feed_preview, :completed, user: user)
 
     freeze_time do
@@ -212,6 +212,7 @@ class FeedPreviewTest < ActiveSupport::TestCase
                              at: preview.timeout_after.from_now) do
           preview.restart!
         end
+        assert_enqueued_with(job: FeedPreviewJob, args: [preview.id, NEXT_RUN_ID, preview.params_digest])
       end
     end
   end
