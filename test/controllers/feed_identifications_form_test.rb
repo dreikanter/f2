@@ -45,6 +45,8 @@ class FeedIdentificationsFormTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='entry.checking-status'] svg[data-icon='loader-circle'].animate-spin", count: 1
+    status = css_select("[data-key='entry.checking-status'] span").sole
+    assert_equal "Checking this feed. This usually takes a few seconds.", status.text
   end
 
   test "#create should disable and visibly dim the checking submit button" do

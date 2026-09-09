@@ -48,7 +48,7 @@
               <% if checking? %>
                 <p class="flex items-center gap-2 text-sm text-muted" role="status" data-key="form.source-checking">
                   <%= helpers.icon "loader-circle", css_class: "size-4 animate-spin" %>
-                  Checking this feed. This usually takes a few seconds.
+                  <span>Checking this feed. This usually takes a few seconds.</span>
                 </p>
               <% elsif source_error %>
                 <p class="text-sm text-danger" data-key="form.source-error"><%= source_error %></p>
