@@ -56,9 +56,8 @@
     <div class="hidden w-full md:block md:w-auto md:order-1" id="primary-navigation">
       <%# Desktop: horizontal nav links %>
       <ul class="hidden font-medium text-body md:flex md:flex-row md:items-center md:space-x-4">
-        <% navbar_items.each_with_index do |item, index| %>
+        <% navbar_items.each do |item| %>
           <%
-            # Desktop classes
             desktop_link_classes = class_names(
               "inline-flex items-center rounded-sm px-3 py-2 transition-colors duration-150 md:px-3 md:py-1",
               {

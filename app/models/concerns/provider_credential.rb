@@ -95,7 +95,7 @@ module ProviderCredential
       user: user
     )
 
-    feeds.where(state: Feed.states[:enabled]).update_all(state: Feed.states[:disabled]) if required_for_feeds?
+    feeds.enabled.update_all(state: :disabled) if required_for_feeds?
     true
   end
 

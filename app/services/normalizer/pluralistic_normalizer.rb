@@ -1,10 +1,7 @@
 module Normalizer
   class PluralisticNormalizer < RssNormalizer
-    # WordPress Photon CDN host pattern. A full regex anchor is used here
-    # (^...$), so this cannot be bypassed by a hostname like
-    # "evil-i0.wp.com" or "i0.wp.com.evil.com" — the anchor ensures an
-    # exact match against the host segment, which is why plain end_with?
-    # is not used for the CodeQL-flagged domain-equality checks elsewhere.
+    # WordPress Photon CDN host, anchored so "evil-i0.wp.com" and
+    # "i0.wp.com.evil.com" cannot match.
     PHOTON_HOST_PATTERN = /\Ai\d+\.wp\.com\z/
 
     private

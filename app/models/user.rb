@@ -34,7 +34,7 @@ class User < ApplicationRecord
   validate :both_emails_are_globally_unique
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
-  normalizes :unconfirmed_email, with: ->(e) { e&.strip&.downcase }
+  normalizes :unconfirmed_email, with: ->(e) { e.strip.downcase }
   normalizes :name, with: ->(n) { n.strip }
 
   before_save :set_password_updated_at, if: :will_save_change_to_password_digest?
@@ -122,19 +122,16 @@ class User < ApplicationRecord
     @last_email_change_event ||= Event.where(user: self, type: "email_changed").order(created_at: :desc).first
   end
 
-  # Returns the count of all feeds created by this user
   # @return [Integer] total number of feeds
   def total_feeds_count
     feeds.count
   end
 
-  # Returns the count of all imported posts across all user's feeds
   # @return [Integer] total number of imported posts
   def total_imported_posts_count
     imported_posts.count
   end
 
-  # Returns the count of published posts across all user's feeds
   # @return [Integer] total number of published posts
   def total_published_posts_count
     published_posts.count
@@ -203,7 +200,7 @@ class User < ApplicationRecord
   end
 
   def published_posts
-    imported_posts.where(posts: { status: :published })
+    imported_posts.published
   end
 
   def imported_posts

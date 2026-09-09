@@ -92,7 +92,7 @@ class PostPreviewComponentTest < ViewComponent::TestCase
   end
 
   # Bluesky and most modern CDNs serve content-addressed image URLs with no file
-  # extension; those used to fall through to the plain-link list.
+  # extension; they still belong in the thumbnails, not the plain-link list.
   test "#render should thumbnail attachment urls that carry no file extension" do
     url = "https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:author/bafkphoto"
     post_data = { "content" => "Body", "attachments" => [url] }

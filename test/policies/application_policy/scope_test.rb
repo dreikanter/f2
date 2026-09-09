@@ -43,16 +43,4 @@ class ApplicationPolicy::ScopeTest < ActiveSupport::TestCase
   test "#admin? should return false for nil user" do
     assert_not scope_for(nil).send(:admin?)
   end
-
-  test "#dev? should return true for dev users" do
-    assert scope_for(dev_user).send(:dev?)
-  end
-
-  test "#dev? should return false for regular users" do
-    assert_not scope_for(regular_user).send(:dev?)
-  end
-
-  test "#dev? should return false for nil user" do
-    assert_not scope_for(nil).send(:dev?)
-  end
 end

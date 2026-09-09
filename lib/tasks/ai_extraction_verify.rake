@@ -1,5 +1,5 @@
 namespace :ai do
-  # Live end-to-end check of the production extraction prompts (spec 005 §2/§8):
+  # Live end-to-end check of the production extraction prompts:
   # runs the combined system prompt + universal schema + web tools against a real
   # provider and a real source, then validates the structured result. Also a
   # smoke test of the transformation contract — the request asks for one-line

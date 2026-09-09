@@ -143,9 +143,7 @@ class FreefeedPublisher
     end
 
     publication.uploaded_attachment_ids
-  rescue RateLimit::Throttled
-    raise
-  rescue FreefeedClient::UnauthorizedError
+  rescue RateLimit::Throttled, FreefeedClient::UnauthorizedError
     raise
   rescue FileBuffer::Error => e
     raise SourceContentError, "Failed to upload attachments: #{e.message}"
@@ -207,9 +205,7 @@ class FreefeedPublisher
 
     publication.destroy!
     post.freefeed_post_id
-  rescue RateLimit::Throttled
-    raise
-  rescue FreefeedClient::UnauthorizedError
+  rescue RateLimit::Throttled, FreefeedClient::UnauthorizedError
     raise
   rescue => e
     raise CommentPublishError, "Failed to create comments: #{e.message}"

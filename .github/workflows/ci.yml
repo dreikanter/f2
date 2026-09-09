@@ -163,7 +163,7 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      # Pinned to match the production accessory in config/deploy.yml.
+      # Pinned to match the production accessory in config/deploy.production.yml.
       # Bump in lockstep — see docs/postgres-upgrade.md.
       postgres:
         image: postgres:18
@@ -178,12 +178,6 @@ jobs:
           --health-timeout=5s
           --health-retries=3
           --tmpfs=/var/lib/postgresql
-
-      # redis:
-      #   image: redis
-      #   ports:
-      #     - 6379:6379
-      #   options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
       - name: Checkout code
@@ -200,7 +194,6 @@ jobs:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432
           COVERAGE: "1"
-          # REDIS_URL: redis://localhost:6379/0
         run: |
           set -o pipefail
           bin/rails db:test:prepare test 2>&1 | tee test-output.log

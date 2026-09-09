@@ -121,16 +121,6 @@ class EventTest < ActiveSupport::TestCase
     assert_not recent.expired?
   end
 
-  test "should set expiration time" do
-    event = Event.create!(type: "test_event")
-
-    event.expires_in(1.week)
-
-    assert event.expires_at.present?
-    assert event.expires_at > Time.current
-    assert event.expires_at < 2.weeks.from_now
-  end
-
   test "#references should resolve referenced records, skipping deleted ones" do
     event = Event.create!(type: "feed_refresh", subject: feed)
     kept = create(:post, feed: feed)

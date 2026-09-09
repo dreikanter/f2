@@ -12,6 +12,16 @@ class WebhookIngestion
   MAX_UID_LENGTH = 255
   SUPPORTED_PUBLISHED_AT_YEARS = (1..9999).freeze
 
+  # RFC 8941 sf-string: printable ASCII inside double quotes, with backslash
+  # escaping only quotes and backslashes.
+  SF_STRING = /\A"(?<value>(?:[\x20-\x21\x23-\x5B\x5D-\x7E]|\\["\\])*)"\z/
+
+  # Percent-encoding during uid normalization can inflate a multibyte URL well
+  # past its schema-checked length; past this cap the uid would overflow the
+  # (feed_id, uid) btree index rows, so such a URL loses its identity role and
+  # the delivery falls back to a random uid instead of a 500.
+  MAX_URL_UID_BYTES = 2048
+
   # Caps on images/comments are load-bearing: publishing costs
   # 1 + comments + images FreeFeed POSTs against a burst capacity of 20, and
   # PostPublishJob permanently fails any post whose cost exceeds capacity.
@@ -116,10 +126,6 @@ class WebhookIngestion
     end
   end
 
-  # RFC 8941 sf-string: printable ASCII inside double quotes, with backslash
-  # escaping only quotes and backslashes.
-  SF_STRING = /\A"(?<value>(?:[\x20-\x21\x23-\x5B\x5D-\x7E]|\\["\\])*)"\z/
-
   # The Idempotency-Key header is a second spelling of uid, so it gets the same
   # constraints, plus a mismatch check: two different keys on one request almost
   # certainly mean a confused client, and dedup keys are the wrong place to
@@ -171,7 +177,7 @@ class WebhookIngestion
   end
 
   def persist!(post)
-    ActiveRecord::Base.transaction do
+    ApplicationRecord.transaction do
       post.feed_entry.save!
       FeedEntryUid.create!(feed: feed, uid: uid, imported_at: Time.current)
       post.save!
@@ -180,12 +186,6 @@ class WebhookIngestion
       WebhookEndpoint.update_counters(endpoint.id, received_count: 1, touch: :last_received_at)
     end
   end
-
-  # Percent-encoding during uid normalization can inflate a multibyte URL well
-  # past its schema-checked length; past this cap the uid would overflow the
-  # (feed_id, uid) btree index rows, so such a URL loses its identity role and
-  # the delivery falls back to a random uid instead of a 500.
-  MAX_URL_UID_BYTES = 2048
 
   # Uid precedence: explicit idempotency key (the uid field or
   # the equivalent Idempotency-Key header — validation guarantees they agree),

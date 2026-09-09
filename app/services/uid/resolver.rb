@@ -74,10 +74,9 @@ module Uid
         uri
       end
 
-      # Non-ASCII/IDN permalinks make URI.parse raise, which used to silently
-      # drop the item. Percent-encode the path and punycode the host via
-      # Addressable, then retry — a Cyrillic URL should yield a stable uid,
-      # not vanish.
+      # URI.parse rejects non-ASCII/IDN permalinks. Percent-encode the path and
+      # punycode the host via Addressable, then retry, so a Cyrillic URL yields
+      # a stable uid instead of losing the item.
       def parse_http(raw)
         URI.parse(raw)
       rescue URI::InvalidURIError

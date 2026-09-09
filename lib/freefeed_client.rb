@@ -78,23 +78,6 @@ class FreefeedClient
     raise Error, "Failed to fetch app token info: #{e.message}"
   end
 
-  # Create attachment
-  # @param file_path [String] path to the file to upload
-  # @param content_type [String, nil] optional MIME type of the file
-  # @return [Hash] attachment data with id
-  def create_attachment(file_path, content_type: nil)
-    content_type ||= Marcel::MimeType.for(name: file_path) || "application/octet-stream"
-
-    payload = {
-      file: Faraday::Multipart::FilePart.new(file_path, content_type)
-    }
-
-    response = post("/v1/attachments", body: payload)
-    parse_attachment_response(response.body)
-  rescue HttpClient::Error => e
-    raise Error, "Failed to upload attachment: #{e.message}"
-  end
-
   # Create attachment from IO object
   # @param io [IO] IO object containing the file data
   # @param content_type [String, nil] optional MIME type of the file
@@ -171,9 +154,9 @@ class FreefeedClient
 
   private
 
-  def get(path, options: {})
+  def get(path)
     url = "#{@host}#{path}"
-    response = @http_client.get(url, headers: auth_headers, options: options)
+    response = @http_client.get(url, headers: auth_headers)
     handle_response(response)
   end
 
@@ -262,7 +245,7 @@ class FreefeedClient
 
   def parse_whoami_response(body)
     data = JSON.parse(body)
-    user = data.dig("users")
+    user = data["users"]
 
     unless user && user["username"]
       raise Error, "Invalid whoami response format"
@@ -317,7 +300,7 @@ class FreefeedClient
 
   def parse_attachment_response(body)
     data = JSON.parse(body)
-    attachment = data.dig("attachments")
+    attachment = data["attachments"]
 
     unless attachment && attachment["id"]
       raise Error, "Invalid attachment response format"
@@ -337,7 +320,7 @@ class FreefeedClient
 
   def parse_post_response(body)
     data = JSON.parse(body)
-    post = data.dig("posts")
+    post = data["posts"]
 
     unless post && post["id"]
       raise Error, "Invalid post response format"
@@ -357,7 +340,7 @@ class FreefeedClient
 
   def parse_comment_response(body)
     data = JSON.parse(body)
-    comment = data.dig("comments")
+    comment = data["comments"]
 
     unless comment && comment["id"]
       raise Error, "Invalid comment response format"

@@ -6,10 +6,10 @@ class FreefeedUserComponent < ViewComponent::Base
   private
 
   def username
-    @user["username"] || @user[:username]
+    @user["username"]
   end
 
   def userpic_url
-    @user["profile_picture_url"] || @user[:profile_picture_url]
+    @user["profile_picture_url"]
   end
 end

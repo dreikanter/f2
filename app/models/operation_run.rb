@@ -37,7 +37,7 @@ class OperationRun < ApplicationRecord
 
     subject.with_lock do
       where(subject: subject, kind: kind).active.update_all(
-        status: statuses[:superseded],
+        status: :superseded,
         finished_at: now,
         updated_at: now
       )

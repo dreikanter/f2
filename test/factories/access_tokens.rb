@@ -6,10 +6,8 @@ FactoryBot.define do
     last_used_at { nil }
     host { "https://candy.freefeed.net" }
 
-    token_value = "freefeed_token_#{SecureRandom.hex(16)}"
-
-    token { token_value }
-    encrypted_token { token_value }
+    token { "freefeed_token_#{SecureRandom.hex(16)}" }
+    encrypted_token { token }
 
     trait :without_token do
       token { nil }
@@ -26,10 +24,6 @@ FactoryBot.define do
 
     trait :inactive do
       state { :inactive }
-    end
-
-    trait :recently_used do
-      last_used_at { 1.hour.ago }
     end
   end
 end

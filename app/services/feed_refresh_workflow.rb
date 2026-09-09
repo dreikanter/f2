@@ -88,7 +88,7 @@ class FeedRefreshWorkflow
     if usage_rows.any?
       stats_updates.merge!(
         "llm_calls" => usage_rows.size,
-        "llm_cost_cents" => usage_rows.any? { |_id, cents| cents.nil? } ? nil : usage_rows.sum { |_id, cents| cents }.to_f
+        "llm_cost_cents" => llm_cost_cents(usage_rows)
       )
     end
     stats_updates["search_calls"] = search_event_ids.size if search_event_ids.any?
@@ -205,7 +205,7 @@ class FeedRefreshWorkflow
     entries_data = new_entries.map { entry_data(_1, current_time) }
     entry_uids_data = new_entries.map { feed_entry_uid_data(_1, current_time) }
 
-    ActiveRecord::Base.transaction do
+    ApplicationRecord.transaction do
       FeedEntry.insert_all(entries_data)
       FeedEntryUid.insert_all(entry_uids_data, unique_by: [:feed_id, :uid])
     end
@@ -289,7 +289,6 @@ class FeedRefreshWorkflow
     Metrics.increment("feed_refresh_total", status: "ok", profile: feed.feed_profile_key)
     complete_refresh_event(posts)
 
-    # Record daily metrics (sparse data - only if there's activity)
     posts_count = posts.count { |p| p.enqueued? || p.published? }
     FeedMetric.record(
       feed: feed,
@@ -369,8 +368,15 @@ class FeedRefreshWorkflow
 
     record_stats(
       llm_calls: usage_rows.size,
-      llm_cost_cents: usage_rows.any? { |_id, cents| cents.nil? } ? nil : usage_rows.sum { |_id, cents| cents }.to_f
+      llm_cost_cents: llm_cost_cents(usage_rows)
     )
+  end
+
+  # nil when any call has an unknown cost: a partial sum would misstate spend.
+  def llm_cost_cents(usage_rows)
+    return nil if usage_rows.any? { |_id, cents| cents.nil? }
+
+    usage_rows.sum { |_id, cents| cents }.to_f
   end
 
   def reference_llm_usages(event, usage_rows)

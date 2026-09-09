@@ -5,10 +5,6 @@ class Settings::NameUpdatesControllerTest < ActionDispatch::IntegrationTest
     @user ||= create(:user, name: "Original Name")
   end
 
-  def sign_in_user
-    post session_url, params: { email_address: user.email_address, password: "password123" }
-  end
-
   test "should redirect to login when not authenticated" do
     get edit_settings_name_update_url
     assert_redirected_to new_session_path
@@ -21,7 +17,7 @@ class Settings::NameUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show the current name in the form" do
-    sign_in_user
+    sign_in_as(user)
     get edit_settings_name_update_url
     assert_response :success
     assert_select "input[name='user[name]'][value=?]", "Original Name"
@@ -29,7 +25,7 @@ class Settings::NameUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update the name" do
-    sign_in_user
+    sign_in_as(user)
     patch settings_name_update_url, params: { user: { name: "Alex" } }
     assert_redirected_to settings_path
     assert_equal "Name updated.", flash[:success]
@@ -37,14 +33,14 @@ class Settings::NameUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should allow clearing the name" do
-    sign_in_user
+    sign_in_as(user)
     patch settings_name_update_url, params: { user: { name: "" } }
     assert_redirected_to settings_path
     assert_equal "", user.reload.name
   end
 
   test "should reject a name longer than the limit" do
-    sign_in_user
+    sign_in_as(user)
     patch settings_name_update_url, params: { user: { name: "a" * (User::NAME_MAX_LENGTH + 1) } }
     assert_redirected_to edit_settings_name_update_path
     assert_match "too long", flash[:alert]
@@ -52,7 +48,7 @@ class Settings::NameUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should treat a missing name param as blank" do
-    sign_in_user
+    sign_in_as(user)
     patch settings_name_update_url
     assert_redirected_to settings_path
     assert_equal "", user.reload.name

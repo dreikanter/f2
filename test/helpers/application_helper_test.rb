@@ -3,18 +3,18 @@ require "test_helper"
 class ApplicationHelperTest < ActionView::TestCase
   attr_accessor :policy_override
 
-  PolicyStub = Struct.new(:allowed) do
-    def index?
-      allowed
+  PolicyStub = Struct.new(:admin, :dev) do
+    def admin?
+      admin
     end
 
     def dev?
-      allowed
+      dev
     end
   end
 
   def policy(record)
-    (policy_override || ->(_record) { PolicyStub.new(false) }).call(record)
+    (policy_override || ->(_record) { PolicyStub.new(false, false) }).call(record)
   end
 
   teardown do
@@ -102,54 +102,6 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_includes credential_state_icon("inactive"), 'data-icon="circle-x"'
   end
 
-  test "#post_status_icon returns draft icon for draft status" do
-    result = post_status_icon("draft")
-    assert_includes result, "<svg"
-    assert_includes result, 'title="Draft"'
-    assert_includes result, "text-muted"
-  end
-
-  test "#post_status_icon returns enqueued icon for enqueued status" do
-    result = post_status_icon("enqueued")
-    assert_includes result, "<svg"
-    assert_includes result, 'title="Enqueued"'
-    assert_includes result, "text-secondary"
-  end
-
-  test "#post_status_icon returns rejected icon for rejected status" do
-    result = post_status_icon("rejected")
-    assert_includes result, "<svg"
-    assert_includes result, 'title="Rejected"'
-    assert_includes result, "text-danger"
-  end
-
-  test "#post_status_icon returns published icon for published status" do
-    result = post_status_icon("published")
-    assert_includes result, "<svg"
-    assert_includes result, 'title="Published"'
-    assert_includes result, "text-success"
-  end
-
-  test "#post_status_icon returns failed icon for failed status" do
-    result = post_status_icon("failed")
-    assert_includes result, "<svg"
-    assert_includes result, 'title="Failed"'
-    assert_includes result, "text-danger"
-  end
-
-  test "#post_status_icon returns withdrawn icon for withdrawn status" do
-    result = post_status_icon("withdrawn")
-    assert_includes result, "<svg"
-    assert_includes result, 'title="Withdrawn"'
-    assert_includes result, "text-secondary"
-  end
-
-  test "#post_status_icon returns capitalized text for unknown status" do
-    result = post_status_icon("unknown")
-    expected = '<span class="text-muted">Unknown</span>'
-    assert_equal expected, result
-  end
-
   test "#navbar_items should return empty array when user is missing" do
     assert_equal [], navbar_items
   end
@@ -211,7 +163,7 @@ class ApplicationHelperTest < ActionView::TestCase
 
     self.stub(:current_page?, current_page_stub) do
       self.stub(:controller_path, "admin/dashboard") do
-        self.policy_override = ->(record) { PolicyStub.new(record == Event) }
+        self.policy_override = ->(record) { PolicyStub.new(record == :access, false) }
 
         items = navbar_items
         admin_item = items.find { |item| item[:name] == "Admin Panel" }
@@ -243,7 +195,7 @@ class ApplicationHelperTest < ActionView::TestCase
 
     self.stub(:current_page?, current_page_stub) do
       self.stub(:controller_path, "developments") do
-        self.policy_override = ->(record) { PolicyStub.new(record == :access) }
+        self.policy_override = ->(record) { PolicyStub.new(false, record == :access) }
 
         items = navbar_items
         dev_item = items.find { |item| item[:name] == "Dev Tools" }

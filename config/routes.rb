@@ -26,9 +26,9 @@ Rails.application.routes.draw do
     mount MissionControl::Jobs::Engine, at: "/jobs"
   end
 
-  resource :session
+  resource :session, only: %i[new create destroy]
   resource :status, only: :show, controller: "statuses"
-  resources :passwords, param: :token
+  resources :passwords, param: :token, only: %i[new create edit update]
   resources :invites, only: [:index, :create, :destroy]
   resource :registration, only: [:show, :create], path: "register"
 

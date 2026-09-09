@@ -5,10 +5,6 @@ class Settings::PasswordUpdatesControllerTest < ActionDispatch::IntegrationTest
     @user ||= create(:user)
   end
 
-  def sign_in_user
-    post session_url, params: { email_address: user.email_address, password: "password123" }
-  end
-
   test "should redirect to login when not authenticated" do
     patch settings_password_update_url, params: {
       user: {
@@ -21,7 +17,7 @@ class Settings::PasswordUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update password with correct current password" do
-    sign_in_user
+    sign_in_as(user)
     patch settings_password_update_url, params: {
       user: {
         current_password: "password123",
@@ -34,7 +30,7 @@ class Settings::PasswordUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should not update password with incorrect current password" do
-    sign_in_user
+    sign_in_as(user)
     patch settings_password_update_url, params: {
       user: {
         current_password: "wrongpassword",
@@ -47,7 +43,7 @@ class Settings::PasswordUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should not update password with mismatched confirmation" do
-    sign_in_user
+    sign_in_as(user)
     patch settings_password_update_url, params: {
       user: {
         current_password: "password123",

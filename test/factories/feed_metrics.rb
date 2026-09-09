@@ -6,24 +6,8 @@ FactoryBot.define do
     invalid_posts_count { 0 }
     published_posts_count { 0 }
 
-    trait :with_posts do
-      posts_count { 5 }
-    end
-
     trait :with_published_posts do
       published_posts_count { 4 }
-    end
-
-    trait :with_invalid_posts do
-      invalid_posts_count { 2 }
-    end
-
-    trait :yesterday do
-      date { 1.day.ago.to_date }
-    end
-
-    trait :last_week do
-      date { 1.week.ago.to_date }
     end
   end
 end

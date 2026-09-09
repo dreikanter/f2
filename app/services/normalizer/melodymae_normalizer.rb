@@ -1,8 +1,8 @@
 module Normalizer
   class MelodymaeNormalizer < RssNormalizer
-    private
-
     PHOTON_CDN_PATTERN = %r{https://i\d+\.wp\.com/}
+
+    private
 
     def normalize_content
       (raw_data.dig("title") || "").strip

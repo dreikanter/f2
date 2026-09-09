@@ -7,8 +7,7 @@ module HttpClient
   # testing fetch the same source URLs repeatedly. This adapter allows to reuse
   # downloaded web content multiple times in a row, rather than fetching it again.
   #
-  # Do NOT use this adapter when you need HTTP-headers drived cache. It is build
-  # for a different use case.
+  # Not an HTTP-header-driven cache; it only reuses content within one run.
   #
   # Only 2xx GETs are cached. Non-2xx responses and raised errors fall through
   # to a live request every time, so a transient blip can't poison the cache or

@@ -1,6 +1,9 @@
 module TitleExtractor
   # Extractor for RSS feed titles
   class RssTitleExtractor < Base
+    RSS1_NS = { "rdf" => "http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rss1" => "http://purl.org/rss/1.0/" }.freeze
+    ATOM_NS = { "atom" => "http://www.w3.org/2005/Atom" }.freeze
+
     # Extracts the feed title from RSS XML
     # @return [String, nil] the feed title or nil if it cannot be extracted
     def title
@@ -13,9 +16,6 @@ module TitleExtractor
     end
 
     private
-
-    RSS1_NS = { "rdf" => "http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rss1" => "http://purl.org/rss/1.0/" }.freeze
-    ATOM_NS = { "atom" => "http://www.w3.org/2005/Atom" }.freeze
 
     def extract_title(doc)
       rss_title = doc.at_xpath("//channel/title")&.text

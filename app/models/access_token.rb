@@ -44,9 +44,8 @@ class AccessToken < ApplicationRecord
     where("scopes @> ARRAY[?]::varchar[]", scope)
   }
 
-  # A user can create access token record associated with a known
-  # FreeFeed instances only (see Settings::AccessTokensController).
-  # Though the model allows to define any valid host URL.
+  # Instances offered when creating a token. The model itself accepts any
+  # valid host URL.
   FREEFEED_HOSTS = {
     production: {
       url: "https://freefeed.net",
@@ -190,18 +189,6 @@ class AccessToken < ApplicationRecord
     feeds.update_all(state: :disabled, access_token_id: nil)
   end
 
-  # Drop the limiter bucket when this token is gone. Account-scoped subjects can
-  # be shared by sibling tokens, so only forget once no sibling still uses it.
-  def forget_rate_limit_state
-    subject = rate_limit_subject
-    return if freefeed_user_id.present? &&
-              AccessToken.where(freefeed_user_id: freefeed_user_id)
-                         .where.not(id: id)
-                         .any? { |sibling| sibling.rate_limit_subject == subject }
-
-    RateLimit.forget(:freefeed, subject: subject)
-  end
-
   # `event_type` carries the reason, so a dead token and an under-permissioned
   # one read differently in the event log.
   def disable_token_and_feeds(event_type: "access_token_validation_failed", run: nil, attributes: {})
@@ -217,6 +204,18 @@ class AccessToken < ApplicationRecord
   end
 
   private
+
+  # Drop the limiter bucket when this token is gone. Account-scoped subjects can
+  # be shared by sibling tokens, so only forget once no sibling still uses it.
+  def forget_rate_limit_state
+    subject = rate_limit_subject
+    return if freefeed_user_id.present? &&
+              AccessToken.where(freefeed_user_id: freefeed_user_id)
+                         .where.not(id: id)
+                         .any? { |sibling| sibling.rate_limit_subject == subject }
+
+    RateLimit.forget(:freefeed, subject: subject)
+  end
 
   # DNS is case-insensitive, so equivalent host spellings collapse onto one form.
   def canonical_host_domain

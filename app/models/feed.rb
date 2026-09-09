@@ -1,7 +1,6 @@
 class Feed < ApplicationRecord
   NAME_MAX_LENGTH = 40
-  DESCRIPTION_MAX_LENGTH = 100
-  TARGET_GROUP_PATTERN = /\A[a-z0-9_-]+\z/.freeze
+  TARGET_GROUP_PATTERN = /\A[a-z0-9_-]+\z/
   TARGET_GROUP_MAX_LENGTH = 80
 
   SCHEDULE_INTERVALS = {
@@ -344,7 +343,7 @@ class Feed < ApplicationRecord
     return false if disabled?
 
     transaction do
-      update_columns(state: self.class.states[:disabled], consecutive_failures: 0)
+      update_columns(state: :disabled, consecutive_failures: 0)
       Event.create!(type: type, level: :warning, subject: self, user: user, metadata: metadata)
     end
   end
@@ -378,8 +377,6 @@ class Feed < ApplicationRecord
     disable_with_event!("feed_auto_disabled", { error_count: consecutive_failures })
   end
 
-  # Only touches import_after when the form parts were assigned, so saves that
-  # never saw the checkbox (state flips, background updates) leave it alone.
   # Profile schemas are closed, so params left over from the previous profile
   # would fail validation and strand the feed.
   def drop_params_foreign_to_profile
@@ -395,6 +392,8 @@ class Feed < ApplicationRecord
     self.params = FeedProfile.cast_params(feed_profile_key, params)
   end
 
+  # Only touches import_after when the form parts were assigned, so saves that
+  # never saw the checkbox (state flips, background updates) leave it alone.
   def compose_import_after_from_parts
     return unless @import_after_parts_assigned
 

@@ -104,9 +104,9 @@ class PostsController < ApplicationController
     uid = post.uid
     reposted_at = post.reposted_at
 
-    ActiveRecord::Base.transaction do
+    ApplicationRecord.transaction do
       if feed_entry
-        feed_entry.destroy! # cascades to the post via dependent: :destroy
+        feed_entry.destroy!
       else
         post.destroy!
       end

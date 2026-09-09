@@ -11,7 +11,7 @@
   <h2 class="text-xl font-semibold text-heading mb-4">AI Settings</h2>
 
   <div class="space-y-6">
-    <% if credential_setup_complete? %>
+    <% if credentials? %>
       <% if model_unavailable? %>
         <%= render PanelComponent.new(variant: :info) do %>
           <div class="space-y-1" data-key="form.ai-model-unavailable">

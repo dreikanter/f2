@@ -103,7 +103,7 @@ class SortablePresenter
 
   # @return [String] canonical default field name
   def default_field
-    @default_field ||= fields.keys.first ? fields.keys.first.to_s : ""
+    @default_field ||= fields.keys.first.to_s
   end
 
   # @param direction [String]

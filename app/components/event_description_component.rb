@@ -116,7 +116,7 @@ class EventDescriptionComponent < ViewComponent::Base
 
   def stage
     raw_stage = event.metadata.dig("error", "stage")
-    raw_stage.to_s.humanize(capitalize: false)
+    ERB::Util.html_escape(raw_stage.to_s.humanize(capitalize: false))
   end
 
   def default_description

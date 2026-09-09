@@ -8,24 +8,20 @@ module Normalizer
     end
 
     def normalize_comments
-      summary = raw_data.dig("summary") || ""
-      return [] if summary.blank?
-
-      doc = Nokogiri::HTML::DocumentFragment.parse(summary)
-      main_image = doc.css("img").first
       alt_text = main_image&.[]("title")
 
       alt_text.present? ? [alt_text.strip] : []
     end
 
     def normalize_attachment_urls
-      summary = raw_data.dig("summary") || ""
-      return [] if summary.blank?
-
-      doc = Nokogiri::HTML::DocumentFragment.parse(summary)
-      main_image = doc.css("img").first
-
       main_image&.[]("src") ? [main_image["src"]] : []
+    end
+
+    def main_image
+      return @main_image if defined?(@main_image)
+
+      summary = raw_data["summary"].to_s
+      @main_image = summary.blank? ? nil : Nokogiri::HTML::DocumentFragment.parse(summary).at_css("img")
     end
   end
 end

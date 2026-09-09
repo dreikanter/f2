@@ -5,17 +5,8 @@ class Settings::EmailConfirmationsControllerTest < ActionDispatch::IntegrationTe
     @user ||= create(:user)
   end
 
-  def sign_in_user
-    params = {
-      email_address: user.email_address,
-      password: "password123"
-    }
-
-    post session_url, params: params
-  end
-
   test "should confirm email change with valid token" do
-    sign_in_user
+    sign_in_as(user)
     new_email = "updated@example.com"
     user.update!(unconfirmed_email: new_email)
     token = user.generate_token_for(:change_email_confirmation)
@@ -29,7 +20,7 @@ class Settings::EmailConfirmationsControllerTest < ActionDispatch::IntegrationTe
   end
 
   test "should reject invalid token" do
-    sign_in_user
+    sign_in_as(user)
     get settings_email_confirmation_url("invalid")
 
     assert_redirected_to settings_path
@@ -37,7 +28,7 @@ class Settings::EmailConfirmationsControllerTest < ActionDispatch::IntegrationTe
   end
 
   test "should reject email change to existing email in race condition" do
-    sign_in_user
+    sign_in_as(user)
 
     # Another user claims the email first
     create(:user, email_address: "race@example.com")
@@ -53,7 +44,7 @@ class Settings::EmailConfirmationsControllerTest < ActionDispatch::IntegrationTe
   end
 
   test "should clear email deactivation on successful confirmation" do
-    sign_in_user
+    sign_in_as(user)
     user.deactivate_email!(reason: "bounced")
     user.update!(unconfirmed_email: "new@example.com")
     token = user.generate_token_for(:change_email_confirmation)
@@ -68,7 +59,7 @@ class Settings::EmailConfirmationsControllerTest < ActionDispatch::IntegrationTe
   end
 
   test "should create EmailChangedEvent on successful confirmation" do
-    sign_in_user
+    sign_in_as(user)
     old_email = user.email_address
     user.update!(unconfirmed_email: "new@example.com")
     token = user.generate_token_for(:change_email_confirmation)

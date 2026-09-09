@@ -27,7 +27,7 @@ After the server is up, bump `postgres:<major>` in `config/deploy.yml` and `.git
 
 ## Staging (disposable data)
 
-Staging is allowed to lose its database. The flow mirrors the "Staging database reset" section of `docs/deploy.md`.
+Staging is allowed to lose its database. The flow mirrors the "Staging database reset" section of [`deployment-setup.md`](deployment-setup.md).
 
 1. Edit `config/deploy.staging.yml` (or `config/deploy.yml` if staging shares it) and bump the `db` accessory image:
 

@@ -6,13 +6,13 @@ module TitleExtractor
   # the input is the Atom feed URL directly, the body is the feed XML, so we
   # fall back to its <title>. As a last resort we derive a handle from the URL.
   class YoutubeTitleExtractor < Base
+    ATOM_NS = { "atom" => "http://www.w3.org/2005/Atom" }.freeze
+
     def title
       og_title.presence || atom_title.presence || handle.presence
     end
 
     private
-
-    ATOM_NS = { "atom" => "http://www.w3.org/2005/Atom" }.freeze
 
     def atom_title
       return nil if fetched_body.blank?

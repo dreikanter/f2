@@ -42,17 +42,18 @@ class Settings::EmailConfirmationsController < ApplicationController
   end
 
   def redirect_with_success
-    redirect_path = authenticated? ? settings_path : new_session_path
-    redirect_to redirect_path, success: "Email address updated."
+    redirect_to return_path, success: "Email address updated."
   end
 
   def redirect_with_failure
-    redirect_path = authenticated? ? settings_path : new_session_path
-    redirect_to redirect_path, alert: "Email confirmation failed. Please request a new confirmation link."
+    redirect_to return_path, alert: "Email confirmation failed. Please request a new confirmation link."
   end
 
   def redirect_with_invalid_token
-    redirect_path = authenticated? ? settings_path : new_session_path
-    redirect_to redirect_path, alert: "Email confirmation link is invalid or has expired."
+    redirect_to return_path, alert: "Email confirmation link is invalid or has expired."
+  end
+
+  def return_path
+    authenticated? ? settings_path : new_session_path
   end
 end

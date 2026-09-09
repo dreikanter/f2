@@ -1,6 +1,5 @@
 source "https://rubygems.org"
 
-# Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", github: "rails/rails", branch: "main"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
@@ -102,7 +101,6 @@ gem "mission_control-jobs"
 gem "pundit"
 gem "resend"
 gem "ruby_llm"
-gem "rouge"
 gem "svix"
 gem "heatmap-builder", github: "dreikanter/heatmap-builder"
 gem "with_advisory_lock"

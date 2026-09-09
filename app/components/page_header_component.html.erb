@@ -4,7 +4,7 @@
   <% end %>
   <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
     <div class="flex flex-col gap-5">
-      <%= tag.h1(title_content, class: class_names("text-4xl font-semibold mb-0 text-heading", "flex items-center gap-3" => title_icon?), data: @title_data) %>
+      <%= tag.h1(@title, class: "text-4xl font-semibold mb-0 text-heading", data: @title_data) %>
       <% if context_paragraphs? %>
         <% context_paragraphs.each do |paragraph| %>
           <p class="text-body"><%= paragraph %></p>

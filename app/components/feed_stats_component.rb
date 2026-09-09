@@ -63,9 +63,7 @@ class FeedStatsComponent < StatsPanelComponent
   end
 
   def last_refreshed_at
-    return @last_refreshed_at if defined?(@last_refreshed_at)
-
-    @last_refreshed_at = @feed.last_refreshed_at
+    @feed.last_refreshed_at
   end
 
   def most_recent_repost_at

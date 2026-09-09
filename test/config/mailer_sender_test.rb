@@ -1,10 +1,10 @@
 require "test_helper"
 
 class MailerSenderConfigTest < ActiveSupport::TestCase
-  # ApplicationMailer used to default the sender to an address on a domain that
-  # was never verified in Resend, so a deploy missing MAILER_FROM looked healthy
-  # and failed one delivery at a time. Production now has no fallback; boot it in
-  # a subprocess to prove a missing sender stops the app instead.
+  # A fallback sender on a domain never verified in Resend would make a deploy
+  # missing MAILER_FROM look healthy and fail one delivery at a time. Production
+  # has no fallback; boot it in a subprocess to prove a missing sender stops the
+  # app instead.
   test "production refuses to boot without MAILER_FROM" do
     output, status = boot_production("MAILER_FROM" => nil)
 

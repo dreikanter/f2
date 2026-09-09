@@ -27,7 +27,7 @@
             <% if option.icon_name.present? %>
               <span class="flex items-center text-muted">
                 <%= helpers.icon(option.icon_name, css_class: "size-4 text-muted") %>
-                <span class="sr-only"><%= option.active_direction == "asc" ? "Ascending" : "Descending" %></span>
+                <span class="sr-only"><%= direction_label_for(option.active_direction) %></span>
               </span>
             <% end %>
           <% end %>
