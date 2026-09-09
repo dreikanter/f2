@@ -20,7 +20,7 @@ end
 
 def head_blob(path)
   sh("git", "rev-parse", "HEAD:#{path}")
-rescue
+rescue RuntimeError
   nil
 end
 
@@ -133,7 +133,7 @@ def main
   when "mark"
     paths = ARGV
     if paths.empty?
-      puts "Usage: review.rb mark <path...>"; exit 1
+      puts "Usage: bin/review mark <path...>"; exit 1
     end
     cmd_mark(paths)
   when "mark-changed"
@@ -147,27 +147,27 @@ def main
   else
     puts <<~USAGE
       Usage:
-        review.rb init
-        review.rb status [-v]
-        review.rb mark <path ...>
-        review.rb mark-changed [--since <REF>] [paths ...]
-        review.rb sync [--no-prune]
+        bin/review init
+        bin/review status [-v]
+        bin/review mark <path ...>
+        bin/review mark-changed [--since <REF>] [paths ...]
+        bin/review sync [--no-prune]
 
       Typical flow:
-        ./tools/review.rb init
+        bin/review init
         git add REVIEW.yml && git commit -m "review: seed"
 
         # After committing fixes:
-        ./tools/review.rb mark app/models/team_task.rb
+        bin/review mark app/models/team_task.rb
         git add REVIEW.yml && git commit -m "review: mark team_task.rb"
 
         # After merging/pulling:
         git pull
-        ./tools/review.rb sync
+        bin/review sync
         git add REVIEW.yml && git commit -m "review: prune stale" || true
 
         # Progress:
-        ./tools/review.rb status -v
+        bin/review status -v
     USAGE
     exit 1
   end
