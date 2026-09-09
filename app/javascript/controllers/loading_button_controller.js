@@ -19,7 +19,12 @@ export default class extends Controller {
     this._setLoading(true)
     const elapsed = performance.now() - (this._startedAt ?? 0)
     const remaining = Math.max(0, this.minDurationValue - elapsed)
-    setTimeout(() => this._setLoading(false), remaining)
+    clearTimeout(this._resetTimer)
+    this._resetTimer = setTimeout(() => this._setLoading(false), remaining)
+  }
+
+  disconnect() {
+    clearTimeout(this._resetTimer)
   }
 
   _setLoading(loading) {
