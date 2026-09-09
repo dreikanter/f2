@@ -1,9 +1,8 @@
 module Loader
-  class YoutubeLoader < Base
+  class YoutubeLoader < HttpBase
     FEED_URL_PATH = "/feeds/videos.xml"
     FEED_BASE_URL = "https://www.youtube.com/feeds/videos.xml"
     YOUTUBE_DOMAINS = %w[youtube.com www.youtube.com].freeze
-    DEFAULT_MAX_REDIRECTS = 3
 
     CHANNEL_ID_PREFIX = "UC"
 
@@ -18,12 +17,10 @@ module Loader
     NO_LONG_FORM_MESSAGE = "This channel has no regular uploads to follow. Turn off Skip Shorts to include its Shorts.".freeze
 
     def load
-      response = http_client.get(feed_url)
+      response = http_get(feed_url)
       raise Loader::Error, NO_LONG_FORM_MESSAGE if response.status == 404 && long_form_playlist?
       raise Loader::Error, "HTTP #{response.status}" unless response.success?
       response.body
-    rescue HttpClient::Error => e
-      raise Loader::Error, e.message
     end
 
     private
@@ -81,7 +78,7 @@ module Loader
     end
 
     def fetch_feed_url_from_html(url)
-      response = http_client.get(url)
+      response = http_get(url)
       raise Loader::Error, "HTTP #{response.status}" unless response.success?
 
       extract_feed_url(response.body) or raise Loader::Error, "Could not find YouTube RSS feed link"
@@ -102,13 +99,6 @@ module Loader
       link = doc.at_css('link[type="application/rss+xml"]') ||
              doc.at_css('link[type="application/atom+xml"]')
       link&.[]("href")
-    end
-
-    def http_client
-      @http_client ||= options.fetch(:http_client) do
-        max_redirects = options.fetch(:max_redirects, DEFAULT_MAX_REDIRECTS)
-        HttpClient.build(max_redirects: max_redirects)
-      end
     end
   end
 end

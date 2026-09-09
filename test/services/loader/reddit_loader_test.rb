@@ -60,8 +60,17 @@ class Loader::RedditLoaderTest < ActiveSupport::TestCase
   test "#load should raise on HTTP error" do
     feed = create(:feed, feed_profile_key: "reddit", url: "r/worldnews")
     error_client = MockHttpClient.new(response: HttpClient::Response.new(status: 429, body: "Too Many Requests"))
-    error = assert_raises(StandardError) { Loader::RedditLoader.new(feed, { http_client: error_client }).load }
+    error = assert_raises(Loader::Error) { Loader::RedditLoader.new(feed, { http_client: error_client }).load }
     assert_equal "HTTP 429", error.message
+  end
+
+  test "#load should wrap transport timeouts as loader errors" do
+    stub_request(:get, "https://www.reddit.com/r/sample_subreddit/new.rss").to_raise(Net::ReadTimeout.new("Sample read timeout"))
+
+    error = assert_raises(Loader::Error) { loader("r/sample_subreddit").load }
+
+    assert_instance_of HttpClient::TimeoutError, error.cause
+    assert_equal error.cause.message, error.message
   end
 
   private

@@ -57,12 +57,12 @@ class Loader::TelegramLoaderTest < ActiveSupport::TestCase
 
   test "#load should raise on HTTP error" do
     client = mock_client(response: HttpClient::Response.new(status: 404, body: ""))
-    error = assert_raises(StandardError) { loader("examplechannel", http_client: client).load }
+    error = assert_raises(Loader::Error) { loader("examplechannel", http_client: client).load }
     assert_equal "HTTP 404", error.message
   end
 
   test "#load should raise when the channel cannot be determined" do
-    error = assert_raises(StandardError) { loader("https://t.me/", http_client: mock_client).load }
+    error = assert_raises(Loader::Error) { loader("https://t.me/", http_client: mock_client).load }
     assert_match(/Could not determine/, error.message)
   end
 
@@ -70,6 +70,15 @@ class Loader::TelegramLoaderTest < ActiveSupport::TestCase
     client = mock_client(response: HttpClient::Response.new(status: 200, body: INFO_PAGE_BODY))
     error = assert_raises(Loader::Error) { loader("examplechannel", http_client: client).load }
     assert_match(/No public web preview for examplechannel/, error.message)
+  end
+
+  test "#load should wrap transport timeouts as loader errors" do
+    stub_request(:get, "https://t.me/s/sample_channel").to_raise(Net::ReadTimeout.new("Sample read timeout"))
+
+    error = assert_raises(Loader::Error) { loader("sample_channel").load }
+
+    assert_instance_of HttpClient::TimeoutError, error.cause
+    assert_equal error.cause.message, error.message
   end
 
   private

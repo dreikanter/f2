@@ -7,19 +7,10 @@ module Loader
     SHORT_USER      = %r{\Auser/([A-Za-z0-9_-]+)\z}i
     REDDIT_PATH     = %r{reddit\.com/(r|user)/([A-Za-z0-9_-]+)}
 
-    def load
-      response = http_client.get(rss_url)
-      raise Loader::Error, "HTTP #{response.status}" unless response.success?
-
-      response.body
-    rescue HttpClient::Error => e
-      raise Loader::Error, e.message
-    end
-
     private
 
-    def rss_url
-      @rss_url ||= build_rss_url(feed.url.to_s.strip)
+    def feed_url
+      @feed_url ||= build_rss_url(feed.url.to_s.strip)
     end
 
     def build_rss_url(input)

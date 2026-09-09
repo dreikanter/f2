@@ -52,39 +52,48 @@ class Loader::BlueskyLoaderTest < ActiveSupport::TestCase
   test "#load should surface the API error message on HTTP error" do
     body = '{"error":"InvalidRequest","message":"Profile not found"}'
     client = mock_client(response: HttpClient::Response.new(status: 400, body: body))
-    error = assert_raises(StandardError) { loader("https://bsky.app/profile/testuser.bsky.social", http_client: client).load }
+    error = assert_raises(Loader::Error) { loader("https://bsky.app/profile/testuser.bsky.social", http_client: client).load }
     assert_equal "HTTP 400: Profile not found", error.message
   end
 
   test "#load should raise with the bare status when the error body is not JSON" do
     client = mock_client(response: HttpClient::Response.new(status: 500, body: "oops"))
-    error = assert_raises(StandardError) { loader("https://bsky.app/profile/testuser.bsky.social", http_client: client).load }
+    error = assert_raises(Loader::Error) { loader("https://bsky.app/profile/testuser.bsky.social", http_client: client).load }
     assert_equal "HTTP 500", error.message
   end
 
   test "#load should reject a bare handle" do
-    error = assert_raises(StandardError) { loader("testuser.bsky.social", http_client: mock_client).load }
+    error = assert_raises(Loader::Error) { loader("testuser.bsky.social", http_client: mock_client).load }
     assert_match(/Expected a bsky\.app profile URL/, error.message)
   end
 
   test "#load should reject an @handle" do
-    error = assert_raises(StandardError) { loader("@testuser.bsky.social", http_client: mock_client).load }
+    error = assert_raises(Loader::Error) { loader("@testuser.bsky.social", http_client: mock_client).load }
     assert_match(/Expected a bsky\.app profile URL/, error.message)
   end
 
   test "#load should reject a profile URL with an invalid actor" do
-    error = assert_raises(StandardError) { loader("https://bsky.app/profile/justname", http_client: mock_client).load }
+    error = assert_raises(Loader::Error) { loader("https://bsky.app/profile/justname", http_client: mock_client).load }
     assert_match(/Expected a bsky\.app profile URL/, error.message)
   end
 
   test "#load should reject a bsky.app URL without a profile path" do
-    error = assert_raises(StandardError) { loader("https://bsky.app/search", http_client: mock_client).load }
+    error = assert_raises(Loader::Error) { loader("https://bsky.app/search", http_client: mock_client).load }
     assert_match(/Expected a bsky\.app profile URL/, error.message)
   end
 
   test "#load should reject a non-bsky.app URL" do
-    error = assert_raises(StandardError) { loader("https://example.com/profile/testuser.bsky.social", http_client: mock_client).load }
+    error = assert_raises(Loader::Error) { loader("https://example.com/profile/testuser.bsky.social", http_client: mock_client).load }
     assert_match(/Expected a bsky\.app profile URL/, error.message)
+  end
+
+  test "#load should wrap transport timeouts as loader errors" do
+    stub_request(:get, "https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=sample.example&filter=posts_no_replies").to_raise(Net::ReadTimeout.new("Sample read timeout"))
+
+    error = assert_raises(Loader::Error) { loader("https://bsky.app/profile/sample.example").load }
+
+    assert_instance_of HttpClient::TimeoutError, error.cause
+    assert_equal error.cause.message, error.message
   end
 
   private

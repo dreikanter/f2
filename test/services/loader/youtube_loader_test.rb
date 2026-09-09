@@ -160,7 +160,7 @@ class Loader::YoutubeLoaderTest < ActiveSupport::TestCase
 
     loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
 
-    error = assert_raises(StandardError) { loader.load }
+    error = assert_raises(Loader::Error) { loader.load }
     assert_match "Could not find YouTube RSS feed link", error.message
   end
 
@@ -170,7 +170,7 @@ class Loader::YoutubeLoaderTest < ActiveSupport::TestCase
 
     loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
 
-    error = assert_raises(StandardError) { loader.load }
+    error = assert_raises(Loader::Error) { loader.load }
     assert_equal "HTTP 404", error.message
   end
 
@@ -180,7 +180,7 @@ class Loader::YoutubeLoaderTest < ActiveSupport::TestCase
 
     loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
 
-    error = assert_raises(StandardError) { loader.load }
+    error = assert_raises(Loader::Error) { loader.load }
     assert_equal "HTTP 403", error.message
   end
 
@@ -190,7 +190,7 @@ class Loader::YoutubeLoaderTest < ActiveSupport::TestCase
 
     loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
 
-    error = assert_raises(StandardError) { loader.load }
+    error = assert_raises(Loader::Error) { loader.load }
     assert_equal "Connection refused", error.message
   end
 
@@ -242,6 +242,15 @@ class Loader::YoutubeLoaderTest < ActiveSupport::TestCase
 
     assert_equal FEED_BODY, loader.load
     assert_equal [handle_url, FEED_URL], mock_client.requested_urls
+  end
+
+  test "#load should wrap channel discovery timeouts as loader errors" do
+    stub_request(:get, CHANNEL_URL).to_raise(Net::ReadTimeout.new("Sample read timeout"))
+
+    error = assert_raises(Loader::Error) { Loader::YoutubeLoader.new(feed_with_url(CHANNEL_URL)).load }
+
+    assert_instance_of HttpClient::TimeoutError, error.cause
+    assert_equal error.cause.message, error.message
   end
 
   private

@@ -10,11 +10,10 @@ module Loader
   # Accepts the channel as a full URL (https://t.me/examplechannel,
   # https://t.me/s/examplechannel), a short form (t.me/examplechannel), an
   # @handle, or a bare username.
-  class TelegramLoader < Base
+  class TelegramLoader < HttpBase
     PREVIEW_BASE = "https://t.me/s".freeze
     HOSTS = %w[t.me telegram.me www.t.me].freeze
     USERNAME = /\A[A-Za-z0-9_]{2,64}\z/
-    DEFAULT_MAX_REDIRECTS = 3
 
     # Container class of the message wall, present on every preview page (even
     # for channels with no posts yet). When a channel has no public preview,
@@ -29,13 +28,11 @@ module Loader
       name = channel_name
       raise Loader::Error, "Could not determine Telegram channel from #{feed.url.inspect}" unless name.match?(USERNAME)
 
-      response = http_client.get("#{PREVIEW_BASE}/#{name}", headers: { "User-Agent" => USER_AGENT })
+      response = http_get("#{PREVIEW_BASE}/#{name}", headers: { "User-Agent" => USER_AGENT })
       raise Loader::Error, "HTTP #{response.status}" unless response.success?
 
       ensure_preview_page!(response.body, name)
       response.body
-    rescue HttpClient::Error => e
-      raise Loader::Error, e.message
     end
 
     private
@@ -57,12 +54,6 @@ module Loader
       parts.shift if parts.first && HOSTS.include?(parts.first.downcase)
       parts.shift if parts.first&.casecmp?("s")
       parts.first.to_s
-    end
-
-    def http_client
-      @http_client ||= options.fetch(:http_client) do
-        HttpClient.build(max_redirects: options.fetch(:max_redirects, DEFAULT_MAX_REDIRECTS))
-      end
     end
   end
 end
