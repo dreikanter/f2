@@ -7,8 +7,7 @@ export default class extends Controller {
     initialDelay: { type: Number, default: 0 },
     maxPolls: { type: Number, default: 30 },
     indicateBusy: { type: Boolean, default: true },
-    stopCondition: String,
-    scope: { type: String, default: "element" }
+    stopCondition: String
   }
 
   static targets = ["timeoutMessage", "content"]
@@ -141,8 +140,7 @@ export default class extends Controller {
     const selector = this.stopConditionValue.trim()
     if (!selector) return false
 
-    const root = this.scopeValue === "document" ? document : this.element
-    if (root.matches?.(selector)) return true
-    return !!root.querySelector(selector)
+    if (this.element.matches?.(selector)) return true
+    return !!this.element.querySelector(selector)
   }
 }
