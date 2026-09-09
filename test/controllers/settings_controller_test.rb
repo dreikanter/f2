@@ -5,12 +5,8 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     @user ||= create(:user)
   end
 
-  def sign_in_user
-    post session_url, params: { email_address: user.email_address, password: "password123" }
-  end
-
   test "should show settings when authenticated" do
-    sign_in_user
+    sign_in_as(user)
     get settings_url
     assert_response :success
     assert_select "h2", text: "Your Name"
@@ -21,7 +17,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show current email and password age in account cards" do
-    sign_in_user
+    sign_in_as(user)
     get settings_url
     assert_response :success
     assert_select "[data-key='settings.email']", text: /Your current email is #{Regexp.escape(user.email_address)}/
@@ -30,7 +26,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
 
   test "should show the current name in the account card" do
     @user = create(:user, name: "Alex")
-    sign_in_user
+    sign_in_as(user)
     get settings_url
     assert_response :success
     assert_select "[data-key='settings.name']", text: /People you invite will see Alex/
@@ -38,14 +34,14 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
 
   test "should explain the fallback when no name is set" do
     @user = create(:user, name: "")
-    sign_in_user
+    sign_in_as(user)
     get settings_url
     assert_response :success
     assert_select "[data-key='settings.name']", text: /Somebody/
   end
 
   test "should link to settings sections" do
-    sign_in_user
+    sign_in_as(user)
     get settings_url
     assert_response :success
     assert_select "a[href=?]", edit_settings_name_update_path
@@ -64,14 +60,14 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
 
   test "should show permission display name in the page header" do
     @user = create(:user, :dev)
-    sign_in_user
+    sign_in_as(user)
     get settings_url
     assert_response :success
     assert_select "header [data-key='settings.permissions.value']", text: "Developer Tools"
   end
 
   test "should not show permissions when the user has none" do
-    sign_in_user
+    sign_in_as(user)
     get settings_url
     assert_response :success
     assert_select "[data-key='settings.permissions.value']", count: 0
