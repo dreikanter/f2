@@ -171,7 +171,7 @@ class WebhookIngestion
   end
 
   def persist!(post)
-    ActiveRecord::Base.transaction do
+    ApplicationRecord.transaction do
       post.feed_entry.save!
       FeedEntryUid.create!(feed: feed, uid: uid, imported_at: Time.current)
       post.save!

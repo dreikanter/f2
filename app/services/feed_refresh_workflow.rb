@@ -205,7 +205,7 @@ class FeedRefreshWorkflow
     entries_data = new_entries.map { entry_data(_1, current_time) }
     entry_uids_data = new_entries.map { feed_entry_uid_data(_1, current_time) }
 
-    ActiveRecord::Base.transaction do
+    ApplicationRecord.transaction do
       FeedEntry.insert_all(entries_data)
       FeedEntryUid.insert_all(entry_uids_data, unique_by: [:feed_id, :uid])
     end

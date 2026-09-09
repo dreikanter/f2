@@ -123,6 +123,6 @@ class DiskUsageService
   end
 
   def execute_query(sql)
-    ActiveRecord::Base.connection.execute(sql)
+    ApplicationRecord.connection.execute(sql)
   end
 end
