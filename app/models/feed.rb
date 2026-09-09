@@ -1,6 +1,6 @@
 class Feed < ApplicationRecord
   NAME_MAX_LENGTH = 40
-  TARGET_GROUP_PATTERN = /\A[a-z0-9_-]+\z/.freeze
+  TARGET_GROUP_PATTERN = /\A[a-z0-9_-]+\z/
   TARGET_GROUP_MAX_LENGTH = 80
 
   SCHEDULE_INTERVALS = {
