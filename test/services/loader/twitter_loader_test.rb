@@ -50,13 +50,22 @@ class Loader::TwitterLoaderTest < ActiveSupport::TestCase
 
   test "#load should raise on HTTP error" do
     client = mock_client(response: HttpClient::Response.new(status: 404, body: ""))
-    error = assert_raises(StandardError) { loader("XDevelopers", http_client: client).load }
+    error = assert_raises(Loader::Error) { loader("XDevelopers", http_client: client).load }
     assert_equal "HTTP 404", error.message
   end
 
   test "#load should raise when the handle cannot be determined" do
-    error = assert_raises(StandardError) { loader("https://x.com/", http_client: mock_client).load }
+    error = assert_raises(Loader::Error) { loader("https://x.com/", http_client: mock_client).load }
     assert_match(/Could not determine/, error.message)
+  end
+
+  test "#load should wrap transport timeouts as loader errors" do
+    stub_request(:get, "https://syndication.twitter.com/srv/timeline-profile/screen-name/sample_user").to_raise(Net::ReadTimeout.new("Sample read timeout"))
+
+    error = assert_raises(Loader::Error) { loader("sample_user").load }
+
+    assert_instance_of HttpClient::TimeoutError, error.cause
+    assert_equal error.cause.message, error.message
   end
 
   private

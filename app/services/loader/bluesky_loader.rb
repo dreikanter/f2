@@ -11,7 +11,6 @@ module Loader
     # a DID is did:<method>:<identifier>.
     HANDLE = /\A[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)+\z/
     DID = /\Adid:[a-z]+:[a-zA-Z0-9._:%-]+\z/
-    DEFAULT_MAX_REDIRECTS = 3
 
     def load
       identifier = actor
@@ -19,12 +18,10 @@ module Loader
         raise Loader::Error, "Expected a bsky.app profile URL, got #{feed.url.inspect}"
       end
 
-      response = http_client.get(feed_url(identifier), headers: { "Accept" => "application/json" })
+      response = http_get(feed_url(identifier), headers: { "Accept" => "application/json" })
       raise Loader::Error, error_message(response) unless response.success?
 
       response.body
-    rescue HttpClient::Error => e
-      raise Loader::Error, e.message
     end
 
     private
@@ -61,12 +58,6 @@ module Loader
       parsed["message"] if parsed.is_a?(Hash)
     rescue JSON::ParserError
       nil
-    end
-
-    def http_client
-      @http_client ||= options.fetch(:http_client) do
-        HttpClient.build(max_redirects: options.fetch(:max_redirects, DEFAULT_MAX_REDIRECTS))
-      end
     end
   end
 end

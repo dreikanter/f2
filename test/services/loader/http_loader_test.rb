@@ -28,7 +28,7 @@ class Loader::HttpLoaderTest < ActiveSupport::TestCase
 
     loader = Loader::HttpLoader.new(feed, { http_client: mock_client })
 
-    error = assert_raises(StandardError) do
+    error = assert_raises(Loader::Error) do
       loader.load
     end
 
@@ -40,7 +40,7 @@ class Loader::HttpLoaderTest < ActiveSupport::TestCase
 
     loader = Loader::HttpLoader.new(feed, { http_client: mock_client })
 
-    error = assert_raises(StandardError) do
+    error = assert_raises(Loader::Error) do
       loader.load
     end
 
@@ -52,7 +52,7 @@ class Loader::HttpLoaderTest < ActiveSupport::TestCase
 
     loader = Loader::HttpLoader.new(feed, { http_client: mock_client })
 
-    error = assert_raises(StandardError) do
+    error = assert_raises(Loader::Error) do
       loader.load
     end
 
@@ -64,29 +64,41 @@ class Loader::HttpLoaderTest < ActiveSupport::TestCase
 
     loader = Loader::HttpLoader.new(feed, { http_client: mock_client })
 
-    error = assert_raises(StandardError) do
+    error = assert_raises(Loader::Error) do
       loader.load
     end
 
     assert_equal "Too many redirects", error.message
   end
 
-  test "#http_client should use default max redirects of 3" do
-    loader = Loader::HttpLoader.new(feed)
+  test "#load should stop after three redirects by default" do
+    stub_redirect_chain
 
-    # Check that it creates a FaradayAdapter with max_redirects: 3
-    assert_instance_of HttpClient::FaradayAdapter, loader.send(:http_client)
+    error = assert_raises(Loader::Error) { Loader::HttpLoader.new(feed).load }
+
+    assert_instance_of HttpClient::TooManyRedirectsError, error.cause
+    assert_requested :get, "https://example.com/redirect-3", times: 1
+    assert_not_requested :get, "https://example.com/redirect-4"
   end
 
-  test "#http_client should accept custom max redirects" do
-    loader = Loader::HttpLoader.new(feed, { max_redirects: 5 })
+  test "#load should honor a custom redirect limit" do
+    stub_redirect_chain
 
-    # Check that it creates a FaradayAdapter (we can't easily test the internal options)
-    assert_instance_of HttpClient::FaradayAdapter, loader.send(:http_client)
+    result = Loader::HttpLoader.new(feed, max_redirects: 4).load
+
+    assert_equal "<rss>feed content</rss>", result
+    assert_requested :get, "https://example.com/redirect-4", times: 1
   end
-
 
   private
+
+  def stub_redirect_chain
+    urls = [feed.url] + (1..4).map { |i| "https://example.com/redirect-#{i}" }
+    urls.each_cons(2) do |source, target|
+      stub_request(:get, source).to_return(status: 302, headers: { "Location" => target })
+    end
+    stub_request(:get, urls.last).to_return(body: "<rss>feed content</rss>")
+  end
 
   class MockHttpClient
     attr_reader :last_request_url
