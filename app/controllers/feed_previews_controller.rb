@@ -29,8 +29,7 @@ class FeedPreviewsController < ApplicationController
   # PATCH /feed_previews/:id, the explicit refresh. The row already holds the
   # source and selections, so a re-run needs nothing but its id.
   def update
-    preview.restart!
-    render_frame(preview)
+    render_frame(start_run(locate_preview))
   end
 
   helper_method :state_partial
@@ -95,7 +94,7 @@ class FeedPreviewsController < ApplicationController
 
     @search_credential =
       if preview
-        Current.user.search_credentials.active.find_by(id: preview.search_credential_id)
+        Current.user.search_credentials.find_by(id: preview.search_credential_id)
       else
         resolve_search_credential(profile_key, params[:search_credential_id])
       end

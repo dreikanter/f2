@@ -1344,7 +1344,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Updated Name", feed.name, "operational edits still persist while detection runs"
 
     identification = FeedIdentification.find_by!(user: user, input: "https://evil.com/feed.xml")
-    assert_enqueued_with(job: FeedIdentificationJob, args: [identification.id, identification.run_id])
+    assert_enqueued_with(job: FeedIdentificationJob,
+                         args: [identification.id, identification.run_id, FeedProfile.configuration_digest])
     assert_enqueued_with(job: FeedIdentificationTimeoutJob,
                          args: [identification.id, identification.run_id],
                          at: identification.started_at + FeedIdentification::TIMEOUT_AFTER)

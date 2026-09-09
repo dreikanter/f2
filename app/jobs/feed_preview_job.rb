@@ -4,9 +4,11 @@ class FeedPreviewJob < ApplicationJob
 
   # @param feed_preview_id [String] UUID of the FeedPreview
   # @param run_id [String] the run token captured when this job was enqueued
-  def perform(feed_preview_id, run_id)
+  # @param params_digest [String, nil] expected identity, absent in previously queued jobs
+  def perform(feed_preview_id, run_id, params_digest = nil)
     feed_preview = FeedPreview.find_by(id: feed_preview_id)
     return unless feed_preview
+    return if params_digest && params_digest != feed_preview.params_digest
 
     FeedPreviewWorkflow.new(feed_preview, run_id: run_id).execute
   rescue LlmClient::CredentialMissing => e

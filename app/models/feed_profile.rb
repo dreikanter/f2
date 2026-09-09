@@ -450,6 +450,14 @@ class FeedProfile
   }.freeze
 
   class << self
+    # Identification depends on the whole registry, including newly added profiles.
+    # Previews depend on the selected profile's configuration.
+    # @param key [String, nil] one profile, or nil for the registry
+    # @return [String] the configuration fingerprint
+    def configuration_digest(key = nil)
+      Digest::SHA256.hexdigest((key ? PROFILES[key] : PROFILES).to_json)
+    end
+
     # @return [Array<String>] all profile keys
     def all
       PROFILES.keys

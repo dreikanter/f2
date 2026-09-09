@@ -19,7 +19,7 @@ class FeedIdentificationsController < ApplicationController
 
     # A working result is shown as-is and an in-flight check keeps polling;
     # any settled failure re-runs detection, so resubmitting re-checks it.
-    return present_result if feed_identification.working?
+    return present_result if feed_identification.working? && feed_identification.current_configuration?
 
     feed_identification.restart_detection unless active_detection?
 
@@ -27,7 +27,7 @@ class FeedIdentificationsController < ApplicationController
   end
 
   def show
-    unless feed_identification.persisted?
+    unless feed_identification.persisted? && feed_identification.current_configuration?
       return render(identification_error(error: "That check expired. Please try again."))
     end
 
@@ -107,7 +107,8 @@ class FeedIdentificationsController < ApplicationController
   end
 
   def active_detection?
-    feed_identification.persisted? && feed_identification.processing? && !feed_identification.invalid_processing?
+    feed_identification.persisted? && feed_identification.current_configuration? &&
+      feed_identification.processing? && !feed_identification.invalid_processing?
   end
 
   def timeout_error
