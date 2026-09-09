@@ -52,7 +52,7 @@ class PostPreviewComponent < ViewComponent::Base
   end
 
   def attachments?
-    valid_attachments.any?
+    attachments.any?
   end
 
   def comments?
@@ -63,12 +63,8 @@ class PostPreviewComponent < ViewComponent::Base
     @comments ||= Array(post_data["comments"]).filter_map { |comment| comment.to_s.presence }
   end
 
-  def image_attachments
-    @image_attachments ||= valid_attachments.select { |attachment| image_attachment?(attachment) }
-  end
-
-  def other_attachments
-    @other_attachments ||= valid_attachments.reject { |attachment| image_attachment?(attachment) }
+  def attachments
+    @attachments ||= Array(post_data["attachments"]).compact_blank
   end
 
   def thumbnail_url(url)
@@ -83,12 +79,6 @@ class PostPreviewComponent < ViewComponent::Base
     ImgproxyUrl::THUMBNAIL_SIZE
   end
 
-  def other_attachments_list
-    helpers.content_tag(:ul, class: "list-disc space-y-2 pl-4") do
-      helpers.safe_join(other_attachments.map { |attachment| attachment_list_item(attachment) })
-    end
-  end
-
   def card_id
     return unless index
 
@@ -98,45 +88,4 @@ class PostPreviewComponent < ViewComponent::Base
   private
 
   attr_reader :post_data, :index
-
-  def valid_attachments
-    @valid_attachments ||= raw_attachments.filter_map do |attachment|
-      url = attachment_url(attachment)
-      next if url.blank?
-
-      { url: url, type: attachment_type(attachment) }
-    end
-  end
-
-  def raw_attachments
-    Array(post_data["attachments"]).compact_blank
-  end
-
-  def attachment_url(attachment)
-    attachment.is_a?(Hash) ? attachment["url"] : attachment
-  end
-
-  def attachment_type(attachment)
-    attachment.is_a?(Hash) ? attachment["type"].presence : nil
-  end
-
-  # Preview attachments arrive as bare URLs (FeedPreviewWorkflow passes
-  # Post#attachment_urls straight through), so an untyped one is an image the
-  # normalizer collected — thumbnail it, like the published post will.
-  def image_attachment?(attachment)
-    type = attachment[:type].to_s.downcase
-    type.blank? || type.start_with?("image")
-  end
-
-  def attachment_list_item(attachment)
-    helpers.content_tag(:li) do
-      fragments = [
-        helpers.link_to(attachment[:url], attachment[:url], target: "_blank", rel: "noopener", class: class_names(helpers.text_link_classes, "font-medium break-all"))
-      ]
-      if attachment[:type]
-        fragments << helpers.content_tag(:span, "(#{attachment[:type]})", class: "ml-2 text-xs text-muted")
-      end
-      helpers.safe_join(fragments)
-    end
-  end
 end
