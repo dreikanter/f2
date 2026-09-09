@@ -1,6 +1,7 @@
 class FeedIdentification < ApplicationRecord
   POLLING_INTERVAL_MS = 2500
   TIMEOUT_AFTER = 85.seconds
+  RETENTION = 7.days
 
   belongs_to :user
 
@@ -16,6 +17,12 @@ class FeedIdentification < ApplicationRecord
   enum :status, { processing: 0, working: 1, unreachable: 2, no_feed: 3, timed_out: 4 }
 
   validates :input, presence: true
+
+  scope :obsolete, -> {
+    where(configuration_digest: nil)
+      .or(where.not(configuration_digest: FeedProfile.configuration_digest))
+      .or(where(updated_at: ..RETENTION.ago))
+  }
 
   def current_configuration?
     configuration_digest == FeedProfile.configuration_digest
