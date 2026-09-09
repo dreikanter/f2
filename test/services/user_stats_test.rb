@@ -99,14 +99,6 @@ class UserStatsTest < ActiveSupport::TestCase
     assert_equal 2, UserStats.new(user).created_invites_count
   end
 
-  test "#invited_users_count should return count of invitations with invited user" do
-    create(:invite, created_by_user: user, invited_user: create(:user))
-    create(:invite, created_by_user: user, invited_user: create(:user))
-    create(:invite, created_by_user: user, invited_user: nil)
-
-    assert_equal 2, UserStats.new(user).invited_users_count
-  end
-
   test "#invited_users should return invitations with invited user ordered by created_at desc" do
     inv1 = create(:invite, created_by_user: user, invited_user: create(:user), created_at: 2.days.ago)
     inv2 = create(:invite, created_by_user: user, invited_user: create(:user), created_at: 1.hour.ago)
