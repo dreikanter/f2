@@ -40,8 +40,8 @@ module EmailStorage
       metadata = read_metadata(base_dir.join("#{filename}.json"))
       return nil unless metadata
 
-      text_content = load_text_content(filename)
-      html_content = load_html_content(filename)
+      text_content = load_part(filename, "txt")
+      html_content = load_part(filename, "html")
 
       {
         message_id: metadata["message_id"],
@@ -128,19 +128,11 @@ module EmailStorage
       nil
     end
 
-    def load_text_content(id)
-      path = base_dir.join("#{id}.txt")
+    def load_part(filename, extension)
+      path = base_dir.join("#{filename}.#{extension}")
       File.exist?(path) ? File.read(path) : nil
     rescue Errno::ENOENT, IOError => e
-      Rails.logger.error "Failed to load email text from #{path}: #{e.message}"
-      nil
-    end
-
-    def load_html_content(id)
-      path = base_dir.join("#{id}.html")
-      File.exist?(path) ? File.read(path) : nil
-    rescue Errno::ENOENT, IOError => e
-      Rails.logger.error "Failed to load email HTML from #{path}: #{e.message}"
+      Rails.logger.error "Failed to load email #{extension} from #{path}: #{e.message}"
       nil
     end
 
