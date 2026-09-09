@@ -3,7 +3,7 @@
   <% header.with_breadcrumb(label: "Access Tokens", url: access_tokens_path) %>
   <% if feed_id.present? %>
     <% header.with_action_button do %>
-      <%= link_to "Back to your feed", edit_feed_path(feed_id), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+      <%= link_to "Back to your feed", edit_feed_path(feed_id), class: secondary_button_classes(compact: true) %>
     <% end %>
   <% end %>
 
@@ -52,7 +52,7 @@
   <% if feed_id.present? %>
     <%= link_to "Continue setting up your feed",
                 edit_feed_path(feed_id),
-                class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
+                class: primary_button_classes,
                 data: { key: "access_token.return-to" } %>
   <% end %>
 
@@ -88,8 +88,8 @@
         <%= link_to "Create a new token", access_token.token_creation_url,
                     target: "_blank",
                     rel: "noopener",
-                    class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
-        and <%= link_to "paste it here", edit_access_token_path(access_token), class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %> to fix this.
+                    class: text_link_classes %>
+        and <%= link_to "paste it here", edit_access_token_path(access_token), class: text_link_classes %> to fix this.
       </p>
     </div>
   <% else %>
@@ -97,7 +97,7 @@
       <p>Feeder couldn't confirm this token, so feeds can't publish with it.</p>
       <p>
         It may be expired, revoked, or incorrectly copied — or the check didn't get through.
-        <%= link_to "Paste the token again", edit_access_token_path(access_token), class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %> to try once more.
+        <%= link_to "Paste the token again", edit_access_token_path(access_token), class: text_link_classes %> to try once more.
       </p>
     </div>
   <% end %>

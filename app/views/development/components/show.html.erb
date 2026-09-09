@@ -74,11 +74,11 @@
       <div class="flex flex-wrap items-start gap-6">
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Primary</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Save changes</button>
+          <button type="button" class="<%= class_names(primary_button_classes(compact: true), "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50") %>">Save changes</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Secondary</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Cancel</button>
+          <button type="button" class="<%= class_names(secondary_button_classes(compact: true), "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50") %>">Cancel</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger</p>
@@ -86,11 +86,11 @@
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Primary disabled</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Save changes</button>
+          <button type="button" class="<%= class_names(primary_button_classes(compact: true), "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50") %>" disabled>Save changes</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Secondary disabled</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Cancel</button>
+          <button type="button" class="<%= class_names(secondary_button_classes(compact: true), "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50") %>" disabled>Cancel</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger disabled</p>
@@ -107,15 +107,15 @@
       <div class="grid gap-6 sm:grid-cols-2">
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Empty (with placeholder)</p>
-          <%= text_field_tag :feed_name, nil, placeholder: "e.g. Ruby Weekly", class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= text_field_tag :feed_name, nil, placeholder: "e.g. Ruby Weekly", class: input_field_classes %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Filled</p>
-          <%= text_field_tag :feed_name_filled, "Ruby Weekly", class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= text_field_tag :feed_name_filled, "Ruby Weekly", class: input_field_classes %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Disabled</p>
-          <%= text_field_tag :feed_name_disabled, "Locked while syncing", disabled: true, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= text_field_tag :feed_name_disabled, "Locked while syncing", disabled: true, class: input_field_classes %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Error</p>
@@ -133,15 +133,15 @@
       <div class="grid gap-6 sm:grid-cols-2">
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Default</p>
-          <%= select_tag :frequency, options_for_select(["Every 30 minutes", "Every hour", "Every 6 hours", "Daily at midnight"]), class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= select_tag :frequency, options_for_select(["Every 30 minutes", "Every hour", "Every 6 hours", "Daily at midnight"]), class: input_field_classes %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">With selection</p>
-          <%= select_tag :frequency_selected, options_for_select(["Every 30 minutes", "Every hour", "Every 6 hours", "Daily at midnight"], "Every hour"), class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= select_tag :frequency_selected, options_for_select(["Every 30 minutes", "Every hour", "Every 6 hours", "Daily at midnight"], "Every hour"), class: input_field_classes %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Disabled</p>
-          <%= select_tag :frequency_disabled, options_for_select(["Every hour"]), disabled: true, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= select_tag :frequency_disabled, options_for_select(["Every hour"]), disabled: true, class: input_field_classes %>
         </div>
       </div>
     </section>
@@ -158,7 +158,7 @@
             <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
               <%= icon("calendar", css_class: "size-5 text-muted") %>
             </div>
-            <%= text_field_tag :demo_date, nil, placeholder: "Pick a date", autocomplete: "off", class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", data: { controller: "datepicker" } %>
+            <%= text_field_tag :demo_date, nil, placeholder: "Pick a date", autocomplete: "off", class: input_field_classes(icon_padding: true), data: { controller: "datepicker" } %>
           </div>
         </div>
         <div class="space-y-2">
@@ -167,7 +167,7 @@
             <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
               <%= icon("calendar", css_class: "size-5 text-muted") %>
             </div>
-            <%= text_field_tag :demo_date_filled, Date.current.iso8601, autocomplete: "off", class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", data: { controller: "datepicker" } %>
+            <%= text_field_tag :demo_date_filled, Date.current.iso8601, autocomplete: "off", class: input_field_classes(icon_padding: true), data: { controller: "datepicker" } %>
           </div>
         </div>
         <div class="space-y-2">
@@ -176,7 +176,7 @@
             <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
               <%= icon("clock", css_class: "size-5 text-muted") %>
             </div>
-            <%= time_field_tag :demo_time, "09:30", class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+            <%= time_field_tag :demo_time, "09:30", class: input_field_classes(icon_padding: true) %>
           </div>
         </div>
         <div class="space-y-2">
@@ -185,7 +185,7 @@
             <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
               <%= icon("clock", css_class: "size-5 text-muted") %>
             </div>
-            <%= time_field_tag :demo_time_disabled, "09:30", disabled: true, class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed" %>
+            <%= time_field_tag :demo_time_disabled, "09:30", disabled: true, class: input_field_classes(disabled: true, icon_padding: true) %>
           </div>
         </div>
       </div>
@@ -218,7 +218,7 @@
       <p class="text-body">A set of mutually exclusive options sharing one name. One is selected by default; unavailable options are disabled. Each label targets its radio's id.</p>
 
       <fieldset class="space-y-3">
-        <legend class="block font-semibold text-heading">Refresh frequency</legend>
+        <legend class="<%= form_label_classes %>">Refresh frequency</legend>
         <div class="flex items-start gap-3">
           <%= radio_button_tag :refresh_frequency, "30m", true, class: "mt-1 h-4 w-4 border-border-strong text-info focus:ring-ring" %>
           <%= label_tag :refresh_frequency_30m, "Every 30 minutes", class: "text-base text-heading" %>
@@ -245,19 +245,19 @@
 
       <div class="max-w-xl space-y-8">
         <div class="space-y-2">
-          <%= label_tag :group_feed_name, "Feed name", class: "block font-semibold text-heading" %>
-          <%= text_field_tag :group_feed_name, nil, placeholder: "e.g. Ruby Weekly", class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= label_tag :group_feed_name, "Feed name", class: form_label_classes %>
+          <%= text_field_tag :group_feed_name, nil, placeholder: "e.g. Ruby Weekly", class: input_field_classes %>
           <p class="text-sm text-muted">Shown in your feed list and on FreeFeed posts.</p>
         </div>
 
         <div class="space-y-2">
-          <%= label_tag :group_frequency, "Refresh frequency", class: "block font-semibold text-heading" %>
-          <%= select_tag :group_frequency, options_for_select(["Every 30 minutes", "Every hour", "Daily at midnight"], "Every hour"), class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+          <%= label_tag :group_frequency, "Refresh frequency", class: form_label_classes %>
+          <%= select_tag :group_frequency, options_for_select(["Every 30 minutes", "Every hour", "Daily at midnight"], "Every hour"), class: input_field_classes %>
           <p class="text-sm text-muted">How often Feeder checks the source for new posts.</p>
         </div>
 
         <div class="space-y-2">
-          <%= label_tag :group_source_url, "Source URL", class: "block font-semibold text-heading" %>
+          <%= label_tag :group_source_url, "Source URL", class: form_label_classes %>
           <%= text_field_tag :group_source_url, "not-a-valid-url", class: "w-full rounded-md border border-danger bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-danger-hover transition focus:border-danger-hover focus:outline-none focus:ring-2" %>
           <p class="text-sm text-danger">Enter a valid feed URL, like https://example.com/feed.xml.</p>
         </div>
@@ -278,10 +278,10 @@
                 Manage the sources Feeder reposts to FreeFeed.
               <% end %>
               <% header.with_action_button do %>
-                <%= link_to "Import", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+                <%= link_to "Import", "#", class: secondary_button_classes(compact: true) %>
               <% end %>
               <% header.with_action_button do %>
-                <%= link_to "New feed", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+                <%= link_to "New feed", "#", class: primary_button_classes(compact: true) %>
               <% end %>
             <% end %>
 

@@ -18,7 +18,7 @@
     <% if source_url %>
       <% header.with_context_paragraph do %>
         <%= link_to source_url, source_url, target: "_blank", rel: "noopener",
-              class: "break-all text-brand underline underline-offset-4 transition hover:text-brand-hover",
+              class: class_names(text_link_classes, "break-all"),
               data: { key: "feed_entry.source_url" } %>
       <% end %>
     <% end %>

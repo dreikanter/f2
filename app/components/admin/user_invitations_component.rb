@@ -1,6 +1,4 @@
 class Admin::UserInvitationsComponent < ViewComponent::Base
-  EDIT_CLASSES = "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover text-sm".freeze
-
   def initialize(user:, stats:)
     @user = user
     @stats = stats
@@ -20,7 +18,7 @@ class Admin::UserInvitationsComponent < ViewComponent::Base
     helpers.tag.span(class: "flex items-center gap-4") do
       helpers.safe_join([
         helpers.render(partial: "admin/users/available_invites_value", locals: { user: @user }),
-        helpers.link_to("Edit", "#", class: EDIT_CLASSES, data: edit_modal_data)
+        helpers.link_to("Edit", "#", class: class_names(helpers.text_link_classes, "font-medium text-sm"), data: edit_modal_data)
       ])
     end
   end

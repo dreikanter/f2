@@ -14,30 +14,30 @@
     <%= form_with url: password_path(params[:token]), method: :put, local: true do |form| %>
       <div class="space-y-10">
         <div class="space-y-2">
-          <%= form.label :password, "New password", class: "block font-semibold text-heading" %>
+          <%= form.label :password, "New password", class: form_label_classes %>
           <%= form.password_field :password,
                                   required: true,
                                   autofocus: true,
                                   autocomplete: "new-password",
                                   placeholder: "Enter a new password",
                                   maxlength: User::PASSWORD_MAX_LENGTH,
-                                  class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+                                  class: input_field_classes %>
         </div>
 
         <div class="space-y-2">
-          <%= form.label :password_confirmation, "Confirm password", class: "block font-semibold text-heading" %>
+          <%= form.label :password_confirmation, "Confirm password", class: form_label_classes %>
           <%= form.password_field :password_confirmation,
                                   required: true,
                                   autocomplete: "new-password",
                                   placeholder: "Repeat the new password",
                                   maxlength: User::PASSWORD_MAX_LENGTH,
-                                  class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+                                  class: input_field_classes %>
         </div>
       </div>
 
       <div class="mt-6 flex flex-col items-start justify-start gap-4 text-body sm:flex-row sm:items-center sm:justify-between">
-        <%= form.submit "Save password", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 w-full sm:w-auto" %>
-        <p><%= link_to "Back to sign in", new_session_path, class: "inline-block font-medium leading-loose text-brand underline underline-offset-4 transition hover:text-brand-hover" %></p>
+        <%= form.submit "Save password", class: class_names(primary_button_classes, "w-full sm:w-auto") %>
+        <p><%= link_to "Back to sign in", new_session_path, class: class_names(text_link_classes, "inline-block font-medium leading-loose") %></p>
       </div>
     <% end %>
   </div>

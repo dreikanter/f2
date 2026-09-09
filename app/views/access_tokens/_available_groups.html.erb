@@ -43,7 +43,7 @@
       <% if groups.any? %>
         <ul class="list-disc list-inside space-y-1">
           <% groups.sort_by { _1["username"] }.each do |group| %>
-            <li><%= link_to group["username"], access_token.group_url(group["username"]), target: "_blank", rel: "noopener noreferrer", class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %></li>
+            <li><%= link_to group["username"], access_token.group_url(group["username"]), target: "_blank", rel: "noopener noreferrer", class: class_names(text_link_classes, "font-medium") %></li>
           <% end %>
         </ul>
       <% else %>

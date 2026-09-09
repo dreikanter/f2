@@ -19,28 +19,28 @@
 
       <div class="space-y-10">
         <div class="space-y-2">
-          <%= label_tag "search_credential_provider", "Search Provider", class: "block font-semibold text-heading" %>
+          <%= label_tag "search_credential_provider", "Search Provider", class: form_label_classes %>
           <%= text_field_tag "search_credential_provider",
                              @credential.provider_label,
                              disabled: true,
-                             class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed" %>
+                             class: input_field_classes(disabled: true) %>
         </div>
 
         <div class="space-y-2">
-          <%= f.label :display_name, "Name", class: "block font-semibold text-heading" %>
+          <%= f.label :display_name, "Name", class: form_label_classes %>
           <%= f.text_field :display_name,
                            autofocus: true,
-                           class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
+                           class: input_field_classes,
                            required: true,
                            data: { key: "search_credentials.display-name" } %>
         </div>
 
         <div class="space-y-2">
-          <%= label_tag "search_credential_credential_data_api_key", "API key", class: "block font-semibold text-heading" %>
+          <%= label_tag "search_credential_credential_data_api_key", "API key", class: form_label_classes %>
           <%= password_field_tag "search_credential[credential_data][api_key]",
                                  nil,
                                  id: "search_credential_credential_data_api_key",
-                                 class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
+                                 class: input_field_classes,
                                  autocomplete: "off",
                                  data: { key: "search_credentials.credential-data.api_key" } %>
           <p class="text-sm text-muted">Leave blank to keep the current key and validation state.</p>
@@ -49,9 +49,9 @@
 
       <div class="mt-6 flex flex-wrap items-center justify-start gap-4">
         <%= f.submit "Update Credential",
-                     class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring",
+                     class: primary_button_classes,
                      data: { turbo_submits_with: "Saving…" } %>
-        <%= link_to "Cancel", search_credential_path(@credential), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted" %>
+        <%= link_to "Cancel", search_credential_path(@credential), class: secondary_button_classes %>
       </div>
     <% end %>
   </div>

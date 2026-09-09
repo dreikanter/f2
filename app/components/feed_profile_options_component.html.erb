@@ -14,7 +14,7 @@
                                   data: { key: "form.profile-option-input.#{profile_key}.#{option.name}", param_name: option.name } %>
               </div>
               <div class="ml-3">
-                <%= label_tag option.field_id(profile_key), option.title, class: "block font-semibold text-heading mb-0" %>
+                <%= label_tag option.field_id(profile_key), option.title, class: class_names(helpers.form_label_classes, "mb-0") %>
                 <% if option.description %>
                   <p class="text-sm text-muted"><%= option.description %></p>
                 <% end %>
@@ -22,7 +22,7 @@
             </div>
           <% else %>
             <div class="space-y-2">
-              <%= label_tag option.field_id(profile_key), option.title, class: "block font-semibold text-heading" %>
+              <%= label_tag option.field_id(profile_key), option.title, class: helpers.form_label_classes %>
               <% if option.choices? %>
                 <%= select_tag option.field_name,
                                options_for_select(choices_for(option), value_for(option)),

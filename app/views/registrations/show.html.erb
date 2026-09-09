@@ -9,7 +9,7 @@
       <div class="space-y-2">
         <p class="font-semibold text-heading">Already have an account?</p>
         <p class="text-body">
-          <%= link_to "Sign in", new_session_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+          <%= link_to "Sign in", new_session_path, class: class_names(text_link_classes, "font-medium") %>
           with your email and password.
         </p>
       </div>
@@ -31,11 +31,11 @@
         <ul class="list-disc space-y-1 ps-5 text-body">
           <li>
             Forgot your password?
-            <%= link_to "Reset it here", new_password_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>.
+            <%= link_to "Reset it here", new_password_path, class: class_names(text_link_classes, "font-medium") %>.
           </li>
           <li>
             Otherwise,
-            <%= link_to "sign in", new_session_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+            <%= link_to "sign in", new_session_path, class: class_names(text_link_classes, "font-medium") %>
             with your email and password.
           </li>
         </ul>
@@ -68,22 +68,22 @@
           <% end %>
 
           <div class="space-y-2">
-            <%= form.label :email_address, "Email", class: "block font-semibold text-heading" %>
-            <%= form.email_field :email_address, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", required: true, autofocus: true %>
+            <%= form.label :email_address, "Email", class: form_label_classes %>
+            <%= form.email_field :email_address, class: input_field_classes, required: true, autofocus: true %>
             <p class="text-sm text-muted">Only for password resets. No marketing.</p>
           </div>
 
           <div class="space-y-2">
-            <%= form.label :password, class: "block font-semibold text-heading" %>
-            <%= form.password_field :password, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", required: true %>
+            <%= form.label :password, class: form_label_classes %>
+            <%= form.password_field :password, class: input_field_classes, required: true %>
             <p class="text-sm text-muted">At least <%= User::PASSWORD_MIN_LENGTH %> characters. A few random words work well.</p>
           </div>
         </div>
         <div class="mt-6 flex flex-col items-start gap-4 text-body sm:flex-row sm:items-center sm:justify-between">
-          <%= form.submit "Create account", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 w-full sm:w-auto" %>
+          <%= form.submit "Create account", class: class_names(primary_button_classes, "w-full sm:w-auto") %>
           <span class="text-body">
             Already use Feeder?
-            <%= link_to "Sign in", new_session_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+            <%= link_to "Sign in", new_session_path, class: class_names(text_link_classes, "font-medium") %>
           </span>
         </div>
       <% end %>

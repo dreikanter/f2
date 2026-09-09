@@ -1,9 +1,9 @@
 <%= render ModalComponent.new(title: "Update Available Invites", modal_id: @modal_id) do |modal| %>
   <%= form_with(model: @user, url: admin_user_available_invites_path(@user), method: :patch, id: "available-invites-form-#{@user.id}", data: { turbo_frame: "_top" }) do |form| %>
     <div class="space-y-2">
-      <%= form.label :available_invites, "Available Invites", class: "block font-semibold text-heading" %>
+      <%= form.label :available_invites, "Available Invites", class: helpers.form_label_classes %>
       <span id="available-invites-input-wrapper-<%= @user.id %>">
-        <%= form.number_field(:available_invites, min: 0, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", autofocus: true) %>
+        <%= form.number_field(:available_invites, min: 0, class: helpers.input_field_classes, autofocus: true) %>
       </span>
     </div>
   <% end %>
@@ -12,11 +12,11 @@
     <%= tag.button "Update",
                    type: "submit",
                    form: "available-invites-form-#{@user.id}",
-                   class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
+                   class: helpers.primary_button_classes(compact: true),
                    data: { action: "modal#confirm" } %>
     <%= tag.button "Cancel",
                    type: "button",
-                   class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
+                   class: helpers.secondary_button_classes(compact: true),
                    data: { action: "modal#close" } %>
   <% end %>
 <% end %>
