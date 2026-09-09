@@ -94,7 +94,7 @@ class FeedPreviewsController < ApplicationController
 
     @search_credential =
       if preview
-        Current.user.search_credentials.active.find_by(id: preview.search_credential_id)
+        Current.user.search_credentials.find_by(id: preview.search_credential_id)
       else
         resolve_search_credential(profile_key, params[:search_credential_id])
       end
