@@ -1,6 +1,5 @@
 class FileDelivery
   def initialize(settings)
-    @settings = settings
     @email_storage = settings[:email_storage]
   end
 
