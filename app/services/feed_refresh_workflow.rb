@@ -88,7 +88,7 @@ class FeedRefreshWorkflow
     if usage_rows.any?
       stats_updates.merge!(
         "llm_calls" => usage_rows.size,
-        "llm_cost_cents" => usage_rows.any? { |_id, cents| cents.nil? } ? nil : usage_rows.sum { |_id, cents| cents }.to_f
+        "llm_cost_cents" => llm_cost_cents(usage_rows)
       )
     end
     stats_updates["search_calls"] = search_event_ids.size if search_event_ids.any?
@@ -369,8 +369,15 @@ class FeedRefreshWorkflow
 
     record_stats(
       llm_calls: usage_rows.size,
-      llm_cost_cents: usage_rows.any? { |_id, cents| cents.nil? } ? nil : usage_rows.sum { |_id, cents| cents }.to_f
+      llm_cost_cents: llm_cost_cents(usage_rows)
     )
+  end
+
+  # nil when any call has an unknown cost: a partial sum would misstate spend.
+  def llm_cost_cents(usage_rows)
+    return nil if usage_rows.any? { |_id, cents| cents.nil? }
+
+    usage_rows.sum { |_id, cents| cents }.to_f
   end
 
   def reference_llm_usages(event, usage_rows)
