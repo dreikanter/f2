@@ -16,7 +16,7 @@ class CredentialDefaultsController < ApplicationController
         @credentials = scope.order(created_at: :desc)
       end
       format.html do
-        redirect_to helpers.polymorphic_path(credential_class), success: success_message
+        redirect_to polymorphic_path(credential_class), success: success_message
       end
     end
   end
