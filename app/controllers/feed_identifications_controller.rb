@@ -180,10 +180,10 @@ class FeedIdentificationsController < ApplicationController
     expanded_form(edit_feed, attempted_url: attempted_url, source_error: error)
   end
 
-  def identification_error(error:, url: raw_url, prompt: nil)
-    return edit_form(attempted_url: url, error: error) if editing?
+  def identification_error(error:, prompt: nil)
+    return edit_form(attempted_url: raw_url, error: error) if editing?
 
-    entry_form(url: url, prompt: prompt, error: error)
+    entry_form(url: raw_url, prompt: prompt, error: error)
   end
 
   # Terminal: reachable, but no profile reads it. Creation offers the AI
