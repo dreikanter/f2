@@ -34,7 +34,7 @@ class User < ApplicationRecord
   validate :both_emails_are_globally_unique
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
-  normalizes :unconfirmed_email, with: ->(e) { e&.strip&.downcase }
+  normalizes :unconfirmed_email, with: ->(e) { e.strip.downcase }
   normalizes :name, with: ->(n) { n.strip }
 
   before_save :set_password_updated_at, if: :will_save_change_to_password_digest?
