@@ -245,7 +245,7 @@ class FreefeedClient
 
   def parse_whoami_response(body)
     data = JSON.parse(body)
-    user = data.dig("users")
+    user = data["users"]
 
     unless user && user["username"]
       raise Error, "Invalid whoami response format"
@@ -300,7 +300,7 @@ class FreefeedClient
 
   def parse_attachment_response(body)
     data = JSON.parse(body)
-    attachment = data.dig("attachments")
+    attachment = data["attachments"]
 
     unless attachment && attachment["id"]
       raise Error, "Invalid attachment response format"
@@ -320,7 +320,7 @@ class FreefeedClient
 
   def parse_post_response(body)
     data = JSON.parse(body)
-    post = data.dig("posts")
+    post = data["posts"]
 
     unless post && post["id"]
       raise Error, "Invalid post response format"
@@ -340,7 +340,7 @@ class FreefeedClient
 
   def parse_comment_response(body)
     data = JSON.parse(body)
-    comment = data.dig("comments")
+    comment = data["comments"]
 
     unless comment && comment["id"]
       raise Error, "Invalid comment response format"
