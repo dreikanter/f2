@@ -71,7 +71,7 @@ class FeedPreview < ApplicationRecord
   # @return [FeedPreview] self
   def timeout!(run_id:)
     updated = self.class
-                  .where(id: self.id)
+                  .where(id: id)
                   .where(run_id: run_id)
                   .where(status: [:pending, :processing])
                   .update_all(status: :failed, run_id: SecureRandom.uuid, updated_at: Time.current)
