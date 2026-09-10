@@ -2,6 +2,7 @@ require "test_helper"
 
 class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
   include FixtureFeedEntries
+  include DnsTestHelper
 
   PAGE_URL = "https://www.bunicomic.com/comic/buni-1983/".freeze
 
@@ -23,34 +24,16 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
     entry = feed_entry(0)
 
     normalizer = Normalizer::BuniNormalizer.new(entry)
-    post = normalizer.normalize
+    post = stub_dns { normalizer.normalize }
 
     assert_matches_snapshot(post.normalized_attributes, snapshot: "#{fixture_dir}/normalized.json")
-  end
-
-  test "#normalize should attach the full-size comic image from the page" do
-    stub_comic_page
-    entry = feed_entry(0)
-
-    post = Normalizer::BuniNormalizer.new(entry).normalize
-
-    assert_equal ["https://www.bunicomic.com/wp-content/uploads/2026/06/2026-06-10-Buni.jpg"], post.attachment_urls
-  end
-
-  test "#normalize should use the image alt text as post content" do
-    stub_comic_page
-    entry = feed_entry(0)
-
-    post = Normalizer::BuniNormalizer.new(entry).normalize
-
-    assert_equal "To eat or not to eat that last slice - #{PAGE_URL}", post.content
   end
 
   test "#normalize should reject the post when the comic page is unavailable" do
     stub_request(:get, PAGE_URL).to_return(status: 404)
     entry = feed_entry(0)
 
-    post = Normalizer::BuniNormalizer.new(entry).normalize
+    post = stub_dns { Normalizer::BuniNormalizer.new(entry).normalize }
 
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "missing_images"
@@ -62,7 +45,7 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
     entry = feed_entry(0)
     reported = []
     Rails.error.stub(:report, ->(error, **options) { reported << [error, options] }) do
-      post = Normalizer::BuniNormalizer.new(entry).normalize
+      post = stub_dns { Normalizer::BuniNormalizer.new(entry).normalize }
       assert_equal "rejected", post.status
       assert_includes post.validation_errors, "missing_images"
     end
@@ -74,19 +57,32 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
     assert_requested :get, PAGE_URL, times: 1
   end
 
-  test "#normalize should report a missing comic image even when a successful page is empty" do
+  test "#normalize should report a missing comic image when the successful response is empty" do
+    stub_request(:get, PAGE_URL).to_return(status: 200, body: "")
     entry = feed_entry(0)
-    ["", "<html><body><div id='comic'></div></body></html>"].each do |body|
-      stub_request(:get, PAGE_URL).to_return(status: 200, body: body)
-      reported = []
-      Rails.error.stub(:report, ->(error, **) { reported << error }) do
-        post = Normalizer::BuniNormalizer.new(entry).normalize
-        assert_includes post.validation_errors, "missing_images"
-      end
+    reported = []
 
-      assert_equal 1, reported.size
-      assert_match(/comic image missing/, reported.first.message)
+    Rails.error.stub(:report, ->(error, **) { reported << error }) do
+      post = stub_dns { Normalizer::BuniNormalizer.new(entry).normalize }
+      assert_includes post.validation_errors, "missing_images"
     end
+
+    assert_equal 1, reported.size
+    assert_match(/comic image missing/, reported.first.message)
+  end
+
+  test "#normalize should report a missing comic image when the page has no comic" do
+    stub_request(:get, PAGE_URL).to_return(status: 200, body: "<html><body><div id='comic'></div></body></html>")
+    entry = feed_entry(0)
+    reported = []
+
+    Rails.error.stub(:report, ->(error, **) { reported << error }) do
+      post = stub_dns { Normalizer::BuniNormalizer.new(entry).normalize }
+      assert_includes post.validation_errors, "missing_images"
+    end
+
+    assert_equal 1, reported.size
+    assert_match(/comic image missing/, reported.first.message)
   end
 
   test "#normalize should add a Webtoons comment when the entry links to Webtoons" do
@@ -108,7 +104,7 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
     stub_request(:get, webtoons_url)
       .to_return(status: 200, body: '<html><body><div class="entry"><img srcset="https://cdn.webtoons.com/img.jpg 1x" src="https://cdn.webtoons.com/img.jpg" /></div></body></html>')
 
-    post = Normalizer::BuniNormalizer.new(entry).normalize
+    post = stub_dns { Normalizer::BuniNormalizer.new(entry).normalize }
 
     assert_includes post.comments, "Check out today's comic on Webtoons: #{webtoons_url}"
     assert_equal ["https://cdn.webtoons.com/img.jpg"], post.attachment_urls
@@ -132,7 +128,7 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
     stub_request(:get, PAGE_URL)
       .to_return(status: 200, body: file_fixture("#{fixture_dir}/page.html").read)
 
-    post = Normalizer::BuniNormalizer.new(entry).normalize
+    post = stub_dns { Normalizer::BuniNormalizer.new(entry).normalize }
 
     assert_empty post.comments
   end

@@ -2,6 +2,7 @@ require "test_helper"
 
 class Normalizer::PluralisticNormalizerTest < ActiveSupport::TestCase
   include FixtureFeedEntries
+  include DnsTestHelper
 
   def fixture_dir
     "feeds/pluralistic"
@@ -20,25 +21,9 @@ class Normalizer::PluralisticNormalizerTest < ActiveSupport::TestCase
     entry = feed_entry(0)
 
     normalizer = Normalizer::PluralisticNormalizer.new(entry)
-    post = normalizer.normalize
+    post = stub_dns { normalizer.normalize }
 
     assert_matches_snapshot(post.normalized_attributes, snapshot: "#{fixture_dir}/normalized.json")
-  end
-
-  test "#normalize should rewrite WordPress Photon CDN image URL to direct URL" do
-    entry = feed_entry(0)
-
-    post = Normalizer::PluralisticNormalizer.new(entry).normalize
-
-    assert_equal ["https://craphound.com/images/11Jun2026.jpg?w=840&ssl=1"], post.attachment_urls
-  end
-
-  test "#normalize should use entry title as content" do
-    entry = feed_entry(0)
-
-    post = Normalizer::PluralisticNormalizer.new(entry).normalize
-
-    assert_match "The world has moved on", post.content
   end
 
   test "#normalize should fall back to inherited defaults when page fetch fails" do
@@ -47,7 +32,7 @@ class Normalizer::PluralisticNormalizerTest < ActiveSupport::TestCase
 
     entry = feed_entry(0)
 
-    post = Normalizer::PluralisticNormalizer.new(entry).normalize
+    post = stub_dns { Normalizer::PluralisticNormalizer.new(entry).normalize }
 
     # Falls back to super (images from enclosures/content), which returns []
     # for this fixture entry
@@ -59,7 +44,7 @@ class Normalizer::PluralisticNormalizerTest < ActiveSupport::TestCase
       .to_raise(HttpClient::ConnectionError.new("connection refused"))
     entry = feed_entry(0)
 
-    post = Normalizer::PluralisticNormalizer.new(entry).normalize
+    post = stub_dns { Normalizer::PluralisticNormalizer.new(entry).normalize }
 
     assert_empty post.attachment_urls
   end
@@ -72,7 +57,7 @@ class Normalizer::PluralisticNormalizerTest < ActiveSupport::TestCase
     reported = []
 
     Rails.error.stub(:report, ->(err, **) { reported << err.message }) do
-      Normalizer::PluralisticNormalizer.new(entry).normalize
+      stub_dns { Normalizer::PluralisticNormalizer.new(entry).normalize }
     end
 
     assert reported.any? { |msg| msg.match?(/no <img> found — markup changed/) },

@@ -2,6 +2,7 @@ require "test_helper"
 
 class Normalizer::NextbigfutureNormalizerTest < ActiveSupport::TestCase
   include FixtureFeedEntries
+  include DnsTestHelper
 
   def fixture_dir
     "feeds/nextbigfuture"
@@ -19,35 +20,9 @@ class Normalizer::NextbigfutureNormalizerTest < ActiveSupport::TestCase
   test "#normalize should match the expected normalization result" do
     entry = feed_entry(0)
 
-    post = Normalizer::NextbigfutureNormalizer.new(entry).normalize
+    post = stub_dns { Normalizer::NextbigfutureNormalizer.new(entry).normalize }
 
     assert_matches_snapshot(post.normalized_attributes, snapshot: "#{fixture_dir}/normalized.json")
-  end
-
-  test "#normalize should extract the title as content" do
-    entry = feed_entry(0)
-
-    post = Normalizer::NextbigfutureNormalizer.new(entry).normalize
-
-    assert_includes post.content, "Sample Article One"
-  end
-
-  test "#normalize should include stripped summary as a comment" do
-    entry = feed_entry(0)
-
-    post = Normalizer::NextbigfutureNormalizer.new(entry).normalize
-
-    assert_equal 1, post.comments.size
-    assert_includes post.comments.first, "introductory text about the topic"
-  end
-
-  test "#normalize should fetch the featured image from the article page" do
-    entry = feed_entry(0)
-
-    post = Normalizer::NextbigfutureNormalizer.new(entry).normalize
-
-    assert_equal ["https://example.com/uploads/2025/01/sample-photo.jpg"],
-                 post.attachment_urls
   end
 
   test "#normalize should return no attachments when page fetch fails" do
@@ -56,7 +31,7 @@ class Normalizer::NextbigfutureNormalizerTest < ActiveSupport::TestCase
 
     entry = feed_entry(0)
 
-    post = Normalizer::NextbigfutureNormalizer.new(entry).normalize
+    post = stub_dns { Normalizer::NextbigfutureNormalizer.new(entry).normalize }
 
     assert_equal [], post.attachment_urls
   end

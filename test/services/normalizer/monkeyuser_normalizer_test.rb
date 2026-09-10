@@ -2,6 +2,7 @@ require "test_helper"
 
 class Normalizer::MonkeyuserNormalizerTest < ActiveSupport::TestCase
   include FixtureFeedEntries
+  include DnsTestHelper
 
   def fixture_dir
     "feeds/monkeyuser"
@@ -21,34 +22,16 @@ class Normalizer::MonkeyuserNormalizerTest < ActiveSupport::TestCase
     entry = feed_entry(0)
 
     normalizer = Normalizer::MonkeyuserNormalizer.new(entry)
-    post = normalizer.normalize
+    post = stub_dns { normalizer.normalize }
 
     assert_matches_snapshot(post.normalized_attributes, snapshot: "#{fixture_dir}/normalized.json")
-  end
-
-  test "#normalize should attach the comic image with an absolutized URL" do
-    stub_comic_page
-    entry = feed_entry(0)
-
-    post = Normalizer::MonkeyuserNormalizer.new(entry).normalize
-
-    assert_equal ["https://www.monkeyuser.com/2025/sample-one/sample-image.png"], post.attachment_urls
-  end
-
-  test "#normalize should add the comic hovertext as a comment" do
-    stub_comic_page
-    entry = feed_entry(0)
-
-    post = Normalizer::MonkeyuserNormalizer.new(entry).normalize
-
-    assert_equal ["Sample hover text."], post.comments
   end
 
   test "#normalize should reject the post when the comic page is unavailable" do
     stub_request(:get, "https://www.monkeyuser.com/2025/sample-one/").to_return(status: 500)
     entry = feed_entry(0)
 
-    post = Normalizer::MonkeyuserNormalizer.new(entry).normalize
+    post = stub_dns { Normalizer::MonkeyuserNormalizer.new(entry).normalize }
 
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "missing_images"
@@ -61,7 +44,7 @@ class Normalizer::MonkeyuserNormalizerTest < ActiveSupport::TestCase
       .to_raise(Faraday::ConnectionFailed.new("connection refused"))
     entry = feed_entry(0)
 
-    post = Normalizer::MonkeyuserNormalizer.new(entry).normalize
+    post = stub_dns { Normalizer::MonkeyuserNormalizer.new(entry).normalize }
 
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "missing_images"
@@ -74,7 +57,7 @@ class Normalizer::MonkeyuserNormalizerTest < ActiveSupport::TestCase
       HTML
     entry = feed_entry(0)
 
-    post = Normalizer::MonkeyuserNormalizer.new(entry).normalize
+    post = stub_dns { Normalizer::MonkeyuserNormalizer.new(entry).normalize }
 
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "missing_images"
@@ -84,7 +67,7 @@ class Normalizer::MonkeyuserNormalizerTest < ActiveSupport::TestCase
     stub_request(:get, "https://www.monkeyuser.com/2025/sample-one/")
       .to_return(body: '<div class="comic"><div class="video-container"><div id="sample12345"></div></div></div>')
 
-    post = Normalizer::MonkeyuserNormalizer.new(feed_entry(0)).normalize
+    post = stub_dns { Normalizer::MonkeyuserNormalizer.new(feed_entry(0)).normalize }
 
     assert_equal "enqueued", post.status
     assert_empty post.attachment_urls
@@ -102,7 +85,7 @@ class Normalizer::MonkeyuserNormalizerTest < ActiveSupport::TestCase
         </div>
       HTML
 
-    post = Normalizer::MonkeyuserNormalizer.new(feed_entry(0)).normalize
+    post = stub_dns { Normalizer::MonkeyuserNormalizer.new(feed_entry(0)).normalize }
 
     assert_equal "enqueued", post.status
     assert_equal "Sample title one - https://www.monkeyuser.com/2025/sample-one/", post.content
@@ -114,7 +97,7 @@ class Normalizer::MonkeyuserNormalizerTest < ActiveSupport::TestCase
     stub_request(:get, "https://www.monkeyuser.com/2025/sample-one/")
       .to_return(body: '<div class="comic"><div class="video-container"><div id="../invalid"></div></div></div>')
 
-    post = Normalizer::MonkeyuserNormalizer.new(feed_entry(0)).normalize
+    post = stub_dns { Normalizer::MonkeyuserNormalizer.new(feed_entry(0)).normalize }
 
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "missing_images"

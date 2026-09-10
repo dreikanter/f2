@@ -2,6 +2,7 @@ require "test_helper"
 
 class Normalizer::OglafNormalizerTest < ActiveSupport::TestCase
   include FixtureFeedEntries
+  include DnsTestHelper
 
   def fixture_dir
     "feeds/oglaf"
@@ -23,19 +24,9 @@ class Normalizer::OglafNormalizerTest < ActiveSupport::TestCase
     entry = feed_entry(0)
 
     normalizer = Normalizer::OglafNormalizer.new(entry)
-    post = normalizer.normalize
+    post = stub_dns { normalizer.normalize }
 
     assert_matches_snapshot(post.normalized_attributes, snapshot: "#{fixture_dir}/normalized.json")
-  end
-
-  test "#normalize should collect strip images and titles from every story page" do
-    stub_story_pages
-    entry = feed_entry(0)
-
-    post = Normalizer::OglafNormalizer.new(entry).normalize
-
-    assert_equal ["https://media.oglaf.com/comic/sample1.jpg", "https://media.oglaf.com/comic/sample2.jpg"], post.attachment_urls
-    assert_equal ["Sample image title", "Another sample image title"], post.comments
   end
 
   test "#normalize should keep collected pages when a page fetch fails" do
@@ -44,7 +35,7 @@ class Normalizer::OglafNormalizerTest < ActiveSupport::TestCase
     stub_request(:get, "https://www.oglaf.com/sample/2/").to_return(status: 500)
     entry = feed_entry(0)
 
-    post = Normalizer::OglafNormalizer.new(entry).normalize
+    post = stub_dns { Normalizer::OglafNormalizer.new(entry).normalize }
 
     assert_equal ["https://media.oglaf.com/comic/sample1.jpg"], post.attachment_urls
     assert_equal ["Sample image title"], post.comments
@@ -55,7 +46,7 @@ class Normalizer::OglafNormalizerTest < ActiveSupport::TestCase
       .to_raise(Faraday::ConnectionFailed.new("connection refused"))
     entry = feed_entry(0)
 
-    post = Normalizer::OglafNormalizer.new(entry).normalize
+    post = stub_dns { Normalizer::OglafNormalizer.new(entry).normalize }
 
     assert_empty post.attachment_urls
     assert_equal "enqueued", post.status
@@ -71,7 +62,7 @@ class Normalizer::OglafNormalizerTest < ActiveSupport::TestCase
       HTML
     entry = feed_entry(0)
 
-    post = Normalizer::OglafNormalizer.new(entry).normalize
+    post = stub_dns { Normalizer::OglafNormalizer.new(entry).normalize }
 
     assert_equal ["https://media.oglaf.com/comic/sample1.jpg"], post.attachment_urls
     assert_equal "enqueued", post.status
@@ -86,7 +77,7 @@ class Normalizer::OglafNormalizerTest < ActiveSupport::TestCase
     HTML
     entry = feed_entry(1)
 
-    post = Normalizer::OglafNormalizer.new(entry).normalize
+    post = stub_dns { Normalizer::OglafNormalizer.new(entry).normalize }
 
     assert_equal ["https://media.oglaf.com/comic/another.jpg"], post.attachment_urls
     assert_equal "enqueued", post.status
@@ -99,7 +90,7 @@ class Normalizer::OglafNormalizerTest < ActiveSupport::TestCase
     reported = []
 
     Rails.error.stub(:report, ->(err, **kwargs) { reported << [err.message, kwargs] }) do
-      post = Normalizer::OglafNormalizer.new(entry).normalize
+      post = stub_dns { Normalizer::OglafNormalizer.new(entry).normalize }
       assert_empty post.attachment_urls
     end
 

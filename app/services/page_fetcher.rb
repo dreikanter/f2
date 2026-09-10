@@ -8,7 +8,7 @@ class PageFetcher
   def fetch(url)
     return nil if url.blank?
 
-    response = HttpClient.build.get(url)
+    response = HttpClient.build(validate_url: PublicUrl.method(:safe?), pin_public_address: true).get(url)
     return response.body if response.success?
 
     details = context.merge(url: url).map { |key, value| "#{key}=#{value}" }.join(" ")

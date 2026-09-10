@@ -2,6 +2,7 @@ require "test_helper"
 
 class Normalizer::TomorrowsNormalizerTest < ActiveSupport::TestCase
   include FixtureFeedEntries
+  include DnsTestHelper
 
   def fixture_dir
     "feeds/tomorrows"
@@ -20,26 +21,9 @@ class Normalizer::TomorrowsNormalizerTest < ActiveSupport::TestCase
     entry = feed_entry(0)
 
     normalizer = Normalizer::TomorrowsNormalizer.new(entry)
-    post = normalizer.normalize
+    post = stub_dns { normalizer.normalize }
 
     assert_matches_snapshot(post.normalized_attributes, snapshot: "#{fixture_dir}/normalized.json")
-  end
-
-  test "#normalize should use the entry title as content" do
-    entry = feed_entry(0)
-
-    post = Normalizer::TomorrowsNormalizer.new(entry).normalize
-
-    assert_equal "The Black Cube - https://365tomorrows.com/2026/06/10/the-black-cube/", post.content
-  end
-
-  test "#normalize should include story text as a comment" do
-    entry = feed_entry(0)
-
-    post = Normalizer::TomorrowsNormalizer.new(entry).normalize
-
-    assert_equal 1, post.comments.size
-    assert_includes post.comments.first, "There was a moment, in his dream"
   end
 
   test "#normalize should fall back to feed summary when page fetch fails" do
@@ -47,7 +31,7 @@ class Normalizer::TomorrowsNormalizerTest < ActiveSupport::TestCase
       .to_return(status: 503)
 
     entry = feed_entry(0)
-    post = Normalizer::TomorrowsNormalizer.new(entry).normalize
+    post = stub_dns { Normalizer::TomorrowsNormalizer.new(entry).normalize }
 
     assert_equal 1, post.comments.size
     assert_includes post.comments.first, "Author: Bill Cox"
@@ -60,7 +44,7 @@ class Normalizer::TomorrowsNormalizerTest < ActiveSupport::TestCase
     entry = feed_entry(0)
     reported = []
     Rails.error.stub(:report, ->(err, **) { reported << err }) do
-      Normalizer::TomorrowsNormalizer.new(entry).normalize
+      stub_dns { Normalizer::TomorrowsNormalizer.new(entry).normalize }
     end
 
     assert reported.any? { |e| e.message.include?(".entry-content missing") },
@@ -74,7 +58,7 @@ class Normalizer::TomorrowsNormalizerTest < ActiveSupport::TestCase
     entry = feed_entry(0)
     reported = []
     Rails.error.stub(:report, ->(err, **) { reported << err }) do
-      Normalizer::TomorrowsNormalizer.new(entry).normalize
+      stub_dns { Normalizer::TomorrowsNormalizer.new(entry).normalize }
     end
 
     assert_empty reported, "should not report transient HTTP failures to Rails.error"
