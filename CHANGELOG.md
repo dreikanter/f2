@@ -5,6 +5,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-09-10
 
 - Added a WordPress RSS profile that keeps post titles, captions, and body images without redundant sharing thumbnails.
+
+- Added a Tumblr profile that preserves captions, image descriptions, and all panels at their largest advertised resolution.
 - RSS and Atom posts retain their titles, prefer full content over summaries, and preserve paragraph breaks and link destinations.
 
 ## 2026-09-09
