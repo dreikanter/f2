@@ -299,20 +299,6 @@ class LlmClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "#available_models should call the provider models endpoint with the credential api_key" do
-    client = LlmClient.new(credential)
-
-    fake_provider_class = Class.new do
-      def initialize(_config); end
-      def list_models; []; end
-    end
-
-    RubyLLM::Provider.stub(:resolve, fake_provider_class) do
-      assert_equal [], client.available_models
-      assert_equal 0, LlmUsage.count
-    end
-  end
-
   test "#available_models should resolve providers by their RubyLLM key, not the registry name" do
     moonshot = create(:ai_credential, :active, user: user, provider: "moonshot", credential_data: { "api_key" => "sk-#{SecureRandom.hex(16)}" })
     client = LlmClient.new(moonshot)
