@@ -34,13 +34,16 @@ class AccessTokenDetailTest < ActiveSupport::TestCase
 
   test "#groups_refresh_failed? should reflect the latest terminal run" do
     detail = create(:access_token_detail)
+
+    assert_equal false, detail.groups_refresh_failed?
+
     create(:operation_run, subject: detail, kind: :groups_refresh, status: :failed, finished_at: Time.current)
 
-    assert detail.groups_refresh_failed?
+    assert_equal true, detail.groups_refresh_failed?
 
     create(:operation_run, subject: detail, kind: :groups_refresh, status: :succeeded, finished_at: Time.current)
 
-    assert_not detail.groups_refresh_failed?
+    assert_equal false, detail.groups_refresh_failed?
   end
 
   test "#start_groups_refresh! should persist and schedule a worker and timeout for one run" do

@@ -37,7 +37,7 @@ class AccessTokens::GroupsRefreshesController < ApplicationController
   end
 
   def render_fragment(refreshing:)
-    failed = !refreshing && !!access_token.access_token_detail&.groups_refresh_failed?
+    failed = !refreshing && detail.groups_refresh_failed?
 
     if params[:context] == "feed_form"
       render turbo_stream: turbo_stream.replace(
