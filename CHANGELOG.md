@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-10
 
+- Added a Hacker News Best feed for stories with more than 300 points, including source links and discussion links.
 - Add an Atlantic Photos profile that keeps gallery introductions, captions, and photographer credits.
 - Feed posts keep the first 20 images and log a warning for images omitted due to FreeFeed's attachment limit.
 - Added a WordPress RSS profile that keeps post titles, captions, and body images without redundant sharing thumbnails.

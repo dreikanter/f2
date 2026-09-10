@@ -8,6 +8,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       "bluesky",
       "buni",
       "elementy",
+      "hackernews",
       "json_feed",
       "litterbox",
       "llm",

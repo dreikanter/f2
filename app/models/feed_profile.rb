@@ -109,6 +109,19 @@ class FeedProfile
       normalizer: { class: "Normalizer::AtlanticPhotosNormalizer", config: {} },
       title_extractor: "TitleExtractor::RssTitleExtractor"
     },
+    "hackernews" => {
+      display_name: "Hacker News Best",
+      description: "Best Hacker News stories with more than 300 points",
+      input_shape: :url,
+      depends_on_ai: false,
+      scheduled: true,
+      matcher: "ProfileMatcher::HackernewsProfileMatcher",
+      parameter_schema: URL_PARAMETER_SCHEMA,
+      loader: { class: "Loader::HackernewsLoader", config: {} },
+      processor: { class: "Processor::HackernewsProcessor", config: {} },
+      normalizer: { class: "Normalizer::HackernewsNormalizer", config: {} },
+      title_extractor: "TitleExtractor::HackernewsTitleExtractor"
+    },
     "json_feed" => {
       display_name: "JSON Feed",
       description: "Posts from a site's JSON feed (jsonfeed.org)",
