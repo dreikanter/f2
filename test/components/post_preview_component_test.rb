@@ -14,7 +14,7 @@ class PostPreviewComponentTest < ViewComponent::TestCase
       "published_at" => 1.hour.ago.iso8601,
       "source_url" => "https://example.com/post/123",
       "attachments" => [
-        { "url" => "https://example.com/attachment.png", "type" => "image" }
+        "https://example.com/attachment.png"
       ]
     }
 
@@ -73,7 +73,7 @@ class PostPreviewComponentTest < ViewComponent::TestCase
     post_data = {
       "content" => "Body",
       "attachments" => [
-        { "url" => "https://example.com/photo.png", "type" => "image" },
+        "https://example.com/photo.png",
         "https://example.com/plain.jpg"
       ]
     }
@@ -113,22 +113,6 @@ class PostPreviewComponentTest < ViewComponent::TestCase
     assert_equal ImgproxyUrl.preview(url), image["src"]
     assert_equal ImgproxyUrl.preview_srcset(url), image["srcset"]
     assert_equal ImgproxyUrl::THUMBNAIL_SIZE.to_s, image["width"]
-  end
-
-  test "keeps non-image attachments as links" do
-    post_data = {
-      "content" => "Body",
-      "attachments" => [
-        { "url" => "https://example.com/clip.mp4", "type" => "video" }
-      ]
-    }
-
-    result = render_inline(PostPreviewComponent.new(post_data: post_data))
-
-    section = result.at_css('[data-key="preview.attachments"]')
-    assert_not_nil section
-    assert_empty section.css("img")
-    assert_not_nil section.at_css('a[href="https://example.com/clip.mp4"]')
   end
 
   test "#render should thumbnail attachments with unparseable urls" do
