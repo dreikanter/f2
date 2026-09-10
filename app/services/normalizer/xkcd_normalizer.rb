@@ -14,7 +14,10 @@ module Normalizer
     end
 
     def normalize_attachment_urls
-      main_image&.[]("src") ? [main_image["src"]] : []
+      page = page_fetcher.fetch(source_url)
+      image_url = page && Nokogiri::HTML(page).at_css('meta[property="og:image"]')&.[]("content")
+      image_url = main_image&.[]("src") unless PublicUrl.safe?(image_url)
+      [image_url].compact
     end
 
     def main_image

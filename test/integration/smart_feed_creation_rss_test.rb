@@ -3,6 +3,7 @@ require "test_helper"
 # Integration test for User Story 1 (RSS happy path).
 # Walks paste → detection → preview cache → save → enabled feed.
 class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
+  include DnsTestHelper
   include ActiveJob::TestHelper
 
   setup { clear_enqueued_jobs }
@@ -94,6 +95,7 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
   end
 
   test "#post should rank XKCD profile above generic RSS for an xkcd.com URL" do
+    stub_request(:get, %r{http://example.com/post\d+}).to_return(status: 404)
     sign_in_as(user)
     xkcd_url = "https://xkcd.com/"
     stub_request(:get, xkcd_url)
@@ -101,7 +103,7 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
 
     with_memory_cache do
       post feed_identifications_path, params: { url: xkcd_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-      perform_enqueued_jobs
+      stub_dns { perform_enqueued_jobs }
 
       get feed_identifications_path, params: { url: xkcd_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
