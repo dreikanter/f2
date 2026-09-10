@@ -23,7 +23,9 @@ class AccessTokenDetail < ApplicationRecord
 
   def groups_refresh_failed?
     run = latest_operation_run(:groups_refresh)
-    run&.status.in?(%w[failed timed_out]) && run.finished_at.present? && run.finished_at >= updated_at
+    return false unless run
+
+    run.status.in?(%w[failed timed_out]) && run.finished_at.present? && run.finished_at >= updated_at
   end
 
   # @return [AccessTokenDetail] self, persisted with a new run
