@@ -1,6 +1,3 @@
-# Public API ingress for creating posts in webhook-backed feeds. Each request
-# creates at most one post and enters the standard normalization and publishing
-# pipeline. This API-only controller has no session, browser, CSRF, or HTML surface.
 class Api::V1::PostsController < ActionController::API
   wrap_parameters false
 

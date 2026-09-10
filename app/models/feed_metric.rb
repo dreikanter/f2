@@ -14,12 +14,10 @@ class FeedMetric < ApplicationRecord
     joins(:feed).where(feeds: { user_id: user.id })
   }
 
-  # Record metrics for a specific date (upsert)
-  # Only creates a record if there's actual activity (sparse data)
-  # @param feed [Feed] the feed to record metrics for
-  # @param date [Date] the date to record metrics for
-  # @param posts_count [Integer] number of posts imported
-  # @param invalid_posts_count [Integer] number of invalid posts
+  # @param feed [Feed] source feed
+  # @param date [Date] activity date
+  # @param posts_count [Integer] imported post count
+  # @param invalid_posts_count [Integer] invalid post count
   def self.record(feed:, date:, posts_count: 0, invalid_posts_count: 0)
     return if posts_count.zero? && invalid_posts_count.zero?
 
