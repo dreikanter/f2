@@ -47,15 +47,18 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
     assert_nil schedule.reload.last_run_at
   end
 
-  test ".perform_now should handle concurrent updates with optimistic locking" do
+  test ".perform_now should not claim a schedule already advanced by another invocation" do
     feed = create(:feed, :enabled)
-    schedule = create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
+    create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
+    stale_feed = Feed.due.includes(:feed_schedule).find(feed.id)
+    first_invocation = FeedSchedulerJob.new
 
-    # Simulate another process updating the schedule
-    FeedSchedule.where(id: schedule.id).update_all(next_run_at: 1.hour.from_now)
-
-    assert_no_enqueued_jobs(only: FeedRefreshJob) do
+    assert_enqueued_jobs 1, only: FeedRefreshJob do
       FeedSchedulerJob.perform_now
+      claimed_schedule = feed.reload.feed_schedule.attributes
+
+      assert_not first_invocation.send(:refresh?, stale_feed)
+      assert_equal claimed_schedule, feed.feed_schedule.reload.attributes
     end
   end
 
