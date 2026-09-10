@@ -78,7 +78,6 @@ class FeedRefreshWorkflow
 
   # Existing references retain partial spend from a process that died.
   def interrupt_abandoned_event(event)
-    link_legacy_llm_usages(event) unless event.metadata["llm_usage_references"]
     usage_rows = llm_usage_rows(event)
     search_event_ids = event.event_references.where(reference_type: "Event").pluck(:reference_id)
     stats_updates = {}
@@ -96,23 +95,6 @@ class FeedRefreshWorkflow
     event.update!(level: :debug, metadata: metadata)
   end
 
-  # Only events written before immediate usage linking need the old timestamp
-  # fallback. Never take usage that already belongs to another event.
-  def link_legacy_llm_usages(event)
-    run_started_at = begin
-      Time.zone.parse(event.metadata.dig("stats", "started_at").to_s)
-    rescue ArgumentError
-      nil
-    end
-    return unless run_started_at
-
-    linked_ids = EventReference.where(reference_type: "LlmUsage").select(:reference_id)
-    feed.llm_usages.scheduled_run.where(started_at: run_started_at..)
-        .where.not(id: linked_ids).find_each do |usage|
-      event.event_references.create!(reference: usage)
-    end
-  end
-
   # The in-flight record is user-visible and ephemeral: completion or failure
   # deletes it and creates the permanent outcome event in its place, so each
   # run leaves exactly one lasting record.
@@ -122,7 +104,7 @@ class FeedRefreshWorkflow
       level: :info,
       subject: feed,
       user: feed.user,
-      metadata: { status: "started", stats: stats, llm_usage_references: true }
+      metadata: { status: "started", stats: stats }
     )
   end
 

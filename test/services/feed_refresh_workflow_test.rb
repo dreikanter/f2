@@ -727,7 +727,6 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "started", in_flight_event.metadata["status"]
     assert_equal "info", in_flight_event.level, "the in-flight record should be user-visible"
     assert in_flight_event.metadata["stats"]["started_at"].present?
-    assert in_flight_event.metadata["llm_usage_references"]
 
     assert_not Event.exists?(in_flight_event.id), "the started event should be deleted on completion"
 
@@ -774,7 +773,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
                  "the rest of the abandoned event's metadata stays intact"
   end
 
-  test "#execute should attach the dead run's LLM usage to its interrupted event" do
+  test "#execute should retain the dead run's LLM cost on its interrupted event" do
     test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml", feed_profile_key: "rss")
     WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
 
@@ -785,14 +784,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       user: test_feed.user,
       metadata: { status: "started", stats: { started_at: 10.minutes.ago.iso8601 } }
     )
-    create(:llm_usage, user: test_feed.user, feed: test_feed, started_at: 11.minutes.ago,
-                       cost_estimate_cents: 7)
     dead_run_usage = create(:llm_usage, user: test_feed.user, feed: test_feed,
                             started_at: 9.minutes.ago, cost_estimate_cents: 40)
-    other_event = Event.create!(type: "feed_refresh", level: :debug, subject: test_feed, user: test_feed.user,
-                                metadata: { status: "interrupted" })
-    other_usage = create(:llm_usage, user: test_feed.user, feed: test_feed, started_at: 9.minutes.ago)
-    other_event.event_references.create!(reference: other_usage)
+    abandoned.event_references.create!(reference: dead_run_usage)
 
     FeedRefreshWorkflow.new(test_feed).execute
 
@@ -800,9 +794,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "interrupted", abandoned.metadata["status"]
     assert_equal 1, abandoned.metadata.dig("stats", "llm_calls")
     assert_equal 40, abandoned.metadata.dig("stats", "llm_cost_cents")
-    assert_equal [dead_run_usage], abandoned.references,
-                 "only the dead run's unlinked rows attach"
-    assert_equal [other_usage], other_event.references
+    assert_equal [dead_run_usage], abandoned.references
 
     completed = Event.where(subject: test_feed, type: "feed_refresh")
                      .where("metadata ->> 'status' = 'completed'").sole
@@ -811,11 +803,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_empty completed.event_references
   end
 
-  test "#execute should interrupt new events using only their linked usage" do
+  test "#execute should interrupt events using only their linked usage" do
     test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml", feed_profile_key: "rss")
     stub_request(:get, test_feed.url).to_return(body: empty_rss)
     abandoned = Event.create!(type: "feed_refresh", level: :info, subject: test_feed, user: test_feed.user,
-                              metadata: { status: "started", llm_usage_references: true,
+                              metadata: { status: "started",
                                           stats: { started_at: 10.minutes.ago.iso8601 } })
     linked = create(:llm_usage, user: test_feed.user, feed: test_feed, cost_estimate_cents: nil)
     reference = abandoned.event_references.create!(reference: linked)
@@ -830,11 +822,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal [linked], abandoned.references
   end
 
-  test "#execute should not recover unrelated usage for a new event without LLM calls" do
+  test "#execute should not attribute unlinked usage to an interrupted event" do
     test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml", feed_profile_key: "rss")
     stub_request(:get, test_feed.url).to_return(body: empty_rss)
     abandoned = Event.create!(type: "feed_refresh", level: :info, subject: test_feed, user: test_feed.user,
-                              metadata: { status: "started", llm_usage_references: true,
+                              metadata: { status: "started",
                                           stats: { started_at: 10.minutes.ago.iso8601 } })
     create(:llm_usage, user: test_feed.user, feed: test_feed)
 
