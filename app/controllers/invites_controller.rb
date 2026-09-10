@@ -44,9 +44,10 @@ class InvitesController < ApplicationController
   end
 
   def invite_stats
+    stats = UserStats.new(Current.user)
     {
-      remaining_invites_count: [0, available_invites_count - created_invites.count].max,
-      invited_users_count: created_invites.where.not(invited_user_id: nil).count
+      remaining_invites_count: stats.remaining_invites_count,
+      invited_users_count: stats.invited_users_count
     }
   end
 
