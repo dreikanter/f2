@@ -5,8 +5,6 @@ module Normalizer
   class Base
     include HtmlTextUtils
 
-    MAX_ATTACHMENTS = 20
-
     # @param feed_entry [FeedEntry] the feed entry to normalize
     def initialize(feed_entry)
       @feed_entry = feed_entry
@@ -75,12 +73,7 @@ module Normalizer
     # a feed's `<img src="/etc/passwd">`) from reaching FileBuffer at publish,
     # where File.exist? would read it off the server (LFI).
     def attachment_urls
-      return @attachment_urls if @attachment_urls
-
-      urls = normalize_attachment_urls.select { |url| PublicUrl.safe?(url) }
-      skipped = urls.size - MAX_ATTACHMENTS
-      Rails.logger.warn "#{skipped}/#{urls.size} attachments skipped: FreeFeed limit" if skipped.positive?
-      @attachment_urls = urls.first(MAX_ATTACHMENTS)
+      @attachment_urls ||= normalize_attachment_urls.select { |url| PublicUrl.safe?(url) }
     end
 
     def comments

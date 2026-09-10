@@ -2,6 +2,8 @@
 # Handles attachment uploads, post creation, and comment creation.
 #
 class FreefeedPublisher
+  MAX_ATTACHMENTS = 20
+
   class Error < StandardError; end
   class ValidationError < Error; end
   class PublishError < Error; end
@@ -131,7 +133,11 @@ class FreefeedPublisher
   end
 
   def upload_pending_attachments
-    post.attachment_urls.drop(publication.attachments_processed_count).each do |url|
+    urls = post.attachment_urls
+    skipped = urls.size - MAX_ATTACHMENTS
+    Rails.logger.warn "#{skipped}/#{urls.size} attachments skipped: FreeFeed limit (post #{post.id})" if skipped.positive?
+
+    urls.first(MAX_ATTACHMENTS).drop(publication.attachments_processed_count).each do |url|
       attachment_id = upload_attachment(url)
       attachment_ids = publication.uploaded_attachment_ids.dup
       attachment_ids << attachment_id if attachment_id
