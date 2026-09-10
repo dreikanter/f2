@@ -13,7 +13,7 @@ module Normalizer
     # WordPress plugins may advertise a separate sharing thumbnail as an
     # enclosure. The post body carries the actual panels and their order.
     def normalize_attachment_urls
-      inline_images.presence || super
+      dedup_attachment_urls(inline_images).presence || super
     end
   end
 end

@@ -10,7 +10,7 @@ class WordpressFeedTest < ActiveSupport::TestCase
     assert_not ProfileMatcher::WordpressProfileMatcher.new(URL, "<html>WordPress</html>").match?
   end
 
-  test "preview should preserve body panels and a full caption without the sharing thumbnail" do
+  test "preview should deduplicate body panels and preserve their order and full caption without the sharing thumbnail" do
     preview = create(:feed_preview, feed_profile_key: "wordpress", params: { "url" => URL })
     stub_request(:get, URL).to_return(body: source)
 
