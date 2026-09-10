@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-10
 
+- Reddit Atom posts retain their body text and linked article alongside the discussion permalink.
 - Add an Atlantic Photos profile that keeps gallery introductions, captions, and photographer credits.
 - Feed posts keep the first 20 images and log a warning for images omitted due to FreeFeed's attachment limit.
 - Added a WordPress RSS profile that keeps post titles, captions, and body images without redundant sharing thumbnails.
