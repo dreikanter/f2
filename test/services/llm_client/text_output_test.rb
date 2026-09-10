@@ -78,6 +78,131 @@ class LlmClient::TextOutputTest < ActiveSupport::TestCase
     assert_equal "success", LlmUsage.find(result.usage_id).outcome
   end
 
+  test "#call should link successful preview usage before its run finishes" do
+    run_feed = create(:feed, user: credential.user, ai_credential: credential)
+    event = Event.create!(
+      type: "feed_preview",
+      level: :info,
+      subject: run_feed,
+      user: credential.user,
+      metadata: { status: "started" }
+    )
+    @context = LlmClient::CallContext.new(
+      feed: run_feed,
+      profile_key: "llm",
+      stage: :loader,
+      model: "new-unregistered-model",
+      purpose: :preview,
+      refresh_event: event
+    )
+    stub_completions(completion('{"items":[]}'))
+
+    result = call(native_schema: false)
+
+    assert_equal [LlmUsage.find(result.usage_id)], event.references
+    assert_equal "started", event.reload.metadata["status"]
+  end
+
+  test "#call should retain earlier preview usage when a correction fails" do
+    run_feed = create(:feed, user: credential.user, ai_credential: credential)
+    event = Event.create!(
+      type: "feed_preview",
+      level: :info,
+      subject: run_feed,
+      user: credential.user,
+      metadata: { status: "started" }
+    )
+    @context = LlmClient::CallContext.new(
+      feed: run_feed,
+      profile_key: "llm",
+      stage: :loader,
+      model: "new-unregistered-model",
+      purpose: :preview,
+      refresh_event: event
+    )
+    stub_completions(completion('{"wrong":true}'),
+                     rejection(code: "invalid_request", param: "messages", message: "Invalid correction request"))
+
+    assert_raises(LlmClient::ProviderError) { call(native_schema: false) }
+
+    usages = event.references
+    assert_equal ["provider_error", "schema_error"], usages.map(&:outcome).sort
+    assert_equal 20, usages.find(&:schema_error?).input_tokens
+    assert_equal "started", event.reload.metadata["status"]
+  end
+
+  test "#call should link successful scheduled_run usage before its run finishes" do
+    run_feed = create(:feed, user: credential.user, ai_credential: credential)
+    event = Event.create!(
+      type: "feed_refresh",
+      level: :info,
+      subject: run_feed,
+      user: credential.user,
+      metadata: { status: "started" }
+    )
+    @context = LlmClient::CallContext.new(
+      feed: run_feed,
+      profile_key: "llm",
+      stage: :loader,
+      model: "new-unregistered-model",
+      purpose: :scheduled_run,
+      refresh_event: event
+    )
+    stub_completions(completion('{"items":[]}'))
+
+    result = call(native_schema: false)
+
+    assert_equal [LlmUsage.find(result.usage_id)], event.references
+    assert_equal "started", event.reload.metadata["status"]
+  end
+
+  test "#call should retain earlier scheduled_run usage when a correction fails" do
+    run_feed = create(:feed, user: credential.user, ai_credential: credential)
+    event = Event.create!(
+      type: "feed_refresh",
+      level: :info,
+      subject: run_feed,
+      user: credential.user,
+      metadata: { status: "started" }
+    )
+    @context = LlmClient::CallContext.new(
+      feed: run_feed,
+      profile_key: "llm",
+      stage: :loader,
+      model: "new-unregistered-model",
+      purpose: :scheduled_run,
+      refresh_event: event
+    )
+    stub_completions(completion('{"wrong":true}'),
+                     rejection(code: "invalid_request", param: "messages", message: "Invalid correction request"))
+
+    assert_raises(LlmClient::ProviderError) { call(native_schema: false) }
+
+    usages = event.references
+    assert_equal ["provider_error", "schema_error"], usages.map(&:outcome).sort
+    assert_equal 20, usages.find(&:schema_error?).input_tokens
+    assert_equal "started", event.reload.metadata["status"]
+  end
+
+  test "#call should roll back usage when linking its run fails" do
+    run_feed = create(:feed, user: credential.user, ai_credential: credential)
+    event = Event.create!(type: "feed_refresh", level: :info, subject: run_feed, user: credential.user)
+    @context = LlmClient::CallContext.new(
+      feed: run_feed,
+      profile_key: "llm",
+      stage: :loader,
+      model: "new-unregistered-model",
+      refresh_event: event
+    )
+    stub_completions(completion('{"items":[]}'))
+
+    event.event_references.stub(:create!, ->(*) { raise ActiveRecord::RecordNotSaved, "Cannot link usage" }) do
+      assert_no_difference("LlmUsage.count") do
+        assert_raises(ActiveRecord::RecordNotSaved) { call(native_schema: false) }
+      end
+    end
+  end
+
   test "#call should send text JSON requests through the other provider transports" do
     [
       ["anthropic", "new-anthropic-model", "https://api.anthropic.com/v1/messages"],

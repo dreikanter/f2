@@ -471,20 +471,33 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "active", credential.reload.state
   end
 
-  def usage_writing_loader(test_feed, rss, cost_cents: 3)
-    loader = Object.new
-    loader.define_singleton_method(:load) do
-      FactoryBot.create(:llm_usage, user: test_feed.user, feed: test_feed,
-                         started_at: Time.current, finished_at: Time.current,
-                         cost_estimate_cents: cost_cents)
-      rss
+  def usage_writing_loader(test_feed, rss, costs: [3], error: nil)
+    lambda do |refresh_event:|
+      loader = Object.new
+      loader.define_singleton_method(:load) do
+        costs.each do |cost|
+          usage = FactoryBot.create(
+            :llm_usage,
+            user: test_feed.user,
+            feed: test_feed,
+            started_at: Time.current,
+            finished_at: Time.current,
+            cost_estimate_cents: cost,
+            outcome: error ? :provider_error : :success
+          )
+          refresh_event.event_references.create!(reference: usage)
+        end
+        raise error if error
+        rss
+      end
+      loader
     end
-    loader
   end
 
-  test "#execute should reference the run's LLM usage on the completed event" do
+  test "#execute should reference only the run's LLM usage even when timestamps overlap" do
+    freeze_time
     test_feed = create(:feed, :enabled, feed_profile_key: "rss")
-    prior_usage = create(:llm_usage, user: test_feed.user, feed: test_feed, started_at: 1.minute.ago)
+    prior_usage = create(:llm_usage, user: test_feed.user, feed: test_feed, started_at: Time.current)
 
     test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss)) do
       FeedRefreshWorkflow.new(test_feed).execute
@@ -502,13 +515,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   test "#execute should reference the run's LLM usage on the failed event" do
     test_feed = create(:feed, :enabled, feed_profile_key: "rss")
 
-    loader = Object.new
-    loader.define_singleton_method(:load) do
-      FactoryBot.create(:llm_usage, user: test_feed.user, feed: test_feed,
-                         started_at: Time.current, finished_at: Time.current,
-                         cost_estimate_cents: 5, outcome: :provider_error)
-      raise LlmClient::ProviderError, "server error"
-    end
+    loader = usage_writing_loader(test_feed, empty_rss, costs: [5], error: LlmClient::ProviderError.new("server error"))
 
     test_feed.stub(:loader_instance, loader) do
       assert_raises(LlmClient::ProviderError) { FeedRefreshWorkflow.new(test_feed).execute }
@@ -525,7 +532,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   test "#execute should not ignore zero-cost LLM calls" do
     test_feed = create(:feed, :enabled, feed_profile_key: "rss")
 
-    test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss, cost_cents: 0)) do
+    test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss, costs: [0])) do
       FeedRefreshWorkflow.new(test_feed).execute
     end
 
@@ -537,18 +544,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
   test "#execute should sum cost across a run's LLM calls" do
     test_feed = create(:feed, :enabled, feed_profile_key: "rss")
-    rss = empty_rss
-
-    loader = Object.new
-    loader.define_singleton_method(:load) do
-      FactoryBot.create(:llm_usage, user: test_feed.user, feed: test_feed,
-                         started_at: Time.current, finished_at: Time.current, cost_estimate_cents: "0.4")
-      FactoryBot.create(:llm_usage, user: test_feed.user, feed: test_feed,
-                         started_at: Time.current, finished_at: Time.current, cost_estimate_cents: "0.4")
-      rss
-    end
-
-    test_feed.stub(:loader_instance, loader) do
+    test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss, costs: ["0.4", "0.4"])) do
       FeedRefreshWorkflow.new(test_feed).execute
     end
 
@@ -557,6 +553,19 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 2, event.metadata.dig("stats", "llm_calls")
     assert_equal 0.8, event.metadata.dig("stats", "llm_cost_cents")
     assert_equal test_feed.llm_usages.to_a, event.references
+  end
+
+  test "#execute should keep the run cost unknown when any linked usage is unpriced" do
+    test_feed = create(:feed, :enabled, feed_profile_key: "rss")
+
+    test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss, costs: [3, nil])) do
+      FeedRefreshWorkflow.new(test_feed).execute
+    end
+
+    event = Event.find_by!(subject: test_feed, type: "feed_refresh")
+    assert_equal 2, event.metadata.dig("stats", "llm_calls")
+    assert_nil event.metadata.dig("stats", "llm_cost_cents")
+    assert_equal 2, event.references.size
   end
 
   test "#execute should record no LLM usage stats for a run without LLM calls" do
@@ -770,7 +779,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
                  "the rest of the abandoned event's metadata stays intact"
   end
 
-  test "#execute should attach the dead run's LLM usage to its interrupted event" do
+  test "#execute should retain the dead run's LLM cost on its interrupted event" do
     test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml", feed_profile_key: "rss")
     WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
 
@@ -781,10 +790,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       user: test_feed.user,
       metadata: { status: "started", stats: { started_at: 10.minutes.ago.iso8601 } }
     )
-    create(:llm_usage, user: test_feed.user, feed: test_feed, started_at: 11.minutes.ago,
-                       cost_estimate_cents: 7)
     dead_run_usage = create(:llm_usage, user: test_feed.user, feed: test_feed,
                             started_at: 9.minutes.ago, cost_estimate_cents: 40)
+    abandoned.event_references.create!(reference: dead_run_usage)
 
     FeedRefreshWorkflow.new(test_feed).execute
 
@@ -792,14 +800,55 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "interrupted", abandoned.metadata["status"]
     assert_equal 1, abandoned.metadata.dig("stats", "llm_calls")
     assert_equal 40, abandoned.metadata.dig("stats", "llm_cost_cents")
-    assert_equal [dead_run_usage], abandoned.references,
-                 "only the dead run's rows attach; an earlier run's row stays out"
+    assert_equal [dead_run_usage], abandoned.references
 
     completed = Event.where(subject: test_feed, type: "feed_refresh")
                      .where("metadata ->> 'status' = 'completed'").sole
     assert_not completed.metadata["stats"].key?("llm_calls"),
                "the sweeping run must not absorb the dead run's spend"
     assert_empty completed.event_references
+  end
+
+  test "#execute should interrupt events using only their linked usage" do
+    test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+    stub_request(:get, test_feed.url).to_return(body: empty_rss)
+    abandoned = Event.create!(
+      type: "feed_refresh",
+      level: :info,
+      subject: test_feed,
+      user: test_feed.user,
+      metadata: { status: "started", stats: { started_at: 10.minutes.ago.iso8601 } }
+    )
+    linked = create(:llm_usage, user: test_feed.user, feed: test_feed, cost_estimate_cents: nil)
+    reference = abandoned.event_references.create!(reference: linked)
+    create(:llm_usage, user: test_feed.user, feed: test_feed, cost_estimate_cents: 99)
+
+    FeedRefreshWorkflow.new(test_feed).execute
+
+    assert_equal "interrupted", abandoned.reload.metadata["status"]
+    assert_equal 1, abandoned.metadata.dig("stats", "llm_calls")
+    assert_nil abandoned.metadata.dig("stats", "llm_cost_cents")
+    assert_equal [reference.id], abandoned.event_references.pluck(:id)
+    assert_equal [linked], abandoned.references
+  end
+
+  test "#execute should not attribute unlinked usage to an interrupted event" do
+    test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+    stub_request(:get, test_feed.url).to_return(body: empty_rss)
+    abandoned = Event.create!(
+      type: "feed_refresh",
+      level: :info,
+      subject: test_feed,
+      user: test_feed.user,
+      metadata: { status: "started", stats: { started_at: 10.minutes.ago.iso8601 } }
+    )
+    create(:llm_usage, user: test_feed.user, feed: test_feed)
+
+    FeedRefreshWorkflow.new(test_feed).execute
+
+    assert_equal "interrupted", abandoned.reload.metadata["status"]
+    assert_not abandoned.metadata.fetch("stats").key?("llm_calls")
+    assert_empty abandoned.references
   end
 
   test "#execute should not touch other feeds' started events" do
@@ -1145,7 +1194,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
   test "#execute should preserve unknown AI cost in completed refresh statistics" do
     test_feed = create(:feed, :enabled, feed_profile_key: "rss")
-    test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss, cost_cents: nil)) do
+    test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss, costs: [nil])) do
       FeedRefreshWorkflow.new(test_feed).execute
     end
     event = Event.find_by!(subject: test_feed, type: "feed_refresh")

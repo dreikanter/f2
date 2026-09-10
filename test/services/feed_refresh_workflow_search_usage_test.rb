@@ -34,6 +34,7 @@ class FeedRefreshWorkflowSearchUsageTest < ActiveSupport::TestCase
   test "completion should transfer search references to the terminal refresh event" do
     started = started_event
     searches = record_searches(started, 2)
+    reference_ids = started.event_references.pluck(:id).sort
 
     workflow_with(started).send(:complete_refresh_event, [])
 
@@ -42,11 +43,14 @@ class FeedRefreshWorkflowSearchUsageTest < ActiveSupport::TestCase
     assert_equal 2, terminal.metadata.dig("stats", "search_calls")
     assert_equal searches.map(&:id).sort, WebSearchUsage.referenced_by(terminal).pluck(:id).sort
     assert_not Event.exists?(started.id)
+    assert_operator terminal.id, :>, started.id
+    assert_equal reference_ids, terminal.event_references.pluck(:id).sort
   end
 
   test "failure should transfer search references to the terminal refresh event" do
     started = started_event
     searches = record_searches(started, 3)
+    reference_ids = started.event_references.pluck(:id).sort
 
     workflow_with(started).send(:fail_refresh_event, StandardError.new("boom"))
 
@@ -55,6 +59,8 @@ class FeedRefreshWorkflowSearchUsageTest < ActiveSupport::TestCase
     assert_equal 3, terminal.metadata.dig("stats", "search_calls")
     assert_equal searches.map(&:id).sort, WebSearchUsage.referenced_by(terminal).pluck(:id).sort
     assert_not Event.exists?(started.id)
+    assert_operator terminal.id, :>, started.id
+    assert_equal reference_ids, terminal.event_references.pluck(:id).sort
   end
 
   test "interruption should retain search references and add the search count" do

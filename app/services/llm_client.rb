@@ -347,32 +347,34 @@ class LlmClient
     # the provider could not supply a complete charge (including BYOK).
     cost = ctx.retrieval["reported_cost_cents"] if ctx.retrieval.key?("reported_cost_cents")
 
-    usage = LlmUsage.create!(
-      user: credential.user,
-      feed: ctx.feed,
-      ai_credential: credential,
-      profile_key: ctx.profile_key,
-      stage: ctx.stage,
-      purpose: ctx.purpose,
-      provider: credential.provider,
-      model: ctx.model,
-      input_tokens: tokens.input_tokens,
-      output_tokens: tokens.output_tokens,
-      cache_write_tokens: tokens.cache_write_tokens,
-      cache_read_tokens: tokens.cache_read_tokens,
-      cost_estimate_cents: cost,
-      retrieval: ctx.retrieval,
-      outcome: outcome,
-      started_at: started_at,
-      finished_at: finished_at,
-      duration_ms: ((finished_at - started_at) * 1000).round,
-      error_message: error_message
-    )
-    # Each preview event links only the attempts made by that run.
-    if ctx.purpose.to_s == "preview" && ctx.refresh_event
-      ctx.refresh_event.event_references.create!(reference: usage)
+    # Keep the usage and its run reference together if the worker stops here.
+    LlmUsage.transaction do
+      usage = LlmUsage.create!(
+        user: credential.user,
+        feed: ctx.feed,
+        ai_credential: credential,
+        profile_key: ctx.profile_key,
+        stage: ctx.stage,
+        purpose: ctx.purpose,
+        provider: credential.provider,
+        model: ctx.model,
+        input_tokens: tokens.input_tokens,
+        output_tokens: tokens.output_tokens,
+        cache_write_tokens: tokens.cache_write_tokens,
+        cache_read_tokens: tokens.cache_read_tokens,
+        cost_estimate_cents: cost,
+        retrieval: ctx.retrieval,
+        outcome: outcome,
+        started_at: started_at,
+        finished_at: finished_at,
+        duration_ms: ((finished_at - started_at) * 1000).round,
+        error_message: error_message
+      )
+      if ctx.refresh_event
+        ctx.refresh_event.event_references.create!(reference: usage)
+      end
+      usage
     end
-    usage
   end
 
   def error_context(ctx)
