@@ -191,10 +191,10 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     images = (1..21).map { |index| "https://example.com/panel-#{index}.jpg" }
     post = post_with_content("Sample gallery", attachment_urls: images, comments: ["Source caption"])
     attachment_ids = (1..20).map { |index| "attachment-#{index}" }
-    downloaded = []
+    downloaded_paths = []
 
     stub_request(:get, %r{https://example.com/panel-\d+\.jpg}).to_return do |request|
-      downloaded << request.uri.to_s
+      downloaded_paths << request.uri.path
       { status: 200, body: "image_data", headers: { "Content-Type" => "image/jpeg" } }
     end
     stub_request(:post, "#{access_token.host}/v1/attachments")
@@ -208,7 +208,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
 
     FreefeedPublisher.new(post).publish
 
-    assert_equal images.first(20), downloaded
+    assert_equal images.first(20).map { |url| URI(url).path }, downloaded_paths
     assert_requested :post, "#{access_token.host}/v1/attachments", times: 20
     assert_requested post_request
     assert_requested comment_request
