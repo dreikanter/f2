@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Sample publication</title>
+    <link>https://example.com/</link>
+    <description>Sample posts</description>
+    <generator>https://wordpress.org/?v=7.1</generator>
+    <item>
+      <title>Sample comic</title>
+      <link>https://example.com/comic</link>
+      <guid isPermaLink="false">https://example.com/?p=123</guid>
+      <pubDate>Wed, 09 Sep 2026 10:00:00 GMT</pubDate>
+      <description>Short summary.</description>
+      <enclosure url="https://example.com/sharing-card.jpg" type="image/jpeg"/>
+      <content:encoded><![CDATA[<p><img src="https://example.com/first.png"><img src="https://example.com/first.png"><img src="https://example.com/second.png"><img src="https://example.com/first.png?t=123"></p><p>Full caption with a <a href="https://example.org/extra">link</a>.</p>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

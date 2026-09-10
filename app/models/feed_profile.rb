@@ -83,6 +83,19 @@ class FeedProfile
       normalizer: { class: "Normalizer::TumblrNormalizer", config: {} },
       title_extractor: "TitleExtractor::RssTitleExtractor"
     },
+    "wordpress" => {
+      display_name: "WordPress RSS",
+      description: "WordPress posts with body images and captions",
+      input_shape: :url,
+      depends_on_ai: false,
+      scheduled: true,
+      matcher: "ProfileMatcher::WordpressProfileMatcher",
+      parameter_schema: URL_PARAMETER_SCHEMA,
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::WordpressNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor"
+    },
     "json_feed" => {
       display_name: "JSON Feed",
       description: "Posts from a site's JSON feed (jsonfeed.org)",
