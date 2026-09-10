@@ -75,17 +75,12 @@ module Normalizer
     # a feed's `<img src="/etc/passwd">`) from reaching FileBuffer at publish,
     # where File.exist? would read it off the server (LFI).
     def attachment_urls
-      @attachment_urls ||= begin
-        urls = normalize_attachment_urls.select { |url| PublicUrl.safe?(url) }
-        skipped = urls.size - MAX_ATTACHMENTS
-        if skipped.positive?
-          Rails.logger.warn(
-            "#{skipped}/#{urls.size} attachments not published because of FreeFeed's #{MAX_ATTACHMENTS}-attachment limit. " \
-            "feed_id=#{feed_entry.feed_id} uid=#{feed_entry.uid}"
-          )
-        end
-        urls.first(MAX_ATTACHMENTS)
-      end
+      return @attachment_urls if @attachment_urls
+
+      urls = normalize_attachment_urls.select { |url| PublicUrl.safe?(url) }
+      skipped = urls.size - MAX_ATTACHMENTS
+      Rails.logger.warn "#{skipped}/#{urls.size} attachments skipped: FreeFeed limit" if skipped.positive?
+      @attachment_urls = urls.first(MAX_ATTACHMENTS)
     end
 
     def comments
