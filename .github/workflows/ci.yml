@@ -10,6 +10,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build_css:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install Yarn
+        run: npm install -g yarn@1.22.21
+
+      - name: Install locked dependencies and build CSS
+        run: |
+          yarn install --frozen-lockfile
+          yarn build:css
+
   scan_ruby:
     runs-on: ubuntu-latest
 

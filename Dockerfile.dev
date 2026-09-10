@@ -53,9 +53,8 @@ COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
 # Install node modules. Baked into the image; compose mounts a named volume over
-# /rails/node_modules so the host bind mount doesn't shadow them. Lenient install
-# (like the production Dockerfile) since the committed yarn.lock can lag package.json.
+# /rails/node_modules so the host bind mount doesn't shadow them.
 COPY package.json yarn.lock ./
-RUN yarn install
+RUN yarn install --frozen-lockfile
 
 CMD ["bash"]
