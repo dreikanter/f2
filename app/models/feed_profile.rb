@@ -109,6 +109,19 @@ class FeedProfile
       normalizer: { class: "Normalizer::AtlanticPhotosNormalizer", config: {} },
       title_extractor: "TitleExtractor::RssTitleExtractor"
     },
+    "lunarbaboon" => {
+      display_name: "Lunarbaboon",
+      description: "Lunarbaboon comics and bonus links",
+      input_shape: :url,
+      depends_on_ai: false,
+      scheduled: true,
+      matcher: "ProfileMatcher::LunarbaboonProfileMatcher",
+      parameter_schema: URL_PARAMETER_SCHEMA,
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::LunarbaboonNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor"
+    },
     "json_feed" => {
       display_name: "JSON Feed",
       description: "Posts from a site's JSON feed (jsonfeed.org)",
