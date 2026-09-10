@@ -1,3 +1,4 @@
+# Page-based navigation over a controller-provided collection.
 module Pagination
   extend ActiveSupport::Concern
 

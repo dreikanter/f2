@@ -47,6 +47,7 @@ module EventStreaming
     render turbo_stream: turbo_stream.replace(events_log_dom_id, events_log_stream_body)
   end
 
+  # Keep a stable replacement target across event log presentations.
   def events_log_dom_id
     EventsListComponent::DOM_ID
   end

@@ -1,3 +1,5 @@
+# Shares sort selection between list queries and their navigation controls.
+# Controllers define the available fields and paths.
 module Sortable
   extend ActiveSupport::Concern
 

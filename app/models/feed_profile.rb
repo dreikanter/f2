@@ -317,6 +317,7 @@ class FeedProfile
       normalizer: { class: "Normalizer::TomorrowsNormalizer", config: {} },
       title_extractor: "TitleExtractor::RssTitleExtractor"
     },
+    # Explicitly selected for requests expressed as free-form prompts.
     "llm" => {
       display_name: "AI",
       description: "Uses AI to follow and transform web content per a free-form prompt",
@@ -420,6 +421,7 @@ class FeedProfile
       normalizer: { class: "Normalizer::BlueskyNormalizer", config: {} },
       title_extractor: "TitleExtractor::BlueskyTitleExtractor"
     },
+    # External senders drive ingestion for this profile.
     "webhook" => {
       display_name: "Webhook",
       description: "Posts sent in from your own scripts through a secret URL",

@@ -1,11 +1,6 @@
-# Shared behavior for the provider credential types (AI and web search). Both
-# wrap a user-owned API key in the same pending → validating → active|inactive
-# lifecycle and name themselves after their provider. Required credentials
-# disable dependent feeds when deactivated or destroyed.
-#
-# Including models declare their provider vocabulary, the event types they
-# record, and their own domain logic; everything else derives from the model
-# name.
+# Shared ownership, encrypted storage, and validation lifecycle for AI and
+# search credentials. Each type supplies its provider-specific rules and events.
+# Required credentials disable dependent feeds when deactivated or removed.
 module ProviderCredential
   extend ActiveSupport::Concern
 

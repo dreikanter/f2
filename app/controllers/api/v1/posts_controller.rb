@@ -1,3 +1,4 @@
+# Accepts externally supplied posts for webhook feeds.
 class Api::V1::PostsController < ActionController::API
   wrap_parameters false
 

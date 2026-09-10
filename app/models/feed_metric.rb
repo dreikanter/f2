@@ -14,6 +14,7 @@ class FeedMetric < ApplicationRecord
     joins(:feed).where(feeds: { user_id: user.id })
   }
 
+  # Keep daily import metrics sparse by recording days with activity.
   # @param feed [Feed] source feed
   # @param date [Date] activity date
   # @param posts_count [Integer] imported post count

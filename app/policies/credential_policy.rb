@@ -1,3 +1,5 @@
+# Shared access rules for AI and search credentials: owners manage their own,
+# and admins can manage credentials across users.
 class CredentialPolicy < ApplicationPolicy
   def index?
     authenticated?
