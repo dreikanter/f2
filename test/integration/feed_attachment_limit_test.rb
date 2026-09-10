@@ -9,12 +9,11 @@ class FeedAttachmentLimitTest < ActiveSupport::TestCase
       "content" => images.map { |url| "<img src='#{url}'>" }.join
     })
 
-    Rails.logger.expects(:warn).with(
-      "1/21 attachments not published because of FreeFeed's 20-attachment limit. " \
-      "feed_id=#{entry.feed_id} uid=#{entry.uid}"
-    ).once
+    post = nil
+    log = capture_log { post = Normalizer::RssNormalizer.new(entry).normalize }
 
-    post = Normalizer::RssNormalizer.new(entry).normalize
+    assert_equal "WARN: 1/21 attachments not published because of FreeFeed's 20-attachment limit. " \
+                 "feed_id=#{entry.feed_id} uid=#{entry.uid}\n", log
 
     assert_equal images.first(20), post.attachment_urls
     assert_empty post.comments
@@ -29,12 +28,11 @@ class FeedAttachmentLimitTest < ActiveSupport::TestCase
       "images" => images,
       "comments" => ["First caption", "Second caption"]
     })
-    Rails.logger.expects(:warn).with(
-      "2/22 attachments not published because of FreeFeed's 20-attachment limit. " \
-      "feed_id=#{entry.feed_id} uid=#{entry.uid}"
-    ).once
+    post = nil
+    log = capture_log { post = Normalizer::WebhookNormalizer.new(entry).normalize }
 
-    post = Normalizer::WebhookNormalizer.new(entry).normalize
+    assert_equal "WARN: 2/22 attachments not published because of FreeFeed's 20-attachment limit. " \
+                 "feed_id=#{entry.feed_id} uid=#{entry.uid}\n", log
 
     assert_equal images.first(20), post.attachment_urls
     assert_equal ["First caption", "Second caption"], post.comments
@@ -48,11 +46,25 @@ class FeedAttachmentLimitTest < ActiveSupport::TestCase
       "enclosures" => [{ "url" => "file:///etc/passwd" }] + images.map { |url| { "url" => url } }
     })
 
-    Rails.logger.expects(:warn).never
+    post = nil
+    log = capture_log { post = Normalizer::RssNormalizer.new(entry).normalize }
 
-    post = Normalizer::RssNormalizer.new(entry).normalize
+    assert_empty log
 
     assert_equal images, post.attachment_urls
     assert_empty post.comments
+  end
+
+  private
+
+  def capture_log
+    io = StringIO.new
+    original = Rails.logger
+    Rails.logger = ActiveSupport::Logger.new(io)
+    Rails.logger.formatter = ->(severity, _time, _progname, message) { "#{severity}: #{message}\n" }
+    yield
+    io.string
+  ensure
+    Rails.logger = original
   end
 end
