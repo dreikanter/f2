@@ -5,6 +5,8 @@ module Normalizer
   class Base
     include HtmlTextUtils
 
+    MAX_ATTACHMENTS = 20
+
     # @param feed_entry [FeedEntry] the feed entry to normalize
     def initialize(feed_entry)
       @feed_entry = feed_entry
@@ -73,11 +75,18 @@ module Normalizer
     # a feed's `<img src="/etc/passwd">`) from reaching FileBuffer at publish,
     # where File.exist? would read it off the server (LFI).
     def attachment_urls
-      @attachment_urls ||= normalize_attachment_urls.select { |url| PublicUrl.safe?(url) }
+      @attachment_urls ||= public_attachment_urls.first(MAX_ATTACHMENTS)
     end
 
     def comments
-      @comments ||= normalize_comments.map { |comment| Post.clamp_comment(comment) }
+      @comments ||= (normalize_comments + public_attachment_urls.drop(MAX_ATTACHMENTS))
+        .map { |comment| Post.clamp_comment(comment) }
+    end
+
+    # FreeFeed caps attachments per post. Retain the remaining images as
+    # links in comments so a large gallery can still be published intact.
+    def public_attachment_urls
+      @public_attachment_urls ||= normalize_attachment_urls.select { |url| PublicUrl.safe?(url) }
     end
 
     def normalize_source_url

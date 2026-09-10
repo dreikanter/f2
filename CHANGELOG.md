@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-10
+
+- Feeds with more than 20 images retain additional image links in comments so large galleries can be published.
+
 ## 2026-09-09
 
 - Feed identification and previews refresh when their feed profile configuration changes.
