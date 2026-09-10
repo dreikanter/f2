@@ -187,6 +187,59 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_not_nil post.reposted_at
   end
 
+  test "#publish should upload only the first 20 attachments and preserve source comments" do
+    images = (1..21).map { |index| "https://example.com/panel-#{index}.jpg" }
+    post = post_with_content("Sample gallery", attachment_urls: images, comments: ["Source caption"])
+    attachment_ids = (1..20).map { |index| "attachment-#{index}" }
+    downloaded_paths = []
+
+    stub_request(:get, %r{https://example.com/panel-\d+\.jpg}).to_return do |request|
+      downloaded_paths << request.uri.path
+      { status: 200, body: "image_data", headers: { "Content-Type" => "image/jpeg" } }
+    end
+    stub_request(:post, "#{access_token.host}/v1/attachments")
+      .to_return(*attachment_ids.map { |id| { status: 201, body: { attachments: { id: id } }.to_json } })
+    post_request = stub_request(:post, "#{access_token.host}/v4/posts")
+      .with(body: { post: { body: "Sample gallery", attachments: attachment_ids }, meta: { feeds: ["testgroup"] } }.to_json)
+      .to_return(status: 201, body: { posts: { id: "gallery-post" } }.to_json)
+    comment_request = stub_request(:post, "#{access_token.host}/v4/comments")
+      .with(body: { comment: { body: "Source caption", postId: "gallery-post" } }.to_json)
+      .to_return(status: 201, body: { comments: { id: "caption-comment" } }.to_json)
+
+    FreefeedPublisher.new(post).publish
+
+    assert_equal images.first(20).map { |url| URI(url).path }, downloaded_paths
+    assert_requested :post, "#{access_token.host}/v1/attachments", times: 20
+    assert_requested post_request
+    assert_requested comment_request
+    assert_requested :post, "#{access_token.host}/v4/comments", times: 1
+    assert_predicate post.reload, :published?
+    assert_equal images, post.attachment_urls
+    assert_equal ["Source caption"], post.comments
+  end
+
+  test "#resume should apply the attachment limit before the upload checkpoint" do
+    images = (1..22).map { |index| "https://example.com/panel-#{index}.jpg" }
+    post = post_with_content("Sample gallery", attachment_urls: images)
+    attachment_ids = (1..20).map { |index| "attachment-#{index}" }
+    post.create_post_publication!(attachments_processed_count: 19, uploaded_attachment_ids: attachment_ids.first(19))
+
+    stub_request(:get, images[19])
+      .to_return(status: 200, body: "image_data", headers: { "Content-Type" => "image/jpeg" })
+    stub_request(:post, "#{access_token.host}/v1/attachments")
+      .to_return(status: 201, body: { attachments: { id: attachment_ids.last } }.to_json)
+    post_request = stub_request(:post, "#{access_token.host}/v4/posts")
+      .with(body: { post: { body: "Sample gallery", attachments: attachment_ids }, meta: { feeds: ["testgroup"] } }.to_json)
+      .to_return(status: 201, body: { posts: { id: "gallery-post" } }.to_json)
+
+    FreefeedPublisher.new(post).resume
+
+    assert_requested :post, "#{access_token.host}/v1/attachments", times: 1
+    assert_requested post_request
+    assert_predicate post.reload, :published?
+    assert_nil post.post_publication
+  end
+
   test "#publish should upload attachments before publishing" do
     file_path = file_fixture("test_image.jpg")
     post = post_with_content("Post with image", attachment_urls: [file_path.to_s])

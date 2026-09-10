@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-10
 
+- Feed posts keep the first 20 images and log a warning for images omitted due to FreeFeed's attachment limit.
 - Added a WordPress RSS profile that keeps post titles, captions, and body images without redundant sharing thumbnails.
 - Added a Tumblr profile that preserves captions, image descriptions, and all panels at their largest advertised resolution.
 - RSS and Atom posts retain their titles, prefer full content over summaries, and preserve paragraph breaks and link destinations.

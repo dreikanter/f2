@@ -20,6 +20,21 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_matches_snapshot(post.normalized_attributes, snapshot: "#{fixture_dir}/normalized.json")
   end
 
+  test "#normalize should retain all safe gallery images for publication" do
+    images = (1..21).map { |index| "https://example.com/panel-#{index}.jpg" }
+    entry = build(:feed_entry, raw_data: {
+      "title" => "Sample gallery",
+      "link" => "https://example.com/gallery",
+      "enclosures" => [{ "url" => "file:///etc/passwd" }] + images.map { |url| { "url" => url } }
+    })
+
+    post = Normalizer::RssNormalizer.new(entry).normalize
+
+    assert_equal images, post.attachment_urls
+    assert_empty post.comments
+    assert_predicate post, :enqueued?
+  end
+
   test "#normalize should include RSS enclosure image in attachment_urls" do
     entry = create(:feed_entry, raw_data: {
       "summary" => "Photo of the day.",
