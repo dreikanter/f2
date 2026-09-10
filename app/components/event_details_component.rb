@@ -14,7 +14,7 @@ class EventDetailsComponent < ViewComponent::Base
   end
 
   def call
-    render(ListComponent.new) do |list|
+    render(DescriptionListComponent.new) do |list|
       items.each { |item| list.with_item(item) }
     end
   end

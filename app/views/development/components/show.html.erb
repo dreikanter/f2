@@ -512,7 +512,7 @@
 
       <div class="space-y-2">
         <p class="<%= caption_classes %>">With stat items</p>
-        <%= render ListComponent.new do |list|
+        <%= render DescriptionListComponent.new do |list|
           list.with_item(StatListItemComponent.new(label: "Total feeds", value: "42"))
           list.with_item(StatListItemComponent.new(label: "Total posts", value: "1,234"))
           list.with_item(StatListItemComponent.new(label: "Active feeds", value: "38"))

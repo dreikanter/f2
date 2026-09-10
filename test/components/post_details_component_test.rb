@@ -11,6 +11,11 @@ class PostDetailsComponentTest < ViewComponent::TestCase
 
     result = render_inline(PostDetailsComponent.new(post: post))
 
+    assert_equal 1, result.css("dl").size
+    assert_empty result.css("ul")
+    assert_not_empty result.css("dl > div > dt")
+    assert_equal result.css("dl > div > dt").size, result.css("dl > div > dd").size
+
     assert_not_nil result.css('[data-key="post.reposted"]').first
     assert_includes result.css('[data-key="post.reposted.label"]').first.text, "Reposted"
   end

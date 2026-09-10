@@ -47,7 +47,7 @@
   <% if @referenced_web_searches.any? %>
     <section class="space-y-4" data-key="events.web_search_usage">
       <%= h2 t("events.web_search_usage.section_title") %>
-      <%= render ListComponent.new do |list| %>
+      <%= render DescriptionListComponent.new do |list| %>
         <% list.with_item(StatListItemComponent.new(
           label: t("events.web_search_usage.calls"),
           value: number_with_delimiter(@referenced_web_searches.count),
