@@ -476,9 +476,15 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       loader = Object.new
       loader.define_singleton_method(:load) do
         costs.each do |cost|
-          usage = FactoryBot.create(:llm_usage, user: test_feed.user, feed: test_feed,
-                                    started_at: Time.current, finished_at: Time.current,
-                                    cost_estimate_cents: cost, outcome: error ? :provider_error : :success)
+          usage = FactoryBot.create(
+            :llm_usage,
+            user: test_feed.user,
+            feed: test_feed,
+            started_at: Time.current,
+            finished_at: Time.current,
+            cost_estimate_cents: cost,
+            outcome: error ? :provider_error : :success
+          )
           refresh_event.event_references.create!(reference: usage)
         end
         raise error if error
@@ -806,9 +812,13 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   test "#execute should interrupt events using only their linked usage" do
     test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml", feed_profile_key: "rss")
     stub_request(:get, test_feed.url).to_return(body: empty_rss)
-    abandoned = Event.create!(type: "feed_refresh", level: :info, subject: test_feed, user: test_feed.user,
-                              metadata: { status: "started",
-                                          stats: { started_at: 10.minutes.ago.iso8601 } })
+    abandoned = Event.create!(
+      type: "feed_refresh",
+      level: :info,
+      subject: test_feed,
+      user: test_feed.user,
+      metadata: { status: "started", stats: { started_at: 10.minutes.ago.iso8601 } }
+    )
     linked = create(:llm_usage, user: test_feed.user, feed: test_feed, cost_estimate_cents: nil)
     reference = abandoned.event_references.create!(reference: linked)
     create(:llm_usage, user: test_feed.user, feed: test_feed, cost_estimate_cents: 99)
@@ -825,9 +835,13 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   test "#execute should not attribute unlinked usage to an interrupted event" do
     test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml", feed_profile_key: "rss")
     stub_request(:get, test_feed.url).to_return(body: empty_rss)
-    abandoned = Event.create!(type: "feed_refresh", level: :info, subject: test_feed, user: test_feed.user,
-                              metadata: { status: "started",
-                                          stats: { started_at: 10.minutes.ago.iso8601 } })
+    abandoned = Event.create!(
+      type: "feed_refresh",
+      level: :info,
+      subject: test_feed,
+      user: test_feed.user,
+      metadata: { status: "started", stats: { started_at: 10.minutes.ago.iso8601 } }
+    )
     create(:llm_usage, user: test_feed.user, feed: test_feed)
 
     FeedRefreshWorkflow.new(test_feed).execute
