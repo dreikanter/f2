@@ -1,0 +1,7 @@
+[
+  {"id": 100001, "type": "story", "score": 301, "time": 1788948000, "title": "Sample article", "url": "https://example.org/article"},
+  {"id": 100002, "type": "story", "score": 300, "time": 1788948001, "title": "At the threshold", "url": "https://example.org/threshold"},
+  {"id": 100003, "type": "story", "score": 302, "time": 1788948002, "title": "Sample discussion"},
+  {"id": 100004, "type": "story", "score": 500, "time": 1788948003, "title": "Removed story", "deleted": true},
+  null
+]
