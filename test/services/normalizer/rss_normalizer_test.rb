@@ -119,7 +119,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
 
     post = Normalizer::RssNormalizer.new(entry).normalize
 
-    assert_equal "Full article body. - https://example.com/article", post.content
+    assert_equal "Article title\n\nFull article body. - https://example.com/article", post.content
   end
 
   test "#normalize should ignore description images when the content has its own" do

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Sample journal</title>
+    <link>https://journal.example.com</link>
+    <description>Sample entries</description>
+    <item>
+      <title>Sample discovery</title>
+      <link>https://journal.example.com/discovery</link>
+      <guid isPermaLink="false">discovery-123</guid>
+      <pubDate>Wed, 09 Sep 2026 12:30:00 +0200</pubDate>
+      <description>Short excerpt.</description>
+      <content:encoded><![CDATA[<p>Full explanation.</p><p>Read the <a href="https://research.example.org/paper">paper</a>.</p><img src="https://journal.example.com/first.png"><img src="https://journal.example.com/second.png">]]></content:encoded>
+    </item>
+  </channel>
+</rss>

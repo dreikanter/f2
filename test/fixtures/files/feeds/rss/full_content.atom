@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Sample essays</title>
+  <id>https://essays.example.org/</id>
+  <updated>2026-09-09T10:30:00Z</updated>
+  <entry>
+    <title>Sample essay</title>
+    <id>urn:sample:essay</id>
+    <link href="https://essays.example.org/essay"/>
+    <published>2026-09-09T10:30:00Z</published>
+    <updated>2026-09-10T10:30:00Z</updated>
+    <summary>Short preview.</summary>
+    <content type="html">&lt;p&gt;First paragraph.&lt;/p&gt;&lt;p&gt;A &lt;a href="https://reference.example.com/"&gt;reference&lt;/a&gt;.&lt;/p&gt;</content>
+  </entry>
+</feed>

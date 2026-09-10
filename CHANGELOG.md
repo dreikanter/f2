@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-10
+
+- RSS and Atom posts retain their titles, prefer full content over summaries, and preserve paragraph breaks and link destinations.
+
 ## 2026-09-09
 
 - Feed identification and previews refresh when their feed profile configuration changes.
