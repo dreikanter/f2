@@ -26,6 +26,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       "tomorrows",
       "twitter",
       "webhook",
+      "wordpress",
       "wumo",
       "xkcd",
       "youtube"
