@@ -4,6 +4,7 @@ class FeedProfileTest < ActiveSupport::TestCase
   test ".all returns list of profile keys" do
     expected = [
       "aerostat",
+      "atlantic_photos",
       "bluesky",
       "buni",
       "elementy",
