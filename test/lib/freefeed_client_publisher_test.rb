@@ -1,10 +1,50 @@
 require "test_helper"
+require "stringio"
 
 class FreefeedClientPublisherTest < ActiveSupport::TestCase
   def setup
     @host = "https://freefeed.net"
     @token = "test_token"
     @client = FreefeedClient.new(host: @host, token: @token)
+  end
+
+  test "#create_attachment_from_io should upload multipart content and returns attachment metadata" do
+    request = stub_request(:post, "#{@host}/v1/attachments")
+      .with(headers: { "Authorization" => "Bearer #{@token}", "Content-Type" => /multipart\/form-data/ }) do |req|
+        req.body.include?('name="file"') && req.body.include?("Content-Type: text/plain") && req.body.include?("sample attachment")
+      end
+      .to_return(status: 201, body: { attachments: {
+        id: "attachment123", url: "https://example.com/attachment.txt", fileName: "attachment.txt",
+        fileSize: 17, mediaType: "text/plain"
+      } }.to_json)
+
+    result = @client.create_attachment_from_io(StringIO.new("sample attachment"), content_type: "text/plain")
+
+    assert_equal({ id: "attachment123", url: "https://example.com/attachment.txt", thumbnail_url: nil,
+                   filename: "attachment.txt", file_size: 17, media_type: "text/plain" }, result)
+    assert_requested request, times: 1
+  end
+
+  test "#create_attachment_from_io should preserve API errors" do
+    stub_request(:post, "#{@host}/v1/attachments")
+      .to_return(status: 400, body: { err: "Unsupported attachment" }.to_json)
+
+    error = assert_raises(FreefeedClient::BadRequestError) do
+      @client.create_attachment_from_io(StringIO.new("sample attachment"), content_type: "text/plain")
+    end
+
+    assert_equal "Unsupported attachment", error.message
+  end
+
+  test "#create_attachment_from_io should preserve the server's payload-too-large message" do
+    stub_request(:post, "#{@host}/v1/attachments")
+      .to_return(status: 413, body: { err: "File exceeds the 10 MB upload limit" }.to_json)
+
+    error = assert_raises(FreefeedClient::PayloadTooLargeError) do
+      @client.create_attachment_from_io(StringIO.new("sample attachment"), content_type: "text/plain")
+    end
+
+    assert_equal "File exceeds the 10 MB upload limit", error.message
   end
 
   test "create_post creates post successfully" do
