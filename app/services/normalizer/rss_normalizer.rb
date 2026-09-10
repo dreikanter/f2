@@ -2,7 +2,7 @@ module Normalizer
   # RSS-specific normalizer for feed entries
   class RssNormalizer < Base
     # Where an entry's text may live, best source first.
-    CONTENT_FIELDS = %w[summary content description title].freeze
+    CONTENT_FIELDS = %w[content summary description].freeze
 
     private
 
@@ -46,11 +46,25 @@ module Normalizer
       validate_url(original_url)
     end
 
-    # An entry whose body is a bare image (comics, photo feeds) strips down to
-    # nothing, so keep walking the chain instead of settling for the first
-    # field that happens to be filled; the title is the last resort.
     def normalize_content
-      CONTENT_FIELDS.lazy.filter_map { |field| strip_html(raw_data[field]).presence }.first || ""
+      title = strip_html(raw_data["title"])
+      body = CONTENT_FIELDS.lazy.filter_map { |field| feed_text(raw_data[field]).presence }.first
+      [title, body].compact_blank.uniq.join("\n\n")
+    end
+
+    def feed_text(html)
+      return "" if html.blank?
+
+      doc = Nokogiri::HTML::DocumentFragment.parse(html)
+      doc.css("a[href]").each do |link|
+        href = link["href"]
+        next unless PublicUrl.safe?(href)
+
+        label = link.text.strip
+        link.content = label.blank? || label == href ? href : "#{label} (#{href})"
+      end
+      doc.css("div, li, blockquote, figure, figcaption").each { |node| node.after("\n") }
+      strip_html_preserving_paragraphs(doc.to_html)
     end
 
     def normalize_attachment_urls

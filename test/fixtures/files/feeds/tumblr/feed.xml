@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Sample comic</title>
+    <link>https://sample.tumblr.com/</link>
+    <description>Sample posts</description>
+    <generator>Tumblr (3.0; @sample)</generator>
+    <item>
+      <title>Sample strip</title>
+      <link>https://sample.tumblr.com/post/123</link>
+      <guid>https://sample.tumblr.com/post/123</guid>
+      <pubDate>Wed, 09 Sep 2026 10:00:00 GMT</pubDate>
+      <description><![CDATA[<figure class="tmblr-full"><img src="https://images.example.com/first-small.png" srcset="https://images.example.com/first-small.png 640w, https://images.example.com/first-large.png 1600w" alt="First panel description"><span class="tmblr-alt-text-helper">ALT</span></figure><figure class="tmblr-full"><img src="https://images.example.com/second.png"></figure><p>Sample strip</p><p>Read the <a href="https://example.org/bonus">bonus</a>.</p>]]></description>
+    </item>
+    <item>
+      <link>https://sample.tumblr.com/post/124</link>
+      <guid>https://sample.tumblr.com/post/124</guid>
+      <pubDate>Thu, 10 Sep 2026 10:00:00 GMT</pubDate>
+      <description><![CDATA[<p class="npf_link"><a href="https://example.org/comic">External comic</a></p>]]></description>
+    </item>
+  </channel>
+</rss>

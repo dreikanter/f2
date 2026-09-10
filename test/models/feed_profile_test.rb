@@ -24,8 +24,10 @@ class FeedProfileTest < ActiveSupport::TestCase
       "telegram",
       "theycantalk",
       "tomorrows",
+      "tumblr",
       "twitter",
       "webhook",
+      "wordpress",
       "wumo",
       "xkcd",
       "youtube"

@@ -6,6 +6,11 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 - Feeds with more than 20 images retain additional image links in comments so large galleries can be published.
 
+- Added a WordPress RSS profile that keeps post titles, captions, and body images without redundant sharing thumbnails.
+
+- Added a Tumblr profile that preserves captions, image descriptions, and all panels at their largest advertised resolution.
+- RSS and Atom posts retain their titles, prefer full content over summaries, and preserve paragraph breaks and link destinations.
+
 ## 2026-09-09
 
 - Feed identification and previews refresh when their feed profile configuration changes.
