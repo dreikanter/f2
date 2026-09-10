@@ -96,6 +96,19 @@ class FeedProfile
       normalizer: { class: "Normalizer::WordpressNormalizer", config: {} },
       title_extractor: "TitleExtractor::RssTitleExtractor"
     },
+    "atlantic_photos" => {
+      display_name: "The Atlantic Photos",
+      description: "Photo galleries with captions and photographer credits",
+      input_shape: :url,
+      depends_on_ai: false,
+      scheduled: true,
+      matcher: "ProfileMatcher::AtlanticPhotosProfileMatcher",
+      parameter_schema: URL_PARAMETER_SCHEMA,
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::AtlanticPhotosNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor"
+    },
     "json_feed" => {
       display_name: "JSON Feed",
       description: "Posts from a site's JSON feed (jsonfeed.org)",

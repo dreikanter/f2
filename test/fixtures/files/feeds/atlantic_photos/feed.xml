@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Sample photo journal</title>
+  <entry>
+    <id>urn:sample:gallery</id>
+    <title>Sample gallery</title>
+    <author><name>Sample Author</name></author>
+    <link href="https://example.com/gallery"/>
+    <published>2026-09-09T10:00:00Z</published>
+    <summary type="html">A &lt;em&gt;short&lt;/em&gt; introduction.</summary>
+    <content type="html"><![CDATA[
+      <figure><img src="https://example.com/one.jpg" alt="A tree"/><figcaption><div class="credit">First Photographer</div><div class="caption">First caption.</div></figcaption></figure>
+      <figure><img src="https://example.com/two.jpg" alt="A river"/><figcaption><div class="credit">Second Photographer</div><div class="caption">Second caption with a <a href="https://example.org/reference">reference</a>.</div></figcaption></figure>
+    ]]></content>
+  </entry>
+</feed>
