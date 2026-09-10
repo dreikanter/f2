@@ -317,13 +317,10 @@ class FeedProfile
       normalizer: { class: "Normalizer::TomorrowsNormalizer", config: {} },
       title_extractor: "TitleExtractor::RssTitleExtractor"
     },
+    # Explicitly selected for requests expressed as free-form prompts.
     "llm" => {
       display_name: "AI",
       description: "Uses AI to follow and transform web content per a free-form prompt",
-      # Accepts anything (a link, several links, or a description); the prompt
-      # is the source. The params key is `prompt`, not derived from input_shape.
-      # Registers NO matcher: the AI profile is structurally excluded from
-      # detection — Mode B selects it directly, detection never can.
       input_shape: :any,
       depends_on_ai: true,
       scheduled: true,
@@ -424,12 +421,10 @@ class FeedProfile
       normalizer: { class: "Normalizer::BlueskyNormalizer", config: {} },
       title_extractor: "TitleExtractor::BlueskyTitleExtractor"
     },
+    # External senders drive ingestion for this profile.
     "webhook" => {
       display_name: "Webhook",
       description: "Posts sent in from your own scripts through a secret URL",
-      # Push-ingested: content arrives over HTTP, so there is
-      # nothing to fetch and nothing to detect — no loader/processor, no
-      # matcher, no schedule.
       input_shape: :none,
       depends_on_ai: false,
       scheduled: false,
@@ -475,9 +470,7 @@ class FeedProfile
       PROFILES[key]
     end
 
-    # In registration order. The AI profile registers no matcher, so it can
-    # never be detected.
-    # @return [Array<Class>] matcher classes
+    # @return [Array<Class>] matcher classes in registration order
     def matchers
       PROFILES.filter_map { |_key, entry| entry[:matcher].presence&.constantize }
     end

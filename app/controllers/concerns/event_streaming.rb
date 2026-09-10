@@ -47,8 +47,7 @@ module EventStreaming
     render turbo_stream: turbo_stream.replace(events_log_dom_id, events_log_stream_body)
   end
 
-  # Both logs share the bordered-list DOM id; admin overrides only the stream
-  # body to render its richer Admin::EventsListComponent rows.
+  # Keep a stable replacement target across event log presentations.
   def events_log_dom_id
     EventsListComponent::DOM_ID
   end

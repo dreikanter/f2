@@ -1,3 +1,4 @@
+# Page-based navigation over a controller-provided collection.
 module Pagination
   extend ActiveSupport::Concern
 
@@ -38,7 +39,6 @@ module Pagination
     end
   end
 
-  # Override this method in the including controller to provide the scope to paginate
   def pagination_scope
     raise NotImplementedError, "Controllers using Pagination must implement pagination_scope method"
   end
