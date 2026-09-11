@@ -96,14 +96,13 @@ class FeedPreviewsController < ApplicationController
       if preview
         Current.user.search_credentials.find_by(id: preview.search_credential_id)
       else
-        resolve_search_credential(profile_key, params[:search_credential_id])
+        resolve_search_credential(params[:search_credential_id])
       end
   end
 
-  # @param profile_key [String] the preview's profile
   # @param requested_id [String, nil] a credential chosen in the form
   # @return [SearchCredential, nil] the credential backing the run
-  def resolve_search_credential(profile_key, requested_id = nil)
+  def resolve_search_credential(requested_id)
     return unless FeedProfile.exists?(profile_key) && FeedProfile.depends_on_ai?(profile_key)
 
     Current.user.search_credentials.active.find_by(id: requested_id) if requested_id.present?
