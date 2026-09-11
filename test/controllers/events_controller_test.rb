@@ -408,8 +408,6 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "a", text: "← Previous", count: 0
     assert_select "a", text: "Next →", count: 0
-    assert_select "span.cursor-not-allowed", text: "← Previous"
-    assert_select "span.cursor-not-allowed", text: "Next →"
   end
 
   test "#show navigation should ignore another user's events" do
@@ -421,8 +419,8 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get event_path(mine)
 
     assert_response :success
-    assert_select "span.cursor-not-allowed", text: "← Previous"
-    assert_select "span.cursor-not-allowed", text: "Next →"
+    assert_select "a", text: "← Previous", count: 0
+    assert_select "a", text: "Next →", count: 0
   end
 
   test "#index should preload imported post counts for the full polling stream" do

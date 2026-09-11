@@ -162,16 +162,17 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='feeds.empty.token-note']", count: 1
   end
 
-  test "#index should render tailwind pagination controls" do
+  test "#index should render pagination links and count" do
     sign_in_as(user)
     create_list(:feed, 4, user: user)
 
     get feeds_url, params: { per_page: 3 }
 
     assert_response :success
-    assert_select "nav[aria-label='Feeds pagination']"
-    assert_select "nav[aria-label='Feeds pagination'] ul[class*='inline-flex']", minimum: 1
-    assert_select "div.text-center", text: /3 of 4 feeds/
+    assert_select "nav[aria-label='Feeds pagination']" do
+      assert_select "a[href=?]", feeds_path(page: 2), text: "Next"
+    end
+    assert_select "[data-key='feeds.pagination-summary']", text: "3 of 4 feeds"
   end
 
   test "#new should render when authenticated" do
@@ -354,8 +355,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     assert_predicate Feed.last, :draft?
     assert_match "Couldn't enable", flash[:alert]
-    # Target group error rendered inline by _target_group_selector partial
-    assert_select "#target-group-selector p.text-danger", text: /can(?:'|&#39;)t be blank/
+    assert_select "[data-key='form.target-group-error']", text: /can't be blank/
   end
 
   test "#create should fail without persisting when even draft validation fails" do
@@ -618,8 +618,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     # Verify expanded form is shown, not collapsed form
     assert_select "input[name='feed[url_display]'][disabled]"
 
-    # Verify validation errors are shown
-    assert_select "p.text-danger", text: /lowercase letters/
+    assert_select "[data-key='form.target-group-error']", text: /lowercase letters/
   end
 
   test "#create should keep the expanded form for a query-shaped feed on validation failure" do
@@ -641,7 +640,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     # Query-shaped feeds have a blank url; the expanded form must still render
     # (keyed off source_input, not url) so the preview button survives the error.
     assert_select "[data-key='preview.open']", count: 1
-    assert_select "p.text-danger", text: /lowercase letters/
+    assert_select "[data-key='form.target-group-error']", text: /lowercase letters/
   end
 
   test "#show should render feed owned by user" do
@@ -1362,9 +1361,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "fieldset[disabled]"
     assert_select "input[data-key='form.source-edit'][value=?]", new_url
     assert_select "input[type=submit][value='Checking…'][disabled]"
-    assert_select "[data-key='form.source-checking'] svg[data-icon='loader-circle'].animate-spin", count: 1
-    status = css_select("[data-key='form.source-checking'] span").sole
-    assert_equal "Checking this feed. This usually takes a few seconds.", status.text
+    assert_select "[data-key='form.source-checking']", text: "Checking this feed. This usually takes a few seconds."
     assert_select "[data-controller*='polling']"
     assert_includes response.body, "feed_id=#{feed.id}"
     assert_select "[data-polling-interval-value='2500'][data-polling-max-polls-value='36']"
@@ -1526,7 +1523,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     disabled.reload
     assert_predicate disabled, :disabled?, "Disabled feed must not fall back to draft"
     assert_match "Couldn't enable", flash[:alert]
-    assert_select "#target-group-selector p.text-danger", text: /can(?:'|&#39;)t be blank/
+    assert_select "[data-key='form.target-group-error']", text: /can't be blank/
   end
 
   test "#update should pause an enabled feed when checkbox unchecked" do

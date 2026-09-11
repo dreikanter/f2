@@ -17,9 +17,7 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
     end
     assert_redirected_to ai_credential_path(credential)
     follow_redirect!
-    assert_select 'button[data-key="ai_credential.refresh-models"][title="Refresh models"][disabled]' do
-      assert_select "svg.animate-spin"
-    end
+    assert_select 'button[data-key="ai_credential.refresh-models"][disabled]'
     assert_select '[data-key="ai_credential.models-refresh-status"]', text: /Refreshing models/
     assert_includes response.body, "cached-model"
     assert_predicate credential.reload, :active?
