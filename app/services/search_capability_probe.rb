@@ -36,6 +36,7 @@ module SearchCapabilityProbe
       @results << { check: check, status: outcome[:status], note: outcome[:note],
                     evidence: outcome[:evidence], seconds: (Time.current - started).round(1) }
     rescue StandardError => e
+      Rails.error.report(e, context: { provider: @credential.provider, check: check })
       @results << { check: check, status: "FAIL", note: "#{e.class}: #{e.message.to_s[0, 300]}",
                     evidence: nil, seconds: (Time.current - started).round(1) }
     end

@@ -68,6 +68,7 @@ class WithdrawAllPosts
     Rails.logger.error(
       "Failed to withdraw post #{post.id} from FreeFeed: #{e.message}"
     )
+    Rails.error.report(e, context: { post_id: post.id, feed_id: post.feed_id })
 
     false
   end

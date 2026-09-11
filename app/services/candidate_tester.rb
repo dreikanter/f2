@@ -32,7 +32,8 @@ class CandidateTester
     # Loaders wrap transport errors, so a transient failure shows up as the
     # cause. Any other Loader::Error means we fetched but couldn't read.
     Result.new(status: e.cause.is_a?(HttpClient::Error) ? Candidate::UNREACHABLE : Candidate::FAILED, posts_found: 0)
-  rescue StandardError
+  rescue StandardError => e
+    Rails.error.report(e, context: { profile_key: profile_key, user_id: user&.id })
     Result.new(status: Candidate::FAILED, posts_found: 0)
   end
 
