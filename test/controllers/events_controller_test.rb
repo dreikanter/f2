@@ -318,18 +318,18 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_operator response.body.index(newer_dom), :<, response.body.index(older_dom)
   end
 
-  test "#show should limit imported posts to MAX_RECENT_POSTS" do
+  test "#show should limit imported posts to MAX_REFERENCED_POSTS" do
     sign_in_as user
     feed = create(:feed, user: user)
     event = create(:event, type: "feed_refresh", user: user, subject: feed)
-    posts = create_list(:post, EventsController::MAX_RECENT_POSTS + 2, feed: feed)
+    posts = create_list(:post, EventDisplay::MAX_REFERENCED_POSTS + 2, feed: feed)
     posts.each { |post| create(:event_reference, event: event, reference: post) }
 
     get event_path(event)
 
     assert_response :success
     rendered = posts.count { |post| css_select("##{ActionView::RecordIdentifier.dom_id(post)}").any? }
-    assert_equal EventsController::MAX_RECENT_POSTS, rendered
+    assert_equal EventDisplay::MAX_REFERENCED_POSTS, rendered
   end
 
   test "#show should not render the imported posts section without references" do
