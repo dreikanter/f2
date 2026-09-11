@@ -14,8 +14,7 @@ class Admin::EmailUpdatesController < ApplicationController
 
     if require_confirmation?
       if user.update(unconfirmed_email: new_email)
-        ProfileMailer.email_change_confirmation(user).deliver_later
-        Event.create!(type: "mail.profile_mailer.email_change_confirmation", user: user, subject: user, level: :info)
+        ProfileMailer.deliver_to(:email_change_confirmation, user)
         redirect_to admin_user_path(user), notice: "Confirmation email sent to #{new_email}. User must confirm before change takes effect."
       else
         redirect_to edit_admin_user_email_update_path(user), alert: "Failed to update email address."
