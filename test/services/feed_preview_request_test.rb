@@ -102,12 +102,13 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
 
   test "#create should retain a model previously selected on the user's feed" do
     create(:feed, user: user, feed_profile_key: "llm", params: { prompt: "Sample news" },
-                  ai_credential: ai_credential, ai_model: "unlisted-model", search_credential: nil)
+                  ai_credential: ai_credential, ai_model: "sample-model", search_credential: nil)
+    ai_credential.update!(available_models: [])
 
-    result = request(**ai_attributes.merge(ai_model: "unlisted-model")).create
+    result = request(**ai_attributes).create
 
     assert_nil result.error
-    assert_equal "unlisted-model", result.preview.ai_model
+    assert_equal "sample-model", result.preview.ai_model
   end
 
   test "#create should use the selected search credential" do
@@ -294,9 +295,10 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   test "#refresh should preserve the stored source and selections" do
     feed = create(:feed, user: user)
     existing = create(:feed_preview, :completed, user: user, feed: feed, feed_profile_key: "llm",
-                                                params: { "prompt" => "Sample news" }, ai_model: "unlisted-model",
+                                                params: { "prompt" => "Sample news" }, ai_model: "sample-model",
                                                 ai_credential: ai_credential, search_credential: search_credential)
     original_digest = existing.params_digest
+    ai_credential.update!(available_models: [])
 
     result = request(params: { url: "https://example.com/override.xml" }).refresh(existing)
 
@@ -304,7 +306,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
     assert_equal existing, result.preview
     assert_equal original_digest, existing.reload.params_digest
     assert_equal feed, existing.feed
-    assert_equal "unlisted-model", existing.ai_model
+    assert_equal "sample-model", existing.ai_model
     assert_equal({ "prompt" => "Sample news" }, existing.params)
   end
 
