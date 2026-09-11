@@ -2,7 +2,7 @@ require "test_helper"
 
 class StatusesControllerTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   test "#show should require authentication" do

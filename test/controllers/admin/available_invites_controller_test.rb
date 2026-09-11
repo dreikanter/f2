@@ -2,7 +2,7 @@ require "test_helper"
 
 class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
   def admin
-    @admin ||= create(:user).tap { |u| u.permissions.create!(name: "admin") }
+    admin_user
   end
 
   def target_user

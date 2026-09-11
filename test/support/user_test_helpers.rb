@@ -1,17 +1,17 @@
 module UserTestHelpers
   def regular_user
-    @regular_user ||= create(:user)
+    users(:regular_user)
   end
 
   def other_user
-    @other_user ||= create(:user)
+    users(:unrelated_user)
   end
 
   def admin_user
-    @admin_user ||= create(:user, :admin)
+    users(:admin_user)
   end
 
   def dev_user
-    @dev_user ||= create(:user, :dev)
+    users(:dev_user)
   end
 end

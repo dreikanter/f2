@@ -1,3 +1,7 @@
 admin_permission:
   user: admin_user
   name: admin
+
+dev_permission:
+  user: dev_user
+  name: dev

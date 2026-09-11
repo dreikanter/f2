@@ -9,7 +9,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   test "#create should authenticate with valid credentials" do
     user = users(:one)
 
-    post session_url, params: { email_address: user.email_address, password: "password" }
+    post session_url, params: { email_address: user.email_address, password: "password123" }
     assert_redirected_to root_url
   end
 

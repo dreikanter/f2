@@ -2,7 +2,7 @@ require "test_helper"
 
 class DevelopmentsControllerTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   test "should show dev tools when authenticated as dev" do

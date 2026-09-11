@@ -6,7 +6,7 @@ class InvitePolicyTest < ActiveSupport::TestCase
   end
 
   def admin
-    @admin ||= create(:user).tap { |u| u.permissions.create!(name: "admin") }
+    admin_user
   end
 
   def invite

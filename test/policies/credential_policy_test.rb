@@ -9,7 +9,7 @@ class CredentialPolicyTest < ActiveSupport::TestCase
   }.freeze
 
   def owner
-    @owner ||= create(:user)
+    @owner ||= regular_user
   end
 
   def each_policy

@@ -7,7 +7,7 @@ class FormAutofocusTest < ActionDispatch::IntegrationTest
   UNFOCUSABLE_INPUT_TYPES = %w[hidden submit button image reset].freeze
 
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   test "sign in form autofocuses the email field" do

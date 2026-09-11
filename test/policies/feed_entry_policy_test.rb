@@ -2,7 +2,7 @@ require "test_helper"
 
 class FeedEntryPolicyTest < ActiveSupport::TestCase
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   def feed

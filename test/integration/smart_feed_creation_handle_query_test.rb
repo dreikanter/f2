@@ -10,7 +10,7 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
   setup { clear_enqueued_jobs }
 
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   test "Mode B bridges a free-text prompt straight to a draft AI feed" do

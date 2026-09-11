@@ -18,7 +18,7 @@ class AccessPolicyTest < ActiveSupport::TestCase
   end
 
   test "#dev? should allow dev users" do
-    assert policy_for(create(:user, :dev)).dev?
+    assert policy_for(dev_user).dev?
   end
 
   test "#dev? should deny regular users" do

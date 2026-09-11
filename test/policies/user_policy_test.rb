@@ -9,10 +9,6 @@ class UserPolicyTest < ActiveSupport::TestCase
     users(:other_user)
   end
 
-  def admin_user
-    users(:admin_user)
-  end
-
   def policy_for_user(current_user, target_user)
     UserPolicy.new(current_user, target_user)
   end
