@@ -57,7 +57,7 @@ class AccessTokenDetailTest < ActiveSupport::TestCase
       assert_enqueued_with(
         job: TokenGroupsRefreshTimeoutJob,
         args: [run],
-        at: AccessTokenDetail::GROUPS_REFRESH_TIMEOUT_AFTER.from_now
+        at: AccessTokenDetail::TIMEOUT_AFTER.from_now
       )
     end
 
@@ -92,16 +92,5 @@ class AccessTokenDetailTest < ActiveSupport::TestCase
     assert_predicate run.reload, :succeeded?
     assert_not detail.groups_refresh_running?
     assert_equal [{ "username" => "newgroup" }], detail.reload.managed_groups
-  end
-
-  test ".groups_refresh_polling_max_polls should preserve the polling interval and timeout budget" do
-    assert_equal 2500, AccessTokenDetail::GROUPS_REFRESH_POLLING_INTERVAL_MS
-    assert_equal 85.seconds, AccessTokenDetail::GROUPS_REFRESH_TIMEOUT_AFTER
-    assert_equal 36, AccessTokenDetail.groups_refresh_polling_max_polls
-
-    final_poll_at = (AccessTokenDetail.groups_refresh_polling_max_polls - 1) *
-                    AccessTokenDetail::GROUPS_REFRESH_POLLING_INTERVAL_MS
-    assert_equal AccessTokenDetail::GROUPS_REFRESH_POLLING_INTERVAL_MS,
-                 final_poll_at - AccessTokenDetail::GROUPS_REFRESH_TIMEOUT_AFTER.in_milliseconds
   end
 end

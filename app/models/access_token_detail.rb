@@ -1,5 +1,6 @@
 class AccessTokenDetail < ApplicationRecord
   include HasOperationRuns
+  include PolledRun
 
   # Superseded by the dedicated columns below; kept in the schema so old-code
   # containers survive the deploy that ships this model. A follow-up migration
@@ -8,8 +9,6 @@ class AccessTokenDetail < ApplicationRecord
 
   belongs_to :access_token
 
-  GROUPS_REFRESH_POLLING_INTERVAL_MS = 2500
-  GROUPS_REFRESH_TIMEOUT_AFTER = 85.seconds
   # Recover if the scheduled timeout is lost or fails to settle the run.
   GROUPS_REFRESH_STALE_AFTER = 15.minutes
 
@@ -34,7 +33,7 @@ class AccessTokenDetail < ApplicationRecord
     run = OperationRun.start!(
       subject: self,
       kind: :groups_refresh,
-      timeout: GROUPS_REFRESH_TIMEOUT_AFTER
+      timeout: TIMEOUT_AFTER
     )
     TokenGroupsRefreshJob.perform_later(run)
     TokenGroupsRefreshTimeoutJob
@@ -60,11 +59,5 @@ class AccessTokenDetail < ApplicationRecord
 
     run.succeed! { |detail| detail.replace_managed_groups!(groups) }
     self
-  end
-
-  def self.groups_refresh_polling_max_polls
-    # The first poll is immediate. Two extra polls leave one interval for Solid
-    # Queue to dispatch a due timeout and let the final poll render its result.
-    GROUPS_REFRESH_TIMEOUT_AFTER.in_milliseconds.div(GROUPS_REFRESH_POLLING_INTERVAL_MS) + 2
   end
 end

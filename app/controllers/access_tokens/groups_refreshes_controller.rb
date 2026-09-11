@@ -7,8 +7,8 @@
 class AccessTokens::GroupsRefreshesController < ApplicationController
   include StatePolling
 
-  self.polling_interval_ms = AccessTokenDetail::GROUPS_REFRESH_POLLING_INTERVAL_MS
-  self.polling_max_polls = AccessTokenDetail.groups_refresh_polling_max_polls
+  self.polling_interval_ms = AccessTokenDetail::POLLING_INTERVAL_MS
+  self.polling_max_polls = AccessTokenDetail.polling_max_polls
 
   def create
     authorize access_token, :refresh?
