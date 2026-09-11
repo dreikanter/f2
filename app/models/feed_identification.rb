@@ -38,8 +38,8 @@ class FeedIdentification < ApplicationRecord
   #
   # Two concurrent submits can both look the row up before either inserts; the
   # loser's insert then hits the user+input unique index. Returns false in that
-  # case — the winner's detection is already in flight, so the stale copy
-  # should be discarded — and true when this call (re)started detection.
+  # case (the winner's detection is already in flight, so the stale copy
+  # should be discarded) and true when this call (re)started detection.
   def restart_detection
     started_at = Time.current
     run_id = SecureRandom.uuid
@@ -97,7 +97,7 @@ class FeedIdentification < ApplicationRecord
 
   # Profile keys of the working candidates, in rank order. An edit's confirming
   # save only applies a source when the submitted profile is one of
-  # these — a settled, source-reading candidate.
+  # these: a settled, source-reading candidate.
   def working_candidate_profile_keys
     working_candidates.map(&:profile_key)
   end

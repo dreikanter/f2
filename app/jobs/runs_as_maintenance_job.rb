@@ -1,5 +1,5 @@
 # What the dev area needs from a job listed in JobRun::RUNNABLE_JOBS. Jobs the
-# app schedules for itself carry none of this — it exists for the ones an
+# app schedules for itself carry none of this; it exists for the ones an
 # operator browses and launches by hand.
 module RunsAsMaintenanceJob
   extend ActiveSupport::Concern

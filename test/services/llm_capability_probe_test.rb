@@ -214,7 +214,7 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_equal "schema-valid but no item emitted a null source_url", outcome[:results].first[:note]
   end
 
-  # Only the schema check asks for the linkless roundup — the client-tools
+  # Only the schema check asks for the linkless roundup; the client-tools
   # prompt asks for one item with the fetched page's own URL.
   test "#run should not require a null source_url from client_tools_schema" do
     outcome = run_checks(grounded_payload, ["client_tools_schema"], tool_rounds: full_tool_loop)

@@ -65,7 +65,7 @@ module HttpClient
 
     # `opts` is the merged instance + per-request options from perform_request,
     # so the initial-URL check and the redirect guard read the same
-    # validate_url — the two halves of the SSRF defense can't diverge.
+    # validate_url; the two halves of the SSRF defense can't diverge.
     def build_connection(opts)
       Faraday.new do |config|
         config.request :multipart
@@ -95,7 +95,7 @@ module HttpClient
 
     # In public-only mode a caller passes a `validate_url` callable (typically
     # PublicUrl.method(:safe?)). We check the initial URL and, via the redirect
-    # callback below, every hop — because follow_redirects otherwise chases a
+    # callback below, every hop, because follow_redirects otherwise chases a
     # public URL's 302 straight to a private/loopback/metadata address, past the
     # caller's one-time check (SSRF).
     def ensure_public_url!(url, validate_url)

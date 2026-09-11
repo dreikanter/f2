@@ -3,7 +3,7 @@ require "addressable/uri"
 # Ingests one webhook delivery into the existing pipeline:
 # validate the payload, resolve its uid, run it through the profile normalizer,
 # then persist FeedEntry + FeedEntryUid + Post in a single transaction and kick
-# the publish chain. A payload that fails validation persists nothing — the
+# the publish chain. A payload that fails validation persists nothing; the
 # synchronous 422 is the rejection record, so a corrected retry goes through.
 class WebhookIngestion
   include HtmlTextUtils
@@ -144,8 +144,8 @@ class WebhookIngestion
     errors
   end
 
-  # Spec-following clients send the header as an sf-string — quotes included on
-  # the wire — so a quoted value is decoded before it is compared or persisted;
+  # Spec-following clients send the header as an sf-string (quotes included on
+  # the wire), so a quoted value is decoded before it is compared or persisted;
   # otherwise the same logical key supplied via uid and via the header would
   # never match. A bare value is kept as-is for clients that skip the
   # structured-field encoding, and a malformed quoted value decodes to nil,
@@ -188,7 +188,7 @@ class WebhookIngestion
   end
 
   # Uid precedence: explicit idempotency key (the uid field or
-  # the equivalent Idempotency-Key header — validation guarantees they agree),
+  # the equivalent Idempotency-Key header; validation guarantees they agree),
   # then the permalink normalized exactly like pull feeds', then a random uuid
   # (each request is a new post; callers with retrying pipelines should pass a
   # key).
@@ -246,8 +246,8 @@ class WebhookIngestion
     false
   end
 
-  # Length never fails a request — the normalizer truncates instead — but the
-  # caller deserves to know.
+  # The normalizer truncates long content instead of rejecting the request,
+  # but the caller deserves to know.
   def warnings
     content.present? && content.length > content_fit_limit(source_url) ? ["content_truncated"] : []
   end

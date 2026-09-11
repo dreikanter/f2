@@ -205,7 +205,7 @@ class Feed < ApplicationRecord
   end
 
   # True for push-ingested profiles (webhook): there is no source input, so
-  # source-driven surfaces — source field, detection, preview — don't apply.
+  # source-driven surfaces (source field, detection, preview) don't apply.
   def sourceless?
     FeedProfile.source_key_for(feed_profile_key).nil?
   end
@@ -298,7 +298,7 @@ class Feed < ApplicationRecord
   end
 
   # Makes the existing schedule due immediately (next_run_at = now). No-op for
-  # a feed without one — the schedule is created when the feed is enabled.
+  # a feed without one; the schedule is created when the feed is enabled.
   def reset_schedule!
     feed_schedule&.update!(next_run_at: Time.current)
   end

@@ -2,7 +2,7 @@ module WebSearchProvider
   # Contract for a search backend. Subclasses declare ENDPOINT and implement
   # `request` (perform the vendor HTTP call) and `map_results` (normalize the
   # vendor payload into Results); everything else is shared here. The API key
-  # is injected at construction — providers never read it from the environment.
+  # is injected at construction; providers never read it from the environment.
   class Base
     MAX_RESULTS = (1..10)
     TIMEOUT = 10
@@ -36,8 +36,8 @@ module WebSearchProvider
 
     attr_reader :api_key
 
-    # Whether a failure means the key itself is finished — rejected, revoked or
-    # spent — rather than a fault that may clear. Vendors disagree on how they
+    # Whether a failure means the key itself is finished (rejected, revoked or
+    # spent), rather than a fault that may clear. Vendors disagree on how they
     # say it, so providers refine this; these statuses are the ones they share.
     def auth_error?(response)
       AUTH_STATUSES.include?(response.status)

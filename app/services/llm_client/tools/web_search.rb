@@ -42,7 +42,7 @@ class LlmClient
 
       private
 
-      # Best-effort: a failed accounting write must not take down the search —
+      # Best-effort: a failed accounting write must not take down the search;
       # or the whole run, since a non-search error escapes every rescue on the
       # way up and would abort the LLM call over a bookkeeping hiccup.
       def record_usage

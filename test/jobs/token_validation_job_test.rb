@@ -301,7 +301,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
 
     run = start_validation
 
-    # First run raises — token stays validating
+    # First run raises; token stays validating
     assert_raises(StandardError) do
       TokenValidationJob.perform_now(run)
     end

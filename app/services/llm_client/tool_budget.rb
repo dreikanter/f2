@@ -2,8 +2,8 @@ class LlmClient
   # Bounds one call's tool loop: RubyLLM satisfies tool calls for as long as the
   # model emits them, and both web tools cost money every round.
   #
-  # Two stages, and both are needed. Telling the model to stop is advisory — it
-  # can call again — so the halt is what actually guarantees termination.
+  # Two stages, and both are needed. Telling the model to stop is advisory (it
+  # can call again), so the halt is what actually guarantees termination.
   class ToolBudget
     ROUNDS = 8
     GRACE = 2

@@ -1,5 +1,5 @@
 module WebSearchProvider
-  # Brave Search API — independent web index.
+  # Brave Search API: independent web index.
   class Brave < Base
     ENDPOINT = "https://api.search.brave.com/res/v1/web/search"
     # Brave rejects a subscription token with 422, the same status it uses for

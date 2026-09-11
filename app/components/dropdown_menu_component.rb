@@ -26,7 +26,7 @@ class DropdownMenuComponent < ViewComponent::Base
 
   attr_reader :menu_id, :items, :width, :label
 
-  # The square, icon-only trigger styling — a subtle borderless ellipsis here.
+  # The square, icon-only trigger styling: a subtle borderless ellipsis here.
   # HeaderMenuComponent overrides it to match the bordered action buttons
   # (Enable, Refresh) it sits beside in a page header.
   def trigger_class

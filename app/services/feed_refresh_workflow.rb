@@ -38,8 +38,8 @@ class FeedRefreshWorkflow
   # A digest feed's period slot is consumed the moment it produces a period-keyed
   # post; refreshing again in the same period just re-runs the costly gather +
   # structure only to dedup the result away. Skip such a scheduled run before any
-  # LLM call. A manual refresh always forces through — the user asked
-  # for it — and mixed/feed-style runs never mark a period, so they never skip.
+  # LLM call. A manual refresh always forces through (the user asked
+  # for it), and mixed/feed-style runs never mark a period, so they never skip.
   def skip_current_digest_period(input)
     return input unless skip_scheduled_digest_run?
 
@@ -61,8 +61,8 @@ class FeedRefreshWorkflow
 
   # FeedRefreshJob's advisory lock allows one refresh per feed at a time, so
   # an event still "started" when a new run begins belongs to a run whose
-  # process died before finalizing. Runs as the first step — before the digest
-  # skip — so even runs that halt still sweep. Demoting to debug takes the dead
+  # process died before finalizing. Runs as the first step (before the digest
+  # skip), so even runs that halt still sweep. Demoting to debug takes the dead
   # run's "in progress" record out of the user event feed.
   def interrupt_abandoned_refresh_events(input = nil)
     feed.events.where(type: "feed_refresh")
@@ -126,7 +126,7 @@ class FeedRefreshWorkflow
   end
 
   # The period this run committed to, read from the actual minted uids rather
-  # than re-derived from the clock at finalize — a run that mints digest:D just
+  # than re-derived from the clock at finalize; a run that mints digest:D just
   # before UTC midnight must record D, not D+1, or its next-day digest gets
   # skipped. nil unless every identified entry is a period-keyed digest, so a
   # mixed or feed-style run never marks a period and thus never skips.
@@ -325,7 +325,8 @@ class FeedRefreshWorkflow
     LlmUsage.where(id: usage_ids).pluck(:id, :cost_estimate_cents)
   end
 
-  # No calls, no stat — keeps deterministic feeds' events free of a noisy $0.
+  # Omit the stat when there are no calls to keep deterministic feeds' events
+  # free of a noisy $0.
   # Decimal sums become numbers at the JSON snapshot boundary.
   def record_llm_usage_stats(usage_rows)
     return if usage_rows.empty?

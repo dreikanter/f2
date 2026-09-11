@@ -19,7 +19,7 @@ class FeedRefreshJob < ApplicationJob
     # Loader errors reflect the remote feed's health (HTTP 404/500, timeouts,
     # connection failures), not a bug on our side. They're already logged,
     # metered, and tracked as feed failures by the workflow, so we don't report
-    # them to the error tracker — doing so just turns every dead or unreachable
+    # them to the error tracker; doing so just turns every dead or unreachable
     # feed into noise.
     Rails.logger.error "Feed #{feed_id} load failed: #{e.message}"
     Metrics.increment("loader_errors_total", profile: feed.feed_profile_key, loader: feed.loader_class.name.demodulize)

@@ -185,7 +185,7 @@ module RateLimit
       Metrics.increment("rate_limit_penalized_total", policy: name.to_s)
     end
 
-    # Largest cost a single acquire could ever satisfy for a dimension — the
+    # Largest cost a single acquire could ever satisfy for a dimension: the
     # smallest bucket capacity (burst) across its windows. A cost above this can
     # never be granted, so callers can reject it instead of throttling forever.
     # @param name [Symbol, String] the policy name
@@ -196,7 +196,7 @@ module RateLimit
     end
 
     # Drop a subject's stored state for a policy. Call this when the subject is
-    # gone for good (e.g. its access token is deleted) — the only definite signal
+    # gone for good (e.g. its access token is deleted). This is the only definite signal
     # that a row will never be used again. A later acquire would recreate it.
     # @param name [Symbol, String] the policy name
     # @param subject [String] identity whose allowance to forget

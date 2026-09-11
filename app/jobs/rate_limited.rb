@@ -4,7 +4,7 @@
 # Jobs call the non-raising RateLimit.acquire and, when denied, defer via
 # reschedule_for_rate_limit. A real mid-call 429 still raises RateLimit::Throttled;
 # jobs rescue it locally and route it through the same helper. Handled inside
-# `perform`, a deferral never reaches the error reporter — only a give-up does.
+# `perform`, a deferral never reaches the error reporter; only a give-up does.
 #
 # Reschedules wait retry_after (plus jitter), up to MAX_ATTEMPTS, then report
 # once and stop.

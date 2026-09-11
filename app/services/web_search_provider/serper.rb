@@ -1,5 +1,5 @@
 module WebSearchProvider
-  # serper.dev — Google SERP results.
+  # serper.dev: Google SERP results.
   class Serper < Base
     ENDPOINT = "https://google.serper.dev/search"
 

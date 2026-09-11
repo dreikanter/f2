@@ -3,7 +3,7 @@ require "test_helper"
 # The two entry modes for a non-link input: Mode B ("Follow with
 # AI") bridges straight to a draft AI feed, while a non-link typed in Mode A
 # ("Follow a feed or channel") re-renders the entry form with the AI panel
-# carrying the text — switching the mode radio is the bridge.
+# carrying the text; switching the mode radio is the bridge.
 class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 

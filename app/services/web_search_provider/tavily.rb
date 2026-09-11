@@ -1,5 +1,5 @@
 module WebSearchProvider
-  # tavily.com — LLM-oriented search with content snippets.
+  # tavily.com: LLM-oriented search with content snippets.
   class Tavily < Base
     ENDPOINT = "https://api.tavily.com/search"
     # An exhausted key gets Tavily's own statuses: 432 plan limit, 433

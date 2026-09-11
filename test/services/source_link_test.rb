@@ -20,7 +20,7 @@ class SourceLinkTest < ActiveSupport::TestCase
   end
 
   test ".canonical should not scheme-fix something that isn't host-shaped" do
-    # `r/x` must not become `https://r/x` (host `r`) — it routes to the AI bridge.
+    # `r/x` must not become `https://r/x` (host `r`); it routes to the AI bridge.
     assert_nil SourceLink.canonical("r/x")
     assert_nil SourceLink.canonical("user/someone")
     assert_nil SourceLink.canonical("localhost:3000")

@@ -56,7 +56,7 @@ class DiskUsageService
   end
 
   def postgres_usage
-    # Memoized so one #call returns an internally consistent snapshot —
+    # Memoized so one #call returns an internally consistent snapshot;
     # the DB can grow between two live pg_database_size reads.
     @postgres_usage ||= execute_query("SELECT pg_database_size(current_database())").first["pg_database_size"]
   end

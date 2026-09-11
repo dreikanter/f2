@@ -119,7 +119,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
   test "#identify should settle as no_feed when no structured profile matches" do
     # The AI profile registers no matcher, so a reachable page with no
-    # standard feed yields no candidates — the entry flow offers the AI bridge.
+    # standard feed yields no candidates; the entry flow offers the AI bridge.
     url = "http://example.com/unknown.txt"
 
     stub_request(:get, url)

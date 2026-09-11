@@ -47,7 +47,7 @@ module Processor
 
     # The spec requires a string `id` and says readers must coerce a numeric
     # one to a string. We additionally fall back to `url` when `id` is absent
-    # rather than dropping the item — a permalink is a fine stable identifier,
+    # rather than dropping the item; a permalink is a fine stable identifier,
     # and this matches RssProcessor. Items with neither are dropped downstream
     # once their uid comes back blank.
     def extract_uid(item)
