@@ -61,11 +61,7 @@ module EventsHelper
   end
 
   def mail_event_types
-    ResendWebhooksController::EMAIL_EVENT_HANDLERS.values.pluck(:type) + %w[
-      mail.profile_mailer.account_confirmation
-      mail.profile_mailer.email_change_confirmation
-      mail.passwords_mailer.reset
-    ]
+    MailEvent.types
   end
 
   private
