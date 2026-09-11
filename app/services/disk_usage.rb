@@ -1,6 +1,6 @@
 require "open3"
 
-class DiskUsageService
+class DiskUsage
   TOP_TABLES_COUNT = 10
 
   def initialize(df_command: method(:execute_df_command))

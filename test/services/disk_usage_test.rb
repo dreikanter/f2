@@ -1,7 +1,7 @@
 require "test_helper"
 require "ostruct"
 
-class DiskUsageServiceTest < ActiveSupport::TestCase
+class DiskUsageTest < ActiveSupport::TestCase
   def stub_df_command(total_kb: 1000000, used_kb: 200000, avail_kb: 750000)
     df_output = <<~DF
       Filesystem     1024-blocks      Used Available Capacity  Mounted on
@@ -12,7 +12,7 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should return free space as integer" do
-    service = DiskUsageService.new(df_command: stub_df_command(avail_kb: 750000))
+    service = DiskUsage.new(df_command: stub_df_command(avail_kb: 750000))
     result = service.call
 
     assert_instance_of Integer, result[:free_space]
@@ -20,7 +20,7 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should return postgres usage as integer" do
-    service = DiskUsageService.new(df_command: stub_df_command)
+    service = DiskUsage.new(df_command: stub_df_command)
     result = service.call
 
     assert_instance_of Integer, result[:postgres_usage]
@@ -28,7 +28,7 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should return table usage as array" do
-    service = DiskUsageService.new(df_command: stub_df_command)
+    service = DiskUsage.new(df_command: stub_df_command)
     result = service.call
 
     assert_instance_of Array, result[:table_usage]
@@ -42,7 +42,7 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should return table sizes in bytes" do
-    service = DiskUsageService.new(df_command: stub_df_command)
+    service = DiskUsage.new(df_command: stub_df_command)
     result = service.call
 
     assert result[:table_usage].any?, "expected at least one table in the test database"
@@ -52,20 +52,20 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should limit table usage to the largest tables" do
-    service = DiskUsageService.new(df_command: stub_df_command)
+    service = DiskUsage.new(df_command: stub_df_command)
     result = service.call
 
-    assert_equal DiskUsageService::TOP_TABLES_COUNT, result[:table_usage].size
+    assert_equal DiskUsage::TOP_TABLES_COUNT, result[:table_usage].size
 
     sizes = result[:table_usage].map { |row| row["total_size"] }
     assert_equal sizes.sort.reverse, sizes
   end
 
   test "#call should aggregate remaining tables into other tables size" do
-    service = DiskUsageService.new(df_command: stub_df_command)
+    service = DiskUsage.new(df_command: stub_df_command)
     result = service.call
 
-    assert result[:other_tables_count].positive?, "expected more than #{DiskUsageService::TOP_TABLES_COUNT} tables in the test database"
+    assert result[:other_tables_count].positive?, "expected more than #{DiskUsage::TOP_TABLES_COUNT} tables in the test database"
     assert_instance_of Integer, result[:other_tables_size]
     assert result[:other_tables_size] >= 0
 
@@ -75,7 +75,7 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should return other used space as integer" do
-    service = DiskUsageService.new(df_command: stub_df_command)
+    service = DiskUsage.new(df_command: stub_df_command)
     result = service.call
 
     assert_instance_of Integer, result[:other_used_space]
@@ -84,7 +84,7 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should return percentages that sum to approximately 100" do
-    service = DiskUsageService.new(df_command: stub_df_command)
+    service = DiskUsage.new(df_command: stub_df_command)
     result = service.call
 
     total_percentage = result[:postgres_percentage] + result[:other_used_percentage] + result[:free_percentage]
@@ -93,7 +93,7 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
 
   test "#call should handle df command failure" do
     df_command = -> { ["", OpenStruct.new(success?: false, exitstatus: 1)] }
-    service = DiskUsageService.new(df_command: df_command)
+    service = DiskUsage.new(df_command: df_command)
 
     error = assert_raises(RuntimeError) do
       service.call
@@ -103,7 +103,7 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should handle zero accountable space" do
-    service = DiskUsageService.new(df_command: stub_df_command(total_kb: 0, used_kb: 0, avail_kb: 0))
+    service = DiskUsage.new(df_command: stub_df_command(total_kb: 0, used_kb: 0, avail_kb: 0))
     result = service.call
 
     assert_equal 0.0, result[:postgres_percentage]
@@ -112,7 +112,7 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should calculate percentages correctly with known values" do
-    service = DiskUsageService.new(df_command: stub_df_command(total_kb: 1000000, used_kb: 200000, avail_kb: 750000))
+    service = DiskUsage.new(df_command: stub_df_command(total_kb: 1000000, used_kb: 200000, avail_kb: 750000))
     result = service.call
 
     accountable_space = (200000 + 750000) * 1024

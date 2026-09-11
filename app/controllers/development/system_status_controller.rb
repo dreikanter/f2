@@ -5,7 +5,7 @@ class Development::SystemStatusController < ApplicationController
     @release_info = release_info
     @configuration = configuration
     @disk_usage = Rails.cache.fetch("development/system_status/v5", expires_in: 5.minutes) do
-      DiskUsageService.new.call
+      DiskUsage.new.call
     end
   end
 

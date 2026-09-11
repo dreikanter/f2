@@ -16,7 +16,7 @@ class FeedIdentificationFetcher
     @logger = logger
   end
 
-  def identify
+  def call
     response = fetch_response_for_input
     candidates = identify_candidates(response)
     settle(status: settled_status(candidates), candidates: candidates)
