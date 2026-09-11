@@ -51,6 +51,25 @@ class ApplicationPolicy
     def admin?
       user&.admin?
     end
+
+    # The resolutions policies share. A signed-out visitor sees nothing in all
+    # of them, so no policy has to spell that branch out.
+
+    def own_records(owner = :user)
+      user ? scope.where(owner => user) : scope.none
+    end
+
+    def own_feed_records
+      user ? scope.joins(:feed).where(feeds: { user: user }) : scope.none
+    end
+
+    def admin_or_own_records(owner = :user)
+      admin? ? scope.all : own_records(owner)
+    end
+
+    def admin_records
+      admin? ? scope.all : scope.none
+    end
   end
 
   private

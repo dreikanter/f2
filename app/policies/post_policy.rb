@@ -19,11 +19,7 @@ class PostPolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if user
-        scope.joins(:feed).where(feeds: { user: user })
-      else
-        scope.none
-      end
+      own_feed_records
     end
   end
 end

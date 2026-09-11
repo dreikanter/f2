@@ -9,13 +9,7 @@ class EventPolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if admin?
-        scope.all
-      elsif user
-        scope.where(user: user)
-      else
-        scope.none
-      end
+      admin_or_own_records
     end
   end
 end

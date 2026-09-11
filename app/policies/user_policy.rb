@@ -55,13 +55,7 @@ class UserPolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if admin?
-        scope.all
-      elsif user
-        scope.where(id: user.id)
-      else
-        scope.none
-      end
+      admin_or_own_records(:id)
     end
   end
 end

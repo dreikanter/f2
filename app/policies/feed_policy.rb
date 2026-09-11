@@ -37,11 +37,7 @@ class FeedPolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if user
-        scope.where(user: user)
-      else
-        scope.none
-      end
+      own_records
     end
   end
 end
