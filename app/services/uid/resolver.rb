@@ -1,5 +1,3 @@
-require "addressable/uri"
-
 module Uid
   # Derives a stable post uid from an AI-extracted item (.call) or from a bare
   # permalink (.from_url), anchored to source identity rather than generated
