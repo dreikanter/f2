@@ -63,6 +63,34 @@ class FeedPreviewTest < ActiveSupport::TestCase
     @feed_preview ||= create(:feed_preview, user: user)
   end
 
+  test "#needs_run? should start a new preview" do
+    assert_predicate build(:feed_preview), :needs_run?
+  end
+
+  test "#needs_run? should preserve a ready result through the freshness window" do
+    freeze_time do
+      preview = create(:feed_preview, :completed, ready_at: FeedPreview::PREVIEW_FRESHNESS_WINDOW.ago)
+
+      assert_not_predicate preview, :needs_run?
+      travel 1.second
+      assert_predicate preview, :needs_run?
+    end
+  end
+
+  test "#needs_run? should leave an overdue run to its timeout job" do
+    preview = create(:feed_preview, :processing, updated_at: 1.day.ago)
+
+    assert_not_predicate preview, :needs_run?
+  end
+
+  test "#needs_run? should require an explicit refresh for a failed preview" do
+    assert_not_predicate create(:feed_preview, :failed), :needs_run?
+  end
+
+  test "#needs_run? should preserve a ready preview without a completion time" do
+    assert_not_predicate create(:feed_preview, :completed, ready_at: nil), :needs_run?
+  end
+
   test "should belong to user" do
     assert_equal user, feed_preview.user
   end
@@ -204,7 +232,7 @@ class FeedPreviewTest < ActiveSupport::TestCase
   end
 
   test "#restart! should enqueue the expected identity and schedule the deterministic timeout" do
-    preview = create(:feed_preview, :completed, user: user)
+    preview = create(:feed_preview, :completed, user: user, run_id: RUN_ID)
 
     freeze_time do
       SecureRandom.stub(:uuid, NEXT_RUN_ID) do
@@ -215,6 +243,11 @@ class FeedPreviewTest < ActiveSupport::TestCase
         assert_enqueued_with(job: FeedPreviewJob, args: [preview.id, NEXT_RUN_ID, preview.params_digest])
       end
     end
+
+    assert_predicate preview.reload, :pending?
+    assert_equal NEXT_RUN_ID, preview.run_id
+    assert_nil preview.data
+    assert_nil preview.ready_at
   end
 
   test "#timeout_after should preserve the deterministic timeout budget" do

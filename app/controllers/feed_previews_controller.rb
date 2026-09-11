@@ -1,6 +1,5 @@
 class FeedPreviewsController < ApplicationController
   before_action :load_preview, only: %i[show update]
-  before_action :guard_preview, only: %i[create update]
 
   # Maps each FeedPreview status to the pane partial that renders it. `fetch`
   # makes an unexpected status fail loudly rather than silently fall through.
@@ -17,166 +16,40 @@ class FeedPreviewsController < ApplicationController
     render_state(preview)
   end
 
-  # POST /feed_previews, asking for a preview of what the form currently holds.
-  # Finds or creates the row for (user, profile_key, params_digest), starts a run
-  # when it has no fresh result, and replaces the frame with its current state.
   def create
-    found = locate_preview
-    found = start_run(found) if needs_run?(found)
-    render_frame(found)
+    request = FeedPreviewRequest.new(user: Current.user, attributes: preview_attributes)
+    render_request(request.create)
   end
 
-  # PATCH /feed_previews/:id, the explicit refresh. The row already holds the
-  # source and selections, so a re-run needs nothing but its id.
   def update
-    render_frame(start_run(locate_preview))
+    request = FeedPreviewRequest.new(user: Current.user)
+    render_request(request.refresh(preview))
   end
 
   helper_method :state_partial
 
   private
 
-  def guard_preview
-    return render_cleared if source_blank? || !FeedProfile.exists?(profile_key)
-    return render_credential_gate if needs_credential_gate?
-
-    render_cleared if invalid_ai_selection?
-  end
-
-  # Server-side backstop for the Stimulus button: an AI preview needs owned,
-  # active AI credentials plus a listed or previously selected model.
-  def invalid_ai_selection?
-    return false unless FeedProfile.depends_on_ai?(profile_key)
-
-    ai_credential.blank? || !available_ai_model?
-  end
-
-  def available_ai_model?
-    return false if ai_model.blank?
-    return true if ai_credential.supports_model?(ai_model)
-    return true if preview && preview.ai_model == ai_model
-
-    Current.user.feeds.exists?(ai_credential: ai_credential, ai_model: ai_model)
-  end
-
-  def previews
-    Current.user.feed_previews
-  end
-
-  def load_preview
-    @preview = previews.find(params[:id])
-  end
-
   attr_reader :preview
 
-  def digest
-    @digest ||= FeedPreview.digest_for(
-      profile_key,
-      preview_params,
-      feed_id: feed&.id,
-      ai_credential_id: ai_credential&.id,
-      ai_model: ai_model,
-      search_credential_id: search_credential&.id
-    )
+  def load_preview
+    @preview = Current.user.feed_previews.find(params[:id])
   end
 
-  # Resolve only from the user's own active credentials, so forged ids can't
-  # borrow another user's provider keys.
-  def ai_credential
-    return @ai_credential if defined?(@ai_credential)
-
-    requested = preview ? preview.ai_credential_id : params[:ai_credential_id]
-    @ai_credential = Current.user.ai_credentials.active.find_by(id: requested)
+  def preview_attributes
+    params.permit(:profile_key, :feed_id, :ai_credential_id, :ai_model, :search_credential_id)
+          .to_h.merge(params: params[:params]&.to_unsafe_h || {})
   end
 
-  def search_credential
-    return @search_credential if defined?(@search_credential)
-
-    @search_credential =
-      if preview
-        Current.user.search_credentials.find_by(id: preview.search_credential_id)
-      else
-        resolve_search_credential(params[:search_credential_id])
-      end
-  end
-
-  # @param requested_id [String, nil] a credential chosen in the form
-  # @return [SearchCredential, nil] the credential backing the run
-  def resolve_search_credential(requested_id)
-    return unless FeedProfile.exists?(profile_key) && FeedProfile.depends_on_ai?(profile_key)
-
-    Current.user.search_credentials.active.find_by(id: requested_id) if requested_id.present?
-  end
-
-  def ai_model
-    @ai_model ||= preview ? preview.ai_model : params[:ai_model].presence
-  end
-
-  def locate_preview
-    previews.find_or_initialize_by(feed: feed, feed_profile_key: profile_key, params_digest: digest)
-  end
-
-  def feed
-    return preview.feed if preview
-    return if params[:feed_id].blank?
-
-    @feed ||= Current.user.feeds.find(params[:feed_id])
-  end
-
-  def needs_run?(preview)
-    preview.new_record? || stale_ready?(preview)
-  end
-
-  # Start a fresh run and return the persisted row. If a concurrent request
-  # already inserted this (user, profile, source) row, adopt the winner's row
-  # rather than enqueuing a duplicate job.
-  def start_run(preview)
-    preview.assign_attributes(
-      params: preview_params,
-      ai_credential_id: ai_credential&.id,
-      ai_model: ai_model,
-      search_credential_id: search_credential&.id
-    )
-    preview.restart!
-  rescue ActiveRecord::RecordNotUnique
-    previews.find_by!(feed: feed, feed_profile_key: profile_key, params_digest: digest)
-  end
-
-  def profile_key
-    @profile_key ||= preview ? preview.feed_profile_key : params[:profile_key].to_s
-  end
-
-  # New previews keep only the profile's declared keys and cast them to the
-  # declared types, matching the params a saved feed would use.
-  def preview_params
-    @preview_params ||=
-      if preview
-        preview.params
-      else
-        raw = params[:params]
-        hash = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : (raw || {})
-        declared = FeedProfile.parameter_keys_for(profile_key) || []
-        FeedProfile.cast_params(profile_key, hash.deep_stringify_keys.slice(*declared))
-      end
-  end
-
-  def stale_ready?(preview)
-    preview.ready? && preview.ready_at.present? && preview.ready_at < FeedPreview::PREVIEW_FRESHNESS_WINDOW.ago
-  end
-
-  def source_blank?
-    FeedProfile.source_input_for(profile_key, preview_params).to_s.strip.blank?
-  end
-
-  # Only reached after guard_preview confirmed the profile exists.
-  def needs_credential_gate?
-    return false unless FeedProfile.depends_on_ai?(profile_key)
-
-    missing_ai_credentials?
-  end
-
-  def missing_ai_credentials?
-    !Current.user.ai_credentials.active.exists?
+  def render_request(request)
+    case request.error
+    when :missing_ai_credentials
+      render_credential_gate(request.profile_key)
+    when :invalid_source, :invalid_ai_selection
+      render_cleared
+    else
+      render_frame(request.preview)
+    end
   end
 
   # The create response carries the whole frame, so the polling host mounts and
@@ -218,12 +91,12 @@ class FeedPreviewsController < ApplicationController
     end
   end
 
-  def render_credential_gate
+  def render_credential_gate(profile_key)
     gate = {
       partial: "feed_previews/credential_gate",
       locals: {
         profile_key: profile_key,
-        missing_ai_credentials: missing_ai_credentials?
+        missing_ai_credentials: true
       }
     }
     respond_to do |format|

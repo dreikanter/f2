@@ -20,6 +20,14 @@ class FeedPreview < ApplicationRecord
 
   before_validation :assign_params_digest, if: :preview_identity_changed?
 
+  def needs_run?
+    new_record? || stale_ready?
+  end
+
+  def stale_ready?
+    ready? && ready_at.present? && ready_at < PREVIEW_FRESHNESS_WINDOW.ago
+  end
+
   def current_configuration?
     params_digest == calculated_params_digest
   end
