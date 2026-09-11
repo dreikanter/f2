@@ -1,12 +1,14 @@
 import { Controller } from "@hotwired/stimulus"
 
+// The spinner stays up at least this long after the submission starts, so it
+// is readable even when the server answers instantly.
+const MIN_DURATION_MS = 500
+
 // Drives a button's loading state across a Turbo form submission:
 // - on submit start, disables the button and swaps the default icon for a spinner
-// - on submit end, resets it, but never sooner than minDuration after the start,
-//   so the spinner stays visible long enough to read even when the server is fast
+// - on submit end, resets it, but no sooner than MIN_DURATION_MS after the start
 export default class extends Controller {
   static targets = ["button", "default", "loading"]
-  static values = { minDuration: { type: Number, default: 500 } }
 
   start() {
     this._startedAt = performance.now()
@@ -18,7 +20,7 @@ export default class extends Controller {
     // loading state so the button stays disabled until the minimum duration is up.
     this._setLoading(true)
     const elapsed = performance.now() - (this._startedAt ?? 0)
-    const remaining = Math.max(0, this.minDurationValue - elapsed)
+    const remaining = Math.max(0, MIN_DURATION_MS - elapsed)
     clearTimeout(this._resetTimer)
     this._resetTimer = setTimeout(() => this._setLoading(false), remaining)
   }
