@@ -23,19 +23,19 @@ class FeedIdentification::CandidateTest < ActiveSupport::TestCase
     assert_equal 3, candidate("posts_found" => 3).posts_found
   end
 
-  test "status predicates should reflect test_status" do
+  test "#failed? and #unreachable? should reflect test_status" do
     assert candidate("test_status" => "failed").failed?
     assert candidate("test_status" => "unreachable").unreachable?
   end
 
-  test "status predicates should be false for a different verdict" do
+  test "#failed? and #unreachable? should be false for a different verdict" do
     subject = candidate("test_status" => "passed")
 
     assert_not subject.failed?
     assert_not subject.unreachable?
   end
 
-  test "status predicates should be false when no verdict is present" do
+  test "#failed? and #unreachable? should be false when no verdict is present" do
     subject = candidate({})
 
     assert_not subject.failed?

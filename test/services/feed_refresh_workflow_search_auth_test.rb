@@ -1,7 +1,7 @@
 require "test_helper"
 
 class FeedRefreshWorkflowSearchAuthTest < ActiveSupport::TestCase
-  test "uncaught search auth failure deactivates the credential and records a failed run without disabling feeds" do
+  test "#execute should deactivate the credential and record a failed run after an uncaught search auth failure without disabling feeds" do
     user = create(:user)
     ai_credential = create(
       :ai_credential,

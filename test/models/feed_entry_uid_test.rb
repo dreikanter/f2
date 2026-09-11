@@ -5,7 +5,7 @@ class FeedEntryUidTest < ActiveSupport::TestCase
     @feed ||= create(:feed)
   end
 
-  test "should be valid with all required attributes" do
+  test "#valid? should return true with all required attributes" do
     feed_entry_uid = build(
       :feed_entry_uid,
       feed: feed,
@@ -16,19 +16,19 @@ class FeedEntryUidTest < ActiveSupport::TestCase
     assert feed_entry_uid.valid?
   end
 
-  test "should require uid" do
+  test "#valid? should require uid" do
     feed_entry_uid = build(:feed_entry_uid, feed: feed, uid: nil)
     assert_not feed_entry_uid.valid?
     assert feed_entry_uid.errors.of_kind?(:uid, :blank)
   end
 
-  test "should require imported_at" do
+  test "#valid? should require imported_at" do
     feed_entry_uid = build(:feed_entry_uid, feed: feed, uid: "test-uid", imported_at: nil)
     assert_not feed_entry_uid.valid?
     assert feed_entry_uid.errors.of_kind?(:imported_at, :blank)
   end
 
-  test "should enforce uniqueness of uid scoped to feed" do
+  test "#valid? should enforce uniqueness of uid scoped to feed" do
     create(:feed_entry_uid, feed: feed, uid: "duplicate-uid")
     duplicate = build(:feed_entry_uid, feed: feed, uid: "duplicate-uid")
 
@@ -36,7 +36,7 @@ class FeedEntryUidTest < ActiveSupport::TestCase
     assert duplicate.errors.of_kind?(:uid, :taken)
   end
 
-  test "should allow same uid for different feeds" do
+  test "#valid? should allow same uid for different feeds" do
     other_feed = create(:feed)
     create(:feed_entry_uid, feed: feed, uid: "same-uid")
     other_uid = build(:feed_entry_uid, feed: other_feed, uid: "same-uid")
@@ -44,7 +44,7 @@ class FeedEntryUidTest < ActiveSupport::TestCase
     assert other_uid.valid?
   end
 
-  test "should belong to a feed" do
+  test "#feed should return the associated feed" do
     feed_entry_uid = create(:feed_entry_uid, feed: feed)
     assert_equal feed, feed_entry_uid.feed
   end

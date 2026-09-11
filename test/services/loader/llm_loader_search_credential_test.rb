@@ -1,7 +1,7 @@
 require "test_helper"
 
 class Loader::LlmLoaderSearchCredentialTest < ActiveSupport::TestCase
-  test "scheduled AI load carries the feed search credential in the call context" do
+  test "#load should carry the feed search credential in the scheduled call context" do
     user = create(:user)
     ai_credential = create(:ai_credential, :active, user: user)
     search_credential = create(:search_credential, :active, user: user)

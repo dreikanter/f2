@@ -5,20 +5,20 @@ class WebhookEndpointTest < ActiveSupport::TestCase
     @feed ||= create(:feed)
   end
 
-  test "should generate a token on create" do
+  test "#save! should generate a token on create" do
     endpoint = create(:webhook_endpoint, feed: feed)
 
     assert_match WebhookEndpoint::TOKEN_PATTERN, endpoint.encrypted_token
   end
 
-  test "should keep an explicitly assigned token" do
+  test "#save! should keep an explicitly assigned token" do
     token = WebhookEndpoint.generate_token
     endpoint = create(:webhook_endpoint, feed: feed, encrypted_token: token)
 
     assert_equal token, endpoint.encrypted_token
   end
 
-  test "should require a unique token" do
+  test "#valid? should require a unique token" do
     token = WebhookEndpoint.generate_token
     create(:webhook_endpoint, feed: feed, encrypted_token: token)
     duplicate = build(:webhook_endpoint, feed: create(:feed), encrypted_token: token)
@@ -27,7 +27,7 @@ class WebhookEndpointTest < ActiveSupport::TestCase
     assert duplicate.errors.of_kind?(:encrypted_token, :taken)
   end
 
-  test "should allow only one endpoint per feed" do
+  test "#valid? should allow only one endpoint per feed" do
     create(:webhook_endpoint, feed: feed)
     duplicate = build(:webhook_endpoint, feed: feed)
 
@@ -35,7 +35,7 @@ class WebhookEndpointTest < ActiveSupport::TestCase
     assert duplicate.errors.of_kind?(:feed_id, :taken)
   end
 
-  test "should persist the token encrypted at rest" do
+  test "#save! should persist the token encrypted at rest" do
     endpoint = create(:webhook_endpoint, feed: feed)
     connection = WebhookEndpoint.connection
     stored_value = connection.select_value(
@@ -78,7 +78,7 @@ class WebhookEndpointTest < ActiveSupport::TestCase
     assert_nil WebhookEndpoint.authenticate(old_token)
   end
 
-  test "should remove rate-limit state when destroyed" do
+  test "#destroy! should remove rate-limit state" do
     endpoint = create(:webhook_endpoint, feed: feed)
     key = "webhook_ingest:#{endpoint.rate_limit_subject}"
     RateLimit.acquire(:webhook_ingest, subject: endpoint.rate_limit_subject, cost: { request: 1 })
@@ -89,7 +89,7 @@ class WebhookEndpointTest < ActiveSupport::TestCase
     assert_not RateLimit::Bucket.exists?(key: key)
   end
 
-  test "should default received_count to zero" do
+  test "#initialize should default received_count to zero" do
     endpoint = create(:webhook_endpoint, feed: feed)
 
     assert_equal 0, endpoint.received_count

@@ -5,12 +5,12 @@ class LlmUsageTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  test "should be valid with the default factory" do
+  test "#valid? should return true with the default factory" do
     usage = build(:llm_usage, user: user)
     assert usage.valid?, usage.errors.full_messages.inspect
   end
 
-  test "should require provider, model, outcome, and timing fields" do
+  test "#valid? should require provider, model, outcome, and timing fields" do
     usage = LlmUsage.new
     refute usage.valid?
     assert usage.errors[:provider].any?
@@ -20,22 +20,22 @@ class LlmUsageTest < ActiveSupport::TestCase
     assert usage.errors[:finished_at].any?
   end
 
-  test "should expose stage enum values" do
+  test ".stages should expose stage enum values" do
     assert_equal({ "loader" => 0, "processor" => 1, "normalizer" => 2 }, LlmUsage.stages)
   end
 
-  test "should expose purpose enum values" do
+  test ".purposes should expose purpose enum values" do
     assert_equal({ "scheduled_run" => 0, "preview" => 1 }, LlmUsage.purposes)
   end
 
-  test "should expose outcome enum values" do
+  test ".outcomes should expose outcome enum values" do
     assert_equal(
       { "success" => 0, "schema_error" => 1, "provider_error" => 2, "rate_limited" => 3, "timeout" => 4 },
       LlmUsage.outcomes
     )
   end
 
-  test "should allow feed and ai_credential to be nil for preview / validation calls" do
+  test "#valid? should allow feed and ai_credential to be nil for preview / validation calls" do
     usage = build(:llm_usage, user: user, feed: nil, ai_credential: nil, purpose: :preview)
     assert usage.valid?
   end
@@ -50,7 +50,7 @@ class LlmUsageTest < ActiveSupport::TestCase
     assert_not_includes result, stale
   end
 
-  test "should belong to a feed when provided" do
+  test "#feed should return the associated feed when provided" do
     feed = create(:feed,
                   user: user,
                   feed_profile_key: "rss",

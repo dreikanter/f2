@@ -24,12 +24,12 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  test "should default candidates to an empty array" do
+  test "#initialize should default candidates to an empty array" do
     identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml")
     assert_equal [], identification.candidates
   end
 
-  test "should persist candidates as JSONB" do
+  test ".create! should persist candidates as JSONB" do
     identification = FeedIdentification.create!(
       user: user,
       input: "https://example.com/feed.xml",
@@ -175,7 +175,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     assert_equal ["rss"], id.working_candidates.map(&:profile_key)
   end
 
-  test "should accept multiple ranked candidates" do
+  test ".create! should accept multiple ranked candidates" do
     identification = FeedIdentification.create!(
       user: user,
       input: "https://example.com/article",

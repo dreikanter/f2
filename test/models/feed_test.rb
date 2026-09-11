@@ -1,7 +1,7 @@
 require "test_helper"
 
 class FeedTest < ActiveSupport::TestCase
-  test "should be valid with all required attributes" do
+  test "#valid? should return true with all required attributes" do
     feed = build(:feed)
     assert feed.valid?
   end
@@ -12,7 +12,7 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
-  test "should require name when enabled" do
+  test "#valid? should require name when enabled" do
     feed = build(:feed, state: :enabled, name: nil)
     assert_not feed.valid?
     assert feed.errors.of_kind?(:name, :blank)
@@ -36,7 +36,7 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.errors.of_kind?(:name, :blank)
   end
 
-  test "should require unique name when present" do
+  test "#valid? should require unique name when present" do
     user = create(:user)
     create(:feed, user: user, name: "Test Feed")
     feed = build(:feed, user: user, name: "Test Feed")
@@ -54,7 +54,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "Untitled feed", feed.display_name
   end
 
-  test "should default params to empty hash for new records" do
+  test "#initialize should default params to empty hash for new records" do
     feed = Feed.new
     assert_equal({}, feed.params)
   end
@@ -141,7 +141,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.params.key?("ratio")
   end
 
-  test "should reject undeclared params on create instead of dropping them" do
+  test "#valid? should reject undeclared params on create instead of dropping them" do
     feed = build(:feed, feed_profile_key: "rss", params: { "url" => "https://example.com/feed.xml", "legacy_option" => true })
 
     assert_not feed.valid?
@@ -222,39 +222,39 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal 42, feed.subscribers_count
   end
 
-  test "should reject params missing required keys per profile schema" do
+  test "#valid? should reject params missing required keys per profile schema" do
     feed = build(:feed, feed_profile_key: "rss", params: {})
     assert_not feed.valid?
     assert feed.errors.of_kind?(:params, "object at root is missing required properties: url")
   end
 
-  test "should reject params with malformed url per profile schema" do
+  test "#valid? should reject params with malformed url per profile schema" do
     feed = build(:feed, feed_profile_key: "rss", params: { "url" => "not-a-uri" })
     assert_not feed.valid?
     assert feed.errors[:params].any? { |msg| msg.include?("/url") && msg.include?("uri") },
            "expected a /url + uri error, got: #{feed.errors[:params].inspect}"
   end
 
-  test "should accept params matching profile schema" do
+  test "#valid? should accept params matching profile schema" do
     feed = build(:feed, feed_profile_key: "rss", params: { "url" => "https://example.com/feed.xml" })
     feed.valid?
     assert_empty feed.errors[:params]
   end
 
-  test "should skip params schema validation when feed_profile_key is unknown" do
+  test "#valid? should skip params schema validation when feed_profile_key is unknown" do
     feed = build(:feed, feed_profile_key: "nonexistent", params: { "anything" => 1 })
     feed.valid?
     assert_empty feed.errors[:params]
   end
 
-  test "should require cron_expression for enabled feeds" do
+  test "#valid? should require cron_expression for enabled feeds" do
     feed = build(:feed, state: :enabled, cron_expression: nil)
 
     assert_not feed.valid?
     assert feed.errors.of_kind?(:cron_expression, :blank)
   end
 
-  test "should not require cron_expression for an unscheduled profile" do
+  test "#valid? should not require cron_expression for an unscheduled profile" do
     FeedProfile.stub(:scheduled?, false) do
       feed = build(:feed, state: :enabled, cron_expression: nil)
 
@@ -262,19 +262,19 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
-  test "should not require cron_expression for disabled feeds" do
+  test "#valid? should not require cron_expression for disabled feeds" do
     feed = build(:feed, cron_expression: nil, state: :disabled)
     feed.valid?
     assert_not feed.errors.of_kind?(:cron_expression, :blank)
   end
 
-  test "should require feed_profile_key" do
+  test "#valid? should require feed_profile_key" do
     feed = build(:feed, :without_feed_profile)
     assert_not feed.valid?
     assert feed.errors.of_kind?(:feed_profile_key, :blank)
   end
 
-  test "should have disabled state when factory builds a feed" do
+  test "feed factory should build a disabled feed" do
     feed = build(:feed)
     assert_equal "disabled", feed.state
   end
@@ -301,7 +301,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_not build(:feed, state: :disabled).enabled?
   end
 
-  test "should support state transitions" do
+  test "#enabled! and #disabled! should transition the feed state" do
     feed = create(:feed)
 
     assert feed.disabled?
@@ -313,7 +313,7 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.disabled?
   end
 
-  test "should create feed_schedule when transitioning from disabled to enabled" do
+  test "#update! should create feed_schedule when transitioning from disabled to enabled" do
     user = create(:user)
     access_token = create(:access_token, :active, user: user)
     feed = create(:feed, user: user, state: :disabled, access_token: access_token, target_group: "testgroup", cron_expression: "0 * * * *")
@@ -330,7 +330,7 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
-  test "should not create feed_schedule when enabling an unscheduled profile" do
+  test "#enable should not create feed_schedule when enabling an unscheduled profile" do
     FeedProfile.stub(:scheduled?, false) do
       feed = create(:feed, state: :disabled, cron_expression: nil)
 
@@ -339,7 +339,7 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
-  test "should not create duplicate feed_schedule when already exists" do
+  test "#update! should not create duplicate feed_schedule when already exists" do
     user = create(:user)
     access_token = create(:access_token, :active, user: user)
     feed = create(:feed, :with_schedule, user: user, state: :disabled, access_token: access_token, target_group: "testgroup")
@@ -351,12 +351,12 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal existing_schedule.id, feed.reload.feed_schedule.id
   end
 
-  test "should have empty description by default" do
+  test "#initialize should default description to an empty string" do
     feed = build(:feed)
     assert_equal "", feed.description
   end
 
-  test "should destroy associated feed_schedule when destroyed" do
+  test "#destroy! should remove the associated feed schedule" do
     feed = create(:feed, :with_schedule)
 
     assert_difference("FeedSchedule.count", -1) do
@@ -421,7 +421,7 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.can_be_enabled?
   end
 
-  test "should enable a webhook feed without cron and create no schedule" do
+  test "#enable should enable a webhook feed without cron and create no schedule" do
     feed = create(:feed, :webhook, state: :disabled)
 
     assert feed.enable
@@ -435,7 +435,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_not build(:feed, :without_feed_profile).sourceless?
   end
 
-  test "should destroy the webhook endpoint when the feed is destroyed" do
+  test "#destroy! should remove the associated webhook endpoint" do
     feed = create(:feed, :webhook)
     create(:webhook_endpoint, feed: feed)
 
@@ -444,13 +444,13 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
-  test "should require user" do
+  test "#valid? should require user" do
     feed = build(:feed, user: nil)
     assert_not feed.valid?
     assert feed.errors.of_kind?(:user, :blank)
   end
 
-  test "should validate name length" do
+  test "#valid? should validate name length" do
     feed = build(:feed, name: "a" * 41)
     assert_not feed.valid?
     assert feed.errors.of_kind?(:name, :too_long)
@@ -459,7 +459,7 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?
   end
 
-  test "should validate cron expression format" do
+  test "#valid? should validate cron expression format" do
     feed = build(:feed, cron_expression: "invalid cron")
     assert_not feed.valid?
     assert_includes feed.errors[:cron_expression].first, "is not a valid cron expression"
@@ -468,27 +468,27 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?
   end
 
-  test "should normalize name by stripping spaces" do
+  test "#name= should normalize name by stripping spaces" do
     feed = create(:feed, name: "  Test-Feed  ")
     assert_equal "Test-Feed", feed.name
   end
 
-  test "should normalize url by stripping spaces" do
+  test "#url= should normalize url by stripping spaces" do
     feed = create(:feed, url: "  https://example.com/feed.xml  ")
     assert_equal "https://example.com/feed.xml", feed.url
   end
 
-  test "should normalize cron expression by stripping spaces" do
+  test "#cron_expression= should normalize cron expression by stripping spaces" do
     feed = create(:feed, cron_expression: "  0 * * * *  ")
     assert_equal "0 * * * *", feed.cron_expression
   end
 
-  test "should normalize description by removing line breaks" do
+  test "#description= should normalize description by removing line breaks" do
     feed = create(:feed, description: "Line 1\nLine 2\r\nLine 3")
     assert_equal "Line 1 Line 2 Line 3", feed.description
   end
 
-  test "should enforce unique name per user" do
+  test "#valid? should enforce unique name per user" do
     user = create(:user)
     create(:feed, user: user, name: "duplicate")
 
@@ -497,7 +497,7 @@ class FeedTest < ActiveSupport::TestCase
     assert duplicate_feed.errors.of_kind?(:name, :taken)
   end
 
-  test "should allow same name for different users" do
+  test "#valid? should allow same name for different users" do
     user1 = create(:user)
     user2 = create(:user)
     create(:feed, user: user1, name: "same-name")
@@ -506,19 +506,19 @@ class FeedTest < ActiveSupport::TestCase
     assert feed2.valid?
   end
 
-  test "should not change state for persisted records" do
+  test ".find should preserve the state of persisted records" do
     feed = create(:feed, state: :enabled)
     reloaded_feed = Feed.find(feed.id)
     assert_equal "enabled", reloaded_feed.state
   end
 
-  test "#scheduled? delegates to the feed profile" do
+  test "#scheduled? should delegate to the feed profile" do
     feed = build(:feed, feed_profile_key: "rss")
 
     assert feed.scheduled?
   end
 
-  test "#can_be_enabled? returns true when feed has active access token and target group" do
+  test "#can_be_enabled? should return true when feed has active access token and target group" do
     user = create(:user)
     access_token = create(:access_token, :active, user: user)
     feed = create(:feed, user: user, access_token: access_token, target_group: "test_group")
@@ -526,7 +526,7 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.can_be_enabled?
   end
 
-  test "#can_be_enabled? does not require a cron expression for an unscheduled profile" do
+  test "#can_be_enabled? should not require a cron expression for an unscheduled profile" do
     FeedProfile.stub(:scheduled?, false) do
       feed = build(:feed, cron_expression: nil)
 
@@ -534,7 +534,7 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
-  test "#can_be_enabled? returns false when feed has a blank name" do
+  test "#can_be_enabled? should return false when feed has a blank name" do
     user = create(:user)
     access_token = create(:access_token, :active, user: user)
     feed = create(:feed, user: user, access_token: access_token, target_group: "test_group", name: "")
@@ -542,7 +542,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_enabled?
   end
 
-  test "#can_be_enabled? returns false when feed has inactive access token" do
+  test "#can_be_enabled? should return false when feed has inactive access token" do
     user = create(:user)
     access_token = create(:access_token, :inactive, user: user)
     feed = create(:feed, user: user, access_token: access_token, target_group: "test_group")
@@ -550,7 +550,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_enabled?
   end
 
-  test "#can_be_enabled? returns false when feed has no target group" do
+  test "#can_be_enabled? should return false when feed has no target group" do
     user = create(:user)
     access_token = create(:access_token, :active, user: user)
     feed = create(:feed, user: user, access_token: access_token, target_group: nil)
@@ -558,26 +558,26 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_enabled?
   end
 
-  test "#can_be_enabled? returns false when feed has neither access token nor target group" do
+  test "#can_be_enabled? should return false when feed has neither access token nor target group" do
     feed = create(:feed, :without_access_token)
 
     assert_not feed.can_be_enabled?
   end
 
-  test "#can_be_enabled? returns false when feed has no feed_profile_key" do
+  test "#can_be_enabled? should return false when feed has no feed_profile_key" do
     feed = build(:feed, :without_feed_profile)
 
     assert_not feed.can_be_enabled?
   end
 
-  test "#can_be_enabled? returns false for an AI feed without a credential" do
+  test "#can_be_enabled? should return false for an AI feed without a credential" do
     feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "ruby news" },
                         ai_credential: nil, ai_model: "claude-sonnet-4-6")
 
     assert_not feed.can_be_enabled?
   end
 
-  test "#can_be_enabled? returns false for an AI feed with an inactive credential" do
+  test "#can_be_enabled? should return false for an AI feed with an inactive credential" do
     credential = create(:ai_credential, :inactive)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
@@ -585,7 +585,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_enabled?
   end
 
-  test "#can_be_enabled? returns false for an AI feed without a model" do
+  test "#can_be_enabled? should return false for an AI feed without a model" do
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: nil)
@@ -593,7 +593,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_enabled?
   end
 
-  test "#can_be_enabled? returns true for an AI feed with an active credential and a model" do
+  test "#can_be_enabled? should return true for an AI feed with an active credential and a model" do
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
@@ -652,19 +652,19 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_previewed?
   end
 
-  test "#processor_class resolves correct processor class" do
+  test "#processor_class should resolve correct processor class" do
     feed = create(:feed, feed_profile_key: "rss")
 
     assert_equal Processor::RssProcessor, feed.processor_class
   end
 
-  test "#normalizer_class resolves correct normalizer class" do
+  test "#normalizer_class should resolve correct normalizer class" do
     feed = create(:feed, feed_profile_key: "rss")
 
     assert_equal Normalizer::RssNormalizer, feed.normalizer_class
   end
 
-  test "#processor_instance creates processor with feed and raw data" do
+  test "#processor_instance should create processor with feed and raw data" do
     feed = create(:feed, feed_profile_key: "rss")
     raw_data = "<rss><item><title>Test</title></item></rss>"
 
@@ -673,7 +673,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_instance_of Processor::RssProcessor, processor
   end
 
-  test "#normalizer_instance creates normalizer with feed entry" do
+  test "#normalizer_instance should create normalizer with feed entry" do
     feed = create(:feed, feed_profile_key: "rss")
     feed_entry = create(:feed_entry, feed: feed)
 
@@ -787,7 +787,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_predicate feed.reload, :disabled?
   end
 
-  test "should reject an ai_credential belonging to a different user" do
+  test "#valid? should reject an ai_credential belonging to a different user" do
     owner = create(:user)
     stranger = create(:user)
     foreign_credential = create(:ai_credential, user: stranger)
@@ -802,7 +802,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_includes feed.errors[:ai_credential], "must belong to the same user"
   end
 
-  test "should accept its own user's ai_credential" do
+  test "#valid? should accept its own user's ai_credential" do
     user = create(:user)
     credential = create(:ai_credential, user: user)
 
@@ -843,7 +843,7 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?, feed.errors.full_messages.inspect
   end
 
-  test "#enabling an AI feed should require an ai_credential" do
+  test "#valid? should require an ai_credential when enabling an AI feed" do
     user = create(:user)
     feed = build(:feed,
                  user: user,
@@ -857,7 +857,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_includes feed.errors[:ai_credential], "must be selected for AI-backed feeds"
   end
 
-  test "#enabling an AI feed should reject an inactive ai_credential" do
+  test "#valid? should reject an inactive ai_credential when enabling an AI feed" do
     user = create(:user)
     credential = create(:ai_credential, :inactive, user: user)
     feed = build(:feed,
@@ -872,7 +872,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_includes feed.errors[:ai_credential], "must be active (currently inactive)"
   end
 
-  test "#enabling an AI feed should accept an active credential with an available model" do
+  test "#valid? should accept an active credential with an available model when enabling an AI feed" do
     user = create(:user)
     credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
     feed = build(:feed,
@@ -887,7 +887,7 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?, feed.errors.full_messages.inspect
   end
 
-  test "#enabling an AI feed should require a model" do
+  test "#valid? should require a model when enabling an AI feed" do
     user = create(:user)
     credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
     feed = build(:feed,
@@ -903,7 +903,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_includes feed.errors[:ai_model], "Choose a model for this feed."
   end
 
-  test "#enabling an AI feed should reject a model the provider no longer offers" do
+  test "#valid? should reject a model the provider no longer offers when enabling an AI feed" do
     user = create(:user)
     credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
     feed = build(:feed,
@@ -919,7 +919,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_includes feed.errors[:ai_model], "This model isn't available anymore. Pick another one."
   end
 
-  test "#saving an unrelated edit should not re-validate a saved model that later dropped" do
+  test "#valid? should allow unrelated edits after a saved model becomes unavailable" do
     user = create(:user)
     credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
     feed = create(:feed, user: user, access_token: access_token_for(user), state: :enabled,
@@ -932,7 +932,7 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?, feed.errors.full_messages.inspect
   end
 
-  test "#changing to an unsupported model on an enabled feed should be rejected" do
+  test "#valid? should reject changing an enabled feed to an unsupported model" do
     user = create(:user)
     credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
     feed = create(:feed, user: user, access_token: access_token_for(user), state: :enabled,
@@ -981,7 +981,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.ai_model_supported?
   end
 
-  test "#enabling a non-AI feed should not require an ai_credential" do
+  test "#valid? should not require an ai_credential when enabling a non-AI feed" do
     user = create(:user)
     feed = build(:feed,
                  user: user,
@@ -1235,7 +1235,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_nil feed.import_after
   end
 
-  test "should default to the current time when the date is blank" do
+  test "#valid? should default import_after to the current time when the date is blank" do
     feed = build(:feed)
     feed.assign_attributes(import_after_enabled: "1", import_after_date: "", import_after_time: "")
 
@@ -1243,7 +1243,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_in_delta Time.current, feed.import_after, 5.seconds
   end
 
-  test "should fall back to the current time for an unparseable date" do
+  test "#valid? should default import_after to the current time for an unparseable date" do
     feed = build(:feed)
     feed.assign_attributes(import_after_enabled: "1", import_after_date: "not-a-date", import_after_time: "10:30")
 
@@ -1258,13 +1258,13 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "not-a-date", feed.import_after_date
   end
 
-  test "should stay valid when import_after is set directly without parts" do
+  test "#valid? should accept import_after set directly without parts" do
     feed = build(:feed, import_after: Time.utc(2026, 1, 15))
 
     assert feed.valid?, feed.errors.full_messages.inspect
   end
 
-  test "should compose the same result regardless of part assignment order" do
+  test "#valid? should compose import_after regardless of part assignment order" do
     feed = build(:feed)
     feed.import_after_enabled = "1"
     feed.import_after_date = "2026-01-15"
@@ -1273,7 +1273,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal Time.zone.parse("2026-01-15 00:00"), feed.import_after
   end
 
-  test "should leave import_after alone when the parts were never assigned" do
+  test "#valid? should leave import_after alone when the parts were never assigned" do
     time = Time.utc(2026, 1, 15, 10, 30, 45)
     feed = build(:feed, import_after: time)
 

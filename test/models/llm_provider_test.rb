@@ -94,7 +94,7 @@ class LlmProviderTest < ActiveSupport::TestCase
     assert_nil config.openai_use_system_role
   end
 
-  test "every provider should declare a default_model with a known rate" do
+  test "#default_model should have a known rate for every provider" do
     LlmProvider.all.each do |provider|
       assert provider.default_model.present?, "#{provider.name} must declare a default_model"
       assert LlmClient::RateTable.rate_for(provider: provider.name, model: provider.default_model),
@@ -102,7 +102,7 @@ class LlmProviderTest < ActiveSupport::TestCase
     end
   end
 
-  test "every provider's ruby_llm_provider should resolve to a registered RubyLLM provider" do
+  test "#ruby_llm_provider should resolve to a registered RubyLLM provider" do
     LlmProvider.all.each do |provider|
       assert_not_nil RubyLLM::Provider.resolve(provider.ruby_llm_provider),
                      "#{provider.name} maps to unknown RubyLLM provider #{provider.ruby_llm_provider}"
@@ -119,12 +119,12 @@ class LlmProviderTest < ActiveSupport::TestCase
     assert_raises(KeyError) { LlmProvider.find(nil) }
   end
 
-  test "instances should be frozen" do
+  test ".find should return frozen instances" do
     assert LlmProvider.find("anthropic").frozen?
     assert LlmProvider.find("openrouter").frozen?
   end
 
-  test "registry should be frozen" do
+  test "PROVIDERS should be frozen" do
     assert LlmProvider::PROVIDERS.frozen?
   end
 end
