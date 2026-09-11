@@ -95,6 +95,24 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert_equal user, feed_preview.user
   end
 
+  test "#ai_credential_id should be cleared when the credential is deleted" do
+    credential = create(:ai_credential, :active, user: user)
+    preview = create(:feed_preview, user: user, ai_credential: credential)
+
+    credential.destroy!
+
+    assert_nil preview.reload.ai_credential_id
+  end
+
+  test "#search_credential_id should be cleared when the credential is deleted" do
+    credential = create(:search_credential, :active, user: user)
+    preview = create(:feed_preview, user: user, search_credential: credential)
+
+    credential.destroy!
+
+    assert_nil preview.reload.search_credential_id
+  end
+
   test "#search_credential should return the associated credential when provided" do
     credential = create(:search_credential, :active, user: user)
     preview = create(:feed_preview, user: user, search_credential: credential)

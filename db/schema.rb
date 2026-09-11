@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_09_143000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_11_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -149,6 +149,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_09_143000) do
     t.string "ai_model"
     t.uuid "search_credential_id"
     t.uuid "feed_id"
+    t.index ["ai_credential_id"], name: "index_feed_previews_on_ai_credential_id"
     t.index ["feed_id"], name: "index_feed_previews_on_feed_id"
     t.index ["search_credential_id"], name: "index_feed_previews_on_search_credential_id"
     t.index ["status"], name: "index_feed_previews_on_status"
@@ -525,6 +526,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_09_143000) do
   add_foreign_key "feed_entry_uids", "feeds", on_delete: :cascade
   add_foreign_key "feed_identifications", "users"
   add_foreign_key "feed_metrics", "feeds", on_delete: :cascade
+  add_foreign_key "feed_previews", "ai_credentials", on_delete: :nullify
   add_foreign_key "feed_previews", "feeds"
   add_foreign_key "feed_previews", "search_credentials", on_delete: :nullify
   add_foreign_key "feed_previews", "users"
