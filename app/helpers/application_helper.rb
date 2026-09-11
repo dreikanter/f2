@@ -170,13 +170,41 @@ module ApplicationHelper
     return [] unless Current.user
 
     [
-      [["Settings", settings_path]],
-      [["Freefeed Access Tokens", access_tokens_path],
-       ["AI Credentials", ai_credentials_path],
-       ["Search Credentials", search_credentials_path],
-       ["Invites", invites_path],
-       ["Changelog", changelog_path]]
-    ].map { |group| group.map { |name, path| { name: name, path: path, active: current_page?(path) } } }
+      [
+        {
+          name: "Settings",
+          path: settings_path,
+          active: current_page?(settings_path)
+        }
+      ],
+      [
+        {
+          name: "Freefeed Access Tokens",
+          path: access_tokens_path,
+          active: current_page?(access_tokens_path)
+        },
+        {
+          name: "AI Credentials",
+          path: ai_credentials_path,
+          active: current_page?(ai_credentials_path)
+        },
+        {
+          name: "Search Credentials",
+          path: search_credentials_path,
+          active: current_page?(search_credentials_path)
+        },
+        {
+          name: "Invites",
+          path: invites_path,
+          active: current_page?(invites_path)
+        },
+        {
+          name: "Changelog",
+          path: changelog_path,
+          active: current_page?(changelog_path)
+        }
+      ]
+    ]
   end
 
   def user_menu_items
