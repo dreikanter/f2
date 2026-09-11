@@ -350,7 +350,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_nil Post.find_by(id: failed_post.id)
   end
 
-  test "#destroy should do nothing when no option is selected" do
+  test "#destroy should reject a request without deletion parameters" do
     sign_in_as(user)
     published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
 
@@ -360,7 +360,22 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
       end
     end
 
-    assert_redirected_to posts_path
+    assert_response :bad_request
+    assert_equal "published", published_post.reload.status
+  end
+
+  test "#destroy should reject a Turbo request with both deletion parameters false" do
+    sign_in_as(user)
+    published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
+
+    assert_no_enqueued_jobs(only: PostWithdrawalJob) do
+      assert_no_difference(["Post.count", "Event.count"]) do
+        delete post_url(published_post), params: { delete_freefeed_post: "0", delete_record: "0" },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      end
+    end
+
+    assert_response :bad_request
     assert_equal "published", published_post.reload.status
   end
 
