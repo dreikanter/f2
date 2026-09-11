@@ -30,7 +30,8 @@ jobs:
       RAILS_ENV: test
       DATABASE_URL: postgres://postgres:postgres@localhost:5432
       COVERAGE: "1"
-      BASELINE_SHA: d72e16d52e42d6cb06eec125e921c2f07d56cb6b
+      # The commit that moved the standard test users from factories to fixtures.
+      FIXTURE_COMMIT: e661241294813ad6a2a3f57df620474c94f54eca
       FIXTURE_SHA: ${{ github.event.pull_request.head.sha }}
 
     steps:
@@ -49,6 +50,14 @@ jobs:
       - name: Prepare database
         run: bin/rails db:test:prepare
 
+      # The factory baseline is the PR head with the fixture commit reverted, so it
+      # keeps every later test change (main merges included) and runs against the
+      # same application code as the fixture version.
+      - name: Build the factory baseline test tree
+        run: |
+          baseline="$(git merge-tree --write-tree --merge-base="$FIXTURE_COMMIT" "$FIXTURE_SHA" "$FIXTURE_COMMIT^")"
+          echo "BASELINE_TREE=$baseline" >> "$GITHUB_ENV"
+
       - name: Compare three full suite runs per version
         run: |
           python3 - <<'PY'
@@ -62,7 +71,7 @@ jobs:
 
           results = []
           for index, version in enumerate(["before", "after", "after", "before", "before", "after"], 1):
-              revision = os.environ["BASELINE_SHA" if version == "before" else "FIXTURE_SHA"]
+              revision = os.environ["BASELINE_TREE" if version == "before" else "FIXTURE_SHA"]
               subprocess.run(["git", "restore", "--source=" + revision, "--", "test"], check=True)
               log = Path(f"fixture-benchmark-{index}-{version}.log")
               started = time.perf_counter()
