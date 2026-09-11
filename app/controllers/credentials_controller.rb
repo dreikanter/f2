@@ -128,12 +128,6 @@ class CredentialsController < ApplicationController
   end
 
   def credential_data_from_params
-    raw = credential_params[:credential_data]
-
-    case raw
-    when ActionController::Parameters then raw.to_unsafe_h
-    when Hash then raw
-    else {}
-    end
+    credential_params[:credential_data].to_h
   end
 end
