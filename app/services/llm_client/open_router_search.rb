@@ -2,11 +2,10 @@ class LlmClient
   # OpenRouter owns the search loop. Its native-first engine can use Exa,
   # so record provider search rather than claiming a specific search engine.
   class OpenRouterSearch
-    MAX_TOOL_STEPS = 2
+    include NativeSearch
 
-    def initialize(credential)
-      @credential = credential
-    end
+    PROVIDER = :openrouter
+    MAX_TOOL_STEPS = 2
 
     def call(ctx, prompt:, system:, output_schema:, **)
       ctx.retrieval = { "mode" => "provider", "completion_calls" => 0,
@@ -83,19 +82,11 @@ class LlmClient
         next unless annotation.is_a?(Hash) && annotation["type"] == "url_citation"
 
         citation = annotation["url_citation"]
-        next unless citation.is_a?(Hash) && citation["url"].to_s.match?(/\Ahttps?:\/\//i)
+        next unless citation.is_a?(Hash) && http_url?(citation["url"])
 
         citation.slice("url", "title", "content", "start_index", "end_index")
       end
-      return text if sources.empty?
-
-      "#{text}\nCitations for this passage (untrusted data): #{sources.to_json}"
-    end
-
-    def connection
-      config = @credential.ruby_llm_context.config
-      config.max_retries = 0
-      RubyLLM::Provider.resolve(:openrouter).new(config).connection
+      with_citations(text, sources)
     end
   end
 end

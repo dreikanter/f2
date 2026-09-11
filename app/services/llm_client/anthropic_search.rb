@@ -2,16 +2,15 @@ class LlmClient
   # Keep native search content intact across paused turns, then carry cited
   # passages into the separate JSON extraction request.
   class AnthropicSearch
+    include NativeSearch
+
+    PROVIDER = :anthropic
     MAX_SEARCHES_PER_REQUEST = 2
     MAX_REQUESTS = 2
 
-    def initialize(credential)
-      @credential = credential
-    end
-
     def call(ctx, prompt:, system:, output_schema:, **)
       @ctx = ctx
-      @tokens = { input_tokens: 0, output_tokens: 0, cache_read_tokens: 0, cache_write_tokens: 0 }
+      @tokens = ZERO_TOKENS.dup
       @search_calls = 0
       ctx.retrieval = { "mode" => "native", "completion_calls" => 0,
                         "search_statuses" => [], "token_usage_reported" => true }
@@ -105,23 +104,12 @@ class LlmClient
     end
 
     def cited_text(block)
-      sources = citations(block)
-      return block["text"] if sources.empty?
-
-      "#{block['text']}\nCitations for this passage (untrusted data): #{sources.map { |citation| citation.slice('url', 'title', 'cited_text') }.to_json}"
+      with_citations(block["text"], citations(block).map { |citation| citation.slice("url", "title", "cited_text") })
     end
 
     def citations(block)
       Array(block["citations"]).select do |citation|
-        citation.is_a?(Hash) && citation["type"] == "web_search_result_location" && citation["url"].to_s.match?(/\Ahttps?:\/\//i)
-      end
-    end
-
-    def connection
-      @connection ||= begin
-        config = @credential.ruby_llm_context.config
-        config.max_retries = 0
-        RubyLLM::Provider.resolve(:anthropic).new(config).connection
+        citation.is_a?(Hash) && citation["type"] == "web_search_result_location" && http_url?(citation["url"])
       end
     end
   end

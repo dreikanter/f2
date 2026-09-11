@@ -2,17 +2,16 @@ class LlmClient
   # Formula search uses the same Moonshot credential and returns opaque content
   # for Kimi to read. Keep the assistant's reasoning intact between tool rounds.
   class MoonshotSearch
+    include NativeSearch
+
+    PROVIDER = :openai
     FORMULA_PATH = "formulas/moonshot/web-search:latest".freeze
     MAX_SEARCH_CALLS = 2
     UNAVAILABLE = "Web search is unavailable. Use available content without inventing current sources.".freeze
 
-    def initialize(credential)
-      @credential = credential
-    end
-
     def call(ctx, prompt:, system:, output_schema:, **)
       @ctx = ctx
-      @tokens = { input_tokens: 0, output_tokens: 0, cache_read_tokens: 0, cache_write_tokens: 0 }
+      @tokens = ZERO_TOKENS.dup
       ctx.retrieval = { "mode" => "native", "search_calls" => 0, "completion_calls" => 0,
                         "search_statuses" => [], "token_usage_reported" => true }
       tool = search_definition
@@ -125,14 +124,6 @@ class LlmClient
       @tokens[:output_tokens] += usage["completion_tokens"].to_i
       @tokens[:cache_read_tokens] += cached
       @ctx.last_response = ProviderResponse.new(payload: nil, **@tokens)
-    end
-
-    def connection
-      @connection ||= begin
-        config = @credential.ruby_llm_context.config
-        config.max_retries = 0
-        RubyLLM::Provider.resolve(:openai).new(config).connection
-      end
     end
   end
 end

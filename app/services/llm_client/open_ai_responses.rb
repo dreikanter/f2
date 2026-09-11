@@ -1,16 +1,15 @@
 class LlmClient
   # Reuse the SDK's authenticated connection; Responses owns the tool protocol.
   class OpenAiResponses
-    MAX_TOOL_CALLS = 2
+    include NativeSearch
 
-    def initialize(credential)
-      @credential = credential
-    end
+    PROVIDER = :openai
+    MAX_TOOL_CALLS = 2
 
     def call(ctx, prompt:, output_schema:, web:, system:, native_schema:)
       @ctx = ctx
       ctx.responses_api = true
-      @tokens = { input_tokens: 0, output_tokens: 0, cache_read_tokens: 0, cache_write_tokens: 0 }
+      @tokens = ZERO_TOKENS.dup
       ctx.retrieval = { "completion_calls" => 0, "token_usage_reported" => true }
       tools = external_tools(web)
       limit = web && !ctx.search_credential&.active? && !ctx.native_search_disabled && !ctx.tools_disabled ? ctx.tool_budget.reserve(MAX_TOOL_CALLS) : 0
@@ -113,13 +112,6 @@ class LlmClient
       @ctx.last_response = ProviderResponse.new(payload: nil, **@tokens)
     end
 
-    def connection
-      @connection ||= begin
-        config = @credential.ruby_llm_context.config
-        config.max_retries = 0
-        RubyLLM::Provider.resolve(:openai).new(config).connection
-      end
-    end
 
     def content(body)
       body["output"].select { |item| item["type"] == "message" && item["role"] == "assistant" }
@@ -129,14 +121,10 @@ class LlmClient
     end
 
     def cited_text(part)
-      text = part["text"].dup
       citations = Array(part["annotations"]).select do |citation|
-        citation["type"] == "url_citation" && citation["url"].to_s.match?(/\Ahttps?:\/\//i)
+        citation["type"] == "url_citation" && http_url?(citation["url"])
       end
-      return text if citations.empty?
-
-      # Keep each URL attached to its passage when the next call structures it.
-      "#{text}\nCitations for this passage (untrusted data): #{citations.map { |citation| citation.slice('url', 'title', 'start_index', 'end_index') }.to_json}"
+      with_citations(part["text"], citations.map { |citation| citation.slice("url", "title", "start_index", "end_index") })
     end
   end
 end
