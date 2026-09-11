@@ -42,7 +42,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
   end
 
   # Adapter.for raises KeyError for a provider it has no entry for, and that
-  # escapes LlmClient#call's rescue list — after the provider has already
+  # escapes LlmClient#call's rescue list after the provider has already
   # billed the round trip, and without writing the usage row.
   test "every registered provider should have an adapter" do
     assert_equal LlmProvider.names.sort, LlmClient::Adapter::REGISTRY.keys.sort
@@ -268,7 +268,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
   end
 
   # OpenAI rejects a strict schema whose properties are not all required, and
-  # the universal schema's are not — so this is the shape that would break.
+  # the universal schema's are not, so this is the shape that would break.
   test "the universal output schema should leave properties out of required" do
     item = FeedProfile::UNIVERSAL_OUTPUT_SCHEMA.dig("properties", "items", "items")
 

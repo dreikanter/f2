@@ -147,7 +147,7 @@ export default class extends Controller {
   }
 
   // The source is the static value from detection, unless an editable field (an
-  // AI feed's prompt) is present — then it's whatever the user has typed.
+  // AI feed's prompt) is present; then it's whatever the user has typed.
   _currentSource() {
     return this.hasSourceTarget ? this.sourceTarget.value : this.sourceValue
   }

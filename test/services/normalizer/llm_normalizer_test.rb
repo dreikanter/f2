@@ -120,11 +120,11 @@ class Normalizer::LlmNormalizerTest < ActiveSupport::TestCase
 
   test "#normalize should keep only public http(s) attachment URLs" do
     images = [
-      "https://cdn.example.com/ok.png",   # public — kept
-      "http://127.0.0.1/secret.png",      # loopback — dropped
-      "http://169.254.169.254/meta",      # link-local metadata — dropped
-      "file:///etc/passwd",               # non-http — dropped
-      "/proc/self/environ"                # not a URL — dropped
+      "https://cdn.example.com/ok.png",   # public (kept)
+      "http://127.0.0.1/secret.png",      # loopback (dropped)
+      "http://169.254.169.254/meta",      # link-local metadata (dropped)
+      "file:///etc/passwd",               # non-http (dropped)
+      "/proc/self/environ"                # not a URL (dropped)
     ]
     post = Normalizer::LlmNormalizer.new(feed_entry("images" => images)).normalize
 

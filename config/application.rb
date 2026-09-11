@@ -25,7 +25,7 @@ Bundler.require(*Rails.groups)
 require_relative "../lib/boot/config"
 
 # RubyLLM reads this when ActiveRecord loads, which happens before
-# config/initializers run — hence the placement here. It opts into the
+# config/initializers run, hence the placement here. It opts into the
 # association-based acts_as API that replaces the legacy one in RubyLLM 2.0.
 # This app talks to the SDK directly and has no acts_as models, so the flag
 # only silences the legacy deprecation warning.

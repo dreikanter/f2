@@ -32,7 +32,7 @@ class LlmClient
 
       def unwrap_json(text)
         stripped = text.to_s.strip
-        # Already-clean JSON is returned untouched — a fence quoted inside a
+        # Already-clean JSON is returned untouched; a fence quoted inside a
         # string value is content, not a wrapper.
         return stripped if stripped.start_with?(*OPENERS.keys)
 
@@ -52,7 +52,7 @@ class LlmClient
       end
 
       # Prose is unrestricted, so a bracket can precede the payload ("Response
-      # [JSON]: {...}") — only a parse tells a false opener from a real one.
+      # [JSON]: {...}"); only a parse tells a false opener from a real one.
       # Earliest opener first, so an array payload is not read as the first
       # object nested inside it.
       def candidates(text)

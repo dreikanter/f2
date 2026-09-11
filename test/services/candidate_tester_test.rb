@@ -139,7 +139,7 @@ class CandidateTesterTest < ActiveSupport::TestCase
   end
 
   test "#call should fail when the source is reachable but exposes no feed" do
-    # YouTube fetches the page fine, then can't find a feed link — a real
+    # YouTube fetches the page fine, then can't find a feed link: a real
     # compatibility failure, not an unreachable source.
     url = "https://www.youtube.com/@handle"
     stub_request(:get, url).to_return(status: 200, body: "<html><head></head><body>no feed</body></html>")

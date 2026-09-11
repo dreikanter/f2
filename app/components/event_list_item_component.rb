@@ -27,8 +27,8 @@ class EventListItemComponent < ListItemComponent
     }
   end
 
-  # Rows stay neutral regardless of level — severity shows in the leading
-  # icon, not the background — so all event lists hover like every other list.
+  # Rows stay neutral regardless of level; severity shows in the leading
+  # icon, not the background, so all event lists hover like every other list.
   def row_css_class
     helpers.class_names("bg-surface", HOVER_ROW_CSS_CLASS)
   end

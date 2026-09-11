@@ -18,7 +18,7 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
 
   test ".call should return no candidates when no deterministic matcher fires" do
     # The AI profile registers no matcher, so a page with no standard feed yields
-    # nothing — the entry flow offers the AI bridge, detection never selects it.
+    # nothing; the entry flow offers the AI bridge, detection never selects it.
     result = FeedProfileDetector.call(input: "https://example.com/page", fetched_body: "<html><body/></html>")
     assert_empty result.candidates
   end

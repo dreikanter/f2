@@ -471,7 +471,7 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal "schema_error", LlmUsage.last.outcome
   end
 
-  # A repair never bypasses validation — a wrapped array of malformed items
+  # A repair never bypasses validation; a wrapped array of malformed items
   # must still fail the full schema.
   test "#call should still validate a repaired payload against the schema" do
     client = LlmClient.new(credential)
@@ -499,7 +499,7 @@ class LlmClientTest < ActiveSupport::TestCase
 
   # A chat double that records the system prompt and the asked user prompt, so we
   # can verify the system message travels via with_instructions and the user
-  # prompt via #ask — the injection-defense channel separation.
+  # prompt via #ask, preserving channel separation for injection defense.
   class FakeChat
     attr_reader :instructions, :asked, :schema, :params
 

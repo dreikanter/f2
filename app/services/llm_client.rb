@@ -1,5 +1,5 @@
 # The only entry point for LLM calls. Stage classes (Loader, Processor,
-# Normalizer) never touch the RubyLLM SDK directly — they ask `LlmClient`
+# Normalizer) never touch the RubyLLM SDK directly; they ask `LlmClient`
 # for a structured result and get back a value object.
 #
 # Every attempt writes an LlmUsage row, including failed attempts and repairs.
@@ -247,7 +247,7 @@ class LlmClient
     chat.with_params(**params) if params.present?
   end
 
-  # A web-enabled call is several billed completions — one per tool round —
+  # A web-enabled call is several billed completions (one per tool round),
   # but #ask returns only the final round. Each round's assistant message
   # stays on the chat, so summing them gives the true per-call total for
   # the single usage row. Falls back to the response when the chat doesn't

@@ -19,8 +19,8 @@ class Event < ApplicationRecord
   validates :level, inclusion: { in: levels.keys }
 
   scope :recent, -> { order(created_at: :desc) }
-  # An event is expired once its explicit expiration has passed, or — when it
-  # never set one — once it ages past DEFAULT_RETENTION. This is what the purge
+  # An event is expired once its explicit expiration has passed, or, when it
+  # never set one, once it ages past DEFAULT_RETENTION. This is what the purge
   # job deletes.
   scope :expired, -> {
     where("expires_at < :now OR (expires_at IS NULL AND created_at < :cutoff)",

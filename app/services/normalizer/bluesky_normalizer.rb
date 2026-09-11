@@ -30,7 +30,7 @@ module Normalizer
 
     # Link cards usually come with little or no text of their own, so the
     # card's target is what the post is about. Bluesky also keeps the link in
-    # the text when the author typed it there — no need to repeat it.
+    # the text when the author typed it there, so there is no need to repeat it.
     def link_card_text
       card = raw_data["link_card"]
       return nil unless card.is_a?(Hash)

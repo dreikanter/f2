@@ -20,7 +20,7 @@ class UpdateFeedSubscribersCountJob < ApplicationJob
     reschedule_for_rate_limit(e.retry_after)
   rescue FreefeedClient::InvalidTokenError
     # A dead token can't publish either, and a dormant feed may never reach the
-    # publishing flow that would notice — enqueue validation, which owns
+    # publishing flow that would notice; enqueue validation, which owns
     # disabling the token and notifying the user. Not validate_token_async: its
     # eager flip to `validating` would make FreefeedPublisher reject queued
     # posts as poison while the validation job waits to run.
@@ -28,7 +28,7 @@ class UpdateFeedSubscribersCountJob < ApplicationJob
   rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError, FreefeedClient::NotFoundError => e
     # Statistics can be out of a token's reach while publishing still works:
     # scoped app tokens get 401 "token has no access to this API method", and a
-    # renamed or deleted group 404s. Expected external conditions — keep the
+    # renamed or deleted group 404s. Expected external conditions; keep the
     # stale count and leave token/feed fallout to the flows that own it.
     Rails.logger.info("Skipping subscribers count for feed #{feed.id}: #{e.message}")
   end

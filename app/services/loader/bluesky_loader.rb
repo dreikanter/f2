@@ -1,7 +1,7 @@
 module Loader
   # Fetches a Bluesky author's timeline through the public AppView API
   # (public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed). It is documented,
-  # needs no API key or login, and carries full-size image URLs — unlike the
+  # needs no API key or login, and carries full-size image URLs, unlike the
   # profile's native RSS feed, which is text-only. Accepts a full bsky.app
   # profile URL identifying the account by handle or DID.
   class BlueskyLoader < HttpBase
@@ -33,7 +33,7 @@ module Loader
     end
 
     # The account's handle or DID from a bsky.app/profile/<actor> URL. Only
-    # the full URL form is accepted — bare handles are ambiguous (and the
+    # the full URL form is accepted; bare handles are ambiguous (and the
     # params schema requires a URI anyway).
     def actor
       raw = feed.url.to_s.strip

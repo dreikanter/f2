@@ -4,7 +4,7 @@
 Rails.application.config.after_initialize do
   next unless Metrics.enabled?
 
-  # Gauges are global DB snapshots, so a single process samples them — the one
+  # Gauges are global DB snapshots, so a single process samples them: the one
   # with METRICS_GAUGES set (the web role; see config/deploy.staging.yml).
   # Without the gate every process (Puma, SolidQueue supervisor, each worker)
   # would run identical queries every flush and overwrite the same series.

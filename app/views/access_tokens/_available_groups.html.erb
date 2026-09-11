@@ -1,7 +1,7 @@
 <%# locals: (access_token:, refreshing: false, refresh_failed: false) %>
 <%# While a refresh runs, this fragment hosts the polling controller: the
     groups-refresh endpoint stays silent until the background job settles, then
-    replaces the whole fragment — which disconnects the poller. %>
+    replaces the whole fragment, which disconnects the poller. %>
 <%= tag.div id: "available-groups", data: refreshing ? {
       controller: "polling",
       polling_endpoint_value: access_token_groups_refresh_path(access_token),

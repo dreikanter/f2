@@ -16,11 +16,11 @@
 # derive the <li> attributes from the record.
 class ListItemComponent < ViewComponent::Base
   # The one hover treatment for rows that lead somewhere. Subclasses return it
-  # from #row_css_class (or pass it as css_class) so every hoverable list —
-  # feeds, posts, tokens, dev tools — highlights rows identically.
+  # from #row_css_class (or pass it as css_class) so every hoverable list
+  # (feeds, posts, tokens, dev tools) highlights rows identically.
   HOVER_ROW_CSS_CLASS = "transition duration-75 hover:bg-surface-muted".freeze
 
-  # The one style for a row's primary link — the record's name, leading to it.
+  # The one style for a row's primary link: the record's name, leading to it.
   # Kept here so the truncation and focus ring stay identical across every list.
   TITLE_LINK_CSS_CLASS = "truncate text-base text-heading transition hover:text-heading rounded-sm outline-none " \
                          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 " \

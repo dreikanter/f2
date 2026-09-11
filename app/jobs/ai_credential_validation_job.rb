@@ -31,7 +31,7 @@ class AiCredentialValidationJob < ApplicationJob
     # and a dead key cannot back a running feed.
     credential.deactivate!(last_error: e.message, run: run)
   rescue LlmClient::Error => e
-    # Everything else says nothing about the key, so the feeds stay up — this
+    # Everything else says nothing about the key, so the feeds stay up; this
     # deliberately does not take the deactivate! path.
     run.fail! do |current_credential|
       current_credential.update!(state: run.context.fetch("fallback_state"), last_error: e.message)

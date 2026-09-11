@@ -44,7 +44,7 @@ class CandidateTester
     feed.loader_instance(loader_options).load
   end
 
-  # An empty result passes only if the processor recognized the payload —
+  # An empty result passes only if the processor recognized the payload;
   # otherwise the page was unreadable, not empty-but-valid.
   def verdict(result, posts_found)
     return Candidate::PASSED if posts_found.positive?

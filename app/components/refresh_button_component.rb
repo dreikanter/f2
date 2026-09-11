@@ -5,13 +5,13 @@ class RefreshButtonComponent < ViewComponent::Base
 
   # An icon refresh button with a spinner loading state.
   #
-  # The loading state is the same button — same element, same classes, same box —
+  # The loading state is the same button (same element, same classes, same box)
   # with the spinner swapped in for the static icon and clicks refused, so moving
   # between the two states can't shift the surrounding layout.
   #
   # It can be driven two ways. By default the button and its two icons are wired
-  # as loading-button targets, so a loading-button Stimulus controller — mounted
-  # on the button itself or an enclosing form — swaps the icons while a refresh
+  # as loading-button targets, so a loading-button Stimulus controller (mounted
+  # on the button itself or an enclosing form) swaps the icons while a refresh
   # runs. Pass `loading: true` to render the loading state outright, for a
   # refresh the server already knows is in flight; such a button drives itself
   # and carries no loading-button targets.

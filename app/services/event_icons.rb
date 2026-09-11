@@ -1,8 +1,8 @@
 # Per-event-type icons for the event log, loaded from config/event_icons.yml.
 #
 # Lets an entry's icon say what happened (an envelope for mail events) instead
-# of only how severe it was. Types without an entry — and entries naming an
-# icon the app doesn't bundle — resolve to nil so callers fall back to the
+# of only how severe it was. Types without an entry (and entries naming an
+# icon the app doesn't bundle) resolve to nil so callers fall back to the
 # level-based icon; a stale or misspelled configuration can never leave an
 # entry without an icon.
 class EventIcons

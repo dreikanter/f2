@@ -45,8 +45,8 @@ module Uid
     end
 
     # The Date carried by a period-keyed digest uid, or nil if the uid isn't a
-    # well-formed one. The refresh workflow records this — rather than
-    # re-deriving the period from the clock at finalize time — so a run that
+    # well-formed one. The refresh workflow records this, rather than
+    # re-deriving the period from the clock at finalize time, so a run that
     # mints its uid just before UTC midnight records the period it actually
     # served, not the next day's (which would skip that day's digest).
     def self.period_from_uid(uid)
@@ -124,7 +124,7 @@ module Uid
     attr_reader :item
 
     # The digest regime is signalled only by an explicit null source_url. A
-    # missing key is malformed and an empty/unusable string is dropped — neither
+    # missing key is malformed and an empty/unusable string is dropped; neither
     # is reinterpreted as a digest.
     def digest?
       item.key?("source_url") && item["source_url"].nil?

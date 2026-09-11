@@ -1,4 +1,4 @@
-# Abstract base class — subclasses must define DEFAULT_ITEM_CLASS, LABEL_CLASSES, and VALUE_CLASSES.
+# Abstract base class. Subclasses must define DEFAULT_ITEM_CLASS, LABEL_CLASSES, and VALUE_CLASSES.
 class StatItemComponent < ViewComponent::Base
   # A figure with nothing behind it yet. Callers pass a blank value and every
   # stat cell renders the same muted dash, rather than each inventing its own.

@@ -25,7 +25,7 @@ class TokenValidationJob < ApplicationJob
   private
 
   # Validation flips the token to `validating` before enqueuing. If we exhaust
-  # the throttle retries, reset it to `pending` so it doesn't stay stuck — the
+  # the throttle retries, reset it to `pending` so it doesn't stay stuck; the
   # recurring schedulers can pick it up again later.
   def on_rate_limit_exhausted(_error)
     run = arguments.first

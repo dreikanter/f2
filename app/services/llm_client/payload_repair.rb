@@ -44,7 +44,7 @@ class LlmClient
       payload
     end
 
-    # The array property a bare array can be re-wrapped under — only when the
+    # The array property a bare array can be re-wrapped under, only when the
     # schema's object root has exactly one, so the repair is unambiguous.
     def envelope_key(output_schema)
       return nil unless output_schema.is_a?(Hash) && output_schema["type"] == "object"

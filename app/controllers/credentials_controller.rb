@@ -52,7 +52,7 @@ class CredentialsController < ApplicationController
     authorize @credential
 
     # A blank key field means "keep the current key", so only a submitted key
-    # is worth re-checking — renaming a credential leaves its state alone.
+    # is worth re-checking; renaming a credential leaves its state alone.
     key_changed = credential_data_from_params["api_key"].present?
 
     if @credential.update(updated_credential_attrs(key_changed: key_changed))

@@ -101,7 +101,7 @@ class FeedPreview < ApplicationRecord
     posts_data.size
   end
 
-  # Total items found in the source — the full batch the loader pulled, not just
+  # Total items found in the source: the full batch the loader pulled, not just
   # the handful shown in the preview. This is an upper bound on what enabling the
   # feed enqueues; the refresh later drops duplicates and entries before the
   # import threshold. Falls back to the preview count for older records without

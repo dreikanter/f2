@@ -15,7 +15,7 @@ export default class extends Controller {
   connect() {
     // Turbo shows a cached snapshot while it fetches the real page, and
     // controllers connect inside that preview too. A poll fired there is
-    // aborted seconds later when the fresh body replaces the preview — the
+    // aborted seconds later when the fresh body replaces the preview; the
     // browser reports it as a cancelled request and nothing consumes the
     // response. The real render connects again; that is the run that counts.
     if (this.renderingTurboPreview) return
@@ -85,8 +85,8 @@ export default class extends Controller {
     }
   }
 
-  // A timed-out fragment can swap several pieces at once — say a spinning button
-  // for a live one plus a note explaining the wait — so every target is toggled.
+  // A timed-out fragment can swap several pieces at once (say a spinning button
+  // for a live one plus a note explaining the wait), so every target is toggled.
   _onTimeout() {
     this.timeoutMessageTargets.forEach((el) => { el.hidden = false })
     this.contentTargets.forEach((el) => { el.hidden = true })

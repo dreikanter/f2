@@ -1,6 +1,6 @@
 # Test-only helper: validates entries from FeedProfile::PROFILES against
 # the registry contract.
-# Lives under test/support because nothing in production needs it — the
+# Lives under test/support because nothing in production needs it; the
 # constant is frozen at load time, so we only need to assert its shape during CI.
 module FeedProfileValidator
   Error = Class.new(StandardError)

@@ -1,7 +1,7 @@
 # Renders why a feed was turned off, from the deterministic reason code in the
 # event metadata. Unknown or missing codes fall back to generic copy.
 class FeedTargetGroupUnavailableDescriptionComponent < EventDescriptionComponent
-  # Reason codes we have specific copy for — the publisher's taxonomy, so the
+  # Reason codes we have specific copy for: the publisher's taxonomy, so the
   # two lists can't drift. Anything else uses the default line.
   KNOWN_REASONS = FreefeedPublisher::TargetGroupUnavailableError::REASONS.map(&:to_s).freeze
 

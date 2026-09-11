@@ -17,7 +17,7 @@ module LlmCapabilityProbe
   SYSTEM_CHECK_PROMPT = "What is the capital of France? Answer in one word."
 
   # A fluent reply can still be a refusal ("I cannot browse the web, visit the
-  # site yourself") — grounding checks must not read that as retrieval.
+  # site yourself"); grounding checks must not read that as retrieval.
   REFUSAL_MARKERS = /(?:don't|do not) have the ability|(?:cannot|can't|unable to) (?:browse|access)|no ability to browse/i
 
   def self.refusal?(text)
@@ -42,8 +42,8 @@ module LlmCapabilityProbe
   CLIENT_TOOLS_SCHEMA_PROMPT = "#{CLIENT_TOOLS_PROMPT} Return exactly one item: body set to that heading, " \
                                "source_url set to the page's URL.".freeze
 
-  # Appears only on the fetched page — never in the prompt or the canned search
-  # results — so quoting it requires having read fetched content. Keep it that
+  # Appears only on the fetched page (never in the prompt or the canned search
+  # results), so quoting it requires having read fetched content. Keep it that
   # way when editing either.
   EXPECTED_HEADING = /example domain/i
 
@@ -52,7 +52,7 @@ module LlmCapabilityProbe
 
   # Stand-in for the production search tool: same wire shape, canned results, so
   # the loop can be driven without managed search credentials. The fetch tool
-  # needs no stand-in — the production one is credential-free.
+  # needs no stand-in; the production one is credential-free.
   class CannedWebSearch < RubyLLM::Tool
     description LlmClient::Tools::WebSearch.description
     param :query, desc: "Search query", required: true
@@ -139,7 +139,7 @@ module LlmCapabilityProbe
 
     # Only the word alone counts: a refusal that names it, or an answer that
     # also volunteers the real one, means the prompt arrived but wasn't obeyed.
-    # Punctuation is ignored — a trailing period is formatting.
+    # Punctuation is ignored; a trailing period is formatting.
     def honors_system_prompt?(text)
       text.gsub(/[^[:alpha:]]/, "").casecmp?(SYSTEM_CHECK_WORD)
     end

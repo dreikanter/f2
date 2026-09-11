@@ -29,7 +29,7 @@ class TokenGroupsRefreshJob < ApplicationJob
   rescue RateLimit::Throttled => e
     reschedule_for_rate_limit(e.retry_after)
   rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError
-    # The token can't even read its own groups — hand it to validation, which
+    # The token can't even read its own groups; hand it to validation, which
     # owns disabling the token and notifying the user.
     access_token.enqueue_validation
     run.fail!

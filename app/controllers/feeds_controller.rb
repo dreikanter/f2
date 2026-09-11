@@ -81,7 +81,7 @@ class FeedsController < ApplicationController
   # A live deterministic feed's source can be re-pointed, but only through
   # detection: a changed source URL re-runs identification and the confirming
   # save applies it only once a working candidate is verified. The
-  # engine stays fixed — deterministic ↔ AI is a new feed.
+  # engine stays fixed; deterministic ↔ AI is a new feed.
   def update
     @feed = load_feed
     authorize @feed
@@ -188,7 +188,7 @@ class FeedsController < ApplicationController
   end
 
   # True when a live deterministic feed's submitted source URL differs from the
-  # one it's anchored to — the only case that routes through re-detection.
+  # one it's anchored to. This is the only case that routes through re-detection.
   def mode_a_source_change?
     return false unless @feed.persisted? && !@feed.draft?
     return false if FeedProfile.depends_on_ai?(@feed.feed_profile_key)
@@ -239,7 +239,7 @@ class FeedsController < ApplicationController
     return render :edit, status: :unprocessable_entity unless @feed.update(operational_update_params)
 
     # A non-link never reaches detection; the engine is fixed in edit,
-    # so there's no AI mode to bridge to — just ask for a link.
+    # so there's no AI mode to bridge to; just ask for a link.
     if canonical_submitted_url.nil?
       return render_identification_state(
         attempted_url: submitted_source_raw,

@@ -73,8 +73,8 @@ class LlmClient
         true
       end
 
-      # Whether a failure means the key itself is finished — unfunded, overdue
-      # or expired — rather than a fault that may clear. RubyLLM maps every 429
+      # Whether a failure means the key itself is finished (unfunded, overdue
+      # or expired), rather than a fault that may clear. RubyLLM maps every 429
       # to a rate limit, but some vendors report a spent key that way, so
       # providers refine this.
       def dead_key?(_error)

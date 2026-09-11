@@ -6,7 +6,7 @@ class FreefeedClient
   class Error < StandardError; end
   class UnauthorizedError < Error; end
   class InvalidTokenError < UnauthorizedError; end
-  # The token is valid but isn't allowed to perform this action — e.g. it lost
+  # The token is valid but isn't allowed to perform this action; for example, it lost
   # permission to post to a target group. Deliberately not a subclass of
   # UnauthorizedError so callers don't mistake it for a dead token and disable it.
   class ForbiddenError < Error; end
@@ -191,8 +191,8 @@ class FreefeedClient
       elsif response.status == 403
         # FreeFeed overloads 403 for both auth problems and "you can't do this
         # here" (e.g. posting to a group you've lost access to). The token itself
-        # is still valid, so default to ForbiddenError — callers scope the fallout
-        # to the affected resource — rather than UnauthorizedError, which would
+        # is still valid, so default to ForbiddenError (callers scope the fallout
+        # to the affected resource), rather than UnauthorizedError, which would
         # disable the whole token and every feed on it.
         raise ForbiddenError, err || "Forbidden"
       else

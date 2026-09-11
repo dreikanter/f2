@@ -19,7 +19,7 @@ class FeedPolicy < ApplicationPolicy
     owner?
   end
 
-  # Refresh is meaningless for push-ingested (schedule-less) feeds — there is
+  # Refresh is meaningless for push-ingested (schedule-less) feeds; there is
   # no loader to run.
   def refresh?
     owner? && record.enabled? && record.scheduled?

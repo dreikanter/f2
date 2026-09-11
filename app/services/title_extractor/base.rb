@@ -1,8 +1,8 @@
 module TitleExtractor
   # Base class for feed title extractors.
   #
-  # Constructor takes the same shape as ProfileMatcher::Base —
-  # (input, fetched_body) — so the detector can share one call shape
+  # Constructor takes the same shape as ProfileMatcher::Base:
+  # (input, fetched_body), so the detector can share one call shape
   # across matchers and title extractors.
   class Base
     attr_reader :input, :fetched_body
@@ -30,7 +30,7 @@ module TitleExtractor
     end
 
     # og:title of the fetched page, for sources whose profile URL resolves to
-    # HTML rather than a feed. Any parse trouble means "no title here" — the
+    # HTML rather than a feed. Any parse trouble means "no title here"; the
     # caller falls back to a handle derived from the input.
     def og_title
       return nil if fetched_body.blank?

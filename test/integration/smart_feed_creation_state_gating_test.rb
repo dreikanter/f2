@@ -3,7 +3,7 @@ require "test_helper"
 # State gating: the controller uses a save-then-promote flow:
 # the initial save persists the feed as a draft (new records default to :draft),
 # then `Feed#enable` attempts the promotion under the `:enable` validation context.
-# Previewing is optional — a feed can be enabled with or without a recent preview.
+# Previewing is optional; a feed can be enabled with or without a recent preview.
 class SmartFeedCreationStateGatingTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)

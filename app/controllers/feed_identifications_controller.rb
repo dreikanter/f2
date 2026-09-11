@@ -241,7 +241,7 @@ class FeedIdentificationsController < ApplicationController
   end
 
   # The canonical source URL for detection (silent scheme-fix), or nil when the
-  # input isn't a link — in which case the entry flow bridges to the AI profile.
+  # input isn't a link, in which case the entry flow bridges to the AI profile.
   def source_url
     return @source_url if defined?(@source_url)
 

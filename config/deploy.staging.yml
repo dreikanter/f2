@@ -48,7 +48,7 @@ accessories:
       - data:/var/lib/postgresql
 
   # Temporary metrics backend for staging. VictoriaMetrics with its built-in
-  # web UI (vmui at :8428/vmui). Bound to localhost — the app pushes over the
+  # web UI (vmui at :8428/vmui). Bound to localhost; the app pushes over the
   # private Kamal network (see METRICS_URL below); view the UI via an SSH
   # tunnel: ssh -L 8428:127.0.0.1:8428 dev-origin.fffeeder.com → http://localhost:8428/vmui
   # Remove with: bin/kamal accessory remove victoriametrics -d staging
@@ -74,7 +74,7 @@ accessories:
       - "/:/host:ro,rslave"
 
   # Self-hosted log storage with a built-in web UI, fed by the vector accessory.
-  # Bound to localhost — reach the UI via an SSH tunnel (see docs/victorialogs.md).
+  # Bound to localhost; reach the UI via an SSH tunnel (see docs/victorialogs.md).
   # Remove with: bin/kamal accessory remove vlogs -d staging
   vlogs:
     image: victoriametrics/victoria-logs:v1.51.0
@@ -115,7 +115,7 @@ env:
     METRICS_FLUSH_INTERVAL: "60"
   # Kamal deep-merges this destination over config/deploy.yml, and the merge
   # replaces arrays rather than concatenating them. So this list must repeat
-  # the base secrets (RAILS_MASTER_KEY, POSTGRES_PASSWORD) — otherwise they
+  # the base secrets (RAILS_MASTER_KEY, POSTGRES_PASSWORD); otherwise they
   # never reach the staging container and the app boots without credentials.
   # IMGPROXY_KEY/SALT are shared by the web and jobs roles so the app can sign
   # imgproxy URLs, matching what the standalone imgproxy app verifies against.
