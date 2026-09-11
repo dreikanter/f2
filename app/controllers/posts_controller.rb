@@ -57,10 +57,11 @@ class PostsController < ApplicationController
     @delete_record = boolean_param(:delete_record)
 
     unless @delete_freefeed_post || @delete_record
-      return respond_to do |format|
+      respond_to do |format|
         format.html { redirect_to posts_path, alert: "Pick at least one thing to delete." }
         format.turbo_stream { head :no_content }
       end
+      return
     end
 
     if @delete_freefeed_post && @post.freefeed_post_id.present?
