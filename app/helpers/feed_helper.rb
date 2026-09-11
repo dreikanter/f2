@@ -24,26 +24,11 @@ module FeedHelper
             target: "_blank", rel: "noopener"
   end
 
-  def feed_missing_enablement_parts(feed)
-    missing_parts = []
-    missing_parts << "source" unless feed.sourceless? || feed.source_input.present?
-    missing_parts << "name" unless feed.name.present?
-    missing_parts << "feed profile" unless feed.feed_profile_present?
-    missing_parts << "active access token" unless feed.access_token&.active?
-    missing_parts << "target group" unless feed.target_group.present?
-    missing_parts << "schedule" if feed.scheduled? && feed.cron_expression.blank?
-    if FeedProfile.depends_on_ai?(feed.feed_profile_key)
-      missing_parts << "active AI credential" unless feed.ai_credential&.active?
-      missing_parts << "AI model" unless feed.ai_model.present?
-    end
-    missing_parts
-  end
-
   # Names what's actually missing: "Complete setup" misleads when setup was
   # finished and a piece (like the access token) stopped working later. Only
   # several parts earn the list; a lone one reads as a sentence.
   def feed_enable_hint(feed)
-    missing_parts = feed_missing_enablement_parts(feed)
+    missing_parts = feed.missing_enablement_parts
     return "Complete setup to enable this feed" if missing_parts.empty?
     return "To enable this feed, add: #{missing_parts.to_sentence}." if missing_parts.many?
 

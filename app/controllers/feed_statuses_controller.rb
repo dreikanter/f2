@@ -1,5 +1,4 @@
 class FeedStatusesController < ApplicationController
-  include FeedHelper
   include FeedStateEvents
 
   def update
@@ -29,11 +28,11 @@ class FeedStatusesController < ApplicationController
     end
   end
 
-  # can_be_enabled? mirrors the enabled-state validators, but they are separate
-  # rule sets: name the missing parts when we know them, and fall back to the
-  # validator messages for any residual drift instead of raising.
+  # The missing parts name what to fix. The enabled-state validators are a
+  # separate rule set, so their messages are the fallback when the feed looks
+  # ready but a validator still refuses.
   def cannot_enable_alert(feed)
-    missing_parts = feed_missing_enablement_parts(feed)
+    missing_parts = feed.missing_enablement_parts
     return "Cannot enable feed: missing #{missing_parts.join(' and ')}." if missing_parts.any?
 
     "Cannot enable feed: #{feed.errors.full_messages.join('; ')}."

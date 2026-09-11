@@ -211,8 +211,26 @@ class Feed < ApplicationRecord
   end
 
   def can_be_enabled?
-    name.present? && access_token&.active? && target_group.present? && feed_profile_present? &&
-      (!scheduled? || cron_expression.present?) && ai_enablement_requirements_met?
+    missing_enablement_parts.empty?
+  end
+
+  # What enabling still needs, in plain nouns for the UI to read out. The
+  # enable check is this list being empty, so what blocks a feed and what the
+  # user is told is missing cannot disagree.
+  # @return [Array<String>] the missing requirements, empty when ready
+  def missing_enablement_parts
+    parts = []
+    parts << "source" unless sourceless? || source_input.present?
+    parts << "name" if name.blank?
+    parts << "feed profile" unless feed_profile_present?
+    parts << "active access token" unless access_token&.active?
+    parts << "target group" if target_group.blank?
+    parts << "schedule" if scheduled? && cron_expression.blank?
+    return parts unless FeedProfile.depends_on_ai?(feed_profile_key)
+
+    parts << "active AI credential" unless ai_credential&.active?
+    parts << "AI model" if ai_model.blank?
+    parts
   end
 
   # Promote the feed to enabled, running the enabled-state validators. If
@@ -363,12 +381,6 @@ class Feed < ApplicationRecord
 
     self.state = state_was
     false
-  end
-
-  def ai_enablement_requirements_met?
-    return true unless FeedProfile.depends_on_ai?(feed_profile_key)
-
-    ai_credential&.active? && ai_model.present?
   end
 
   # Records a feed_auto_disabled event stamped with the streak length, so the

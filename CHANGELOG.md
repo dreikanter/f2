@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-11
+
+- The Enable button now stays off for a feed that's still missing its source, matching the hint that asks you to add one.
+
 ## 2026-09-10
 
 - Include video-only MonkeyUser comics with the video link in the post body.
