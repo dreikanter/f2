@@ -15,7 +15,7 @@ class SearchCredentialDetailsComponent < ViewComponent::Base
     result = [
       {
         label: "Provider",
-        value: @search_credential.provider_label,
+        value: @search_credential.provider_name,
         key: "search_credential.provider"
       },
       {

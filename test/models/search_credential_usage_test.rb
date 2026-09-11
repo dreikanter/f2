@@ -1,10 +1,10 @@
 require "test_helper"
 
 class SearchCredentialUsageTest < ActiveSupport::TestCase
-  test "#provider_label should come from the provider registry" do
+  test "#provider_name should come from the provider registry" do
     credential = build(:search_credential, provider: "brave")
 
-    assert_equal "Brave", credential.provider_label
+    assert_equal "Brave", credential.provider_name
   end
 
   test "#estimated_search_cost_cents should preserve fractional cents" do

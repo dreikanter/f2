@@ -21,7 +21,7 @@
         <div class="space-y-2">
           <%= label_tag "search_credential_provider", "Search Provider", class: form_label_classes %>
           <%= text_field_tag "search_credential_provider",
-                             @credential.provider_label,
+                             @credential.provider_name,
                              disabled: true,
                              class: input_field_classes(disabled: true) %>
         </div>

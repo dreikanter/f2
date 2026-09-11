@@ -63,7 +63,7 @@ class FeedAiSettingsComponent < ViewComponent::Base
 
   def search_credential_options
     [["No external search", ""]] + active_search_credentials.map do |credential|
-      ["#{credential.display_name} · #{credential.provider_label}", credential.id]
+      ["#{credential.display_name} · #{credential.provider_name}", credential.id]
     end
   end
 
