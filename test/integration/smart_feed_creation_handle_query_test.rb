@@ -1,7 +1,7 @@
 require "test_helper"
 
-# The two entry modes for a non-link input: Mode B ("Follow with
-# AI") bridges straight to a draft AI feed, while a non-link typed in Mode A
+# The two entry modes for a non-link input: "Follow with AI" bridges
+# straight to a draft AI feed, while a non-link typed into the link mode
 # ("Follow a feed or channel") re-renders the entry form with the AI panel
 # carrying the text; switching the mode radio is the bridge.
 class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
@@ -13,7 +13,7 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
     @user ||= create(:user)
   end
 
-  test "Mode B bridges a free-text prompt straight to a draft AI feed" do
+  test "Follow with AI bridges a free-text prompt straight to a draft AI feed" do
     sign_in_as(user)
 
     assert_no_enqueued_jobs(only: FeedIdentificationJob) do
@@ -26,7 +26,7 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "climate change"
   end
 
-  test "Mode A hints at the AI mode and carries the text over when the input isn't a link" do
+  test "the link mode hints at the AI mode and carries the text over when the input isn't a link" do
     sign_in_as(user)
 
     post feed_identifications_path, params: { url: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
