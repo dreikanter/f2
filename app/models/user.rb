@@ -27,6 +27,8 @@ class User < ApplicationRecord
 
   enum :state, { inactive: 0, active: 2, suspended: 3 }, default: :inactive
 
+  scope :admins, -> { joins(:permissions).where(permissions: { name: Permission::ADMIN }) }
+
   validates :email_address, presence: true
   validates :password, length: { minimum: PASSWORD_MIN_LENGTH, maximum: PASSWORD_MAX_LENGTH }, allow_nil: true
   validates :available_invites, numericality: { greater_than_or_equal_to: 0 }

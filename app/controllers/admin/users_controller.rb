@@ -46,7 +46,7 @@ class Admin::UsersController < ApplicationController
     @user = User.includes(:feeds, :access_tokens, :created_invites, :permissions).find(params[:id])
     authorize [:admin, @user]
     @stats = UserStats.new(@user)
-    @last_admin = @user.admin? && User.joins(:permissions).where(permissions: { name: Permission::ADMIN }).count == 1
+    @last_admin = @user.admin? && User.admins.count == 1
     @recent_events = @user.events.recent.limit(MAX_RECENT_EVENTS)
   end
 
