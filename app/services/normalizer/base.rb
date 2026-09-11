@@ -19,7 +19,8 @@ module Normalizer
       raise MissingUidError, "#{self.class.name} produced a Post with no uid" if post.uid.blank?
       raise MissingPublishedAtError, "#{self.class.name} produced a Post with no published_at" if post.published_at.blank?
 
-      # TBD: Consider renaming this field
+      # Not ActiveModel messages: these are the reasons a normalized post is
+      # held back, including deliberate skips like a bonus panel.
       post.validation_errors = validate_content
       post.status = post.validation_errors.empty? ? :enqueued : :rejected
       post
