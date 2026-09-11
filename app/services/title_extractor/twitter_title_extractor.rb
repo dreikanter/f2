@@ -3,17 +3,10 @@ module TitleExtractor
   # display name from the fetched page's og:title, falling back to the
   # @handle from the input.
   class TwitterTitleExtractor < Base
+    PROFILE_URL = %r{\A(?:www\.|mobile\.)?(?:twitter|x)\.com/}i
+
     def title
-      og_title.presence || handle.presence
-    end
-
-    private
-
-    def handle
-      name = input.to_s.strip.sub(/\A@/, "").sub(%r{\Ahttps?://}i, "")
-                  .sub(%r{\A(?:www\.|mobile\.)?(?:twitter|x)\.com/}i, "")
-                  .split("/").first.to_s
-      name.empty? ? "" : "@#{name}"
+      og_title.presence || account_handle(PROFILE_URL).presence
     end
   end
 end
