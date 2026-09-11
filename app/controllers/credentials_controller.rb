@@ -6,6 +6,7 @@
 # can't be derived from the model: the provider chosen by default on the new
 # form, and the noun used in user-facing copy.
 class CredentialsController < ApplicationController
+  include CredentialFeedDetour
   include StatePolling
 
   class_attribute :credential_class, instance_writer: false
@@ -78,14 +79,6 @@ class CredentialsController < ApplicationController
 
   def credential_noun
     raise NotImplementedError, "#{self.class.name} must implement #credential_noun"
-  end
-
-  # The draft feed that detoured here from the feed form (feed_id round-trip),
-  # or nil when entered directly.
-  def detour_feed
-    return nil if params[:feed_id].blank?
-
-    Current.user.feeds.find_by(id: params[:feed_id])
   end
 
   def updated_credential_attrs(key_changed:)

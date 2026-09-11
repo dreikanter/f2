@@ -1,4 +1,5 @@
 class AccessTokensController < ApplicationController
+  include CredentialFeedDetour
   include StatePolling
 
   def index
@@ -71,14 +72,6 @@ class AccessTokensController < ApplicationController
   end
 
   private
-
-  # The draft feed that detoured here from the feed form (feed_id round-trip),
-  # or nil when entered directly.
-  def detour_feed
-    return nil if params[:feed_id].blank?
-
-    Current.user.feeds.find_by(id: params[:feed_id])
-  end
 
   def build_access_token
     Current.user.access_tokens.build(**access_token_params, encrypted_token: access_token_params[:token])
