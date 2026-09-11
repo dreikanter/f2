@@ -6,6 +6,7 @@
 # target-group selector (context=feed_form).
 class AccessTokens::GroupsRefreshesController < ApplicationController
   include StatePolling
+  include TargetGroupFeed
 
   self.polling_interval_ms = AccessTokenDetail::GROUPS_REFRESH_POLLING_INTERVAL_MS
   self.polling_max_polls = AccessTokenDetail.groups_refresh_polling_max_polls
@@ -78,9 +79,5 @@ class AccessTokens::GroupsRefreshesController < ApplicationController
     return unless groups.empty? && access_token.active?
 
     failed ? :api_error : :empty
-  end
-
-  def feed
-    @feed ||= current_user.feeds.find_by(id: params[:feed_id]) || current_user.feeds.build
   end
 end

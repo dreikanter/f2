@@ -1,4 +1,6 @@
 class AccessTokens::GroupsController < ApplicationController
+  include TargetGroupFeed
+
   def index
     render turbo_stream: turbo_stream.replace(
       "target-group-selector",
@@ -41,10 +43,6 @@ class AccessTokens::GroupsController < ApplicationController
     return @access_token if defined?(@access_token)
 
     @access_token = current_user.access_tokens.find_by(id: params[:access_token_id])
-  end
-
-  def feed
-    @feed ||= current_user.feeds.find_by(id: params[:feed_id]) || current_user.feeds.build
   end
 
   def cache_key
