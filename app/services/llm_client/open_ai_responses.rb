@@ -52,8 +52,8 @@ class LlmClient
       search = @ctx.search_credential
       return [] unless web && search&.active? && !@ctx.tools_disabled && @credential.model_metadata(@ctx.model)["tool_call"] != false
 
-      Adapter::OpenAi.new.web_tools(search_provider: search.web_search_provider, search_credential: search,
-                                    refresh_event: @ctx.refresh_event, budget: @ctx.tool_budget)
+      Adapter.web_tools(search_provider: search.web_search_provider, search_credential: search,
+                        refresh_event: @ctx.refresh_event, budget: @ctx.tool_budget)
     end
 
     def definition(tool)

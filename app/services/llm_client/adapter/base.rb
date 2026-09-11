@@ -26,17 +26,9 @@ class LlmClient
         output_params.merge(params)
       end
 
-      # Search is optional; both tools share one allowance.
       def apply_web(chat, search_provider:, search_credential:, refresh_event: nil, budget: LlmClient::ToolBudget.new)
-        web_tools(search_provider: search_provider, search_credential: search_credential,
-                  refresh_event: refresh_event, budget: budget).each { |tool| chat.with_tool(tool) }
-      end
-
-      def web_tools(search_provider:, search_credential:, refresh_event: nil, budget:)
-        tools = []
-        tools << Tools::WebSearch.new(provider: search_provider, credential: search_credential,
-                                      refresh_event: refresh_event, budget: budget) if search_provider
-        tools << Tools::WebFetch.new(budget: budget)
+        Adapter.web_tools(search_provider: search_provider, search_credential: search_credential,
+                          refresh_event: refresh_event, budget: budget).each { |tool| chat.with_tool(tool) }
       end
 
       def transport_for(ctx, web:, tools:)

@@ -411,7 +411,7 @@ class LlmClient::OpenAiResponsesTest < ActiveSupport::TestCase
   test "#execute should search and fetch through Responses and attribute preview costs to the saved feed" do
     search = use_external_search
     source = "https://example.com/news"
-    tools = LlmClient::Adapter::OpenAi.new.web_tools(search_provider: search.web_search_provider,
+    tools = LlmClient::Adapter.web_tools(search_provider: search.web_search_provider,
                                                    search_credential: search, budget: context.tool_budget)
     first = function_reply(name: tools.first.name, arguments: { query: "release news" }.to_json)
     body = JSON.parse(first[:body])
