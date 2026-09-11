@@ -252,7 +252,7 @@ class FeedFormComponent < ViewComponent::Base
   def polling_data
     {
       polling_indicate_busy_value: false,
-      polling_endpoint_value: helpers.feed_identifications_path(url: attempted_url, feed_id: feed.id),
+      polling_endpoint_value: helpers.feed_identification_path(url: attempted_url, feed_id: feed.id),
       polling_interval_value: FeedIdentification::POLLING_INTERVAL_MS,
       polling_max_polls_value: FeedIdentification.polling_max_polls,
       polling_stop_condition_value: POLLING_STOP_CONDITION
