@@ -6,10 +6,7 @@ class Settings::PasswordUpdatesController < ApplicationController
   def update
     @user = Current.user
 
-    unless current_password_correct?
-      redirect_with_incorrect_password
-      return
-    end
+    return redirect_with_incorrect_password unless current_password_correct?
 
     if @user.update(password_params)
       redirect_with_success
