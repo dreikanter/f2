@@ -1,4 +1,6 @@
-<% password_digest = BCrypt::Password.create("password123") %>
+# Match has_secure_password in the test environment: the minimum cost keeps
+# each sign-in at about a millisecond instead of a quarter second.
+<% password_digest = BCrypt::Password.create("password123", cost: BCrypt::Engine::MIN_COST) %>
 
 regular_user:
   name: Regular User
