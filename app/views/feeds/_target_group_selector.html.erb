@@ -83,7 +83,7 @@
       <% end %>
     <% end %>
     <% if feed.errors[:target_group].any? %>
-      <p class="text-sm text-danger"><%= feed.errors[:target_group].first %></p>
+      <p class="text-sm text-danger" data-key="form.target-group-error"><%= feed.errors[:target_group].first %></p>
     <% end %>
   </div>
 <% end %>
