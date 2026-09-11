@@ -350,7 +350,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_nil Post.find_by(id: failed_post.id)
   end
 
-  test "#destroy should redirect with an alert when no option is selected" do
+  test "#destroy should reject a request without deletion options" do
     sign_in_as(user)
     published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
 
@@ -360,12 +360,11 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
       end
     end
 
-    assert_redirected_to posts_path
-    assert_equal "Pick at least one thing to delete.", flash[:alert]
+    assert_response :bad_request
     assert_equal "published", published_post.reload.status
   end
 
-  test "#destroy should leave the post unchanged when no option is selected via Turbo" do
+  test "#destroy should reject a Turbo request with both deletion options unchecked" do
     sign_in_as(user)
     published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
 
@@ -376,7 +375,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
       end
     end
 
-    assert_response :no_content
+    assert_response :bad_request
     assert_equal "published", published_post.reload.status
   end
 
