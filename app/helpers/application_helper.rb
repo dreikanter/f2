@@ -31,11 +31,23 @@ module ApplicationHelper
       "focus:ring-2 focus:ring-ring focus:ring-offset-1"
   end
 
-  def secondary_button_classes(compact: false)
+  # `disabled` renders the same control as an inert element: no hover or focus
+  # affordances, since a disabled span never gets either.
+  def secondary_button_classes(compact: false, disabled: false)
     padding = compact ? "px-4 py-2" : "px-6 py-3"
-    "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface " \
-      "#{padding} text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted " \
-      "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+    base = "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface " \
+           "#{padding} text-base font-semibold text-body shadow-sm"
+    return "#{base} opacity-50 cursor-not-allowed" if disabled
+
+    "#{base} transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+  end
+
+  def danger_button_classes(compact: true)
+    padding = compact ? "px-4 py-2" : "px-6 py-3"
+    "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-danger bg-danger " \
+      "#{padding} text-base font-semibold text-on-brand shadow-sm transition hover:bg-danger-hover " \
+      "focus:outline-none focus:ring-2 focus:ring-danger-hover focus:ring-offset-1 cursor-pointer " \
+      "disabled:cursor-not-allowed disabled:opacity-50"
   end
 
   def icon_button_classes

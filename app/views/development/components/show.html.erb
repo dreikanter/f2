@@ -82,7 +82,7 @@
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-danger bg-danger px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-danger-hover focus:outline-none focus:ring-2 focus:ring-danger-hover focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Delete feed</button>
+          <%= tag.button "Delete feed", type: "button", class: danger_button_classes %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Primary disabled</p>
@@ -94,7 +94,7 @@
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger disabled</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-danger bg-danger px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-danger-hover focus:outline-none focus:ring-2 focus:ring-danger-hover focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Delete feed</button>
+          <%= tag.button "Delete feed", type: "button", class: danger_button_classes, disabled: true %>
         </div>
       </div>
     </section>
