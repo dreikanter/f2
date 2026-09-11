@@ -13,7 +13,7 @@ module Normalizer
     end
 
     def normalize_attachment_urls
-      summary = raw_data.dig("summary") || ""
+      summary = raw_data["summary"] || ""
       return [] if summary.blank?
 
       doc = Nokogiri::HTML::DocumentFragment.parse(summary)
@@ -46,7 +46,7 @@ module Normalizer
     end
 
     def extract_paragraphs
-      summary = raw_data.dig("summary") || ""
+      summary = raw_data["summary"] || ""
       return [] if summary.blank?
 
       doc = Nokogiri::HTML::DocumentFragment.parse(summary)

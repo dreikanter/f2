@@ -7,7 +7,7 @@ module Normalizer
     private
 
     def normalize_content
-      title = raw_data.dig("title") || ""
+      title = raw_data["title"] || ""
       title.strip
     end
 
@@ -18,7 +18,7 @@ module Normalizer
     end
 
     def cover_image_url
-      url = raw_data.dig("link") || ""
+      url = raw_data["link"] || ""
       page = page_fetcher.fetch(url)
       return nil if page.nil?
 

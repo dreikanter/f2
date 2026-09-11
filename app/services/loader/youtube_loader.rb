@@ -52,7 +52,7 @@ module Loader
     end
 
     def exclude_shorts?
-      feed.params&.dig("exclude_shorts")
+      feed.params&.[]("exclude_shorts")
     end
 
     def long_form_playlist?

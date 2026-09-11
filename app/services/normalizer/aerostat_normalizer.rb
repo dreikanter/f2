@@ -3,17 +3,17 @@ module Normalizer
     private
 
     def normalize_content
-      title = raw_data.dig("title").to_s.strip
-      enclosure_url = raw_data.dig("enclosure_url").presence
+      title = raw_data["title"].to_s.strip
+      enclosure_url = raw_data["enclosure_url"].presence
       enclosure_url ? "#{title}\nЗапись: #{enclosure_url}" : title
     end
 
     def normalize_attachment_urls
-      [raw_data.dig("itunes_image")].compact_blank
+      [raw_data["itunes_image"]].compact_blank
     end
 
     def normalize_comments
-      summary = raw_data.dig("summary").presence
+      summary = raw_data["summary"].presence
       return [] unless summary
 
       stripped = strip_html(summary)

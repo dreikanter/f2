@@ -15,7 +15,7 @@ module Normalizer
     private
 
     def normalize_content
-      title = raw_data.dig("title") || ""
+      title = raw_data["title"] || ""
       title.strip
     end
 
@@ -46,7 +46,7 @@ module Normalizer
 
     def crawl_story_pages
       pages = []
-      next_url = raw_data.dig("link")
+      next_url = raw_data["link"]
 
       while next_url && pages.size < MAX_PAGES
         html = page_fetcher.fetch(next_url)
