@@ -4,6 +4,8 @@ class LlmClient
     # access. Failed searches become error results the model can work around;
     # rejected credentials are deactivated to keep the failure visible.
     class WebSearch < RubyLLM::Tool
+      extend WireName
+
       description "Search the web. Returns result titles, URLs and snippets. " \
                   "Fetch a result URL with the web fetch tool to read the page."
       param :query, desc: "Search query", required: true

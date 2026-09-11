@@ -47,8 +47,8 @@ module LlmCapabilityProbe
   # way when editing either.
   EXPECTED_HEADING = /example domain/i
 
-  SEARCH_TOOL_NAME = LlmClient::Tools::WebSearch.new(provider: nil, credential: nil).name
-  FETCH_TOOL_NAME = LlmClient::Tools::WebFetch.new.name
+  SEARCH_TOOL_NAME = LlmClient::Tools::WebSearch.tool_name
+  FETCH_TOOL_NAME = LlmClient::Tools::WebFetch.tool_name
 
   # Stand-in for the production search tool: same wire shape, canned results, so
   # the loop can be driven without managed search credentials. The fetch tool

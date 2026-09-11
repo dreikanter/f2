@@ -4,6 +4,8 @@ class LlmClient
     # (Moonshot/Kimi). The model supplies the URL, so it is validated as a
     # public http(s) URL (PublicUrl) before any request.
     class WebFetch < RubyLLM::Tool
+      extend WireName
+
       description "Fetch the readable text of a public web page. Pass one absolute http(s) URL."
       param :url, desc: "Absolute http(s) URL of the page to fetch", required: true
 
