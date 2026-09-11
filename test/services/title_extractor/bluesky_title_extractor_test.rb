@@ -14,6 +14,10 @@ class TitleExtractor::BlueskyTitleExtractorTest < ActiveSupport::TestCase
     assert_equal "@testuser.bsky.social", extractor("https://bsky.app/profile/testuser.bsky.social").title
   end
 
+  test "#title should not double the @ when the input is already a handle" do
+    assert_equal "@testuser.bsky.social", extractor("@testuser.bsky.social").title
+  end
+
   test "#title should ignore extra path segments in the fallback" do
     assert_equal "@testuser.bsky.social", extractor("https://bsky.app/profile/testuser.bsky.social/post/3aaa").title
   end

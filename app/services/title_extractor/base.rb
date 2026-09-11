@@ -22,6 +22,19 @@ module TitleExtractor
 
     protected
 
+    # Account inputs arrive as a bare name, an @name, or a profile URL. The
+    # source supplies the host prefixes it uses; what survives is the first
+    # path segment.
+    def account_name(*prefixes)
+      stripped = input.to_s.strip.sub(/\A@/, "").sub(%r{\Ahttps?://}i, "")
+      prefixes.reduce(stripped) { |value, prefix| value.sub(prefix, "") }.split("/").first.to_s
+    end
+
+    def account_handle(*prefixes)
+      name = account_name(*prefixes)
+      name.empty? ? "" : "@#{name}"
+    end
+
     def hostname_from_url
       host = URI.parse(input.to_s).host.to_s.sub(/\Awww\./, "")
       host.presence

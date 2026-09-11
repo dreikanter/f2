@@ -61,6 +61,12 @@ module WebSearchProvider
       self.class.name.demodulize
     end
 
+    # A JSON POST carrying the vendor's own auth header.
+    def post_json(body, headers)
+      http.post(self.class::ENDPOINT, body: body.to_json,
+                headers: headers.merge("Content-Type" => "application/json"))
+    end
+
     def http
       HttpClient.build(timeout: TIMEOUT)
     end
