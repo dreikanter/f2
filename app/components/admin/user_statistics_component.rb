@@ -37,11 +37,6 @@ class Admin::UserStatisticsComponent < ViewComponent::Base
     post = @stats.most_recent_post
     return helpers.tag.span("No posts yet", class: "text-muted") unless post
 
-    time = post.published_at
-    helpers.tag.time(
-      "#{time.to_date.to_fs(:long)} (#{helpers.short_time_ago(time)})",
-      datetime: time.iso8601,
-      title: time.to_fs(:long)
-    )
+    helpers.datetime_with_duration_tag(post.published_at)
   end
 end

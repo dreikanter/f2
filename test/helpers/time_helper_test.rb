@@ -176,4 +176,22 @@ class TimeHelperTest < ActiveSupport::TestCase
       assert_equal "2 hours", time_ago(time)
     end
   end
+
+  test "#short_time_ago_tag should take an optional class" do
+    tag = short_time_ago_tag(3.hours.ago, css_class: "text-muted")
+
+    assert_match(/class="text-muted"/, tag)
+  end
+
+  test "#time_ago_phrase_tag should spell the age out" do
+    assert_match(/>2 days ago</, time_ago_phrase_tag(2.days.ago))
+  end
+
+  test "#time_ago_phrase_tag should read as just now for a timestamp not yet in the past" do
+    assert_match(/>just now</, time_ago_phrase_tag(1.second.from_now))
+  end
+
+  test "#time_ago_phrase_tag should return nil without a time" do
+    assert_nil time_ago_phrase_tag(nil)
+  end
 end
