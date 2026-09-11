@@ -1,11 +1,6 @@
 class AccessTokenDetail < ApplicationRecord
   include HasOperationRuns
 
-  # Superseded by the dedicated columns below; kept in the schema so old-code
-  # containers survive the deploy that ships this model. A follow-up migration
-  # drops it once this code is live everywhere.
-  self.ignored_columns += ["data"]
-
   belongs_to :access_token
 
   GROUPS_REFRESH_POLLING_INTERVAL_MS = 2500
