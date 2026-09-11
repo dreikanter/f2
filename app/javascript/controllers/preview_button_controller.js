@@ -104,7 +104,7 @@ export default class extends Controller {
   refreshAvailability() {
     if (!this.hasButtonTarget) return
     const reason = this._unavailableReason()
-    this.buttonTarget.disabled = reason != null
+    this.buttonTarget.disabled = reason !== null
     this._showHint(reason)
   }
 
@@ -127,7 +127,7 @@ export default class extends Controller {
   _showHint(reason) {
     if (!this.hasHintTarget) return
     this.hintTarget.textContent = reason || ""
-    this.hintTarget.hidden = reason == null
+    this.hintTarget.hidden = reason === null
   }
 
   // Profile options the form is currently offering, so a preview reads what the

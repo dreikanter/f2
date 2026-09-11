@@ -128,7 +128,7 @@ export default class extends Controller {
 
   _handlePollError(err) {
     if (err.name === "AbortError") return
-    console.error("Polling error:", err)
+    this.application.handleError(err, "Polling error", { controller: this })
     this._scheduleNext(this.intervalValue)
   }
 

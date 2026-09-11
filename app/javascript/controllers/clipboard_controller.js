@@ -39,7 +39,7 @@ export default class extends Controller {
         this.resetTimer = null
       }, 2000)
     }).catch(err => {
-      console.error('Failed to copy text: ', err)
+      this.application.handleError(err, "Failed to copy text", { controller: this })
     })
   }
 }
