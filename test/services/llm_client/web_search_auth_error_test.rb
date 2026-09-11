@@ -1,7 +1,7 @@
 require "test_helper"
 
 class LlmClient::WebSearchAuthErrorTest < ActiveSupport::TestCase
-  test "#call records usage and preserves a search auth error" do
+  test "#call should record usage and preserve a search auth error" do
     user = create(:user)
     credential = create(:ai_credential, :active, user: user)
     feed = create(

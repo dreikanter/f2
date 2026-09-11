@@ -7,7 +7,7 @@ class FreefeedClientSubscriberStatisticsTest < ActiveSupport::TestCase
     @client = FreefeedClient.new(host: @host, token: @token)
   end
 
-  test "returns subscriber count from user statistics" do
+  test "#subscribers_count should return subscriber count from user statistics" do
     stub_request(:get, "#{@host}/v2/users/test-group/statistics")
       .to_return(
         status: 200,
@@ -17,14 +17,14 @@ class FreefeedClientSubscriberStatisticsTest < ActiveSupport::TestCase
     assert_equal 42, @client.subscribers_count("test-group")
   end
 
-  test "escapes the username in the request path" do
+  test "#subscribers_count should escape the username in the request path" do
     stub_request(:get, "#{@host}/v2/users/test%20group/statistics")
       .to_return(status: 200, body: { statistics: { subscribers: 1 } }.to_json)
 
     assert_equal 1, @client.subscribers_count("test group")
   end
 
-  test "raises on malformed statistics response" do
+  test "#subscribers_count should raise on malformed statistics response" do
     stub_request(:get, "#{@host}/v2/users/test-group/statistics")
       .to_return(status: 200, body: { users: { username: "test-group" } }.to_json)
 
@@ -35,7 +35,7 @@ class FreefeedClientSubscriberStatisticsTest < ActiveSupport::TestCase
     assert_includes error.message, "Invalid user statistics response format"
   end
 
-  test "preserves not found errors from the shared client" do
+  test "#subscribers_count should preserve not found errors from the shared client" do
     stub_request(:get, "#{@host}/v2/users/missing/statistics")
       .to_return(status: 404, body: { err: "Account 'missing' was not found" }.to_json)
 

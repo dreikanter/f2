@@ -56,12 +56,7 @@ class PostsController < ApplicationController
     @delete_freefeed_post = boolean_param(:delete_freefeed_post)
     @delete_record = boolean_param(:delete_record)
 
-    unless @delete_freefeed_post || @delete_record
-      return respond_to do |format|
-        format.html { redirect_to posts_path, alert: "Pick at least one thing to delete." }
-        format.turbo_stream { head :no_content }
-      end
-    end
+    return head :bad_request unless @delete_freefeed_post || @delete_record
 
     if @delete_freefeed_post && @post.freefeed_post_id.present?
       PostWithdrawalJob.perform_later(@post.feed_id, @post.freefeed_post_id, @post.id)

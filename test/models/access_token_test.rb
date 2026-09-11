@@ -11,28 +11,28 @@ class AccessTokenTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  test "#rate_limit_subject is keyed by FreeFeed instance and user id once validated" do
+  test "#rate_limit_subject should be keyed by FreeFeed instance and user id once validated" do
     token = create(:access_token, :active, host: "https://freefeed.net", freefeed_user_id: "u-42")
     assert_equal "freefeed:production:u-42", token.rate_limit_subject
   end
 
-  test "#rate_limit_subject collapses sibling tokens of the same account onto one subject" do
+  test "#rate_limit_subject should collapse sibling tokens of the same account onto one subject" do
     a = create(:access_token, host: "https://freefeed.net", freefeed_user_id: "u-42")
     b = create(:access_token, host: "https://freefeed.net", freefeed_user_id: "u-42")
     assert_equal a.rate_limit_subject, b.rate_limit_subject
   end
 
-  test "#rate_limit_subject falls back to the token id before validation" do
+  test "#rate_limit_subject should fall back to the token id before validation" do
     token = create(:access_token) # pending, no freefeed_user_id yet
     assert_equal "freefeed:token:#{token.id}", token.rate_limit_subject
   end
 
-  test "#freefeed_instance uses the known-host key" do
+  test "#freefeed_instance should use the known-host key" do
     assert_equal "staging", create(:access_token, host: "https://candy.freefeed.net").freefeed_instance
     assert_equal "production", create(:access_token, host: "https://freefeed.net").freefeed_instance
   end
 
-  test "#freefeed_instance falls back to the domain for a custom host" do
+  test "#freefeed_instance should fall back to the domain for a custom host" do
     assert_equal "my.freefeed.example", create(:access_token, host: "https://my.freefeed.example").freefeed_instance
   end
 
@@ -54,7 +54,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "candy", create(:access_token, host: "https://Candy.FreeFeed.NET.").instance_label
   end
 
-  test "#rate_limit_subject is stable across equivalent host spellings" do
+  test "#rate_limit_subject should be stable across equivalent host spellings" do
     a = create(:access_token, host: "https://freefeed.net", freefeed_user_id: "u-7")
     b = create(:access_token, host: "https://FREEFEED.NET", freefeed_user_id: "u-7")
     c = create(:access_token, host: "https://Custom.Example.COM", freefeed_user_id: "u-7")
@@ -64,7 +64,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "freefeed:custom.example.com:u-7", c.rate_limit_subject
   end
 
-  test ".build_with_token stores encrypted token and sets pending state" do
+  test ".build_with_token should store encrypted token and set pending state" do
     token = AccessToken.build_with_token(
       name: "Test Token",
       user: user,
@@ -81,13 +81,13 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert token.reload.pending?
   end
 
-  test "auto-generates name when blank" do
+  test "#valid? should generate a name when blank" do
     token = build(:access_token, name: nil)
     assert token.valid?
     assert_equal "Token 1", token.name
   end
 
-  test "auto-generates unique sequential names for same user" do
+  test "#save! should generate unique sequential names for the same user" do
     user = create(:user)
     token1 = create(:access_token, name: nil, user: user)
     token2 = create(:access_token, name: nil, user: user)
@@ -98,7 +98,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "Token 3", token3.name
   end
 
-  test "auto-generates name that skips existing names" do
+  test "#save! should generate a name that skips existing names" do
     user = create(:user)
     create(:access_token, name: "Token 1", user: user)
     create(:access_token, name: "Token 2", user: user)
@@ -107,7 +107,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "Token 3", token.name
   end
 
-  test "auto-generates name fills gaps in sequence" do
+  test "#save! should fill gaps in the generated name sequence" do
     user = create(:user)
     create(:access_token, name: "Token 2", user: user)
 
@@ -115,14 +115,14 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "Token 1", token.name
   end
 
-  test "validates presence of token on create" do
+  test "#valid? should require a token on create" do
     token = build(:access_token, :without_token)
 
     assert_not token.valid?
     assert token.errors.of_kind?(:token, :blank)
   end
 
-  test "validates uniqueness of name per user" do
+  test "#valid? should require a unique name per user" do
     create(:access_token, name: "Token", user: user)
     duplicate_token = build(:access_token, name: "Token", user: user)
 
@@ -130,7 +130,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert duplicate_token.errors.of_kind?(:name, :taken)
   end
 
-  test "allows duplicate names across different users" do
+  test "#valid? should allow duplicate names across different users" do
     user1 = create(:user)
     user2 = create(:user)
     create(:access_token, name: "Same Name", user: user1)
@@ -144,7 +144,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert duplicate_for_different_user.valid?
   end
 
-  test "active scope returns only active tokens" do
+  test ".active should return only active tokens" do
     active_token = create(:access_token, :active)
     inactive_token = create(:access_token, :inactive)
     pending_token = create(:access_token)
@@ -155,7 +155,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_not_includes active_tokens, pending_token
   end
 
-  test "can update state to active with owner" do
+  test "#update! should activate the token with an owner" do
     token = create(:access_token)
     assert token.pending?
     token.update!(state: :active, owner: "testuser")
@@ -164,7 +164,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "testuser", token.owner
   end
 
-  test "can update status to inactive using enum method" do
+  test "#inactive! should deactivate the token" do
     token = create(:access_token, :active)
     assert token.active?
     token.inactive!
@@ -172,7 +172,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert token.reload.inactive?
   end
 
-  test "#validate_token_async updates state and enqueues job when valid" do
+  test "#validate_token_async should update state and enqueue a job when valid" do
     token = create(:access_token)
     assert token.pending?
 
@@ -226,21 +226,21 @@ class AccessTokenTest < ActiveSupport::TestCase
   end
 
   # Host validation tests
-  test "validates presence of host" do
+  test "#valid? should require a host" do
     token = build(:access_token, host: nil)
 
     assert_not token.valid?
     assert token.errors.of_kind?(:host, :blank)
   end
 
-  test "allows arbitrary host URLs" do
+  test "#valid? should allow arbitrary host URLs" do
     ["https://freefeed.net", "https://candy.freefeed.net", "https://custom.example.com"].each do |host|
       token = build(:access_token, host: host)
       assert token.valid?, "#{host} should be valid"
     end
   end
 
-  test "rejects invalid host URLs" do
+  test "#valid? should reject invalid host URLs" do
     ["not a url", "ftp://example.com", "example.com"].each do |host|
       token = build(:access_token, host: host)
       assert_not token.valid?, "#{host.inspect} should be invalid"
@@ -248,7 +248,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     end
   end
 
-  test "build_with_token sets default production host" do
+  test ".build_with_token should set default production host" do
     token = AccessToken.build_with_token(
       name: "Test Token",
       user: user,
@@ -258,7 +258,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "https://freefeed.net", token.host
   end
 
-  test "build_with_token allows host override" do
+  test ".build_with_token should allow host override" do
     staging_host = AccessToken::FREEFEED_HOSTS[:staging][:url]
     token = AccessToken.build_with_token(
       name: "Test Token",
@@ -270,13 +270,13 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal staging_host, token.host
   end
 
-  test "FREEFEED_HOSTS contains expected standard hosts" do
+  test "FREEFEED_HOSTS should contain the expected standard hosts" do
     assert_equal "https://freefeed.net", AccessToken::FREEFEED_HOSTS[:production][:url]
     assert_equal "https://candy.freefeed.net", AccessToken::FREEFEED_HOSTS[:staging][:url]
     assert_equal "https://beta.freefeed.net", AccessToken::FREEFEED_HOSTS[:beta][:url]
   end
 
-  test "destroying access token forgets its rate limit state" do
+  test "#destroy! should forget the token's rate limit state" do
     freeze_time do
       token = create(:access_token, :active)
       subject = token.rate_limit_subject
@@ -290,7 +290,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     end
   end
 
-  test "destroying one token keeps the shared bucket while a sibling still uses it" do
+  test "#destroy! should keep the shared bucket while a sibling token still uses it" do
     freeze_time do
       shared = { host: "https://freefeed.net", freefeed_user_id: "u-99" }
       a = create(:access_token, :active, **shared)
@@ -310,7 +310,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     end
   end
 
-  test "destroying access token disables enabled feeds and nullifies their access_token_id" do
+  test "#destroy! should disable enabled feeds and clear their access_token_id" do
     user = create(:user)
     token = create(:access_token, :active, user: user)
     enabled_feed = create(:feed, user: user, access_token: token, state: :enabled)
@@ -346,7 +346,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     ActiveSupport::Notifications.unsubscribe("sql.active_record")
   end
 
-  test "should disable enabled feeds when token validation service marks token inactive" do
+  test "#call should disable enabled feeds when token validation marks the token inactive" do
     user = create(:user)
     # Feeds can only become enabled while the token is active; re-validation
     # of the live token starts after that.
@@ -422,7 +422,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "freefeed.net", token.provider_name
   end
 
-  test "FREEFEED_HOSTS URLs should all be valid HTTP(S) URLs" do
+  test "FREEFEED_HOSTS should contain valid HTTP(S) URLs" do
     AccessToken::FREEFEED_HOSTS.each do |key, config|
       token = build(:access_token, host: config[:url])
       assert token.valid?, "#{key} host URL (#{config[:url]}) should be valid"
@@ -444,7 +444,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     end
   end
 
-  test "FREEFEED_HOSTS token URLs should request every scope Feeder needs" do
+  test "FREEFEED_HOSTS should request every required token scope" do
     AccessToken::FREEFEED_HOSTS.each do |key, config|
       AccessToken::TOKEN_SCOPES.each do |scope|
         assert_includes config[:token_url], scope, "#{key} token URL should request the #{scope} scope"

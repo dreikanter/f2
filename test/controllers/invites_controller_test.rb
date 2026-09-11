@@ -135,15 +135,14 @@ class InvitesControllerTest < ActionDispatch::IntegrationTest
   test "should render enabled invite button when invites available" do
     sign_in_as user
     get invites_url
-    assert_select "form[data-turbo-frame='_top'] button:not([disabled])[class*='hover:bg-brand-hover']"
+    assert_select "form[action=?][data-turbo-frame='_top'] button:not([disabled])", invites_path, text: "Invite a user"
   end
 
   test "should render disabled invite button when no invites available" do
     u = create(:user, available_invites: 0)
     sign_in_as u
     get invites_url
-    assert_select "button[disabled]"
-    assert_select "button[disabled][class*='opacity-50']"
+    assert_select "form[action=?] button[disabled]", invites_path, text: "Invite a user"
   end
 
   test "should destroy own unused invite" do

@@ -8,25 +8,25 @@ class FreefeedClientTest < ActiveSupport::TestCase
   end
 
   # Constructor tests
-  test "initializes with required parameters" do
+  test "#initialize should accept the required parameters" do
     client = FreefeedClient.new(host: @host, token: @token)
     assert_equal "https://freefeed.net", client.host
     assert_kind_of HttpClient::Base, client.http_client
   end
 
-  test "initializes with custom http_client" do
+  test "#initialize should accept a custom http_client" do
     custom_client = HttpClient.build(timeout: 60)
     client = FreefeedClient.new(host: @host, token: @token, http_client: custom_client)
     assert_equal custom_client, client.http_client
   end
 
-  test "strips trailing slash from host" do
+  test "#initialize should strip the trailing slash from the host" do
     client = FreefeedClient.new(host: "https://freefeed.net/", token: @token)
     assert_equal "https://freefeed.net", client.host
   end
 
   # whoami method tests
-  test "whoami returns user data on success" do
+  test "#whoami should return user data on success" do
     response_body = {
       "users" => {
         "id" => "user123",
@@ -55,7 +55,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_equal "https://media.freefeed.net/profilepics/user123_75.jpg", result[:profile_picture_url]
   end
 
-  test "whoami returns nil profile picture url when the field is blank" do
+  test "#whoami should return nil profile picture url when the field is blank" do
     response_body = {
       "users" => {
         "id" => "user123",
@@ -71,7 +71,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_nil @client.whoami[:profile_picture_url]
   end
 
-  test "whoami raises InvalidTokenError on 401 with inactive or expired token body" do
+  test "#whoami should raise InvalidTokenError on 401 with inactive or expired token body" do
     stub_request(:get, "#{@host}/v4/users/whoami")
       .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
 
@@ -80,7 +80,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "whoami raises UnauthorizedError on 401 with malformed token body" do
+  test "#whoami should raise UnauthorizedError on 401 with malformed token body" do
     stub_request(:get, "#{@host}/v4/users/whoami")
       .to_return(status: 401, body: { err: "invalid JWT payload format" }.to_json)
 
@@ -91,7 +91,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_equal "invalid JWT payload format", error.message
   end
 
-  test "whoami raises UnauthorizedError on 401 with non-JSON body" do
+  test "#whoami should raise UnauthorizedError on 401 with non-JSON body" do
     stub_request(:get, "#{@host}/v4/users/whoami")
       .to_return(status: 401, body: "Unauthorized")
 
@@ -100,7 +100,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "whoami raises ForbiddenError on 403" do
+  test "#whoami should raise ForbiddenError on 403" do
     stub_request(:get, "#{@host}/v4/users/whoami")
       .to_return(status: 403, body: { err: "invalid JWT payload format" }.to_json)
 
@@ -109,7 +109,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "whoami raises InvalidTokenError on 403 with inactive or expired token body" do
+  test "#whoami should raise InvalidTokenError on 403 with inactive or expired token body" do
     stub_request(:get, "#{@host}/v4/users/whoami")
       .to_return(status: 403, body: { err: "inactive or expired token" }.to_json)
 
@@ -118,7 +118,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "whoami raises NotFoundError on 404" do
+  test "#whoami should raise NotFoundError on 404" do
     stub_request(:get, "#{@host}/v4/users/whoami")
       .to_return(status: 404, body: "Not Found")
 
@@ -127,7 +127,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "whoami raises Error on other HTTP errors" do
+  test "#whoami should raise Error on other HTTP errors" do
     stub_request(:get, "#{@host}/v4/users/whoami")
       .to_return(status: 500, body: "Internal Server Error")
 
@@ -137,7 +137,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_includes error.message, "HTTP 500"
   end
 
-  test "whoami raises Error on invalid JSON" do
+  test "#whoami should raise Error on invalid JSON" do
     stub_request(:get, "#{@host}/v4/users/whoami")
       .to_return(status: 200, body: "invalid json")
 
@@ -147,7 +147,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_includes error.message, "Invalid JSON response"
   end
 
-  test "whoami raises Error on invalid response format" do
+  test "#whoami should raise Error on invalid response format" do
     stub_request(:get, "#{@host}/v4/users/whoami")
       .to_return(status: 200, body: '{"invalid": "format"}')
 
@@ -157,7 +157,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_includes error.message, "Invalid whoami response format"
   end
 
-  test "whoami raises Error on HTTP client errors" do
+  test "#whoami should raise Error on HTTP client errors" do
     stub_request(:get, "#{@host}/v4/users/whoami")
       .to_raise(HttpClient::TimeoutError.new("Connection timeout"))
 
@@ -169,7 +169,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
   end
 
   # managed_groups method tests
-  test "managed_groups returns groups data on success" do
+  test "#managed_groups should return groups data on success" do
     response_body = [
       {
         "id" => "group1",
@@ -215,7 +215,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_not second_group[:is_restricted]
   end
 
-  test "managed_groups raises InvalidTokenError on 401 with inactive or expired token body" do
+  test "#managed_groups should raise InvalidTokenError on 401 with inactive or expired token body" do
     stub_request(:get, "#{@host}/v4/managedGroups")
       .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
 
@@ -224,7 +224,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "managed_groups raises Error on invalid JSON" do
+  test "#managed_groups should raise Error on invalid JSON" do
     stub_request(:get, "#{@host}/v4/managedGroups")
       .to_return(status: 200, body: "invalid json")
 
@@ -234,7 +234,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_includes error.message, "Invalid JSON response"
   end
 
-  test "managed_groups raises Error on non-array response" do
+  test "#managed_groups should raise Error on non-array response" do
     stub_request(:get, "#{@host}/v4/managedGroups")
       .to_return(status: 200, body: '{"invalid": "format"}')
 
@@ -244,7 +244,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_includes error.message, "Invalid managed groups response format"
   end
 
-  test "managed_groups raises Error on HTTP client errors" do
+  test "#managed_groups should raise Error on HTTP client errors" do
     stub_request(:get, "#{@host}/v4/managedGroups")
       .to_raise(HttpClient::ConnectionError.new("Connection failed"))
 
@@ -348,7 +348,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
   end
 
   # Edge cases
-  test "handles empty managed groups response" do
+  test "#managed_groups should handle an empty response" do
     stub_request(:get, "#{@host}/v4/managedGroups")
       .to_return(status: 200, body: "[]")
 
@@ -356,7 +356,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_equal [], result
   end
 
-  test "handles missing optional user fields in whoami" do
+  test "#whoami should handle missing optional user fields" do
     response_body = {
       "users" => {
         "id" => "user123",
@@ -375,7 +375,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_nil result[:email]
   end
 
-  test "handles missing optional group fields" do
+  test "#managed_groups should handle missing optional group fields" do
     response_body = [
       {
         "id" => "group1",
@@ -397,7 +397,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
   end
 
   # create_post method tests
-  test "create_post raises ForbiddenError on 403 when the destination rejects the post" do
+  test "#create_post should raise ForbiddenError on 403 when the destination rejects the post" do
     stub_request(:post, "#{@host}/v4/posts")
       .to_return(status: 403, body: { err: "You can not post to some of destinations: cats" }.to_json)
 
@@ -407,11 +407,11 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_equal "You can not post to some of destinations: cats", error.message
   end
 
-  test "create_post ForbiddenError is not an UnauthorizedError" do
+  test "ForbiddenError should not inherit from UnauthorizedError" do
     assert_not FreefeedClient::ForbiddenError.ancestors.include?(FreefeedClient::UnauthorizedError)
   end
 
-  test "create_post raises ForbiddenError on any non-token 403" do
+  test "#create_post should raise ForbiddenError on any non-token 403" do
     stub_request(:post, "#{@host}/v4/posts")
       .to_return(status: 403, body: { err: "some unexpected forbidden reason" }.to_json)
 
@@ -420,7 +420,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "create_post raises InvalidTokenError on 403 with inactive or expired token body" do
+  test "#create_post should raise InvalidTokenError on 403 with inactive or expired token body" do
     stub_request(:post, "#{@host}/v4/posts")
       .to_return(status: 403, body: { err: "inactive or expired token" }.to_json)
 
@@ -429,7 +429,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "create_post raises NotFoundError carrying the server message on 404" do
+  test "#create_post should raise NotFoundError carrying the server message on 404" do
     stub_request(:post, "#{@host}/v4/posts")
       .to_return(status: 404, body: { err: "Account 'cats' was not found" }.to_json)
 
@@ -440,7 +440,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
   end
 
   # delete_post method tests
-  test "delete_post returns true on success" do
+  test "#delete_post should return true on success" do
     post_id = "post123"
 
     stub_request(:delete, "#{@host}/v4/posts/#{post_id}")
@@ -450,7 +450,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert result
   end
 
-  test "delete_post raises InvalidTokenError on 401 with inactive or expired token body" do
+  test "#delete_post should raise InvalidTokenError on 401 with inactive or expired token body" do
     post_id = "post123"
 
     stub_request(:delete, "#{@host}/v4/posts/#{post_id}")
@@ -461,7 +461,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "delete_post raises NotFoundError on 404" do
+  test "#delete_post should raise NotFoundError on 404" do
     post_id = "post123"
 
     stub_request(:delete, "#{@host}/v4/posts/#{post_id}")
@@ -472,7 +472,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "delete_post raises Error on HTTP client errors" do
+  test "#delete_post should raise Error on HTTP client errors" do
     post_id = "post123"
 
     stub_request(:delete, "#{@host}/v4/posts/#{post_id}")
@@ -486,7 +486,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
   end
 
   # 429 handling
-  test "429 raises Throttled and penalizes the subject using Retry-After" do
+  test "#create_post should raise Throttled on 429 and penalize the subject using Retry-After" do
     client = FreefeedClient.new(host: @host, token: @token, rate_limit_subject: "freefeed:1")
     stub_request(:post, "#{@host}/v4/posts").to_return(status: 429, headers: { "Retry-After" => "30" })
 
@@ -499,15 +499,15 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_equal [:freefeed, "freefeed:1", 30 + FreefeedClient::RETRY_AFTER_BUFFER], penalized
   end
 
-  test "Retry-After is padded with a buffer to stay clear of the server window" do
+  test "RETRY_AFTER_BUFFER should add ten seconds to the server window" do
     assert_equal 10, FreefeedClient::RETRY_AFTER_BUFFER
   end
 
-  test "default cooldown is several minutes to wait out FreeFeed's escalating blocks" do
+  test "DEFAULT_RETRY_AFTER should wait five minutes for FreeFeed's escalating blocks" do
     assert_equal 300, FreefeedClient::DEFAULT_RETRY_AFTER
   end
 
-  test "429 without Retry-After uses the default cooldown" do
+  test "#create_post should use the default cooldown on 429 without Retry-After" do
     client = FreefeedClient.new(host: @host, token: @token, rate_limit_subject: "freefeed:1")
     stub_request(:post, "#{@host}/v4/posts").to_return(status: 429)
 
@@ -517,7 +517,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "429 without a rate_limit_subject raises Throttled but does not penalize" do
+  test "#create_post should raise Throttled on 429 without penalizing when rate_limit_subject is missing" do
     stub_request(:post, "#{@host}/v4/posts").to_return(status: 429, headers: { "Retry-After" => "30" })
 
     penalized = false
@@ -528,7 +528,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     refute penalized
   end
 
-  test "429 on a GET (whoami) raises Throttled rather than a generic Error" do
+  test "#whoami should raise Throttled on 429" do
     client = FreefeedClient.new(host: @host, token: @token, rate_limit_subject: "freefeed:1")
     stub_request(:get, "#{@host}/v4/users/whoami").to_return(status: 429, headers: { "Retry-After" => "20" })
 
@@ -538,7 +538,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "429 on a DELETE (delete_post) raises Throttled and penalizes" do
+  test "#delete_post should raise Throttled on 429 and penalize the subject" do
     client = FreefeedClient.new(host: @host, token: @token, rate_limit_subject: "freefeed:1")
     stub_request(:delete, "#{@host}/v4/posts/p1").to_return(status: 429, headers: { "Retry-After" => "15" })
 

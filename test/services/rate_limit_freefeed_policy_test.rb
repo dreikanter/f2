@@ -9,7 +9,7 @@ require "test_helper"
 class RateLimitFreefeedPolicyTest < ActiveSupport::TestCase
   FREEFEED_CEILINGS = { post: 60, get: 200, delete: 30 }.freeze
 
-  test "the :freefeed policy limits posts under FreeFeed's POST ceiling" do
+  test "freefeed policy should limit posts below FreeFeed's POST ceiling" do
     limit = limit_for(:post)
 
     assert_equal 30, limit.rate
@@ -17,7 +17,7 @@ class RateLimitFreefeedPolicyTest < ActiveSupport::TestCase
     assert_equal 60, limit.window
   end
 
-  test "the :freefeed policy limits gets under FreeFeed's GET ceiling" do
+  test "freefeed policy should limit gets below FreeFeed's GET ceiling" do
     limit = limit_for(:get)
 
     assert_equal 100, limit.rate
@@ -25,7 +25,7 @@ class RateLimitFreefeedPolicyTest < ActiveSupport::TestCase
     assert_equal 60, limit.window
   end
 
-  test "the :freefeed policy limits deletes under FreeFeed's fallback ceiling" do
+  test "freefeed policy should limit deletes below FreeFeed's fallback ceiling" do
     limit = limit_for(:delete)
 
     assert_equal 15, limit.rate
@@ -33,7 +33,7 @@ class RateLimitFreefeedPolicyTest < ActiveSupport::TestCase
     assert_equal 60, limit.window
   end
 
-  test "worst-case rolling-minute spend stays under FreeFeed's ceiling for every dimension" do
+  test "freefeed policy should keep rolling-minute spend below every FreeFeed ceiling" do
     FREEFEED_CEILINGS.each do |dimension, ceiling|
       limit = limit_for(dimension)
 
@@ -42,7 +42,7 @@ class RateLimitFreefeedPolicyTest < ActiveSupport::TestCase
     end
   end
 
-  test "the :freefeed policy fails open" do
+  test "freefeed policy should fail open" do
     assert RateLimit.policy(:freefeed).fail_open?
   end
 

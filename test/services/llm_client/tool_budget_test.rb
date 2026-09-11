@@ -31,7 +31,7 @@ class LlmClient::ToolBudgetTest < ActiveSupport::TestCase
     assert_instance_of RubyLLM::Tool::Halt, budget.claim
   end
 
-  test "the shared budget should count both tools together" do
+  test "#execute should share the budget across search and fetch tools" do
     shared = LlmClient::ToolBudget.new(rounds: 1, grace: 0)
     search = LlmClient::Tools::WebSearch.new(provider: nil, credential: nil, budget: shared)
     fetch = LlmClient::Tools::WebFetch.new(budget: shared)
@@ -43,7 +43,7 @@ class LlmClient::ToolBudgetTest < ActiveSupport::TestCase
 
   # A refused call still costs an LLM round, so a model looping on bad
   # arguments has to reach the halt like any other.
-  test "calls refused for bad arguments should still spend the budget" do
+  test "#execute should spend the shared budget even when tool arguments are invalid" do
     shared = LlmClient::ToolBudget.new(rounds: 1, grace: 0)
     search = LlmClient::Tools::WebSearch.new(provider: nil, credential: nil, budget: shared)
     fetch = LlmClient::Tools::WebFetch.new(budget: shared)

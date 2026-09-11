@@ -238,11 +238,6 @@ class FreefeedClient
     seconds.positive? ? seconds + RETRY_AFTER_BUFFER : DEFAULT_RETRY_AFTER
   end
 
-  # TBD: Consider simplifying response processing. Probably keep the keys
-  #   as is, just coerce some of the values when it makes sense. Also consider
-  #   unifying draft implementation of the response processing methods
-  #   since they are basically identical.
-
   def parse_whoami_response(body)
     data = JSON.parse(body)
     user = data["users"]

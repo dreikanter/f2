@@ -5,41 +5,41 @@ class EmailStorageResolverTest < ActiveSupport::TestCase
     EmailStorageResolver.clear_instances
   end
 
-  test ".resolve returns EmailStorage::FileSystemStorage for :file_system" do
+  test ".resolve should return EmailStorage::FileSystemStorage for :file_system" do
     storage = EmailStorageResolver.resolve(:file_system)
     assert_instance_of EmailStorage::FileSystemStorage, storage
   end
 
-  test ".resolve returns EmailStorage::InMemoryStorage for :in_memory" do
+  test ".resolve should return EmailStorage::InMemoryStorage for :in_memory" do
     storage = EmailStorageResolver.resolve(:in_memory)
     assert_instance_of EmailStorage::InMemoryStorage, storage
   end
 
-  test ".resolve returns EmailStorage::FileSystemStorage for nil" do
+  test ".resolve should return EmailStorage::FileSystemStorage for nil" do
     storage = EmailStorageResolver.resolve(nil)
     assert_instance_of EmailStorage::FileSystemStorage, storage
   end
 
-  test ".resolve raises ArgumentError for unknown adapter" do
+  test ".resolve should raise ArgumentError for unknown adapter" do
     error = assert_raises(ArgumentError) do
       EmailStorageResolver.resolve(:unknown)
     end
     assert_equal "Unknown email storage adapter: unknown", error.message
   end
 
-  test ".resolve returns same instance for same adapter (singleton)" do
+  test ".resolve should return same instance for same adapter (singleton)" do
     storage1 = EmailStorageResolver.resolve(:in_memory)
     storage2 = EmailStorageResolver.resolve(:in_memory)
     assert_same storage1, storage2
   end
 
-  test ".resolve returns different instances for different adapters" do
+  test ".resolve should return different instances for different adapters" do
     storage1 = EmailStorageResolver.resolve(:file_system)
     storage2 = EmailStorageResolver.resolve(:in_memory)
     refute_equal storage1.class, storage2.class
   end
 
-  test ".clear_instances clears cached instances" do
+  test ".clear_instances should clear cached instances" do
     storage1 = EmailStorageResolver.resolve(:in_memory)
     EmailStorageResolver.clear_instances
     storage2 = EmailStorageResolver.resolve(:in_memory)

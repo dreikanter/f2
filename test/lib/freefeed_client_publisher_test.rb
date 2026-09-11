@@ -47,7 +47,7 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     assert_equal "File exceeds the 10 MB upload limit", error.message
   end
 
-  test "create_post creates post successfully" do
+  test "#create_post should create post successfully" do
     post_response = {
       "posts" => {
         "id" => "post123",
@@ -88,7 +88,7 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     assert_equal "Test post content", result[:body]
   end
 
-  test "create_post creates post without attachments" do
+  test "#create_post should create post without attachments" do
     post_response = {
       "posts" => {
         "id" => "post123",
@@ -126,7 +126,7 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     assert_equal "post123", result[:id]
   end
 
-  test "create_post raises ForbiddenError on 403" do
+  test "#create_post should raise ForbiddenError on 403" do
     stub_request(:post, "#{@host}/v4/posts")
       .to_return(status: 403, body: "Forbidden")
 
@@ -135,7 +135,7 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     end
   end
 
-  test "create_comment creates comment successfully" do
+  test "#create_comment should create comment successfully" do
     comment_response = {
       "comments" => {
         "id" => "comment123",
@@ -170,7 +170,7 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     assert_equal "Test comment", result[:body]
   end
 
-  test "create_comment handles API error" do
+  test "#create_comment should handle API error" do
     stub_request(:post, "#{@host}/v4/comments")
       .to_return(status: 404, body: "Post not found")
 
@@ -179,7 +179,7 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     end
   end
 
-  test "handles unauthorized error" do
+  test "#create_post should handle an unauthorized error" do
     stub_request(:post, "#{@host}/v4/posts")
       .to_return(status: 401, body: "Unauthorized")
 
@@ -188,7 +188,7 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     end
   end
 
-  test "handles not found error" do
+  test "#create_comment should handle a not found error" do
     stub_request(:post, "#{@host}/v4/comments")
       .to_return(status: 404, body: "Not found")
 
@@ -197,7 +197,7 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     end
   end
 
-  test "handles general HTTP error" do
+  test "#create_post should handle a general HTTP error" do
     stub_request(:post, "#{@host}/v4/posts")
       .to_return(status: 500, body: "Internal Server Error")
 
@@ -206,7 +206,7 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     end
   end
 
-  test "handles malformed JSON response" do
+  test "#create_post should handle a malformed JSON response" do
     stub_request(:post, "#{@host}/v4/posts")
       .to_return(status: 201, body: "invalid json")
 
@@ -216,7 +216,7 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     assert_match(/Invalid JSON response/, error.message)
   end
 
-  test "handles missing required fields in response" do
+  test "#create_post should handle missing required fields in the response" do
     stub_request(:post, "#{@host}/v4/posts")
       .to_return(status: 201, body: { "posts" => {} }.to_json)
 

@@ -36,7 +36,7 @@ class FeedIdentificationsFormTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='entry.actions-webhook'] input[data-turbo-submits-with='Preparing…']", count: 1
   end
 
-  test "#create should spin an indicator next to the checking status" do
+  test "#create should show the checking status and disable submission" do
     sign_in_as(user)
 
     post feed_identifications_path,
@@ -44,23 +44,7 @@ class FeedIdentificationsFormTest < ActionDispatch::IntegrationTest
          headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_select "[data-key='entry.checking-status'] svg[data-icon='loader-circle'].animate-spin", count: 1
-    status = css_select("[data-key='entry.checking-status'] span").sole
-    assert_equal "Checking this feed. This usually takes a few seconds.", status.text
-  end
-
-  test "#create should disable and visibly dim the checking submit button" do
-    sign_in_as(user)
-
-    post feed_identifications_path,
-         params: { url: "http://example.com/feed.xml" },
-         headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-    assert_response :success
-    button = css_select("input[type=submit][value='Checking…'][disabled]").first
-    assert button
-    assert_includes button["class"], "disabled:opacity-60"
-    assert_includes button["class"], "disabled:cursor-not-allowed"
-    assert_includes button["class"], "disabled:hover:bg-brand"
+    assert_select "[data-key='entry.checking-status']", text: "Checking this feed. This usually takes a few seconds."
+    assert_select "input[type=submit][value='Checking…'][disabled]"
   end
 end

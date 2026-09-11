@@ -48,13 +48,13 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_equal LlmProvider.names.sort, LlmClient::Adapter::REGISTRY.keys.sort
   end
 
-  test "every registered adapter should inherit from Base" do
+  test ".for should return a Base adapter for every registered provider" do
     LlmClient::Adapter::REGISTRY.each_key do |provider|
       assert_kind_of LlmClient::Adapter::Base, LlmClient::Adapter.for(provider)
     end
   end
 
-  test "every adapter should attach the injected search provider, credential context, and client-side fetch" do
+  test "#apply_web should attach the injected search provider, credential context, and client-side fetch for every adapter" do
     provider = Object.new
     context = search_context
 
@@ -75,13 +75,13 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     end
   end
 
-  test "Anthropic should not send provider-hosted web tools" do
+  test "#params_for should omit provider-hosted web tools for Anthropic" do
     adapter = LlmClient::Adapter::Anthropic.new
 
     assert_equal({ max_tokens: 8_192 }, adapter.params_for("claude-opus-4-8", schema: true, web: true))
   end
 
-  test "OpenRouter should require structured parameters without enabling its web plugin" do
+  test "#params_for should require structured parameters without enabling the OpenRouter web plugin" do
     params = LlmClient::Adapter::OpenRouter.new.params_for("openai/gpt-4o", schema: false, web: true)
 
     assert_equal({ max_tokens: 8_192, provider: { require_parameters: true } }, params)
@@ -90,20 +90,20 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
 
   # An OpenRouter upstream that ignores `response_format` drops it silently, so
   # the routing constraint has to travel with the schema, not with the tools.
-  test "OpenRouter should require structured parameters on a schema-only call" do
+  test "#params_for should require structured parameters on an OpenRouter schema-only call" do
     params = LlmClient::Adapter::OpenRouter.new.params_for("openai/gpt-4o", schema: true, web: false)
 
     assert_equal({ max_tokens: 8_192, provider: { require_parameters: true } }, params)
   end
 
-  test "OpenAI should leave reasoning settings to the model on tool-enabled calls" do
+  test "#params_for should leave reasoning settings to the model on OpenAI tool-enabled calls" do
     adapter = LlmClient::Adapter::OpenAi.new
 
     assert_equal({ max_completion_tokens: 8_192 }, adapter.params_for("gpt-5.6-luna", schema: false, web: true))
   end
 
   # Structuring keeps its reasoning: no tool is there to collide with it.
-  test "OpenAI should keep reasoning on a schema-only call" do
+  test "#params_for should keep reasoning on an OpenAI schema-only call" do
     adapter = LlmClient::Adapter::OpenAi.new
 
     assert_equal({ max_completion_tokens: 8_192 }, adapter.params_for("gpt-5.6-luna", schema: true, web: false))
@@ -260,7 +260,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_not LlmClient::Adapter::OpenAi.new.schema_strict?
   end
 
-  test "openai #schema_payload should turn strictness off" do
+  test "#schema_payload should turn strictness off for OpenAI" do
     payload = LlmClient::Adapter::OpenAi.new.schema_payload(FeedProfile::UNIVERSAL_OUTPUT_SCHEMA)
 
     assert_equal FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, payload["schema"]
@@ -275,14 +275,14 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_operator item["properties"].keys.size, :>, item["required"].size
   end
 
-  test "openai #unwrap_json should pass provider JSON through untouched" do
+  test "#unwrap_json should pass provider JSON through untouched for OpenAI" do
     adapter = LlmClient::Adapter::OpenAi.new
 
     assert_equal '{"a":1}', adapter.unwrap_json('{"a":1}')
     assert_equal "```\n{\"a\":1}\n```", adapter.unwrap_json("```\n{\"a\":1}\n```")
   end
 
-  test "moonshot #unwrap_json should strip markdown fences and pass clean JSON through" do
+  test "#unwrap_json should strip markdown fences and pass clean JSON through for Moonshot" do
     adapter = LlmClient::Adapter::Moonshot.new
     assert_equal '{"items":[]}', adapter.unwrap_json("```json\n{\"items\":[]}\n```")
     assert_equal '{"a":1}', adapter.unwrap_json("```\n{\"a\":1}\n```")
@@ -291,7 +291,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
   end
 
   # Kimi drops the fence but keeps the preamble often enough to matter.
-  test "moonshot #unwrap_json should recover JSON introduced by unfenced prose" do
+  test "#unwrap_json should recover JSON introduced by unfenced prose for Moonshot" do
     adapter = LlmClient::Adapter::Moonshot.new
 
     assert_equal '{"a":1}', adapter.unwrap_json(%(Here is the JSON:\n{"a":1}))
@@ -299,7 +299,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
   end
 
   # Preamble prose is unrestricted, so a bracket can turn up before the payload.
-  test "moonshot #unwrap_json should skip a bracket in the preamble to reach the payload" do
+  test "#unwrap_json should skip a bracket in the preamble to reach the payload for Moonshot" do
     adapter = LlmClient::Adapter::Moonshot.new
 
     assert_equal '{"items":[]}', adapter.unwrap_json(%(Response [JSON]: {"items":[]}))
@@ -307,14 +307,14 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
   end
 
   # Prose with no JSON stays intact, so it fails as the parse error it is.
-  test "moonshot #unwrap_json should leave text holding no JSON alone" do
+  test "#unwrap_json should leave text holding no JSON alone for Moonshot" do
     adapter = LlmClient::Adapter::Moonshot.new
 
     assert_equal "I cannot browse the web.", adapter.unwrap_json("I cannot browse the web.")
     assert_equal "no close {here", adapter.unwrap_json("no close {here")
   end
 
-  test "moonshot #unwrap_json should tolerate prose around the fence and an uppercase tag" do
+  test "#unwrap_json should tolerate prose around the fence and an uppercase tag for Moonshot" do
     adapter = LlmClient::Adapter::Moonshot.new
 
     assert_equal '{"a":1}', adapter.unwrap_json("Here you go:\n```json\n{\"a\":1}\n```\nHope that helps.")
@@ -323,7 +323,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
 
   # A gathered post can quote a code block, so a fence inside the payload is
   # content. Unwrapping it as if it were the wrapper corrupts valid JSON.
-  test "moonshot #unwrap_json should leave a fence quoted inside the payload alone" do
+  test "#unwrap_json should leave a fence quoted inside the payload alone for Moonshot" do
     adapter = LlmClient::Adapter::Moonshot.new
     payload = %q({"items":[{"body":"install it: ```ruby\ngem \"foo\"\n``` done"}]})
 
@@ -332,11 +332,11 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert JSON.parse(adapter.unwrap_json("```json\n#{payload}\n```"))
   end
 
-  test "moonshot #unwrap_json should pass a bare JSON array through" do
+  test "#unwrap_json should pass a bare JSON array through for Moonshot" do
     assert_equal '[{"a":1}]', LlmClient::Adapter::Moonshot.new.unwrap_json('[{"a":1}]')
   end
 
-  test "base #unwrap_json should be identity" do
+  test "#unwrap_json should be identity for the base adapter" do
     assert_equal "```json\n{}\n```", LlmClient::Adapter::Base.new.unwrap_json("```json\n{}\n```")
   end
 end

@@ -149,7 +149,7 @@ class MetricsTest < ActiveSupport::TestCase
     assert_empty reported, "transport errors must not reach the error tracker"
   end
 
-  test "ApplicationJob should record job runs by outcome" do
+  test ".perform_now should record job runs by outcome" do
     enable!
 
     MetricsProbeJob.perform_now(:ok)

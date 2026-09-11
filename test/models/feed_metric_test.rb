@@ -9,31 +9,31 @@ class FeedMetricTest < ActiveSupport::TestCase
 
   teardown { unfreeze_time }
 
-  test "should be valid with all required attributes" do
+  test "#valid? should return true with all required attributes" do
     metric = build(:feed_metric)
     assert metric.valid?
   end
 
-  test "should require feed" do
+  test "#valid? should require feed" do
     metric = build(:feed_metric, feed: nil)
     assert_not metric.valid?
     assert metric.errors.of_kind?(:feed, :blank)
   end
 
-  test "should require date" do
+  test "#valid? should require date" do
     metric = build(:feed_metric, date: nil)
     assert_not metric.valid?
     assert metric.errors.of_kind?(:date, :blank)
   end
 
-  test "should require unique date per feed" do
+  test "#valid? should require unique date per feed" do
     create(:feed_metric, feed: feed, date: Date.current)
     duplicate = build(:feed_metric, feed: feed, date: Date.current)
     assert_not duplicate.valid?
     assert duplicate.errors.of_kind?(:date, :taken)
   end
 
-  test "should allow same date for different feeds" do
+  test "#valid? should allow same date for different feeds" do
     feed1 = create(:feed)
     feed2 = create(:feed)
     create(:feed_metric, feed: feed1, date: Date.current)
@@ -42,19 +42,19 @@ class FeedMetricTest < ActiveSupport::TestCase
     assert metric2.valid?
   end
 
-  test "should validate posts_count is non-negative" do
+  test "#valid? should validate posts_count is non-negative" do
     metric = build(:feed_metric, posts_count: -1)
     assert_not metric.valid?
     assert metric.errors.of_kind?(:posts_count, :greater_than_or_equal_to)
   end
 
-  test "should validate invalid_posts_count is non-negative" do
+  test "#valid? should validate invalid_posts_count is non-negative" do
     metric = build(:feed_metric, invalid_posts_count: -1)
     assert_not metric.valid?
     assert metric.errors.of_kind?(:invalid_posts_count, :greater_than_or_equal_to)
   end
 
-  test "should validate published_posts_count is non-negative" do
+  test "#valid? should validate published_posts_count is non-negative" do
     metric = build(:feed_metric, published_posts_count: -1)
     assert_not metric.valid?
     assert metric.errors.of_kind?(:published_posts_count, :greater_than_or_equal_to)
@@ -103,13 +103,13 @@ class FeedMetricTest < ActiveSupport::TestCase
     end
   end
 
-  test "should have default values of zero" do
+  test "#initialize should default post counters to zero" do
     metric = build(:feed_metric)
     assert_equal 0, metric.posts_count
     assert_equal 0, metric.invalid_posts_count
   end
 
-  test "#for_date_range scope returns metrics within range" do
+  test ".for_date_range should return metrics within the range" do
     metric1 = create(:feed_metric, feed: feed, date: 5.days.ago.to_date, posts_count: 1)
     metric2 = create(:feed_metric, feed: feed, date: 3.days.ago.to_date, posts_count: 2)
     metric3 = create(:feed_metric, feed: feed, date: 1.day.ago.to_date, posts_count: 3)
@@ -120,7 +120,7 @@ class FeedMetricTest < ActiveSupport::TestCase
     assert_equal [metric1, metric2, metric3], metrics.to_a
   end
 
-  test "#for_user scope returns metrics for user's feeds only" do
+  test ".for_user should return metrics for the user's feeds only" do
     user1 = create(:user)
     user2 = create(:user)
     feed1 = create(:feed, user: user1)

@@ -13,18 +13,18 @@ class PostTest < ActiveSupport::TestCase
     @valid_post ||= build(:post, feed: feed, feed_entry: feed_entry)
   end
 
-  test "should be valid with valid attributes" do
+  test "#valid? should return true with valid attributes" do
     post = valid_post
     assert post.valid?
   end
 
-  test "should require uid" do
+  test "#valid? should require uid" do
     post = build(:post, uid: nil)
     assert_not post.valid?
     assert post.errors.of_kind?(:uid, :blank)
   end
 
-  test "should require uid to be unique within feed scope" do
+  test "#valid? should require uid to be unique within feed scope" do
     post1 = create(:post, feed: feed, uid: "duplicate-uid")
     post2 = build(:post, feed: feed, uid: "duplicate-uid")
 
@@ -32,7 +32,7 @@ class PostTest < ActiveSupport::TestCase
     assert post2.errors.of_kind?(:uid, :taken)
   end
 
-  test "should allow same uid across different feeds" do
+  test "#valid? should allow same uid across different feeds" do
     feed2 = create(:feed)
     post1 = create(:post, feed: feed, uid: "same-uid")
     post2 = build(:post, feed: feed2, uid: "same-uid")
@@ -40,13 +40,13 @@ class PostTest < ActiveSupport::TestCase
     assert post2.valid?
   end
 
-  test "should require published_at" do
+  test "#valid? should require published_at" do
     post = build(:post, published_at: nil)
     assert_not post.valid?
     assert post.errors.of_kind?(:published_at, :blank)
   end
 
-  test "should allow a null source_url for a digest post but reject a blank string" do
+  test "#valid? should allow a null source_url for a digest post but reject a blank string" do
     assert build(:post, source_url: nil).valid?, "a digest post carries source_url = null"
 
     blank = build(:post, source_url: "")
@@ -54,12 +54,12 @@ class PostTest < ActiveSupport::TestCase
     assert blank.errors.of_kind?(:source_url, :blank)
   end
 
-  test "should allow empty content" do
+  test "#valid? should allow empty content" do
     post = build(:post, content: "")
     assert post.valid?
   end
 
-  test "should have draft status by default" do
+  test "#initialize should default status to draft" do
     post = Post.new
     assert_equal "draft", post.status
   end
@@ -72,7 +72,7 @@ class PostTest < ActiveSupport::TestCase
     assert_equal url, post.reload.freefeed_post_url
   end
 
-  test "should allow nil freefeed_post_id" do
+  test "#valid? should allow nil freefeed_post_id" do
     post = build(:post, freefeed_post_id: nil)
     assert post.valid?
   end
@@ -89,7 +89,7 @@ class PostTest < ActiveSupport::TestCase
     assert_nil post.reposted_at
   end
 
-  test "should validate content length within FreeFeed limits when enqueued" do
+  test "#valid? should validate content length within FreeFeed limits when enqueued" do
     post = build(:post, :enqueued, content: "a" * Post::MAX_CONTENT_LENGTH)
     assert post.valid?
 
@@ -98,7 +98,7 @@ class PostTest < ActiveSupport::TestCase
     assert post.errors.of_kind?(:content, :too_long)
   end
 
-  test "should validate comments length within FreeFeed limits when enqueued" do
+  test "#valid? should validate comments length within FreeFeed limits when enqueued" do
     valid_comment = "a" * Post::MAX_COMMENT_LENGTH
     post = build(:post, :enqueued, comments: [valid_comment])
     assert post.valid?
@@ -109,7 +109,7 @@ class PostTest < ActiveSupport::TestCase
     assert_includes post.errors[:comments], "Comment 1 exceeds maximum length of #{Post::MAX_COMMENT_LENGTH} characters"
   end
 
-  test "should validate multiple comments length when enqueued" do
+  test "#valid? should validate multiple comments length when enqueued" do
     valid_comment = "a" * Post::MAX_COMMENT_LENGTH
     long_comment = "a" * (Post::MAX_COMMENT_LENGTH + 1)
 
@@ -118,12 +118,12 @@ class PostTest < ActiveSupport::TestCase
     assert_includes post.errors[:comments], "Comment 2 exceeds maximum length of #{Post::MAX_COMMENT_LENGTH} characters"
   end
 
-  test "should handle non-string comments gracefully" do
+  test "#valid? should handle non-string comments gracefully" do
     post = build(:post, :enqueued, comments: ["valid", nil, 123, "also valid"])
     assert post.valid?
   end
 
-  test "should not enforce length limits when leaving the queue" do
+  test "#valid? should not enforce length limits when leaving the queue" do
     over_content = "a" * (Post::MAX_CONTENT_LENGTH + 1)
     over_comment = "a" * (Post::MAX_COMMENT_LENGTH + 1)
 
@@ -176,20 +176,20 @@ class PostTest < ActiveSupport::TestCase
     assert_equal expected, post.normalized_attributes
   end
 
-  test "should not allow enqueued status with validation errors" do
+  test "#valid? should not allow enqueued status with validation errors" do
     post = build(:post, feed: feed, feed_entry: feed_entry, status: :enqueued, validation_errors: ["url_too_long"])
 
     assert_not post.valid?
     assert_includes post.errors[:status], "cannot be enqueued when validation_errors is not empty"
   end
 
-  test "should allow enqueued status with empty validation errors" do
+  test "#valid? should allow enqueued status with empty validation errors" do
     post = build(:post, feed: feed, feed_entry: feed_entry, status: :enqueued, validation_errors: [])
 
     assert post.valid?
   end
 
-  test "should allow rejected status with validation errors" do
+  test "#valid? should allow rejected status with validation errors" do
     post = build(:post, feed: feed, feed_entry: feed_entry, status: :rejected, validation_errors: ["url_too_long"])
 
     assert post.valid?

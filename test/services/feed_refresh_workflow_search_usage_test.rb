@@ -31,7 +31,7 @@ class FeedRefreshWorkflowSearchUsageTest < ActiveSupport::TestCase
     Array.new(count) { WebSearchUsage.record!(credential: credential, refresh_event: event) }
   end
 
-  test "completion should transfer search references to the terminal refresh event" do
+  test "#complete_refresh_event should transfer search references to the terminal refresh event" do
     started = started_event
     searches = record_searches(started, 2)
     reference_ids = started.event_references.pluck(:id).sort
@@ -47,7 +47,7 @@ class FeedRefreshWorkflowSearchUsageTest < ActiveSupport::TestCase
     assert_equal reference_ids, terminal.event_references.pluck(:id).sort
   end
 
-  test "failure should transfer search references to the terminal refresh event" do
+  test "#fail_refresh_event should transfer search references to the terminal refresh event" do
     started = started_event
     searches = record_searches(started, 3)
     reference_ids = started.event_references.pluck(:id).sort
@@ -63,7 +63,7 @@ class FeedRefreshWorkflowSearchUsageTest < ActiveSupport::TestCase
     assert_equal reference_ids, terminal.event_references.pluck(:id).sort
   end
 
-  test "interruption should retain search references and add the search count" do
+  test "#interrupt_abandoned_event should retain search references and add the search count" do
     event = started_event
     searches = record_searches(event, 2)
 

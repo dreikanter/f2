@@ -83,7 +83,7 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
     assert_equal result[:used_space] - result[:postgres_usage], result[:other_used_space]
   end
 
-  test "#call percentages should sum to approximately 100" do
+  test "#call should return percentages that sum to approximately 100" do
     service = DiskUsageService.new(df_command: stub_df_command)
     result = service.call
 

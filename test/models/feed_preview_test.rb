@@ -91,28 +91,28 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert_not_predicate create(:feed_preview, :completed, ready_at: nil), :needs_run?
   end
 
-  test "should belong to user" do
+  test "#user should return the associated user" do
     assert_equal user, feed_preview.user
   end
 
-  test "should optionally belong to a search credential" do
+  test "#search_credential should return the associated credential when provided" do
     credential = create(:search_credential, :active, user: user)
     preview = create(:feed_preview, user: user, search_credential: credential)
 
     assert_equal credential, preview.search_credential
   end
 
-  test "should have feed_profile_key" do
+  test "#feed_profile_key should return the selected profile key" do
     assert_equal "rss", feed_preview.feed_profile_key
   end
 
-  test "should validate presence of feed_profile_key" do
+  test "#valid? should validate presence of feed_profile_key" do
     preview = build(:feed_preview, feed_profile_key: nil, user: user)
     assert_not preview.valid?
     assert preview.errors.of_kind?(:feed_profile_key, :blank)
   end
 
-  test "should have status enum" do
+  test "#processing!, #ready!, and #failed! should transition the preview status" do
     preview = create(:feed_preview, user: user)
 
     assert preview.pending?

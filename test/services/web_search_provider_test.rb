@@ -46,13 +46,13 @@ class WebSearchProviderTest < ActiveSupport::TestCase
     assert_match(/unknown web search provider/, error.message)
   end
 
-  test "every registered provider should inherit from Base" do
+  test ".for should return a Base provider for every registry entry" do
     WebSearchProvider::REGISTRY.each_key do |name|
       assert_kind_of WebSearchProvider::Base, WebSearchProvider.for(name, api_key: "key")
     end
   end
 
-  test "serper #search should post the query with the API key header" do
+  test "#search should post the query with the API key header for Serper" do
     body = { organic: [{ title: "A", link: "https://a.example", snippet: "sa" }] }.to_json
 
     with_client(ok_response(body)) do |client|
@@ -67,7 +67,7 @@ class WebSearchProviderTest < ActiveSupport::TestCase
     end
   end
 
-  test "brave #search should get the query with the subscription token header" do
+  test "#search should get the query with the subscription token header for Brave" do
     body = { web: { results: [{ title: "B", url: "https://b.example", description: "sb" }] } }.to_json
 
     with_client(ok_response(body)) do |client|
@@ -81,7 +81,7 @@ class WebSearchProviderTest < ActiveSupport::TestCase
     end
   end
 
-  test "tavily #search should post the query with a bearer token" do
+  test "#search should post the query with a bearer token for Tavily" do
     body = { results: [{ title: "C", url: "https://c.example", content: "sc" }] }.to_json
 
     with_client(ok_response(body)) do |client|
@@ -141,7 +141,7 @@ class WebSearchProviderTest < ActiveSupport::TestCase
     end
   end
 
-  test "brave #search should raise AuthError when 422 reports a rejected subscription token" do
+  test "#search should raise AuthError when 422 reports a rejected subscription token for Brave" do
     body = { type: "ErrorResponse", error: { code: "SUBSCRIPTION_TOKEN_INVALID", status: 422 } }.to_json
 
     with_client(HttpClient::Response.new(status: 422, body: body)) do
@@ -151,7 +151,7 @@ class WebSearchProviderTest < ActiveSupport::TestCase
     end
   end
 
-  test "brave #search should raise AuthError when 422 blames the authentication component" do
+  test "#search should raise AuthError when 422 blames the authentication component for Brave" do
     body = { error: { code: "SOME_FUTURE_TOKEN_ERROR", meta: { component: "authentication" } } }.to_json
 
     with_client(HttpClient::Response.new(status: 422, body: body)) do
@@ -161,7 +161,7 @@ class WebSearchProviderTest < ActiveSupport::TestCase
     end
   end
 
-  test "brave #search should raise a plain ProviderError when 422 is a parameter complaint" do
+  test "#search should raise a plain ProviderError when 422 is a parameter complaint for Brave" do
     body = { error: { code: "VALIDATION", meta: { component: "query" } } }.to_json
 
     with_client(HttpClient::Response.new(status: 422, body: body)) do
@@ -172,7 +172,7 @@ class WebSearchProviderTest < ActiveSupport::TestCase
     end
   end
 
-  test "brave #search should raise a plain ProviderError when a 422 body is unreadable" do
+  test "#search should raise a plain ProviderError when a 422 body is unreadable for Brave" do
     with_client(HttpClient::Response.new(status: 422, body: "<html>nope</html>")) do
       error = assert_raises(WebSearchProvider::ProviderError) do
         WebSearchProvider::Brave.new(api_key: "key").search("query")
@@ -181,7 +181,7 @@ class WebSearchProviderTest < ActiveSupport::TestCase
     end
   end
 
-  test "brave #search should raise a plain ProviderError when a 422 body is valid JSON but not an object" do
+  test "#search should raise a plain ProviderError when a 422 body is valid JSON but not an object for Brave" do
     ["null", "[]", "42"].each do |body|
       with_client(HttpClient::Response.new(status: 422, body: body)) do
         error = assert_raises(WebSearchProvider::ProviderError) do
@@ -192,7 +192,7 @@ class WebSearchProviderTest < ActiveSupport::TestCase
     end
   end
 
-  test "tavily #search should raise AuthError on its plan and pay-as-you-go limit statuses" do
+  test "#search should raise AuthError on its plan and pay-as-you-go limit statuses for Tavily" do
     [432, 433].each do |status|
       with_client(HttpClient::Response.new(status: status, body: "")) do
         error = assert_raises(WebSearchProvider::AuthError) do

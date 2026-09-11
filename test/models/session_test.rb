@@ -1,29 +1,29 @@
 require "test_helper"
 
 class SessionTest < ActiveSupport::TestCase
-  test "should be valid with user" do
+  test "#valid? should return true with user" do
     session = build(:session)
     assert session.valid?
   end
 
-  test "should require user" do
+  test "#valid? should require user" do
     session = build(:session, user: nil)
     assert_not session.valid?
     assert session.errors.of_kind?(:user, :blank)
   end
 
-  test "should belong to user" do
+  test "#user should return the associated user" do
     user = create(:user)
     session = create(:session, user: user)
     assert_equal user, session.user
   end
 
-  test "should allow optional ip_address and user_agent" do
+  test "#valid? should allow optional ip_address and user_agent" do
     session = build(:session, ip_address: nil, user_agent: nil)
     assert session.valid?
   end
 
-  test "should be destroyed when user is destroyed" do
+  test "#destroy should remove the user's sessions" do
     user = create(:user)
     session = create(:session, user: user)
 
