@@ -310,15 +310,15 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "#update should rename without resetting state or enqueuing validation" do
+  test "#update should rename without credential_data or enqueuing validation" do
     sign_in_as(user)
     active = create(:ai_credential, :active, user: user)
+    original_key = active.credential_data["api_key"]
 
     assert_no_enqueued_jobs only: AiCredentialValidationJob do
       patch ai_credential_url(active), params: {
         ai_credential: {
-          display_name: "Renamed Key",
-          credential_data: { api_key: "" }
+          display_name: "Renamed Key"
         }
       }
     end
@@ -327,6 +327,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to ai_credential_path(active)
     assert_equal "Renamed Key", active.display_name
     assert_equal "active", active.state
+    assert_equal original_key, active.credential_data["api_key"]
   end
 
   test "#update should replace a new key, reset state, and enqueue validation" do
