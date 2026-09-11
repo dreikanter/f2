@@ -69,7 +69,7 @@ class LlmClient::RateTableTest < ActiveSupport::TestCase
     )
   end
 
-  test "should return an empty table when the rates file is missing" do
+  test ".reload! should use an empty table when the rates file is missing" do
     original = LlmClient::RateTable::PATH
     LlmClient::RateTable.send(:remove_const, :PATH)
     LlmClient::RateTable.const_set(:PATH, Rails.root.join("config/__does_not_exist__.yml"))

@@ -1,7 +1,7 @@
 require "test_helper"
 
 class Feed::SearchCredentialTest < ActiveSupport::TestCase
-  test "search credential must belong to the feed user" do
+  test "#valid? should require the search credential to belong to the feed user" do
     user = create(:user)
     foreign = create(:search_credential, :active)
     feed = build(:feed, user: user, search_credential: foreign)
@@ -10,7 +10,7 @@ class Feed::SearchCredentialTest < ActiveSupport::TestCase
     assert_includes feed.errors[:search_credential], "must belong to the same user"
   end
 
-  test "enabled AI feeds allow a missing or inactive search credential" do
+  test "#valid? and #can_be_previewed? should allow a missing or inactive search credential on enabled AI feeds" do
     feed = build_ai_feed(search_credential: nil)
 
     assert feed.valid?, feed.errors.full_messages.to_sentence
@@ -21,14 +21,14 @@ class Feed::SearchCredentialTest < ActiveSupport::TestCase
     assert feed.can_be_previewed?
   end
 
-  test "non-AI feeds do not require a search credential" do
+  test "#valid? should not require a search credential on non-AI feeds" do
     feed = build(:feed, state: :enabled, search_credential: nil)
 
     feed.valid?
     assert_empty feed.errors[:search_credential]
   end
 
-  test "enablement gating matches the search credential validation" do
+  test "#can_be_enabled? should allow an active or missing search credential" do
     active = create(:search_credential, :active)
     feed = build_ai_feed(user: active.user, search_credential: active)
 

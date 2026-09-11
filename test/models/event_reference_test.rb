@@ -13,7 +13,7 @@ class EventReferenceTest < ActiveSupport::TestCase
     @llm_usage ||= create(:llm_usage)
   end
 
-  test "should create reference linking an event to a record" do
+  test ".create! should create reference linking an event to a record" do
     reference = EventReference.create!(event: event, reference: post)
 
     assert_equal event, reference.event
@@ -22,21 +22,21 @@ class EventReferenceTest < ActiveSupport::TestCase
     assert_equal post.id, reference.reference_id
   end
 
-  test "should require an event" do
+  test "#valid? should require an event" do
     reference = EventReference.new(reference: post)
 
     assert_not reference.valid?
     assert reference.errors.of_kind?(:event, :blank)
   end
 
-  test "should require a reference" do
+  test "#valid? should require a reference" do
     reference = EventReference.new(event: event)
 
     assert_not reference.valid?
     assert reference.errors.of_kind?(:reference, :blank)
   end
 
-  test "should be deleted when its referenced post is deleted" do
+  test "#destroy! should delete event references when the referenced post is destroyed" do
     reference = EventReference.create!(event: event, reference: post)
 
     post.destroy!
@@ -44,7 +44,7 @@ class EventReferenceTest < ActiveSupport::TestCase
     assert_not EventReference.exists?(reference.id)
   end
 
-  test "should be deleted when its referenced llm usage is deleted" do
+  test "#destroy! should delete event references when the referenced LLM usage is destroyed" do
     reference = EventReference.create!(event: event, reference: llm_usage)
 
     llm_usage.destroy!

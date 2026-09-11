@@ -310,7 +310,7 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_equal "tools ran but answer not grounded", outcome[:results].first[:note]
   end
 
-  test "canned web search should present the production search tool's wire shape" do
+  test "#name, #description, and #parameters should match the production web search tool" do
     tool = LlmCapabilityProbe::CannedWebSearch.new
     production = LlmClient::Tools::WebSearch.new(provider: nil, credential: nil)
 
@@ -319,7 +319,7 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_equal %i[query], tool.parameters.keys
   end
 
-  test "canned web search should return fixed real URLs without touching a search provider" do
+  test "#execute should return fixed URLs from canned web search without touching a search provider" do
     result = JSON.parse(LlmCapabilityProbe::CannedWebSearch.new.execute(query: "anything"))
 
     assert_equal ["https://example.com/"], result["results"].map { |r| r["url"] }
@@ -375,7 +375,7 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_same budgets.first, budgets.last
   end
 
-  test "the canned search should spend the shared budget like the production tool" do
+  test "#execute should spend the shared budget for canned web search" do
     budget = LlmClient::ToolBudget.new(rounds: 1, grace: 0)
     search = LlmCapabilityProbe::CannedWebSearch.new(budget: budget)
 

@@ -5,30 +5,30 @@ class AiCredentialTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  test "should be valid with a registered provider and an api_key" do
+  test "#valid? should return true with a registered provider and an api_key" do
     credential = build(:ai_credential, user: user)
     assert credential.valid?, credential.errors.full_messages.inspect
   end
 
-  test "should reject an unknown provider" do
+  test "#valid? should reject an unknown provider" do
     credential = build(:ai_credential, user: user, provider: "made-up")
     refute credential.valid?
     assert_includes credential.errors[:provider], "is not included in the list"
   end
 
-  test "should reject a blank api_key" do
+  test "#valid? should reject a blank api_key" do
     credential = build(:ai_credential, user: user, credential_data: { "api_key" => "" })
     refute credential.valid?
     assert_includes credential.errors[:base], "Enter your API key"
   end
 
-  test "should reject missing credential_data" do
+  test "#valid? should reject missing credential_data" do
     credential = build(:ai_credential, user: user, credential_data: {})
     refute credential.valid?
     assert_includes credential.errors[:base], "Enter your API key"
   end
 
-  test "should enforce display_name uniqueness per (user, provider)" do
+  test "#valid? should enforce display_name uniqueness per (user, provider)" do
     create(:ai_credential, user: user, provider: "anthropic", display_name: "Work")
     duplicate = build(:ai_credential, user: user, provider: "anthropic", display_name: "Work")
 
@@ -36,14 +36,14 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_includes duplicate.errors[:display_name], "has already been taken"
   end
 
-  test "should allow the same display_name across users" do
+  test "#valid? should allow the same display_name across users" do
     create(:ai_credential, user: user, display_name: "Work")
     other = build(:ai_credential, user: create(:user), display_name: "Work")
 
     assert other.valid?
   end
 
-  test "should encrypt credential_data so the raw column doesn't contain the API key" do
+  test "#save! should encrypt credential_data so the raw column doesn't contain the API key" do
     credential = create(:ai_credential, user: user, credential_data: { "api_key" => "sk-ant-secret-12345" })
 
     raw = ActiveRecord::Base.connection.select_value(
@@ -88,7 +88,7 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_equal LlmProvider.find("anthropic"), credential.llm_provider
   end
 
-  test "destroy should be a no-op when no feeds reference the credential" do
+  test "#destroy! should remove a credential with no dependent feeds" do
     credential = create(:ai_credential, user: user)
 
     assert_difference("AiCredential.count", -1) do
@@ -96,7 +96,7 @@ class AiCredentialTest < ActiveSupport::TestCase
     end
   end
 
-  test "destroy should nullify dependent feeds and disable any feed left enabled" do
+  test "#destroy! should nullify dependent feeds and disable any feed left enabled" do
     credential = create(:ai_credential, user: user)
     feed = create(:feed,
                   user: user,

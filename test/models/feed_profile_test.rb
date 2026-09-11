@@ -1,7 +1,7 @@
 require "test_helper"
 
 class FeedProfileTest < ActiveSupport::TestCase
-  test ".all returns list of profile keys" do
+  test ".all should return list of profile keys" do
     expected = [
       "aerostat",
       "atlantic_photos",
@@ -38,13 +38,13 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_equal expected, FeedProfile.all.sort
   end
 
-  test "webhook profile resolves only its normalizer stage" do
+  test ".normalizer_class_for should resolve the webhook stage while other stage resolvers reject it" do
     assert_equal "Normalizer::WebhookNormalizer", FeedProfile.normalizer_class_for("webhook").name
     assert_raises(ArgumentError) { FeedProfile.loader_class_for("webhook") }
     assert_raises(ArgumentError) { FeedProfile.processor_class_for("webhook") }
   end
 
-  test "webhook profile accepts only empty params" do
+  test ".parameter_schema_for should allow only empty params for webhook profiles" do
     schema = FeedProfile.parameter_schema_for("webhook")
 
     assert JSONSchemer.schema(schema).valid?({})
@@ -61,17 +61,17 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_nil FeedProfile.source_input_for("webhook", { "url" => "https://example.com" })
   end
 
-  test ".exists? returns true for valid profile key" do
+  test ".exists? should return true for valid profile key" do
     assert FeedProfile.exists?("rss")
     assert FeedProfile.exists?("xkcd")
   end
 
-  test ".exists? returns false for invalid profile key" do
+  test ".exists? should return false for invalid profile key" do
     assert_not FeedProfile.exists?("invalid")
     assert_not FeedProfile.exists?(nil)
   end
 
-  test ".[] returns the full registry entry hash" do
+  test ".[] should return the full registry entry hash" do
     entry = FeedProfile["rss"]
 
     assert_kind_of Hash, entry
@@ -81,7 +81,7 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_kind_of Hash, entry[:loader]
   end
 
-  test ".[] returns nil for unknown key" do
+  test ".[] should return nil for unknown key" do
     assert_nil FeedProfile["nope"]
   end
 
@@ -89,7 +89,7 @@ class FeedProfileTest < ActiveSupport::TestCase
   # AI output_schema) is validated in FeedProfileValidatorTest against
   # FeedProfile::PROFILES; no need to re-assert it entry-by-entry here.
 
-  test "every matcher-bearing PROFILES entry has a resolvable matcher class" do
+  test "PROFILES should declare resolvable matcher classes" do
     FeedProfile::PROFILES.each do |key, entry|
       next if entry[:matcher].blank?
 
@@ -98,7 +98,7 @@ class FeedProfileTest < ActiveSupport::TestCase
     end
   end
 
-  test "all pull PROFILES have resolvable loader classes" do
+  test ".loader_class_for should resolve every pull profile's loader" do
     FeedProfile::PROFILES.each_key do |key|
       next if key == "webhook"
 
@@ -108,7 +108,7 @@ class FeedProfileTest < ActiveSupport::TestCase
     end
   end
 
-  test "all pull PROFILES have resolvable processor classes" do
+  test ".processor_class_for should resolve every pull profile's processor" do
     FeedProfile::PROFILES.each_key do |key|
       next if key == "webhook"
 
@@ -118,7 +118,7 @@ class FeedProfileTest < ActiveSupport::TestCase
     end
   end
 
-  test "all PROFILES have resolvable normalizer classes" do
+  test ".normalizer_class_for should resolve every profile's normalizer" do
     FeedProfile::PROFILES.each_key do |key|
       normalizer_class = FeedProfile.normalizer_class_for(key)
       assert normalizer_class.present?, "Profile '#{key}' should have a resolvable normalizer class"
@@ -126,7 +126,7 @@ class FeedProfileTest < ActiveSupport::TestCase
     end
   end
 
-  test "all non-AI pull PROFILES have resolvable title extractor classes" do
+  test ".title_extractor_class_for should resolve every non-AI pull profile's title extractor" do
     # AI-backed profiles emit the universal post shape directly, and the
     # webhook profile never goes through identification, so both skip the
     # title-extractor stage.
@@ -139,22 +139,22 @@ class FeedProfileTest < ActiveSupport::TestCase
     end
   end
 
-  test "class_for methods raise ArgumentError for invalid keys" do
+  test ".loader_class_for, .processor_class_for, .normalizer_class_for, and .title_extractor_class_for should reject invalid keys" do
     assert_raises(ArgumentError) { FeedProfile.loader_class_for("invalid") }
     assert_raises(ArgumentError) { FeedProfile.processor_class_for("invalid") }
     assert_raises(ArgumentError) { FeedProfile.normalizer_class_for("invalid") }
     assert_raises(ArgumentError) { FeedProfile.title_extractor_class_for("invalid") }
   end
 
-  test ".config_for returns the stage config hash" do
+  test ".config_for should return the stage config hash" do
     assert_equal({}, FeedProfile.config_for("rss", :loader))
   end
 
-  test ".config_for raises ArgumentError for invalid keys" do
+  test ".config_for should raise ArgumentError for invalid keys" do
     assert_raises(ArgumentError) { FeedProfile.config_for("invalid", :loader) }
   end
 
-  test ".matchers returns matcher classes in registration order" do
+  test ".matchers should return matcher classes in registration order" do
     matchers = FeedProfile.matchers
 
     rss_index = matchers.index(ProfileMatcher::RssProfileMatcher)
@@ -165,26 +165,26 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert rss_index < xkcd_index, "rss should come before xkcd in registration order"
   end
 
-  test ".matchers never includes the AI profile (structural exclusion)" do
+  test ".matchers should never include the AI profile (structural exclusion)" do
     # The AI profile registers no matcher, so detection can't select it.
     # It's reachable only via Mode B, never by auto-detection.
     keys = FeedProfile.matchers.map(&:profile_key)
     assert_not_includes keys, "llm"
   end
 
-  test ".matchers returns every matcher-bearing profile" do
+  test ".matchers should return every matcher-bearing profile" do
     matcher_bearing = FeedProfile::PROFILES.count { |_key, entry| entry[:matcher].present? }
     assert_equal matcher_bearing, FeedProfile.matchers.size
   end
 
-  test ".depends_on_ai? returns true for AI-backed profiles" do
+  test ".depends_on_ai? should return true for AI-backed profiles" do
     assert FeedProfile.depends_on_ai?("llm")
     assert_not FeedProfile.depends_on_ai?("rss")
     assert_not FeedProfile.depends_on_ai?("xkcd")
     assert_not FeedProfile.depends_on_ai?("nonexistent")
   end
 
-  test ".scheduled? returns the explicit scheduling capability" do
+  test ".scheduled? should return the explicit scheduling capability" do
     assert FeedProfile.scheduled?("rss")
     assert FeedProfile.scheduled?("llm")
     assert_not FeedProfile.scheduled?("nonexistent")
@@ -203,7 +203,7 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_equal({}, FeedProfile.defaults_for("nonexistent"))
   end
 
-  test ".parameter_schema_for returns the schema for a profile" do
+  test ".parameter_schema_for should return the schema for a profile" do
     schema = FeedProfile.parameter_schema_for("rss")
 
     assert_kind_of Hash, schema
@@ -211,17 +211,17 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_equal ["url"], schema["required"]
   end
 
-  test ".parameter_schema_for returns nil for unknown profiles" do
+  test ".parameter_schema_for should return nil for unknown profiles" do
     assert_nil FeedProfile.parameter_schema_for("nope")
   end
 
-  test ".parameter_keys_for returns the keys a profile declares" do
+  test ".parameter_keys_for should return the keys a profile declares" do
     assert_equal ["url"], FeedProfile.parameter_keys_for("rss")
     assert_equal ["prompt"], FeedProfile.parameter_keys_for("llm")
     assert_equal [], FeedProfile.parameter_keys_for("webhook")
   end
 
-  test "youtube profile declares its options" do
+  test ".options_for should return the YouTube options" do
     options = FeedProfile.options_for("youtube")
 
     assert_equal %w[exclude_shorts include_description], options.map(&:name)
@@ -232,17 +232,17 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert options.second.default
   end
 
-  test ".options_for returns nothing for a profile declaring only its source" do
+  test ".options_for should return nothing for a profile declaring only its source" do
     assert_empty FeedProfile.options_for("rss")
     assert_empty FeedProfile.options_for("llm")
     assert_empty FeedProfile.options_for("webhook")
   end
 
-  test ".options_for returns nothing for an unknown profile" do
+  test ".options_for should return nothing for an unknown profile" do
     assert_empty FeedProfile.options_for("nope")
   end
 
-  test ".parameter_keys_for returns nil for unknown profiles" do
+  test ".parameter_keys_for should return nil for unknown profiles" do
     assert_nil FeedProfile.parameter_keys_for("nope")
   end
 

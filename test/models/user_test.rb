@@ -5,48 +5,48 @@ class UserTest < ActiveSupport::TestCase
 
   teardown { travel_back }
 
-  test "should be valid with email and password" do
+  test "#valid? should return true with email and password" do
     user = build(:user)
     assert user.valid?
   end
 
-  test "should require email address" do
+  test "#valid? should require email address" do
     user = build(:user, email_address: nil)
     assert_not user.valid?
     assert user.errors.of_kind?(:email_address, :blank)
   end
 
-  test "should require unique email address" do
+  test "#valid? should require unique email address" do
     existing_user = create(:user)
     user = build(:user, email_address: existing_user.email_address)
     assert_not user.valid?
     assert_includes user.errors[:base], "email is already taken"
   end
 
-  test "should allow a blank name" do
+  test "#valid? should allow a blank name" do
     user = build(:user, name: "")
     assert user.valid?
   end
 
-  test "should reject a name longer than the limit" do
+  test "#valid? should reject a name longer than the limit" do
     user = build(:user, name: "a" * (User::NAME_MAX_LENGTH + 1))
     assert_not user.valid?
     assert user.errors.of_kind?(:name, :too_long)
   end
 
-  test "should strip surrounding whitespace from the name" do
+  test "#name= should strip surrounding whitespace from the name" do
     user = build(:user, name: "  Alex  ")
     assert_equal "Alex", user.name
   end
 
-  test "should let an account with a legacy over-long name update other attributes" do
+  test "#update should let an account with a legacy over-long name update other attributes" do
     user = create(:user)
     user.update_column(:name, "a" * (User::NAME_MAX_LENGTH + 1))
 
     assert user.reload.update(password: "brandnewpassword")
   end
 
-  test "should still reject shortening a legacy name to another over-long value" do
+  test "#update should still reject shortening a legacy name to another over-long value" do
     user = create(:user)
     user.update_column(:name, "a" * (User::NAME_MAX_LENGTH + 10))
 
@@ -68,28 +68,28 @@ class UserTest < ActiveSupport::TestCase
     assert_equal "u...e", user.anonymized_email
   end
 
-  test "should authenticate with correct password" do
+  test "#authenticate should return the user with the correct password" do
     user = create(:user)
     assert user.authenticate("password123")
   end
 
-  test "should not authenticate with wrong password" do
+  test "#authenticate should return false with the wrong password" do
     user = create(:user)
     assert_not user.authenticate("wrong_password")
   end
 
-  test "should authenticate by email and password" do
+  test ".authenticate_by should return the user with matching email and password" do
     user = create(:user)
     authenticated_user = User.authenticate_by(email_address: user.email_address, password: "password123")
     assert_equal user, authenticated_user
   end
 
-  test "should not authenticate with wrong email or password" do
+  test ".authenticate_by should return nil with the wrong email or password" do
     authenticated_user = User.authenticate_by(email_address: "wrong@example.com", password: "password")
     assert_nil authenticated_user
   end
 
-  test "#password_reset token should expire" do
+  test ".find_by_password_reset_token should reject expired tokens" do
     user = create(:user)
     token = user.generate_token_for(:password_reset)
 
@@ -102,7 +102,7 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  test "should have inactive state by default" do
+  test "#initialize should default state to inactive" do
     user = User.new
     assert user.inactive?
   end
@@ -142,7 +142,7 @@ class UserTest < ActiveSupport::TestCase
     assert create(:user, state: :active).email_confirmed?
   end
 
-  test "should have many feeds" do
+  test "#feeds should return the associated feeds" do
     user = create(:user)
     feed1 = create(:feed, user: user)
     feed2 = create(:feed, user: user)
@@ -152,7 +152,7 @@ class UserTest < ActiveSupport::TestCase
     assert_includes user.feeds, feed2
   end
 
-  test "should destroy associated feeds when user is destroyed" do
+  test "#destroy! should remove associated feeds" do
     user = create(:user)
     create(:feed, user: user)
     create(:feed, user: user)
@@ -162,7 +162,7 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  test "should have many permissions" do
+  test "#permissions should return the associated permissions" do
     user = create(:user)
     permission = create(:permission, user: user, name: "admin")
 
@@ -170,7 +170,7 @@ class UserTest < ActiveSupport::TestCase
     assert_includes user.permissions, permission
   end
 
-  test "should destroy associated permissions when user is destroyed" do
+  test "#destroy! should remove associated permissions" do
     user = create(:user)
     create(:permission, user: user, name: "admin")
 
@@ -179,7 +179,7 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  test "should have many access_tokens" do
+  test "#access_tokens should return the associated access tokens" do
     user = create(:user)
     token1 = create(:access_token, user: user)
     token2 = create(:access_token, user: user)
@@ -189,7 +189,7 @@ class UserTest < ActiveSupport::TestCase
     assert_includes user.access_tokens, token2
   end
 
-  test "should destroy associated access_tokens when user is destroyed" do
+  test "#destroy! should remove associated access tokens" do
     user = create(:user)
     create(:access_token, user: user)
     create(:access_token, user: user)
@@ -199,7 +199,7 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  test "should nullify associated events when user is destroyed" do
+  test "#destroy! should nullify the user on associated events" do
     user = create(:user)
     event = create(:event, user: user)
 
@@ -210,13 +210,13 @@ class UserTest < ActiveSupport::TestCase
     assert_nil event.reload.user_id
   end
 
-  test "#admin? returns true when user has admin permission" do
+  test "#admin? should return true when user has admin permission" do
     user = create(:user, :admin)
 
     assert user.admin?
   end
 
-  test "#total_feeds_count returns count of all user's feeds" do
+  test "#total_feeds_count should return count of all user's feeds" do
     user = create(:user)
     create(:feed, user: user)
     create(:feed, user: user)
@@ -226,7 +226,7 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 2, user.total_feeds_count
   end
 
-  test "#total_imported_posts_count returns count of all posts across user's feeds" do
+  test "#total_imported_posts_count should return count of all posts across user's feeds" do
     user = create(:user)
     feed1 = create(:feed, user: user)
     feed2 = create(:feed, user: user)
@@ -245,7 +245,7 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 3, user.total_imported_posts_count
   end
 
-  test "#total_published_posts_count returns count of only published posts" do
+  test "#total_published_posts_count should return count of only published posts" do
     user = create(:user)
     feed = create(:feed, user: user)
     entry1 = create(:feed_entry, feed: feed)
@@ -258,7 +258,7 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 2, user.total_published_posts_count
   end
 
-  test "#most_recent_repost_at returns the most recent repost timestamp regardless of original publication date" do
+  test "#most_recent_repost_at should return the most recent repost timestamp regardless of original publication date" do
     user = create(:user)
     feed = create(:feed, user: user)
     entry1 = create(:feed_entry, feed: feed)
@@ -273,7 +273,7 @@ class UserTest < ActiveSupport::TestCase
     assert_in_delta 1.hour.ago.to_i, user.most_recent_repost_at.to_i, 1
   end
 
-  test "#most_recent_repost_at returns nil when no published posts" do
+  test "#most_recent_repost_at should return nil when no published posts" do
     user = create(:user)
     feed = create(:feed, user: user)
     entry = create(:feed_entry, feed: feed)
@@ -321,13 +321,13 @@ class UserTest < ActiveSupport::TestCase
     assert_equal "bounced", user.email_deactivation_reason
   end
 
-  test "#email_deactivated? returns true when email_deactivated_at is present" do
+  test "#email_deactivated? should return true when email_deactivated_at is present" do
     user = create(:user)
     user.deactivate_email!(reason: "bounced")
     assert user.email_deactivated?
   end
 
-  test "#email_deactivated? returns false when email_deactivated_at is nil" do
+  test "#email_deactivated? should return false when email_deactivated_at is nil" do
     user = create(:user)
     assert_not user.email_deactivated?
   end
@@ -340,12 +340,12 @@ class UserTest < ActiveSupport::TestCase
     assert_nil user.email_deactivation_reason
   end
 
-  test "#can_change_email? returns true when no email change events exist" do
+  test "#can_change_email? should return true when no email change events exist" do
     user = create(:user)
     assert user.can_change_email?
   end
 
-  test "#can_change_email? returns true when last email change was more than 24 hours ago" do
+  test "#can_change_email? should return true when last email change was more than 24 hours ago" do
     user = create(:user)
     travel_to 25.hours.ago do
       Event.create!(
@@ -360,7 +360,7 @@ class UserTest < ActiveSupport::TestCase
     assert user.can_change_email?
   end
 
-  test "#can_change_email? returns false when last email change was less than 24 hours ago" do
+  test "#can_change_email? should return false when last email change was less than 24 hours ago" do
     user = create(:user)
     Event.create!(
       type: "email_changed",
@@ -373,12 +373,12 @@ class UserTest < ActiveSupport::TestCase
     assert_not user.can_change_email?
   end
 
-  test "#time_until_email_change_allowed returns 0 when user can change email" do
+  test "#time_until_email_change_allowed should return 0 when user can change email" do
     user = create(:user)
     assert_equal 0, user.time_until_email_change_allowed
   end
 
-  test "#time_until_email_change_allowed returns remaining time when rate limited" do
+  test "#time_until_email_change_allowed should return remaining time when rate limited" do
     user = create(:user)
     time_elapsed = User::EMAIL_CHANGE_COOLDOWN / 2
 
@@ -397,7 +397,7 @@ class UserTest < ActiveSupport::TestCase
     assert_equal expected_remaining, user.time_until_email_change_allowed
   end
 
-  test "#last_email_change_event returns most recent EmailChanged" do
+  test "#last_email_change_event should return most recent EmailChanged" do
     user = create(:user)
 
     old_event = travel_to((User::EMAIL_CHANGE_COOLDOWN * 2).ago) do

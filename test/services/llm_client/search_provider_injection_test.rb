@@ -1,7 +1,7 @@
 require "test_helper"
 
 class LlmClient::SearchProviderInjectionTest < ActiveSupport::TestCase
-  test "web calls resolve the provider from the active search credential" do
+  test "#search_provider_for should resolve the provider from the active search credential" do
     user = create(:user)
     ai_credential = create(:ai_credential, :active, user: user)
     search_credential = create(:search_credential, :active, user: user)
@@ -19,7 +19,7 @@ class LlmClient::SearchProviderInjectionTest < ActiveSupport::TestCase
     end
   end
 
-  test "web calls omit external search for a missing or inactive search credential" do
+  test "#search_provider_for should omit external search for a missing or inactive search credential" do
     user = create(:user)
     ai_credential = create(:ai_credential, :active, user: user)
     inactive = create(:search_credential, :inactive, user: user)

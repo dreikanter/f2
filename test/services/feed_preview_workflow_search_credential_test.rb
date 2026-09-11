@@ -3,7 +3,7 @@ require "test_helper"
 class FeedPreviewWorkflowSearchCredentialTest < ActiveSupport::TestCase
   AI_RUN_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 
-  test "AI preview passes its persisted search credential to the temporary feed and LLM context" do
+  test "#execute should pass the persisted search credential to the temporary feed and LLM context" do
     user = create(:user)
     ai_credential = create(
       :ai_credential,

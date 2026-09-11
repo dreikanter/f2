@@ -125,7 +125,7 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
   # Guards the shape persisted to FeedIdentification#candidates: Rails'
   # native Data#as_json must keep yielding string keys, so a future
   # field/type change can't silently break it.
-  test "DetectionCandidate should serialize to the persisted candidate hash" do
+  test "#as_json should serialize a DetectionCandidate to the persisted candidate hash" do
     candidate = FeedProfileDetector::DetectionCandidate.new(
       profile_key: "rss",
       title: "Example Blog"
