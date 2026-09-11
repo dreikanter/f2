@@ -78,12 +78,8 @@ module Processor
       tweet.dig("extended_entities", "media") || tweet.dig("entities", "media") || []
     end
 
-    def parse_time(value)
-      return nil if value.blank?
-
+    def parse_timestamp(value)
       Time.strptime(value, TWITTER_FORMAT)
-    rescue ArgumentError
-      nil
     end
   end
 end
