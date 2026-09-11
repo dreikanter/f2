@@ -19,7 +19,6 @@ class FeedPreviewJob < ApplicationJob
     # The workflow already transitioned the preview to :failed. Do not re-raise:
     # retrying would reset status back to :processing (via initialize_workflow),
     # causing the status to oscillate and leaving the client polling indefinitely.
-    Rails.logger.error "FeedPreviewJob failed for preview #{feed_preview_id}: #{e.message}"
     Rails.error.report(e, context: { feed_preview_id: feed_preview_id })
   end
 end
