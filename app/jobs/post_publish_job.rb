@@ -126,13 +126,20 @@ class PostPublishJob < ApplicationJob
     fail_post(feed, post, FreefeedPublisher::InterruptedPublicationError.new, report: true)
   end
 
-  # Mark a post failed and advance the chain. Reports to error tracking only for
-  # unexpected faults; expected external failures are logged and skipped.
+  # Reports to error tracking only for unexpected faults; expected external
+  # failures are logged and skipped.
   def fail_post(feed, post, error, report: false)
+    discard_post(feed, post, status: "failed", error: error, report: report,
+                 message: "Failed to publish post #{post.id}: #{error.message}")
+  end
+
+  # Mark a post failed and advance the chain, so one post can never hold up the
+  # queue. `status` labels the metric with why the post was given up on.
+  def discard_post(feed, post, status:, message:, error: nil, report: false)
     post.post_publication&.destroy!
     post.update!(status: :failed)
-    Metrics.increment("posts_published_total", status: "failed")
-    Rails.logger.error "Failed to publish post #{post.id}: #{error.message}"
+    Metrics.increment("posts_published_total", status: status)
+    Rails.logger.error message
     Rails.error.report(error, context: { post: post.attributes, feed: feed.attributes }) if report
     schedule_next(feed)
   end
@@ -158,11 +165,8 @@ class PostPublishJob < ApplicationJob
   # A post needing more POSTs than the bucket can ever hold would throttle
   # forever and block the queue, so fail it and move on.
   def reject_oversized(feed, post, posts)
-    post.post_publication&.destroy!
-    post.update!(status: :failed)
-    Metrics.increment("posts_published_total", status: "rejected")
-    Rails.logger.error "Post #{post.id} needs #{posts} POSTs, over the FreeFeed limit; marking failed"
-    schedule_next(feed)
+    discard_post(feed, post, status: "rejected",
+                 message: "Post #{post.id} needs #{posts} POSTs, over the FreeFeed limit; marking failed")
   end
 
   def count_published(post)
