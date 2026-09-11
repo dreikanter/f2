@@ -2,11 +2,7 @@ require "test_helper"
 
 class AdminsControllerTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
-  end
-
-  def admin_user
-    @admin_user ||= create(:user, :admin)
+    @user ||= regular_user
   end
 
   def admin_dev_user

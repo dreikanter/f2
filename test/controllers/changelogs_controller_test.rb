@@ -2,7 +2,7 @@ require "test_helper"
 
 class ChangelogsControllerTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   test "should redirect to login when not authenticated" do

@@ -77,7 +77,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   test "#create should require authentication" do

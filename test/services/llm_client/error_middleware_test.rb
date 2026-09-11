@@ -1,6 +1,8 @@
 require "test_helper"
 
 class LlmClient::ErrorMiddlewareTest < ActiveSupport::TestCase
+  include JsonResponseTestHelpers
+
   ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
   MALFORMED_ERROR = { error: "No endpoints found that support tool use." }.freeze
 
@@ -21,10 +23,6 @@ class LlmClient::ErrorMiddlewareTest < ActiveSupport::TestCase
 
   def call
     LlmClient.new(credential).call(context, prompt: "Find a recent release", output_schema: nil, web: true)
-  end
-
-  def json(body, status: 200)
-    { status: status, headers: { "Content-Type" => "application/json" }, body: body.to_json }
   end
 
   def tool_round(id = "fetch-1")

@@ -9,10 +9,6 @@ class FeedPolicyTest < ActiveSupport::TestCase
     users(:other_user)
   end
 
-  def admin_user
-    users(:admin_user)
-  end
-
   def feed
     feeds(:feed)
   end

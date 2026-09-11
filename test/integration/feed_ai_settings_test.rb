@@ -6,7 +6,7 @@ require "test_helper"
 # server-rendered contract the Stimulus controller relies on.
 class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   def models

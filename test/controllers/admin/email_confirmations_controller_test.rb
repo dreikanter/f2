@@ -1,10 +1,6 @@
 require "test_helper"
 
 class Admin::EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
-  def admin_user
-    @admin_user ||= create(:user, :admin)
-  end
-
   test "#create should let an admin confirm a pending user's email" do
     sign_in_as admin_user
     user = create(:user, :inactive)

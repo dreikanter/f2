@@ -9,10 +9,6 @@ class AccessTokenPolicyTest < ActiveSupport::TestCase
     users(:other_user)
   end
 
-  def admin_user
-    users(:admin_user)
-  end
-
   def access_token
     access_tokens(:access_token)
   end

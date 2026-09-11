@@ -1,6 +1,8 @@
 require "test_helper"
 
 class LlmClient::MoonshotSearchTest < ActiveSupport::TestCase
+  include JsonResponseTestHelpers
+
   CHAT = "https://api.moonshot.ai/v1/chat/completions".freeze
   FORMULA = "https://api.moonshot.ai/v1/formulas/moonshot/web-search:latest".freeze
   ENCRYPTED = "----MOONSHOT ENCRYPTED BEGIN----opaque search evidence----MOONSHOT ENCRYPTED END----".freeze
@@ -29,10 +31,6 @@ class LlmClient::MoonshotSearchTest < ActiveSupport::TestCase
   def gather
     LlmClient.new(credential).call(context, prompt: "Invent a joke please", output_schema: nil,
                                  system: Loader::LlmPrompts::GATHER_SYSTEM, web: true)
-  end
-
-  def json(body, status: 200)
-    { status: status, headers: { "Content-Type" => "application/json" }, body: body.to_json }
   end
 
   def completion(content = nil, calls: [], usage: true, finish: nil)

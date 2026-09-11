@@ -1,14 +1,6 @@
 require "test_helper"
 
 class Admin::EmailReactivationsControllerTest < ActionDispatch::IntegrationTest
-  def admin_user
-    @admin_user ||= create(:user, :admin)
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   test "should allow admin to reactivate user email" do
     sign_in_as(admin_user)
     user = create(:user)

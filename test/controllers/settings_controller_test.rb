@@ -2,7 +2,7 @@ require "test_helper"
 
 class SettingsControllerTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   test "should show settings when authenticated" do

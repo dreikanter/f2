@@ -2,11 +2,7 @@ require "test_helper"
 
 class EventsControllerTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
-  end
-
-  def other_user
-    @other_user ||= create(:user)
+    @user ||= regular_user
   end
 
   test "#index should require authentication" do

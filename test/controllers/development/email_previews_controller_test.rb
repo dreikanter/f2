@@ -1,14 +1,6 @@
 require "test_helper"
 
 class Development::EmailPreviewsControllerTest < ActionDispatch::IntegrationTest
-  def dev_user
-    @dev_user ||= create(:user, :dev)
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   test "#index should redirect unauthenticated users" do
     get development_email_previews_path
 

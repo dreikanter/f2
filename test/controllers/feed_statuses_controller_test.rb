@@ -2,7 +2,7 @@ require "test_helper"
 
 class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   def feed

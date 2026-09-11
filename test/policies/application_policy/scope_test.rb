@@ -1,18 +1,6 @@
 require "test_helper"
 
 class ApplicationPolicy::ScopeTest < ActiveSupport::TestCase
-  def admin_user
-    @admin_user ||= create(:user, :admin)
-  end
-
-  def dev_user
-    @dev_user ||= create(:user, :dev)
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   def scope_for(current_user)
     ApplicationPolicy::Scope.new(current_user, User)
   end

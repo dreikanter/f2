@@ -1,10 +1,6 @@
 require "test_helper"
 
 class Admin::PermissionsControllerTest < ActionDispatch::IntegrationTest
-  def admin_user
-    @admin_user ||= create(:user, :admin)
-  end
-
   def target_user
     @target_user ||= create(:user)
   end
@@ -68,8 +64,6 @@ class Admin::PermissionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#update should prevent removing admin from the only admin user" do
-    # Remove the fixture admin permission so admin_user is the sole admin
-    permissions(:admin_permission).destroy
     sign_in_as admin_user
 
     patch admin_user_permissions_path(admin_user), params: { permissions: [] }
@@ -80,7 +74,6 @@ class Admin::PermissionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#update should succeed when only admin submits form with admin permission included" do
-    permissions(:admin_permission).destroy
     sign_in_as admin_user
 
     patch admin_user_permissions_path(admin_user), params: { permissions: [Permission::ADMIN] }
@@ -102,7 +95,6 @@ class Admin::PermissionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "show page should display disabled admin checkbox for the only admin" do
-    permissions(:admin_permission).destroy
     sign_in_as admin_user
 
     get admin_user_path(admin_user)

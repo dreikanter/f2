@@ -1,14 +1,6 @@
 require "test_helper"
 
 class Development::JobsControllerTest < ActionDispatch::IntegrationTest
-  def dev_user
-    @dev_user ||= create(:user, :dev)
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   test "#index should require authentication" do
     get development_jobs_path
 

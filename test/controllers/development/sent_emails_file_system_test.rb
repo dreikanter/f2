@@ -21,10 +21,6 @@ class Development::SentEmailsFileSystemTest < ActionDispatch::IntegrationTest
     @storage ||= EmailStorage::FileSystemStorage.new(storage_dir)
   end
 
-  def dev_user
-    @dev_user ||= create(:user, :dev)
-  end
-
   test "#index should render with no captured emails" do
     with_file_system_storage do
       get development_sent_emails_path

@@ -4,12 +4,13 @@ require "test_helper"
 # does not re-run detection or the preview. An explicit Refresh control
 # re-runs the preview on demand.
 class SmartFeedCreationReloadTest < ActionDispatch::IntegrationTest
+  include CacheTestHelpers
   include ActiveJob::TestHelper
 
   setup { clear_enqueued_jobs }
 
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   def feed_url
@@ -32,14 +33,6 @@ class SmartFeedCreationReloadTest < ActionDispatch::IntegrationTest
         </channel>
       </rss>
     XML
-  end
-
-  def with_memory_cache
-    previous = Rails.cache
-    Rails.cache = ActiveSupport::Cache::MemoryStore.new
-    yield
-  ensure
-    Rails.cache = previous
   end
 
   test "#get should not re-enqueue detection when the feed_identification is already success" do
