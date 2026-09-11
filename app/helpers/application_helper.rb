@@ -1,4 +1,17 @@
 module ApplicationHelper
+  # A menu item that opens a modal rather than navigating. The href is a dead
+  # anchor so the item stays keyboard-reachable without a destination.
+  # @param label [String] the item's visible text
+  # @param modal_id [String] DOM id of the modal to open
+  # @param key [String] the item's test hook
+  # @return [Hash] a menu item
+  def modal_trigger_menu_item(label, modal_id:, key:)
+    { label: label, href: "#",
+      data: { key: key, controller: "modal-trigger",
+              modal_trigger_modal_id_value: modal_id,
+              action: "click->modal-trigger#open" } }
+  end
+
   def h1(content = nil, **options, &block)
     options[:class] = class_names("text-4xl font-semibold mb-6 text-heading", options[:class])
     tag.h1(content, **options, &block)

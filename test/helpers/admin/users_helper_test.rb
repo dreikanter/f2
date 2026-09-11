@@ -1,6 +1,8 @@
 require "test_helper"
 
 class Admin::UsersHelperTest < ActionView::TestCase
+  include ApplicationHelper
+
   test "#admin_user_actions_menu_items should list account actions before suspension" do
     user = create(:user, :inactive)
 

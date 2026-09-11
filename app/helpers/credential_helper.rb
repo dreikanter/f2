@@ -26,10 +26,8 @@ module CredentialHelper
     end
 
     items << { separator: true }
-    items << { label: "Delete…", href: "#",
-               data: { key: "#{key_prefix}.delete", controller: "modal-trigger",
-                       modal_trigger_modal_id_value: CredentialDeleteModalComponent.modal_id(credential),
-                       action: "click->modal-trigger#open" } }
+    items << modal_trigger_menu_item("Delete…", key: "#{key_prefix}.delete",
+                                     modal_id: CredentialDeleteModalComponent.modal_id(credential))
 
     items
   end

@@ -1,6 +1,8 @@
 require "test_helper"
 
 class CredentialHelperTest < ActionView::TestCase
+  include ApplicationHelper
+
   def user
     @user ||= create(:user)
   end

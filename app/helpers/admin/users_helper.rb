@@ -9,22 +9,16 @@ module Admin::UsersHelper
         title: "This user's email is already confirmed",
         data: { key: "actions.confirm_email_disabled" } }
     else
-      { label: "Confirm Email…", href: "#",
-        data: { key: "actions.confirm_email", controller: "modal-trigger",
-                modal_trigger_modal_id_value: "confirm-email-modal-#{user.id}",
-                action: "click->modal-trigger#open" } }
+      modal_trigger_menu_item("Confirm Email…", key: "actions.confirm_email",
+                              modal_id: "confirm-email-modal-#{user.id}")
     end
 
     suspension = if user.suspended?
-      { label: "Unsuspend user…", href: "#",
-        data: { key: "actions.unsuspend", controller: "modal-trigger",
-                modal_trigger_modal_id_value: "unsuspend-user-modal-#{user.id}",
-                action: "click->modal-trigger#open" } }
+      modal_trigger_menu_item("Unsuspend user…", key: "actions.unsuspend",
+                              modal_id: "unsuspend-user-modal-#{user.id}")
     elsif can_suspend
-      { label: "Suspend user…", href: "#",
-        data: { key: "actions.suspend", controller: "modal-trigger",
-                modal_trigger_modal_id_value: "suspend-user-modal-#{user.id}",
-                action: "click->modal-trigger#open" } }
+      modal_trigger_menu_item("Suspend user…", key: "actions.suspend",
+                              modal_id: "suspend-user-modal-#{user.id}")
     else
       { label: "Suspend user…", disabled: true,
         title: "You can't suspend your own account",
@@ -35,10 +29,8 @@ module Admin::UsersHelper
       confirm_email,
       { label: "Change Email", href: edit_admin_user_email_update_path(user),
         data: { key: "actions.change_email" } },
-      { label: "Reset Password…", href: "#",
-        data: { key: "actions.reset_password", controller: "modal-trigger",
-                modal_trigger_modal_id_value: "password-reset-modal-#{user.id}",
-                action: "click->modal-trigger#open" } },
+      modal_trigger_menu_item("Reset Password…", key: "actions.reset_password",
+                              modal_id: "password-reset-modal-#{user.id}"),
       { separator: true },
       suspension
     ]

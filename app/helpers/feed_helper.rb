@@ -86,14 +86,12 @@ module FeedHelper
 
     if feed.target_group.present?
       items << { separator: true }
-      items << { label: "Purge feed…", href: "#",
-                 data: { key: "feed.#{feed.id}.purge", controller: "modal-trigger",
-                         modal_trigger_modal_id_value: "purge-modal-#{feed.id}", action: "click->modal-trigger#open" } }
+      items << modal_trigger_menu_item("Purge feed…", key: "feed.#{feed.id}.purge",
+                                       modal_id: "purge-modal-#{feed.id}")
     end
     items << { separator: true }
-    items << { label: "Delete feed…", href: "#",
-               data: { key: "feed.#{feed.id}.delete", controller: "modal-trigger",
-                       modal_trigger_modal_id_value: "delete-feed-modal-#{feed.id}", action: "click->modal-trigger#open" } }
+    items << modal_trigger_menu_item("Delete feed…", key: "feed.#{feed.id}.delete",
+                                     modal_id: "delete-feed-modal-#{feed.id}")
 
     items
   end
