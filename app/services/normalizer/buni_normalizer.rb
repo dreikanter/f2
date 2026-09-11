@@ -6,14 +6,14 @@ module Normalizer
 
     def normalize_content
       image_title = comic_image&.[]("alt")
-      image_title.presence || raw_data.dig("title") || ""
+      image_title.presence || raw_data["title"] || ""
     end
 
     def normalize_attachment_urls
       image_url = comic_image&.[]("src")
 
       if image_url.blank? && !page.nil?
-        url = raw_data.dig("link")
+        url = raw_data["link"]
         Rails.error.report(
           StandardError.new("buni: page #{url} fetched but comic image missing — markup changed?"),
           context: { feed_id: feed_entry.feed&.id, entry_uid: feed_entry.uid, entry_url: url }
@@ -50,7 +50,7 @@ module Normalizer
     def page
       return @page if defined?(@page)
 
-      url = raw_data.dig("link")
+      url = raw_data["link"]
       @page = page_fetcher.fetch(url)
     end
 
@@ -69,7 +69,7 @@ module Normalizer
 
     def first_link_url
       @first_link_url ||= begin
-        html = raw_data.dig("content") || raw_data.dig("summary") || ""
+        html = raw_data["content"] || raw_data["summary"] || ""
         Nokogiri::HTML::DocumentFragment.parse(html).css("a").first&.[]("href").to_s
       end
     end

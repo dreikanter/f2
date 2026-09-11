@@ -15,7 +15,7 @@ module Normalizer
     end
 
     def original_url
-      @original_url ||= raw_data.dig("link") || raw_data.dig("url") || ""
+      @original_url ||= raw_data["link"] || raw_data["url"] || ""
     end
 
     def validate_content
@@ -80,7 +80,7 @@ module Normalizer
     end
 
     def image_urls
-      enclosures = raw_data.dig("enclosures") || []
+      enclosures = raw_data["enclosures"] || []
       enclosures.filter_map { |e| e["url"] if e["type"].nil? || e["type"].start_with?("image/") }
     end
 

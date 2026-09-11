@@ -3,7 +3,7 @@ module Normalizer
     private
 
     def normalize_content
-      title = raw_data.dig("title") || ""
+      title = raw_data["title"] || ""
       title.strip
     end
 
@@ -16,11 +16,11 @@ module Normalizer
     # The entry guid points at the lobste.rs discussion page, while the
     # entry link points at the external story.
     def discussion_url
-      raw_data.dig("id")
+      raw_data["id"]
     end
 
     def tags
-      categories = raw_data.dig("categories") || []
+      categories = raw_data["categories"] || []
       categories.map { |category| "##{category}" }.join(" ")
     end
   end

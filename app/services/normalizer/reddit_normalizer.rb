@@ -8,7 +8,7 @@ module Normalizer
     # Reddit HTML-escapes titles inside the feed XML, so character references
     # like &#8217; survive the XML parse and need one more decode pass.
     def normalize_content
-      title = strip_html(raw_data.dig("title"))
+      title = strip_html(raw_data["title"])
       body = extract_post_body
       body.present? ? "#{title}\n\n#{body}" : title
     end
@@ -23,7 +23,7 @@ module Normalizer
     end
 
     def extract_post_body
-      summary = raw_data.dig("summary") || ""
+      summary = raw_data["summary"] || ""
       return "" if summary.blank?
 
       doc = Nokogiri::HTML::DocumentFragment.parse(summary)

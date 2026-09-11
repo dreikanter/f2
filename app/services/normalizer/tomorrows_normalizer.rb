@@ -5,7 +5,7 @@ module Normalizer
     private
 
     def normalize_content
-      title = raw_data.dig("title") || ""
+      title = raw_data["title"] || ""
       title.strip
     end
 
@@ -17,7 +17,7 @@ module Normalizer
     end
 
     def story_text
-      url = raw_data.dig("link") || ""
+      url = raw_data["link"] || ""
       page = page_fetcher.fetch(url)
       if page
         extract_story_from_page(page, url)
@@ -43,7 +43,7 @@ module Normalizer
     end
 
     def fallback_story_text
-      raw = raw_data.dig("content") || raw_data.dig("summary") || ""
+      raw = raw_data["content"] || raw_data["summary"] || ""
       text = strip_html(raw)
       text.presence
     end

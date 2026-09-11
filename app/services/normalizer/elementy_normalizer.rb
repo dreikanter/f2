@@ -5,12 +5,12 @@ module Normalizer
     private
 
     def normalize_content
-      title = raw_data.dig("title") || ""
+      title = raw_data["title"] || ""
       title.strip
     end
 
     def normalize_comments
-      summary = raw_data.dig("summary") || ""
+      summary = raw_data["summary"] || ""
       text = strip_html(summary)
       return [] if text.blank?
 
@@ -18,7 +18,7 @@ module Normalizer
     end
 
     def normalize_attachment_urls
-      url = raw_data.dig("link")
+      url = raw_data["link"]
       page = page_fetcher.fetch(url)
       return [] if page.nil?
 
