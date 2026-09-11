@@ -17,7 +17,7 @@
     <p class="min-h-5 text-sm text-muted" data-key="ai_credential.models-refresh-status">
       <% if refreshing %>
         Refreshing models. Your credential and saved list remain usable.
-      <% elsif ai_credential.latest_operation_run(:models_refresh)&.status.in?(%w[failed timed_out]) %>
+      <% elsif ai_credential.latest_operation_run(:models_refresh)&.unsuccessful? %>
         Couldn't refresh models. Your saved list is still available.
       <% elsif ai_credential.models_refreshed_at %>
         Updated <%= time_ago_in_words(ai_credential.models_refreshed_at) %> ago.
