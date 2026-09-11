@@ -22,15 +22,22 @@ module Normalizer
       []
     end
 
-    def extract_post_body
-      summary = raw_data.dig("summary") || ""
-      return "" if summary.blank?
+    def normalize_comments
+      entry_document.css("a[href]").filter_map do |link|
+        url = link["href"]
+        url if link.text == "[link]" && url != source_url && PublicUrl.safe?(url)
+      end.uniq
+    end
 
-      doc = Nokogiri::HTML::DocumentFragment.parse(summary)
-      md_div = doc.css("div.md").first
+    def extract_post_body
+      md_div = entry_document.css("div.md").first
       return "" if md_div.nil?
 
       md_div.text.strip.gsub(/\s+/, " ")
+    end
+
+    def entry_document
+      @entry_document ||= Nokogiri::HTML::DocumentFragment.parse(raw_data["content"].presence || raw_data["summary"].to_s)
     end
   end
 end

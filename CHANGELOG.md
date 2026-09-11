@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-10
 
+- Reddit Atom posts retain their body text and linked article alongside the discussion permalink.
 - Include video-only MonkeyUser comics with the video link in the post body.
 - Add a Lunarbaboon profile that preserves images with spaces in their filenames and links to bonus comics.
 - Add an Atlantic Photos profile that keeps gallery introductions, captions, and photographer credits.
