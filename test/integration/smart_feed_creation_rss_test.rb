@@ -3,6 +3,7 @@ require "test_helper"
 # Integration test for User Story 1 (RSS happy path).
 # Walks paste → detection → preview cache → save → enabled feed.
 class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
+  include CacheTestHelpers
   include ActiveJob::TestHelper
 
   setup { clear_enqueued_jobs }
@@ -36,14 +37,6 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
         </channel>
       </rss>
     XML
-  end
-
-  def with_memory_cache
-    previous = Rails.cache
-    Rails.cache = ActiveSupport::Cache::MemoryStore.new
-    yield
-  ensure
-    Rails.cache = previous
   end
 
   test "#post should drive RSS happy path: paste, detect, preview, save enabled" do

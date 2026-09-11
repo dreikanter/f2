@@ -1,18 +1,6 @@
 require "test_helper"
 
 class EventPolicyTest < ActiveSupport::TestCase
-  def admin_user
-    @admin_user ||= begin
-      user = create(:user)
-      create(:permission, user: user, name: "admin")
-      user
-    end
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   def event
     @event ||= create(:event)
   end

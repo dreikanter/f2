@@ -5,10 +5,6 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
     @user ||= create(:user)
   end
 
-  def other_user
-    @other_user ||= create(:user)
-  end
-
   def active_token
     @active_token ||= create(:access_token, user: user, state: :active)
   end

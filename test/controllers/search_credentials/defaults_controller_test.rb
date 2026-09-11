@@ -5,10 +5,6 @@ class SearchCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTes
     @user ||= create(:user)
   end
 
-  def other_user
-    @other_user ||= create(:user)
-  end
-
   test "#update should set the credential as the user's default" do
     sign_in_as(user)
     create(:search_credential, :default, user: user, display_name: "First")

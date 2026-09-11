@@ -5,10 +5,6 @@ class AdminsControllerTest < ActionDispatch::IntegrationTest
     @user ||= create(:user)
   end
 
-  def admin_user
-    @admin_user ||= create(:user, :admin)
-  end
-
   def admin_dev_user
     @admin_dev_user ||= create(:user, :admin, :dev)
   end

@@ -6,14 +6,6 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(dev_user)
   end
 
-  def dev_user
-    @dev_user ||= create(:user, :dev)
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   def email_storage
     EmailStorageResolver.resolve(Rails.application.config.email_storage_adapter)
   end

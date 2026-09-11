@@ -5,10 +5,6 @@ class SearchCredentials::ValidationsControllerTest < ActionDispatch::Integration
     @user ||= create(:user)
   end
 
-  def other_user
-    @other_user ||= create(:user)
-  end
-
   def credential
     @credential ||= create(:search_credential, user: user, state: :pending)
   end

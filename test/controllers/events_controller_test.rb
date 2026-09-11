@@ -5,10 +5,6 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     @user ||= create(:user)
   end
 
-  def other_user
-    @other_user ||= create(:user)
-  end
-
   test "#index should require authentication" do
     get events_path(format: :turbo_stream)
 

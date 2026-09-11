@@ -5,10 +5,6 @@ class FeedEntryPolicyTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  def other_user
-    @other_user ||= create(:user)
-  end
-
   def feed
     @feed ||= create(:feed, user: user)
   end

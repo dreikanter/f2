@@ -5,10 +5,6 @@ class AiCredentials::ValidationsControllerTest < ActionDispatch::IntegrationTest
     @user ||= create(:user)
   end
 
-  def other_user
-    @other_user ||= create(:user)
-  end
-
   def credential
     @credential ||= create(:ai_credential, user: user, state: :pending)
   end

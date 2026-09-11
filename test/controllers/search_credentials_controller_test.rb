@@ -9,10 +9,6 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
     @user ||= create(:user)
   end
 
-  def other_user
-    @other_user ||= create(:user)
-  end
-
   def credential
     @credential ||= create(:search_credential, user: user)
   end

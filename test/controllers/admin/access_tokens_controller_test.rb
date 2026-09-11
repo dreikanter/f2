@@ -1,14 +1,6 @@
 require "test_helper"
 
 class Admin::AccessTokensControllerTest < ActionDispatch::IntegrationTest
-  def admin_user
-    @admin_user ||= begin
-      user = create(:user)
-      create(:permission, user: user, name: "admin")
-      user
-    end
-  end
-
   def access_token
     @access_token ||= create(:access_token, :active)
   end

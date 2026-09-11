@@ -5,10 +5,6 @@ class InvitePolicyTest < ActiveSupport::TestCase
     @user ||= create(:user, available_invites: 5)
   end
 
-  def other_user
-    @other_user ||= create(:user)
-  end
-
   def admin
     @admin ||= create(:user).tap { |u| u.permissions.create!(name: "admin") }
   end

@@ -1,14 +1,6 @@
 require "test_helper"
 
 class Admin::PasswordResetsControllerTest < ActionDispatch::IntegrationTest
-  def admin_user
-    @admin_user ||= create(:user, :admin)
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   test "should redirect non-admin users from create" do
     sign_in_as(regular_user)
     user = create(:user)

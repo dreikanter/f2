@@ -6,6 +6,7 @@ require "test_helper"
 # Loader::LlmLoader seam (per LlmClient contract: stage tests stub the
 # client, not RubyLLM directly).
 class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
+  include CacheTestHelpers
   include ActiveJob::TestHelper
 
   setup { clear_enqueued_jobs }
@@ -41,14 +42,6 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
         "images" => [],
         "published_at" => "2026-05-10T00:00:00Z" }
     ]
-  end
-
-  def with_memory_cache
-    previous = Rails.cache
-    Rails.cache = ActiveSupport::Cache::MemoryStore.new
-    yield
-  ensure
-    Rails.cache = previous
   end
 
   # Stubs LlmClient.for so the loader receives a fake client whose #call

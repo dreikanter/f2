@@ -1,6 +1,8 @@
 require "test_helper"
 
 class LlmClient::AnthropicSearchTest < ActiveSupport::TestCase
+  include JsonResponseTestHelpers
+
   ENDPOINT = "https://api.anthropic.com/v1/messages".freeze
   SOURCE = "https://example.com/release".freeze
 
@@ -20,10 +22,6 @@ class LlmClient::AnthropicSearchTest < ActiveSupport::TestCase
   def gather(prompt = "Invent a joke please")
     LlmClient.new(credential).call(context, prompt: prompt, output_schema: nil,
                                  system: Loader::LlmPrompts::GATHER_SYSTEM, web: true)
-  end
-
-  def json(body, status: 200)
-    { status: status, headers: { "Content-Type" => "application/json" }, body: body.to_json }
   end
 
   def text_block(text, citations: [])

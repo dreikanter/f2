@@ -1,14 +1,6 @@
 require "test_helper"
 
 class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
-  def dev_user
-    @dev_user ||= create(:user, :dev)
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   test "should redirect non-dev users" do
     sign_in_as(regular_user)
 

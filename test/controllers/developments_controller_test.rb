@@ -5,14 +5,6 @@ class DevelopmentsControllerTest < ActionDispatch::IntegrationTest
     @user ||= create(:user)
   end
 
-  def admin_user
-    @admin_user ||= create(:user, :admin)
-  end
-
-  def dev_user
-    @dev_user ||= create(:user, :dev)
-  end
-
   test "should show dev tools when authenticated as dev" do
     sign_in_as(dev_user)
     ActionMailer::Base.stub(:delivery_method, :file) do

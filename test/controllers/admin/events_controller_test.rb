@@ -1,18 +1,6 @@
 require "test_helper"
 
 class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
-  def admin_user
-    @admin_user ||= begin
-      user = create(:user)
-      create(:permission, user: user, name: "admin")
-      user
-    end
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   test "should redirect non-admin users" do
     sign_in_as(regular_user)
 

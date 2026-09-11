@@ -1,14 +1,6 @@
 require "test_helper"
 
 class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
-  def dev_user
-    @dev_user ||= create(:user, :dev)
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   test "#index should require dev permission" do
     sign_in_as(regular_user)
     get development_job_job_runs_path("PurgeExpiredEventsJob")

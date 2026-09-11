@@ -12,18 +12,6 @@ class CredentialPolicyTest < ActiveSupport::TestCase
     @owner ||= create(:user)
   end
 
-  def other_user
-    @other_user ||= create(:user)
-  end
-
-  def admin_user
-    @admin_user ||= begin
-      user = create(:user)
-      create(:permission, user: user, name: "admin")
-      user
-    end
-  end
-
   def each_policy
     CREDENTIALS.each do |policy_class, factory|
       record = create(factory, user: owner)

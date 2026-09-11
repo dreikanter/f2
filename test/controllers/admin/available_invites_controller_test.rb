@@ -5,10 +5,6 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     @admin ||= create(:user).tap { |u| u.permissions.create!(name: "admin") }
   end
 
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   def target_user
     @target_user ||= create(:user, available_invites: 3)
   end

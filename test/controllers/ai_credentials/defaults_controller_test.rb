@@ -5,10 +5,6 @@ class AiCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTest
     @user ||= create(:user)
   end
 
-  def other_user
-    @other_user ||= create(:user)
-  end
-
   test "#update should set the credential as the user's default" do
     sign_in_as(user)
     first = create(:ai_credential, :default, user: user, provider: "anthropic", display_name: "first")
