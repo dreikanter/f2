@@ -53,11 +53,14 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
   setup do
     clear_enqueued_jobs
-    create(:search_credential, :active, user: user)
   end
 
   def user
     @user ||= create(:user)
+  end
+
+  def search_credential
+    @search_credential ||= create(:search_credential, :active, user: user)
   end
 
   def models
@@ -278,7 +281,6 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   test "#create should store the chosen providers and model on the preview" do
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user, available_models: models)
-    search_credential = user.search_credentials.active.first
 
     post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" },
                          ai_credential_id: credential.id, search_credential_id: search_credential.id,
@@ -293,7 +295,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   test "#create should allow no external search without substituting the user's default" do
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user, available_models: models)
-    user.search_credentials.active.first.make_default!
+    search_credential.make_default!
 
     assert_enqueued_with(job: FeedPreviewJob) do
       post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" },
@@ -491,7 +493,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     preview = create(:feed_preview, :completed, user: user, feed_profile_key: "llm",
                                                 params: { "prompt" => "ruby news" },
                                                 ai_credential: credential,
-                                                search_credential: user.search_credentials.active.first,
+                                                search_credential: search_credential,
                                                 ai_model: "gpt-4o-mini")
     credential.update!(state: :inactive)
 
@@ -510,7 +512,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     preview = create(:feed_preview, :completed, user: user, feed_profile_key: "llm",
                                                 params: { "prompt" => "ruby news" },
                                                 ai_credential: stored_credential,
-                                                search_credential: user.search_credentials.active.first,
+                                                search_credential: search_credential,
                                                 ai_model: "claude-sonnet-4-6")
     stored_credential.update!(state: :inactive)
 
@@ -532,7 +534,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   test "#update should not substitute a different active search credential" do
     sign_in_as(user)
     ai_credential = create(:ai_credential, :active, user: user, available_models: models)
-    selected = user.search_credentials.active.first
+    selected = search_credential
     create(:search_credential, :active, :default, user: user)
     preview = create(:feed_preview, :completed, user: user, feed_profile_key: "llm",
                                                 params: { "prompt" => "ruby news" },
