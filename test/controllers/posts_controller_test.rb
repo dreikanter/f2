@@ -350,7 +350,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_nil Post.find_by(id: failed_post.id)
   end
 
-  test "#destroy should reject a request without deletion options" do
+  test "#destroy should reject a request without deletion parameters" do
     sign_in_as(user)
     published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
 
@@ -364,7 +364,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "published", published_post.reload.status
   end
 
-  test "#destroy should reject a Turbo request with both deletion options unchecked" do
+  test "#destroy should reject a Turbo request with both deletion parameters false" do
     sign_in_as(user)
     published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
 
