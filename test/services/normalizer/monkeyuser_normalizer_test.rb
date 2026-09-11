@@ -79,4 +79,45 @@ class Normalizer::MonkeyuserNormalizerTest < ActiveSupport::TestCase
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "missing_images"
   end
+
+  test "#normalize should put a video-only comic destination in the post body" do
+    stub_request(:get, "https://www.monkeyuser.com/2025/sample-one/")
+      .to_return(body: '<div class="comic"><div class="video-container"><div id="sample12345"></div></div></div>')
+
+    post = Normalizer::MonkeyuserNormalizer.new(feed_entry(0)).normalize
+
+    assert_equal "enqueued", post.status
+    assert_empty post.attachment_urls
+    assert_equal "Sample title one - https://www.youtube.com/watch?v=sample12345", post.content
+    assert_empty post.comments
+    assert_equal "https://www.monkeyuser.com/2025/sample-one/", post.source_url
+  end
+
+  test "#normalize should keep a video link in comments when the comic has an image" do
+    stub_request(:get, "https://www.monkeyuser.com/2025/sample-one/")
+      .to_return(body: <<~HTML)
+        <div class="comic">
+          <img src="/sample.png" title="Sample hover text.">
+          <div class="video-container"><div id="sample12345"></div></div>
+        </div>
+      HTML
+
+    post = Normalizer::MonkeyuserNormalizer.new(feed_entry(0)).normalize
+
+    assert_equal "enqueued", post.status
+    assert_equal "Sample title one - https://www.monkeyuser.com/2025/sample-one/", post.content
+    assert_equal ["https://www.monkeyuser.com/sample.png"], post.attachment_urls
+    assert_equal ["Sample hover text.", "https://www.youtube.com/watch?v=sample12345"], post.comments
+  end
+
+  test "#normalize should reject an invalid video identifier" do
+    stub_request(:get, "https://www.monkeyuser.com/2025/sample-one/")
+      .to_return(body: '<div class="comic"><div class="video-container"><div id="../invalid"></div></div></div>')
+
+    post = Normalizer::MonkeyuserNormalizer.new(feed_entry(0)).normalize
+
+    assert_equal "rejected", post.status
+    assert_includes post.validation_errors, "missing_images"
+    assert_empty post.comments
+  end
 end

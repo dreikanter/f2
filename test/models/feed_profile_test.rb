@@ -12,6 +12,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       "litterbox",
       "llm",
       "lobsters",
+      "lunarbaboon",
       "melodymae",
       "monkeyuser",
       "nextbigfuture",

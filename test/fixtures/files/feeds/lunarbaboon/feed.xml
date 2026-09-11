@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<rss version="2.0"><channel>
+  <title>Sample comic</title><link>https://example.com</link><description>Sample feed</description>
+  <item>
+    <title>Sample strip</title><link>https://example.com/strip</link><guid isPermaLink="false">sample:strip</guid>
+    <pubDate>Wed, 09 Sep 2026 10:00:00 GMT</pubDate>
+    <description><![CDATA[<img src="https://images.example.com/first panel.jpg?version=1"/><img src="https://images.example.com/second%20panel.jpg"/><img src="http://127.0.0.1/private image.jpg"/><a href="https://example.org/bonus">Full comic and bonus</a>]]></description>
+  </item>
+</channel></rss>
