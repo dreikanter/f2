@@ -51,6 +51,12 @@ class Post < ApplicationRecord
     withdrawn: 5
   }
 
+  # Today plus the six preceding days, snapped to day boundaries so the window
+  # doesn't shift with the time of day. Dated by source date, not repost time.
+  scope :published_last_week, -> {
+    published.where(published_at: 6.days.ago.beginning_of_day..Time.current.end_of_day)
+  }
+
   after_create :recount_imported_posts
   after_create :recount_published_posts, if: :published?
   after_destroy :recount_imported_posts
