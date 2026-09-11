@@ -1,6 +1,8 @@
 class LlmClient
   module Adapter
     class OpenAi < Base
+      include SchemaRejection
+
       def output_params
         { max_completion_tokens: OutputLimit::DEFAULT }
       end
@@ -28,14 +30,6 @@ class LlmClient
         detail = error_detail(error)
         detail && detail["param"] == "model" &&
           detail["message"].to_s.match?(/\A(?:The |This )?model\b.*\b(?:is not supported|does not support)\b.*\b(?:Responses|v1\/responses)\b/i)
-      end
-
-      def unsupported_schema?(error)
-        detail = error_detail(error)
-        return false unless detail.is_a?(Hash) && %w[response_format text.format text.format.type].include?(detail["param"])
-
-        detail["code"] == "unsupported_parameter" ||
-          detail["message"].to_s.match?(/\AInvalid parameter: '(?:response_format|text.format)' of type 'json_schema' is not supported with (?:this )?model\b/i)
       end
 
       # OpenAI reports every billing stop as a 429, the status it also uses for

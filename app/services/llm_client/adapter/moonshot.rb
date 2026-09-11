@@ -3,16 +3,14 @@ class LlmClient
     # Moonshot (Kimi) returns structured output in markdown fences often enough
     # that JSON must be unwrapped before parsing.
     class Moonshot < Base
+      include SchemaRejection
+
       def native_search_transport
         MoonshotSearch
       end
 
       def transport_for(ctx, web:, tools:)
         super if tools
-      end
-
-      def unsupported_schema?(error)
-        OpenAi.new.unsupported_schema?(error)
       end
 
       # Unanchored and case-insensitive, so preamble prose and a ```JSON tag are

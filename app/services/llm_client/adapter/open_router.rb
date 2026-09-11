@@ -1,6 +1,8 @@
 class LlmClient
   module Adapter
     class OpenRouter < Base
+      include SchemaRejection
+
       def native_search_transport
         OpenRouterSearch
       end
@@ -18,10 +20,6 @@ class LlmClient
 
         target = /(?:(?:this |the selected )?model\b|['"]?#{Regexp.escape(model)}['"]?(?:[.\s]|$))/i
         message.match?(/\A(?:Web search|Server tools?|Tool ['"]?openrouter:web_search['"]?) (?:is|are) not supported (?:with|for|by) #{target}/i)
-      end
-
-      def unsupported_schema?(error)
-        OpenAi.new.unsupported_schema?(error)
       end
 
       # OpenRouter picks the upstream, and one that doesn't implement a
