@@ -122,6 +122,47 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_includes credential_state_icon("inactive"), 'data-icon="circle-x"'
   end
 
+  test "#user_menu_items should return empty array when user is missing" do
+    assert_equal [], user_menu_items
+  end
+
+  test "#user_menu_items should group settings apart from the rest" do
+    Current.session = create(:session, user: create(:user))
+
+    self.stub(:current_page?, ->(_path, *_args) { false }) do
+      groups = user_menu_item_groups
+
+      assert_equal [["Settings"], ["Freefeed Access Tokens", "AI Credentials", "Search Credentials", "Invites", "Changelog"]],
+                   groups.map { |group| group.pluck(:name) }
+      assert_equal groups.flatten, user_menu_items
+    end
+  end
+
+  test "#user_menu_items should mark the current page active" do
+    Current.session = create(:session, user: create(:user))
+
+    self.stub(:current_page?, ->(path, *_args) { path == invites_path }) do
+      assert_equal ["Invites"], user_menu_items.select { |item| item[:active] }.pluck(:name)
+    end
+  end
+
+  test "#mobile_nav_link_classes should round the ends and divide the rest" do
+    first = mobile_nav_link_classes(active: false, first: true, last: false)
+    middle = mobile_nav_link_classes(active: false, first: false, last: false)
+    last = mobile_nav_link_classes(active: false, first: false, last: true)
+
+    assert_includes first, "rounded-t-lg"
+    assert_includes first, "border-b"
+    assert_not_includes middle, "rounded"
+    assert_includes middle, "border-b"
+    assert_includes last, "rounded-b-lg"
+    assert_not_includes last, "border-b"
+  end
+
+  test "#mobile_nav_link_classes should invert the active row" do
+    assert_includes mobile_nav_link_classes(active: true, first: true, last: true), "bg-surface-inverted"
+  end
+
   test "#navbar_items should return empty array when user is missing" do
     assert_equal [], navbar_items
   end
