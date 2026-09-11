@@ -17,7 +17,7 @@ module Loader
       ctx = call_context(client)
       payload = extract(client, ctx)
 
-      raise StandardError, "LlmLoader payload missing 'items' array" unless payload.is_a?(Hash) && payload["items"].is_a?(Array)
+      raise missing_items_error unless payload.is_a?(Hash) && payload["items"].is_a?(Array)
 
       payload["items"]
     rescue LlmClient::SchemaError => e
@@ -31,6 +31,15 @@ module Loader
     end
 
     private
+
+    # A schema-valid reply always carries items, so a missing one means the
+    # contract slipped rather than the source misbehaving. Report before
+    # raising, since FeedRefreshJob deliberately swallows Loader::Error.
+    def missing_items_error
+      error = Loader::Error.new("LlmLoader payload missing 'items' array")
+      Rails.error.report(error, context: { feed_id: feed.id, profile_key: feed.feed_profile_key })
+      error
+    end
 
     def extract(client, ctx)
       schema = config.fetch(:output_schema)

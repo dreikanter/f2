@@ -52,6 +52,18 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     end.new(structured, gathered, credential)
   end
 
+  test "#load should raise a loader error when the payload carries no items" do
+    loader = Loader::LlmLoader.new(feed, llm_client: fake_client(structured: { "posts" => [] }))
+    reported = []
+
+    error = Rails.error.stub(:report, ->(err, **) { reported << err.class }) do
+      assert_raises(Loader::Error) { loader.load }
+    end
+
+    assert_match(/missing 'items' array/, error.message)
+    assert_includes reported, Loader::Error
+  end
+
   test "#load should return the items array from the structured response" do
     items = [
       { "title" => "Post A", "source_url" => "https://example.com/a" },
