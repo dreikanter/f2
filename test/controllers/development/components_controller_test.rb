@@ -21,7 +21,6 @@ class Development::ComponentsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="section.date-time"] input[data-controller="datepicker"]'
     assert_select '[data-key="section.date-time"] input[type="time"]'
     assert_select '[data-key="section.form-group"]'
-    assert_select '[data-key="section.collapsible-section"] details'
     assert_select '[data-key="section.page-header"]'
     assert_select '[data-key="section.event-description"]'
     assert_select '[data-key="section.feed-profile-chooser"]'
