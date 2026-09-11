@@ -238,11 +238,12 @@ class FeedRefreshWorkflow
     feed.recount_imported_posts!
 
     new_uids = posts.map(&:uid)
-    persisted_posts = feed.posts.where(uid: new_uids).order(:published_at)
+    # Loaded once: every later step walks this set in memory anyway.
+    persisted_posts = feed.posts.where(uid: new_uids).order(:published_at).to_a
 
     record_stats(
-      new_posts: persisted_posts.where(status: :enqueued).count,
-      rejected_posts: persisted_posts.where(status: :rejected).count
+      new_posts: persisted_posts.count(&:enqueued?),
+      rejected_posts: persisted_posts.count(&:rejected?)
     )
 
     persisted_posts
