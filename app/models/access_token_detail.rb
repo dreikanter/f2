@@ -2,11 +2,6 @@ class AccessTokenDetail < ApplicationRecord
   include HasOperationRuns
   include PolledRun
 
-  # Superseded by the dedicated columns below; kept in the schema so old-code
-  # containers survive the deploy that ships this model. A follow-up migration
-  # drops it once this code is live everywhere.
-  self.ignored_columns += ["data"]
-
   belongs_to :access_token
 
   # Recover if the scheduled timeout is lost or fails to settle the run.
