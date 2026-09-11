@@ -29,10 +29,10 @@ class FeedsController < ApplicationController
 
   def index
     authorize Feed
-    scope = policy_scope(Feed)
-    @active_feed_count = scope.enabled.count
-    @inactive_feed_count = scope.disabled.count
-    @draft_feed_count = scope.draft.count
+    counts = policy_scope(Feed).group(:state).count
+    @active_feed_count = counts.fetch("enabled", 0)
+    @inactive_feed_count = counts.fetch("disabled", 0)
+    @draft_feed_count = counts.fetch("draft", 0)
     @sortable_presenter = sortable_presenter
     @feeds = paginate_scope
     @has_active_token = current_user.access_tokens.active.exists?
