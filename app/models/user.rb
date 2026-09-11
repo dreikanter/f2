@@ -145,8 +145,9 @@ class User < ApplicationRecord
     published_posts.maximum(:reposted_at)
   end
 
+  # @return [Integer] published posts dated in the last 7 days, by source date
   def posts_published_last_week_count
-    published_posts.where(published_at: 6.days.ago.beginning_of_day..Time.current.end_of_day).count
+    imported_posts.published_last_week.count
   end
 
   private
