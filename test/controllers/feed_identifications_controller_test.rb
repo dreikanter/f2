@@ -633,7 +633,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "#show should preselect the first active access token with no blank option" do
+  test "#show should preselect the first active access token on a new feed" do
     sign_in_as(user)
     first_token = create(:access_token, :active, user: user, host: "https://aaa.freefeed.net")
     create(:access_token, :active, user: user, host: "https://zzz.freefeed.net")
@@ -650,7 +650,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_select "select[name='feed[access_token_id]'] option[value='']", count: 0
+    assert_select "select[name='feed[access_token_id]'] option[value='']", count: 1
     assert_select "select[name='feed[access_token_id]'] option[selected='selected']" do |options|
       assert_equal first_token.id.to_s, options.first["value"]
     end
