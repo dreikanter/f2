@@ -18,14 +18,6 @@ class Development::SentEmailsController < ApplicationController
     end
   end
 
-  def purge
-    authorize :access, :dev?
-    email_storage.purge
-    redirect_to development_sent_emails_path, success: "All emails purged"
-  rescue => e
-    redirect_to development_sent_emails_path, alert: "Failed to purge emails: #{e.message}"
-  end
-
   private
 
   def email_storage

@@ -64,7 +64,7 @@ class Development::SentEmailsFileSystemTest < ActionDispatch::IntegrationTest
     save_email("Welcome aboard")
 
     with_file_system_storage do
-      delete purge_development_sent_emails_path
+      delete development_sent_emails_purge_path
     end
 
     assert_redirected_to development_sent_emails_path
