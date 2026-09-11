@@ -1,5 +1,3 @@
-require_relative "faraday_adapter"
-
 module HttpClient
   # A FaradayAdapter that memoizes successful (2xx) GET responses by URL.
   #
