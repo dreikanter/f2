@@ -1,6 +1,3 @@
-require "json"
-require "time"
-
 module EmailStorage
   class FileSystemStorage < Base
     # Times are stored as ISO8601 strings; everything else is a plain JSON

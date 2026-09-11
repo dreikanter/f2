@@ -1,5 +1,3 @@
-require "addressable/uri"
-
 # Ingests one webhook delivery into the existing pipeline:
 # validate the payload, resolve its uid, run it through the profile normalizer,
 # then persist FeedEntry + FeedEntryUid + Post in a single transaction and kick
