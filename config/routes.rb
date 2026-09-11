@@ -44,7 +44,7 @@ Rails.application.routes.draw do
   resources :feed_previews, only: [:show, :create, :update]
   resource :admin, only: :show
 
-  resource :feed_identifications, only: [:create, :show, :destroy]
+  resource :feed_identification, only: [:create, :show, :destroy]
 
   resources :feeds do
     resource :status, only: :update, controller: "feed_statuses"
