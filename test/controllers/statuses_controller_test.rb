@@ -241,7 +241,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should limit recent events to the initial limit" do
-    with_initial_events_limit(2) do
+    with_brief_events_limit(2) do
       sign_in_as user
       create(:feed, user: user)
       3.times do |i|
@@ -278,11 +278,11 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def with_initial_events_limit(limit)
-    original_limit = StatusesController.initial_events_limit
-    StatusesController.initial_events_limit = limit
+  def with_brief_events_limit(limit)
+    original_limit = StatusesController.brief_events_limit
+    StatusesController.brief_events_limit = limit
     yield
   ensure
-    StatusesController.initial_events_limit = original_limit
+    StatusesController.brief_events_limit = original_limit
   end
 end

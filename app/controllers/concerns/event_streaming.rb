@@ -1,11 +1,11 @@
 module EventStreaming
   extend ActiveSupport::Concern
+  include BriefEventList
 
   UUID_FORMAT = /\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/
 
   included do
     class_attribute :events_page_size, default: 25
-    class_attribute :brief_events_limit, default: 15
   end
 
   private
@@ -56,10 +56,9 @@ module EventStreaming
     helpers.render(EventsListComponent.new(events: @events, endpoint: @log_endpoint, older_url: @older_url, newer_url: @newer_url))
   end
 
-  # The brief list keeps its "View all" footer row across poll refreshes, so
-  # the stream body must mirror the initial render on the status page.
+  # The brief list keeps its "View all" footer row across poll refreshes.
   def render_brief_events_stream
-    @events = events_scope.includes(:user, :subject, :event_references).order(created_at: :desc, id: :desc).limit(brief_events_limit)
+    @events = brief_events(events_scope)
     body = helpers.render(EventsListComponent.new(events: @events, endpoint: brief_polling_endpoint, view_all_url: events_log_path))
     render turbo_stream: turbo_stream.replace(EventsListComponent::DOM_ID, body)
   end
