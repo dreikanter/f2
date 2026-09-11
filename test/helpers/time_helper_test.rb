@@ -178,20 +178,30 @@ class TimeHelperTest < ActiveSupport::TestCase
   end
 
   test "#short_time_ago_tag should take an optional class" do
-    tag = short_time_ago_tag(3.hours.ago, css_class: "text-muted")
+    element = parse_element(short_time_ago_tag(3.hours.ago, css_class: "text-muted"))
 
-    assert_match(/class="text-muted"/, tag)
+    assert_equal "text-muted", element["class"]
   end
 
   test "#time_ago_phrase_tag should spell the age out" do
-    assert_match(/>2 days ago</, time_ago_phrase_tag(2.days.ago))
+    element = parse_element(time_ago_phrase_tag(2.days.ago))
+
+    assert_equal "2 days ago", element.text
   end
 
   test "#time_ago_phrase_tag should read as just now for a timestamp not yet in the past" do
-    assert_match(/>just now</, time_ago_phrase_tag(1.second.from_now))
+    element = parse_element(time_ago_phrase_tag(1.second.from_now))
+
+    assert_equal "just now", element.text
   end
 
   test "#time_ago_phrase_tag should return nil without a time" do
     assert_nil time_ago_phrase_tag(nil)
+  end
+
+  private
+
+  def parse_element(html)
+    Nokogiri::HTML5.fragment(html).at_css("time")
   end
 end
