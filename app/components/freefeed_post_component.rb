@@ -57,18 +57,6 @@ class FreefeedPostComponent < ViewComponent::Base
     post.comments
   end
 
-  def thumbnail_url(url)
-    ImgproxyUrl.preview(url)
-  end
-
-  def thumbnail_srcset(url)
-    ImgproxyUrl.preview_srcset(url)
-  end
-
-  def thumbnail_size
-    ImgproxyUrl::THUMBNAIL_SIZE
-  end
-
   def extract_filename(url)
     uri = URI.parse(url)
     filename = File.basename(uri.path)
