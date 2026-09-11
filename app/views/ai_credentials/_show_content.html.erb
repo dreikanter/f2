@@ -1,65 +1,16 @@
 <%# locals: (ai_credential:, feed_id: nil) %>
-<div class="space-y-6" data-key="ai_credential.show">
-  <%= render PageHeaderComponent.new(title: ai_credential.display_name) do |header| %>
-    <% header.with_breadcrumb(label: "AI credentials", url: ai_credentials_path) %>
-    <% unless ai_credential.pending? || ai_credential.validating? %>
-      <% header.with_context_paragraph do %>
-        <%= render credential_state_badge(ai_credential) %>
-      <% end %>
-    <% end %>
-    <% header.with_action_button do %>
-      <%= render HeaderMenuComponent.new(
-        menu_id: "ai-credential-header-menu-#{ai_credential.id}",
-        items: credential_actions_menu_items(ai_credential)
-      ) %>
-    <% end %>
-  <% end %>
-
-  <%= render CredentialDeleteModalComponent.new(credential: ai_credential) %>
-
-  <% case ai_credential.state %>
-  <% when "pending", "validating" %>
-    <%# aria-busy disables pointer events, so it stays on the waiting block;
-        on the page it would take the breadcrumb and menus down with it. %>
-    <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3"
-         data-key="ai_credential.validating" aria-busy="true">
-      <div class="flex-shrink-0">
-        <%= render SpinnerComponent.new %>
-      </div>
-      <div class="space-y-1">
-        <p class="font-semibold text-heading">Checking your credential…</p>
-        <p class="text-body">This usually takes a few seconds.</p>
-      </div>
-    </div>
-  <% when "active" %>
+<%= render CredentialShowComponent.new(
+      credential: ai_credential,
+      key: "ai_credential",
+      breadcrumb: "AI credentials",
+      breadcrumb_url: ai_credentials_path,
+      checking_note: "This usually takes a few seconds.",
+      rejected_note: "This key didn't work. Grab a fresh key from your provider's dashboard and add it again.",
+      feed_id: feed_id) do |page| %>
+  <% page.with_details do %>
     <%= render AiCredentialDetailsComponent.new(ai_credential: ai_credential) %>
-
+  <% end %>
+  <% page.with_active_extra do %>
     <%= render "ai_credentials/model_catalog", ai_credential: ai_credential %>
-  <% when "inactive" %>
-    <p class="max-w-2xl text-body" data-key="ai_credential.inactive">
-      <% if ai_credential.last_error.present? %>
-        <%= ai_credential.last_error %>
-      <% else %>
-        This key didn't work. Grab a fresh key from your provider's dashboard and add it again.
-      <% end %>
-    </p>
-
-    <%= render AiCredentialDetailsComponent.new(ai_credential: ai_credential) %>
   <% end %>
-
-  <% if feed_id.present? %>
-    <div class="flex flex-wrap gap-3">
-      <% if ai_credential.active? %>
-        <%= link_to "Continue setting up your feed",
-                    edit_feed_path(feed_id),
-                    class: primary_button_classes(compact: true),
-                    data: { key: "ai_credential.return-to" } %>
-      <% else %>
-        <%= link_to "Back to your feed",
-                    edit_feed_path(feed_id),
-                    class: secondary_button_classes(compact: true),
-                    data: { key: "ai_credential.return-to" } %>
-      <% end %>
-    </div>
-  <% end %>
-</div>
+<% end %>
