@@ -91,13 +91,5 @@ module Processor
       end
       images + attachments
     end
-
-    def parse_time(value)
-      return nil if value.blank?
-
-      Time.parse(value.to_s)
-    rescue ArgumentError
-      nil
-    end
   end
 end

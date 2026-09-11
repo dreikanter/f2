@@ -87,13 +87,5 @@ module Processor
     def image_urls(wrap)
       wrap.css(IMAGE_SELECTOR).filter_map { |el| el["style"]&.[](BACKGROUND_IMAGE, 1) }.uniq
     end
-
-    def parse_time(value)
-      return nil if value.blank?
-
-      Time.zone.parse(value)
-    rescue ArgumentError
-      nil
-    end
   end
 end
