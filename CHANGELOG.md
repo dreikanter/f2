@@ -4,7 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-12
 
-- AI feeds and model discovery are temporarily unavailable; saved settings and past usage remain accessible.
+- AI feeds and model discovery are temporarily unavailable; saved settings and past usage remain accessible, and enabled AI feeds retain their status.
 
 ## 2026-09-11
 
