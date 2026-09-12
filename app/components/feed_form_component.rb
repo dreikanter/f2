@@ -6,7 +6,6 @@ class FeedFormComponent < ViewComponent::Base
 
   # Enabling needs a token on the feed itself, so an empty select blocks it
   # even when the account has tokens to spare.
-  TOKEN_REQUIREMENT = "a FreeFeed access token".freeze
   TOKEN_PICK_HINT = "Pick an access token first, then you can enable this feed.".freeze
 
   def initialize(feed:, candidates: [], source_changed: false, profile_changed: false,
@@ -96,15 +95,13 @@ class FeedFormComponent < ViewComponent::Base
     feed.source_input_url? ? "Source URL" : "Source prompt"
   end
 
-  # An AI feed's prompt is its source and stays editable even on a live
-  # feed; the uid scheme is unchanged, so no duplicate risk.
-  def ai_prompt_editable?
+  def ai_profile?
     FeedProfile.depends_on_ai?(feed.feed_profile_key)
   end
 
-  # A changed URL re-runs detection before saving.
+  # AI prompts stay editable; a changed URL requires fresh detection.
   def source_editable?
-    edit_mode? && !ai_prompt_editable?
+    edit_mode? && !ai_profile?
   end
 
   # A disabled source field submits nothing, so the source travels as a hidden
@@ -200,38 +197,14 @@ class FeedFormComponent < ViewComponent::Base
     feed.import_after_time.presence || "00:00"
   end
 
-  # Memoized so the rendered section and the enable-gate checks share one
-  # instance (and its credential lookups).
-  def ai_settings(form)
-    @ai_settings ||= FeedAiSettingsComponent.new(feed: feed, form: form)
+  # An enabled feed keeps its checkbox interactive so it can still be paused.
+  def enable_blocked?
+    !feed.enabled? && (ai_profile? || selected_token_id.blank?)
   end
 
-  # With required credentials missing, enabling can only fail and the
-  # errors would render nowhere; the checkbox locks off and says what's
-  # missing. A still-enabled feed keeps its checkbox so pausing works.
-  def enable_blocked?(form)
-    (ai_settings(form).section_visible? || enable_missing(form).any?) && !feed.enabled?
-  end
-
-  def enable_missing(form)
-    missing = []
-    missing << TOKEN_REQUIREMENT if selected_token_id.blank?
-    missing + missing_ai_credentials(form)
-  end
-
-  # Pieces the dropdowns can't supply: adding AI credentials means leaving the
-  # page, so the checkbox stays locked whatever the token select says.
-  def missing_ai_credentials(form)
-    return @missing_ai_credentials if defined?(@missing_ai_credentials)
-
-    settings = ai_settings(form)
-    @missing_ai_credentials = settings.section_visible? && !settings.credentials? ? ["AI credentials"] : []
-  end
-
-  # The token select flips the gate without a reload, so the checkbox follows
-  # it live. Anything else missing keeps the locked state the server rendered.
-  def enable_gate_data(form)
-    return {} if feed.enabled? || active_tokens.empty? || ai_settings(form).section_visible?
+  # The token select controls enabling only when token selection can unblock it.
+  def enable_gate_data
+    return {} if feed.enabled? || active_tokens.empty? || ai_profile?
 
     {
       controller: "enable-gate",
@@ -240,20 +213,20 @@ class FeedFormComponent < ViewComponent::Base
     }
   end
 
-  def enable_checked?(form)
-    !enable_blocked?(form) && (helpers.params[:enable_feed] == "1" || feed.enabled?)
+  def enable_checked?
+    !enable_blocked? && (helpers.params[:enable_feed] == "1" || feed.enabled?)
   end
 
-  def enable_label_classes(form)
-    "block font-semibold #{enable_blocked?(form) ? 'text-muted' : 'text-heading'} mb-0"
+  def enable_label_classes
+    "block font-semibold #{enable_blocked? ? 'text-muted' : 'text-heading'} mb-0"
   end
 
-  def enable_hint(form)
-    return Loader::LlmLoader::UNAVAILABLE_MESSAGE if ai_settings(form).section_visible?
-    return ready_enable_hint unless enable_blocked?(form)
-    return TOKEN_PICK_HINT if active_tokens.any? && enable_missing(form) == [TOKEN_REQUIREMENT]
+  def enable_hint
+    return Loader::LlmLoader::UNAVAILABLE_MESSAGE if ai_profile?
+    return ready_enable_hint unless enable_blocked?
+    return TOKEN_PICK_HINT if active_tokens.any?
 
-    "Add #{enable_missing(form).to_sentence} first, then you can enable this feed."
+    "Add a FreeFeed access token first, then you can enable this feed."
   end
 
   def submit_label

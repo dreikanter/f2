@@ -1,6 +1,6 @@
 <%= tag.div id: "feed-form", data: wrapper_data do %>
   <%= form_with model: feed, url: form_url, method: form_method, data: form_data do |f| %>
-    <%= tag.fieldset disabled: checking?, class: ("opacity-60" if checking?), data: enable_gate_data(f) do %>
+    <%= tag.fieldset disabled: checking?, class: ("opacity-60" if checking?), data: enable_gate_data do %>
     <div class="space-y-10">
       <%# Source stays anchored at the top so the expansion reads as the entry
           field staying put while the rest of the form appears below it. The
@@ -21,7 +21,7 @@
         <%= helpers.h2 "Source" %>
 
         <div class="space-y-6">
-          <% if ai_prompt_editable? %>
+          <% if ai_profile? %>
             <div class="space-y-2">
               <%= label_tag "feed_params_prompt", "What should AI follow?", class: helpers.form_label_classes %>
               <%= text_area_tag "feed[params][prompt]", feed.source_input,
@@ -76,7 +76,7 @@
 
           <%# Feed type belongs to every deterministic feed: the chooser after a
               multi-candidate re-detection, otherwise a read-only annotation. %>
-          <% unless ai_prompt_editable? %>
+          <% unless ai_profile? %>
             <% if show_chooser? %>
               <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.source_input, selected: feed.feed_profile_key %>
             <% else %>
@@ -131,7 +131,7 @@
         <% end %>
       </div>
 
-      <%= render ai_settings(f) %>
+      <%= render FeedAiSettingsComponent.new(feed: feed, form: f) %>
 
       <% unless feed.sourceless? %>
       <div class="mt-2" data-key="form.preview">
@@ -309,16 +309,16 @@
           <div class="flex items-center h-6">
             <%= check_box_tag "enable_feed",
                               "1",
-                              enable_checked?(f),
+                              enable_checked?,
                               id: "enable_feed",
-                              disabled: enable_blocked?(f),
+                              disabled: enable_blocked?,
                               data: { enable_gate_target: "checkbox" } %>
           </div>
           <div class="ml-3">
-            <%= label_tag "enable_feed", "Enable feed", class: enable_label_classes(f),
+            <%= label_tag "enable_feed", "Enable feed", class: enable_label_classes,
                           data: { enable_gate_target: "label" } %>
-            <%= tag.p enable_hint(f), class: "text-sm text-muted",
-                      data: { key: ("form.enable-blocked-note" if enable_blocked?(f)), enable_gate_target: "hint" } %>
+            <%= tag.p enable_hint, class: "text-sm text-muted",
+                      data: { key: ("form.enable-blocked-note" if enable_blocked?), enable_gate_target: "hint" } %>
           </div>
         </div>
       </div>
