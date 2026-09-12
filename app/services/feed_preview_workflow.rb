@@ -37,7 +37,7 @@ class FeedPreviewWorkflow
     logger.error "FeedPreviewWorkflow error at #{current_step}: #{error.message}"
 
     updated = transition!(status: FeedPreview.statuses[:failed])
-    @activity&.finish!(status: updated ? "failed" : "interrupted", stats: stats)
+    @activity&.finish!(status: updated ? "failed" : "interrupted", stats: stats, error: error)
   end
 
   def initialize_workflow(_input)

@@ -7,7 +7,7 @@ class FeedPreviewActivity
                            metadata: { status: "started", profile_key: preview.feed_profile_key })
   end
 
-  def finish!(status:, stats:)
+  def finish!(status:, stats:, error: nil)
     return if @finished
 
     usage_costs = LlmUsage.where(id: event.event_references.where(reference_type: "LlmUsage").select(:reference_id))
@@ -21,11 +21,21 @@ class FeedPreviewActivity
     search_count = event.event_references.where(reference_type: "Event").count
     totals[:search_calls] = search_count if search_count.positive?
 
+    metadata = event.metadata.merge("status" => status, "stats" => totals)
+    if error
+      metadata["error"] = {
+        class: error.class.name,
+        message: error.message,
+        stage: stats[:failed_at_step].to_s,
+        backtrace: error.backtrace
+      }
+    end
+
     Event.transaction do
       # A fresh terminal event is discoverable by the activity cursor poller.
       completed = Event.create!(type: event.type, user: event.user, subject: event.subject,
                                 level: status == "completed" ? :info : :warning,
-                                metadata: event.metadata.merge("status" => status, "stats" => totals))
+                                message: error&.message.to_s, metadata: metadata)
       event.event_references.update_all(event_id: completed.id, updated_at: Time.current)
       event.destroy!
       @event = completed

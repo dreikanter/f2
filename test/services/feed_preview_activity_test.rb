@@ -30,6 +30,8 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
     assert_not_equal started_id, record.event.id
     assert_equal "completed", record.event.metadata["status"]
     assert_equal "info", record.event.level
+    assert_empty record.event.message
+    assert_not record.event.metadata.key?("error")
     assert_equal credential, record.event.subject
     assert_equal [usage], record.event.references
     assert_not_includes record.event.references, unrelated
@@ -46,8 +48,14 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
                               outcome: :provider_error, cost_estimate_cents: nil)
     record.event.event_references.create!(reference: usage)
 
-    record.finish!(status: "failed", stats: {})
+    error = Loader::Error.new("Provider request timed out")
+    record.finish!(status: "failed", stats: { failed_at_step: :load_feed_contents }, error: error)
+    record.event.reload
 
+    assert_equal error.message, record.event.message
+    assert_equal "Loader::Error", record.event.metadata.dig("error", "class")
+    assert_equal error.message, record.event.metadata.dig("error", "message")
+    assert_equal "load_feed_contents", record.event.metadata.dig("error", "stage")
     assert_equal "failed", record.event.metadata["status"]
     assert_equal "warning", record.event.level
     assert_equal saved_feed, record.event.subject
@@ -61,9 +69,11 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
     usage = create(:llm_usage, user: credential.user, purpose: :preview)
     record.event.event_references.create!(reference: usage)
 
-    record.finish!(status: "interrupted", stats: {})
+    error = Loader::Error.new("Provider request timed out")
+    record.finish!(status: "interrupted", stats: { failed_at_step: :load_feed_contents }, error: error)
 
     assert_equal "interrupted", record.event.metadata["status"]
+    assert_equal error.message, record.event.metadata.dig("error", "message")
     assert_equal "warning", record.event.level
     assert_equal [usage], record.event.references
   end

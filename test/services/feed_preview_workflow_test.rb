@@ -115,6 +115,33 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal workflow.total_duration, workflow.stats[:total_duration]
   end
 
+  test "#execute should persist AI preview failure details in the activity event" do
+    credential = create(:ai_credential, :active, user: user)
+    preview = create(:feed_preview, user: user, feed_profile_key: "llm",
+                     params: { "prompt" => "A daily roundup" }, ai_credential: credential,
+                     status: :pending, run_id: AI_RUN_ID)
+    loader = Object.new
+    def loader.load
+      raise Loader::Error, "Provider request timed out"
+    end
+
+    workflow = FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID)
+    error = Loader::LlmLoader.stub(:new, loader) do
+      assert_raises(Loader::Error) { workflow.execute }
+    end
+
+    assert preview.reload.failed?
+    event = Event.find_by!(type: "feed_preview", subject: credential)
+    assert_equal "failed", event.metadata["status"]
+    assert_equal error.message, event.message
+    assert_equal "Loader::Error", event.metadata.dig("error", "class")
+    assert_equal error.message, event.metadata.dig("error", "message")
+    assert_equal "load_feed_contents", event.metadata.dig("error", "stage")
+    assert_equal error.backtrace, event.metadata.dig("error", "backtrace")
+    assert_equal "load_feed_contents", event.metadata.dig("stats", "failed_at_step")
+    assert_not event.metadata.fetch("stats").key?("error")
+  end
+
   test "#execute should halt before loading when the run is superseded" do
     preview = create(:feed_preview, user: user, feed_profile_key: "rss",
                      params: { "url" => "https://example.com/superseded.xml" },
