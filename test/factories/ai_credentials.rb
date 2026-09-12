@@ -1,9 +1,9 @@
 FactoryBot.define do
   factory :ai_credential do
     association :user
-    provider { "anthropic" }
-    sequence(:display_name) { |n| "Claude credential #{n}" }
-    credential_data { { "api_key" => "sk-ant-#{SecureRandom.hex(16)}" } }
+    provider { "openai" }
+    sequence(:display_name) { |n| "OpenAI credential #{n}" }
+    credential_data { { "api_key" => "sk-test-#{SecureRandom.hex(16)}" } }
     state { :pending }
 
     trait :active do

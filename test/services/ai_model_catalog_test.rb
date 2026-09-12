@@ -115,11 +115,4 @@ class AiModelCatalogTest < ActiveSupport::TestCase
     assert_raises(AiModelCatalog::Error) { AiModelCatalog.fetch(credential) }
     assert_not_requested :get, "https://example.com/models"
   end
-
-  test "#fetch should keep unsupported providers unavailable without HTTP" do
-    credential.provider = "moonshot"
-
-    assert_raises(AiModelCatalog::Unavailable) { AiModelCatalog.fetch(credential) }
-    assert_not_requested :any, /./
-  end
 end

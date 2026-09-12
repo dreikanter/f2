@@ -7,8 +7,8 @@ class AiCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTest
 
   test "#update should set the credential as the user's default" do
     sign_in_as(user)
-    first = create(:ai_credential, :default, user: user, provider: "anthropic", display_name: "first")
-    second = create(:ai_credential, user: user, provider: "anthropic", display_name: "second")
+    first = create(:ai_credential, :default, user: user, display_name: "first")
+    second = create(:ai_credential, user: user, display_name: "second")
 
     patch ai_credential_default_url(second)
 
@@ -18,7 +18,7 @@ class AiCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTest
 
   test "#update should set default when no other default exists" do
     sign_in_as(user)
-    credential = create(:ai_credential, user: user, provider: "anthropic")
+    credential = create(:ai_credential, user: user)
 
     patch ai_credential_default_url(credential)
 
@@ -27,7 +27,7 @@ class AiCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTest
 
   test "#update should confirm the promotion without naming the credential type" do
     sign_in_as(user)
-    credential = create(:ai_credential, user: user, provider: "anthropic", display_name: "Working Key")
+    credential = create(:ai_credential, user: user, display_name: "Working Key")
 
     patch ai_credential_default_url(credential)
 
@@ -36,7 +36,7 @@ class AiCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTest
 
   test "#update should 404 for another user's credential" do
     sign_in_as(user)
-    other = create(:ai_credential, user: other_user, provider: "anthropic")
+    other = create(:ai_credential, user: other_user)
 
     patch ai_credential_default_url(other)
 
@@ -46,7 +46,7 @@ class AiCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTest
 
   test "#update should respond with turbo stream when requested" do
     sign_in_as(user)
-    credential = create(:ai_credential, user: user, provider: "anthropic")
+    credential = create(:ai_credential, user: user)
 
     patch ai_credential_default_url(credential), headers: { "Accept" => "text/vnd.turbo-stream.html" }
 

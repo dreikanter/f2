@@ -29,8 +29,8 @@ class AiCredentialTest < ActiveSupport::TestCase
   end
 
   test "#valid? should enforce display_name uniqueness per (user, provider)" do
-    create(:ai_credential, user: user, provider: "anthropic", display_name: "Work")
-    duplicate = build(:ai_credential, user: user, provider: "anthropic", display_name: "Work")
+    create(:ai_credential, user: user, provider: "openai", display_name: "Work")
+    duplicate = build(:ai_credential, user: user, provider: "openai", display_name: "Work")
 
     refute duplicate.valid?
     assert_includes duplicate.errors[:display_name], "has already been taken"
@@ -44,13 +44,13 @@ class AiCredentialTest < ActiveSupport::TestCase
   end
 
   test "#save! should encrypt credential_data so the raw column doesn't contain the API key" do
-    credential = create(:ai_credential, user: user, credential_data: { "api_key" => "sk-ant-secret-12345" })
+    credential = create(:ai_credential, user: user, credential_data: { "api_key" => "sk-test-secret-12345" })
 
     raw = ActiveRecord::Base.connection.select_value(
       "SELECT credential_data FROM ai_credentials WHERE id = #{ActiveRecord::Base.connection.quote(credential.id)}"
     )
-    refute_includes raw.to_s, "sk-ant-secret-12345"
-    assert_equal "sk-ant-secret-12345", credential.reload.credential_data["api_key"]
+    refute_includes raw.to_s, "sk-test-secret-12345"
+    assert_equal "sk-test-secret-12345", credential.reload.credential_data["api_key"]
   end
 
   test "#default? should return true for the user's default credential" do
@@ -84,31 +84,8 @@ class AiCredentialTest < ActiveSupport::TestCase
   end
 
   test "#llm_provider should return the registry entry for the provider attribute" do
-    credential = create(:ai_credential, user: user, provider: "anthropic")
-    assert_equal LlmProvider.find("anthropic"), credential.llm_provider
-  end
-
-  test "#can_refresh_models? should require an active credential with an implementation" do
-    credential = build(:ai_credential, :active, provider: "openai")
-    assert credential.can_refresh_models?
-
-    credential.state = :inactive
-    assert_not credential.can_refresh_models?
-  end
-
-  test "#can_refresh_models? should keep saved unsupported credentials unavailable" do
-    credential = build(:ai_credential, :active, provider: "anthropic")
-
-    assert_not credential.provider_available?
-    assert_not credential.can_refresh_models?
-    assert_equal "Anthropic", credential.provider_name
-  end
-
-  test "#ruby_llm_context should reject an unavailable provider without network calls" do
-    credential = build(:ai_credential, :active, provider: "anthropic")
-
-    assert_raises(AiModelCatalog::Unavailable) { credential.ruby_llm_context }
-    assert_not_requested :any, /./
+    credential = create(:ai_credential, user: user, provider: "openai")
+    assert_equal LlmProvider.find("openai"), credential.llm_provider
   end
 
   test "#ruby_llm_context should isolate credentials and disable SDK retries" do
@@ -158,58 +135,43 @@ class AiCredentialTest < ActiveSupport::TestCase
   end
 
   test "#supported_models should offer listed models without qualification" do
-    credential = build(:ai_credential, provider: "anthropic",
-                                       available_models: [{ "id" => "claude-sonnet-4-6" }, { "id" => "unverified-model" }])
+    credential = build(:ai_credential, provider: "openai",
+                                       available_models: [{ "id" => "gpt-5.6-luna" }, { "id" => "unverified-model" }])
 
-    assert_equal ["claude-sonnet-4-6", "unverified-model"], credential.supported_models.map { |model| model["id"] }
-  end
-
-  test "#supported_models should offer models from every configured provider" do
-    credential = build(:ai_credential, provider: "anthropic",
-                                       available_models: [{ "id" => "some-model" }])
-    credential.provider = "openrouter"
-
-    assert_equal ["some-model"], credential.supported_models.pluck("id")
+    assert_equal ["gpt-5.6-luna", "unverified-model"], credential.supported_models.map { |model| model["id"] }
   end
 
   test "#supports_model? should be true only for a model in the snapshot" do
-    credential = build(:ai_credential, provider: "anthropic",
-                                       available_models: [{ "id" => "claude-sonnet-4-6" }])
+    credential = build(:ai_credential, provider: "openai",
+                                       available_models: [{ "id" => "gpt-5.6-luna" }])
 
-    assert credential.supports_model?("claude-sonnet-4-6")
+    assert credential.supports_model?("gpt-5.6-luna")
     assert_not credential.supports_model?("some-other-model")
   end
 
   test "#supports_model? should be true for a newly listed model" do
-    credential = build(:ai_credential, provider: "anthropic",
+    credential = build(:ai_credential, provider: "openai",
                                        available_models: [{ "id" => "unverified-model" }])
 
     assert credential.supports_model?("unverified-model")
   end
 
   test "#supports_model? should be false for a blank model id" do
-    credential = build(:ai_credential, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    credential = build(:ai_credential, available_models: [{ "id" => "gpt-5.6-luna" }])
 
     assert_not credential.supports_model?(nil)
     assert_not credential.supports_model?("")
   end
 
   test "#default_supported_model should prefer the provider default when supported" do
-    credential = build(:ai_credential, provider: "anthropic",
-                                       available_models: [{ "id" => "claude-sonnet-4-6" }])
+    credential = build(:ai_credential, provider: "openai",
+                                       available_models: [{ "id" => "gpt-5.6-luna" }])
 
-    assert_equal "claude-sonnet-4-6", credential.default_supported_model
-  end
-
-  test "#default_supported_model should resolve a moonshot credential to its listed model" do
-    credential = build(:ai_credential, provider: "moonshot",
-                                       available_models: [{ "id" => "kimi-k2.6" }])
-
-    assert_equal "kimi-k2.6", credential.default_supported_model
+    assert_equal "gpt-5.6-luna", credential.default_supported_model
   end
 
   test "#default_supported_model should choose the first listed model when the default is absent" do
-    credential = build(:ai_credential, provider: "anthropic",
+    credential = build(:ai_credential, provider: "openai",
                                        available_models: [{ "id" => "unverified-model" }])
 
     assert_equal "unverified-model", credential.default_supported_model
@@ -219,13 +181,13 @@ class AiCredentialTest < ActiveSupport::TestCase
     credential = create(:ai_credential, :active, user: user)
 
     assert_difference("Event.count", 1) do
-      credential.deactivate!(last_error: "Anthropic: HTTP 401")
+      credential.deactivate!(last_error: "OpenAI: HTTP 401")
     end
 
     credential.reload
     event = Event.order(:created_at).last
     assert credential.inactive?
-    assert_equal "Anthropic: HTTP 401", credential.last_error
+    assert_equal "OpenAI: HTTP 401", credential.last_error
     assert_not_nil credential.last_validated_at
     assert_equal "ai_credential_deactivated", event.type
     assert_equal "warning", event.level

@@ -7,19 +7,8 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     @credential ||= create(:ai_credential, :active, available_models: [{ "id" => "saved-model" }])
   end
 
-  test "#perform should settle pending work and preserve the saved catalog and key" do
-    run = OperationRun.start!(subject: credential, kind: :models_refresh, timeout: 15.minutes)
-    original = credential.attributes
-
-    AiModelCatalogRefreshJob.perform_now(run)
-
-    assert_predicate run.reload, :failed?
-    assert_equal AiModelCatalog::UNAVAILABLE_MESSAGE, run.context["error"]
-    assert_equal original, credential.reload.attributes
-    assert_not_requested :any, /./
-  end
-
-  test "#refresh_models_async should reject an unavailable provider without creating work" do
+  test "#refresh_models_async should ignore inactive credentials" do
+    credential.update!(state: :inactive)
     assert_no_enqueued_jobs do
       assert_no_difference "OperationRun.count" do
         assert_nil credential.refresh_models_async(force: true)
@@ -27,16 +16,6 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     end
     assert_not credential.models_refreshing?
     assert_equal ["saved-model"], credential.reload.available_models.pluck("id")
-  end
-
-  test "#perform should skip automatic catalog scheduling for unsupported providers" do
-    credential
-    assert_no_enqueued_jobs do
-      assert_no_difference -> { OperationRun.count } do
-        RefreshAiModelCatalogsJob.perform_now
-      end
-    end
-    assert_not_requested :any, /./
   end
 
   test "#perform should leave a superseded run and its replacement unchanged" do
@@ -156,7 +135,6 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
 
   test "#perform should refresh only stale active OpenAI catalogs" do
     openai_credential
-    credential
     create(:ai_credential, :inactive, provider: "openai")
     create(:ai_credential, :active, provider: "openai", models_refreshed_at: 1.hour.ago)
 

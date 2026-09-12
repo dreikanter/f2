@@ -10,7 +10,8 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
     assert_redirected_to new_session_path
   end
 
-  test "#create should leave an unsupported credential and its saved catalog usable" do
+  test "#create should ignore refresh requests for inactive credentials" do
+    credential.update!(state: :inactive)
     sign_in_as(credential.user)
     assert_no_enqueued_jobs do
       post ai_credential_model_catalog_path(credential)
@@ -18,13 +19,11 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
     assert_redirected_to ai_credential_path(credential)
     follow_redirect!
     assert_select 'button[data-key="ai_credential.refresh-models"][disabled]'
-    assert_select '[data-key="ai_credential.models-refresh-status"]', text: AiModelCatalog::UNAVAILABLE_MESSAGE
     assert_includes response.body, "cached-model"
-    assert_predicate credential.reload, :active?
+    assert_predicate credential.reload, :inactive?
   end
 
   test "#create should queue OpenAI refresh and poll until the snapshot is ready" do
-    credential.update!(provider: "openai")
     sign_in_as(credential.user)
     assert_enqueued_with(job: AiModelCatalogRefreshJob) do
       post ai_credential_model_catalog_path(credential)
@@ -37,7 +36,6 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
     get ai_credential_model_catalog_path(credential)
     assert_response :success
     assert_includes response.body, "cached-model"
-    assert_not_includes response.body, AiModelCatalog::UNAVAILABLE_MESSAGE
     assert_select 'button[data-key="ai_credential.refresh-models"]:not([disabled])'
     assert_not_requested :any, /./
   end

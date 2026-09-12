@@ -1,6 +1,10 @@
 module Ai
   module Providers
     class Openai
+      def name = "openai"
+      def display_name = "OpenAI"
+      def default_model = "gpt-5.6-luna"
+
       def configure(config, api_key)
         config.openai_api_key = api_key
       end

@@ -3,11 +3,11 @@ require "view_component/test_case"
 
 class AiCredentialDetailsComponentTest < ViewComponent::TestCase
   test "#render should show provider display name" do
-    credential = create(:ai_credential, provider: "openrouter")
+    credential = create(:ai_credential, provider: "openai")
 
     result = render_inline(AiCredentialDetailsComponent.new(ai_credential: credential))
 
-    assert_includes result.css('[data-key="ai_credential.provider.value"]').first.text, "OpenRouter"
+    assert_includes result.css('[data-key="ai_credential.provider.value"]').first.text, "OpenAI"
   end
 
   test "#render should show created date" do

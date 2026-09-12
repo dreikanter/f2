@@ -37,26 +37,16 @@ class AiCredential < ApplicationRecord
     available_models.find { |model| model["id"] == model_id }&.fetch("metadata", {}) || {}
   end
 
-  def provider_available?
-    llm_provider.implementation.present?
-  end
-
-  def can_refresh_models?
-    active? && provider_available?
-  end
-
   def ruby_llm_context
-    raise AiModelCatalog::Unavailable unless provider_available?
-
     RubyLLM.context do |config|
-      llm_provider.implementation.configure(config, credential_data.fetch("api_key"))
+      llm_provider.configure(config, credential_data.fetch("api_key"))
       config.max_retries = 0
     end
   end
 
   def refresh_models_async(force: false)
     with_lock do
-      return unless can_refresh_models?
+      return unless active?
 
       recent = latest_operation_run(:models_refresh)
       return recent if recent&.in_progress?(stale_after: MODEL_REFRESH_TIMEOUT)

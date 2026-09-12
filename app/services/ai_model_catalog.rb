@@ -1,6 +1,4 @@
 class AiModelCatalog
-  UNAVAILABLE_MESSAGE = "AI model discovery is temporarily unavailable. Your saved settings are still available.".freeze
-
   class Error < StandardError
     attr_reader :category, :status
 
@@ -15,12 +13,6 @@ class AiModelCatalog
     end
   end
 
-  class Unavailable < Error
-    def initialize
-      super(UNAVAILABLE_MESSAGE, category: :unavailable)
-    end
-  end
-
   def self.fetch(credential)
     new(credential).fetch
   end
@@ -31,10 +23,7 @@ class AiModelCatalog
   end
 
   def fetch
-    implementation = @provider.implementation
-    raise Unavailable unless implementation
-
-    ids = implementation.models(api_key: @api_key)
+    ids = @provider.models(api_key: @api_key)
     metadata = RubyLLM.models.by_provider(@provider.name).index_by(&:id)
     ids.map { |id| catalog_entry(id, metadata[id]) }
   end
