@@ -99,7 +99,7 @@ class AiCredentialTest < ActiveSupport::TestCase
   test "#can_refresh_models? should keep saved unsupported credentials unavailable" do
     credential = build(:ai_credential, :active, provider: "anthropic")
 
-    assert credential.provider_unavailable?
+    assert_not credential.provider_available?
     assert_not credential.can_refresh_models?
     assert_equal "Anthropic", credential.provider_name
   end

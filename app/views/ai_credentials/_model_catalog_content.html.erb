@@ -19,7 +19,7 @@
         Refreshing models. Your credential and saved list remain usable.
       <% elsif ai_credential.latest_operation_run(:models_refresh)&.status.in?(%w[failed timed_out]) %>
         Couldn't refresh models. Your saved list is still available.
-      <% elsif ai_credential.provider_unavailable? %>
+      <% elsif !ai_credential.provider_available? %>
         <%= AiModelCatalog::UNAVAILABLE_MESSAGE %>
       <% end %>
       <% if ai_credential.models_refreshed_at %>

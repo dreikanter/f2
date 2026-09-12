@@ -37,16 +37,16 @@ class AiCredential < ApplicationRecord
     available_models.find { |model| model["id"] == model_id }&.fetch("metadata", {}) || {}
   end
 
-  def provider_unavailable?
-    llm_provider.implementation.nil?
+  def provider_available?
+    llm_provider.implementation.present?
   end
 
   def can_refresh_models?
-    active? && !provider_unavailable?
+    active? && provider_available?
   end
 
   def ruby_llm_context
-    raise AiModelCatalog::Unavailable if provider_unavailable?
+    raise AiModelCatalog::Unavailable unless provider_available?
 
     RubyLLM.context do |config|
       llm_provider.implementation.configure(config, credential_data.fetch("api_key"))
