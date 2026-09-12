@@ -3,6 +3,8 @@
 # Minimal client for FreeFeed API focused on specific application needs.
 # Provides high-level methods for token validation and group management.
 class FreefeedClient
+  include SubscriberStatistics
+
   class Error < StandardError; end
   class UnauthorizedError < Error; end
   class InvalidTokenError < UnauthorizedError; end

@@ -5,10 +5,6 @@
 # HTTParty, etc.) without changing application code, and ensures consistent error
 # handling across the app.
 #
-require_relative "http_client/base"
-require_relative "http_client/faraday_adapter"
-require_relative "http_client/caching_adapter"
-
 module HttpClient
   class Response
     attr_reader :status, :body, :headers, :url
