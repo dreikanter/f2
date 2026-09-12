@@ -15,16 +15,20 @@ class DropdownMenuComponent < ViewComponent::Base
   ITEM_CLASS = "block px-4 py-2 text-sm text-heading transition hover:bg-surface-muted"
   DISABLED_ITEM_CLASS = "block px-4 py-2 text-sm text-muted cursor-not-allowed"
 
-  def initialize(menu_id:, items:, width: "w-44", label: "More options")
+  def initialize(menu_id:, items:, width: "w-44")
     @menu_id = menu_id
     @items = items.compact
     @width = width
-    @label = label
   end
 
   private
 
-  attr_reader :menu_id, :items, :width, :label
+  attr_reader :menu_id, :items, :width
+
+  # Screen-reader name for the icon-only trigger.
+  def label
+    "More options"
+  end
 
   # The square, icon-only trigger styling: a subtle borderless ellipsis here.
   # HeaderMenuComponent overrides it to match the bordered action buttons
