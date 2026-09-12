@@ -1,0 +1,11 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "valid-model"
+    },
+    {
+      "object": "model"
+    }
+  ]
+}

@@ -47,6 +47,8 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-key='ai_credentials.new']"
     assert_select "[data-key='ai_credentials.provider']"
+    assert_select "option[value='openai'][selected]:not([disabled])"
+    assert_select "option[value='anthropic'][disabled]", text: "Anthropic"
     assert_select "[data-key='ai_credentials.credential-data.api_key']"
   end
 
@@ -70,6 +72,24 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "inactive", saved.state
     assert_nil saved.active_operation_run(:validation)
     assert_predicate saved.latest_operation_run(:validation), :failed?
+  end
+
+  test "#create should queue OpenAI validation and expose polling" do
+    sign_in_as(user)
+
+    assert_enqueued_with(job: AiCredentialValidationJob) do
+      post ai_credentials_url, params: {
+        ai_credential: { provider: "openai", credential_data: { api_key: "openai-test-key" } }
+      }
+    end
+
+    saved = AiCredential.last
+    assert_redirected_to ai_credential_path(saved)
+    assert_predicate saved, :validating?
+    follow_redirect!
+    assert_response :success
+    assert_includes response.body, ai_credential_validation_path(saved)
+    assert_not_requested :any, /./
   end
 
   test "#new should accept and remember a feed_id owned by current_user" do

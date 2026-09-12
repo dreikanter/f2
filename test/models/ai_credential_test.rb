@@ -88,6 +88,21 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_equal LlmProvider.find("anthropic"), credential.llm_provider
   end
 
+  test "#ruby_llm_context should isolate credentials and disable SDK retries" do
+    first = build(:ai_credential, provider: "openai", credential_data: { "api_key" => "first-key" })
+    second = build(:ai_credential, provider: "openai", credential_data: { "api_key" => "second-key" })
+    original_key = RubyLLM.config.openai_api_key
+
+    first_context = first.ruby_llm_context
+    second_context = second.ruby_llm_context
+
+    assert_equal "first-key", first_context.config.openai_api_key
+    assert_equal "second-key", second_context.config.openai_api_key
+    assert_equal 0, first_context.config.max_retries
+    assert_equal original_key, RubyLLM.config.openai_api_key
+    assert_not_requested :any, /./
+  end
+
   test "#destroy! should remove a credential with no dependent feeds" do
     credential = create(:ai_credential, user: user)
 

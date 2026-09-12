@@ -21,7 +21,7 @@
         <div class="space-y-2">
           <%= f.label :provider, "AI Provider", class: form_label_classes %>
           <%= f.select :provider,
-                       LlmProvider.all.map { |provider| [provider.display_name, provider.name] },
+                       LlmProvider.all.map { |provider| [provider.display_name, provider.name, { disabled: !provider.discovery_available? }] },
                        {},
                        autofocus: true,
                        class: input_field_classes,
@@ -31,7 +31,7 @@
         <div class="space-y-2">
           <%= f.label :display_name, "Name", class: form_label_classes %>
           <%= f.text_field :display_name,
-                           placeholder: "Personal Anthropic key",
+                           placeholder: "Personal OpenAI key",
                            class: input_field_classes,
                            data: { key: "ai_credentials.display-name" } %>
           <p class="text-sm text-muted">A label so you can tell credentials apart. Leave blank to get one automatically.</p>

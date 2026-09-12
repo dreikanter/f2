@@ -35,6 +35,14 @@ class LlmProvider
     config.openai_use_system_role = true if pin_system_role?
   end
 
+  def discovery_available?
+    name == "openai"
+  end
+
+  def rejected_api_key?(status:, code:)
+    name == "openai" && status == 401 && code == "invalid_api_key"
+  end
+
   PROVIDERS = {
     "anthropic" => new(
       name: "anthropic",

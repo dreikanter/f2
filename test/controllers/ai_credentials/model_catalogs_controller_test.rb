@@ -23,6 +23,25 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
     assert_predicate credential.reload, :active?
   end
 
+  test "#create should queue OpenAI refresh and poll until the snapshot is ready" do
+    credential.update!(provider: "openai")
+    sign_in_as(credential.user)
+    assert_enqueued_with(job: AiModelCatalogRefreshJob) do
+      post ai_credential_model_catalog_path(credential)
+    end
+    assert_redirected_to ai_credential_path(credential)
+    get ai_credential_model_catalog_path(credential)
+    assert_response :no_content
+
+    credential.latest_operation_run(:models_refresh).succeed!
+    get ai_credential_model_catalog_path(credential)
+    assert_response :success
+    assert_includes response.body, "cached-model"
+    assert_not_includes response.body, AiModelCatalog::UNAVAILABLE_MESSAGE
+    assert_select 'button[data-key="ai_credential.refresh-models"]:not([disabled])'
+    assert_not_requested :any, /./
+  end
+
   test "#create and show should reject another user's credential" do
     sign_in_as(create(:user))
     assert_no_enqueued_jobs { post ai_credential_model_catalog_path(credential) }
