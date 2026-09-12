@@ -30,7 +30,6 @@ class FeedRefreshWorkflow
   def on_error(error)
     Metrics.increment("feed_refresh_total", status: "error", profile: feed.feed_profile_key)
     record_error_stats(error, current_step: current_step)
-    disable_credentials_on_auth_error(error)
     fail_refresh_event(error)
     feed.record_refresh_failure!
   end
@@ -360,15 +359,6 @@ class FeedRefreshWorkflow
         @refresh_event.destroy!
       end
       event
-    end
-  end
-
-  def disable_credentials_on_auth_error(error)
-    case error
-    when LlmClient::AuthError
-      feed.ai_credential&.deactivate!(last_error: error.message)
-    when WebSearchProvider::AuthError
-      feed.search_credential&.deactivate!(last_error: error.message)
     end
   end
 

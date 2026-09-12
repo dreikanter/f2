@@ -195,18 +195,6 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_equal user, event.user
   end
 
-  test "#chat should use the provider's RubyLLM key without an SDK model lookup or retries" do
-    credential = create(:ai_credential, user: user, provider: "moonshot")
-    captured = nil
-    context = Struct.new(:config).new(RubyLLM.config.dup)
-    context.define_singleton_method(:chat) { |**args| captured = args }
-
-    credential.stub(:ruby_llm_context, context) { credential.chat("kimi-k2.6") }
-
-    assert_equal({ model: "kimi-k2.6", provider: :openai, assume_model_exists: true }, captured)
-    assert_equal 0, context.config.max_retries
-  end
-
   test "#deactivate! should disable feeds running on the credential" do
     credential = create(:ai_credential, :active, user: user)
     enabled = create(:feed, :enabled, user: user, ai_credential: credential)

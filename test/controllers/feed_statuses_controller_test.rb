@@ -181,7 +181,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to ai_feed
     follow_redirect!
-    assert_includes response.body, "Cannot enable feed: missing active AI credential and AI model"
+    assert_includes response.body, Loader::LlmLoader::UNAVAILABLE_MESSAGE
 
     ai_feed.reload
     assert_equal "disabled", ai_feed.state

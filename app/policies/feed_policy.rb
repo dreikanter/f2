@@ -22,7 +22,7 @@ class FeedPolicy < ApplicationPolicy
   # Refresh is meaningless for push-ingested (schedule-less) feeds; there is
   # no loader to run.
   def refresh?
-    owner? && record.enabled? && record.scheduled?
+    owner? && record.enabled? && record.scheduled? && !FeedProfile.depends_on_ai?(record.feed_profile_key)
   end
 
   def purge?

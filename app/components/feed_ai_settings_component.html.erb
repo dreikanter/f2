@@ -9,6 +9,7 @@
       }
     ) do %>
   <%= helpers.h2 "AI Settings" %>
+  <p class="mb-3 text-sm text-muted" data-key="form.ai-unavailable"><%= Loader::LlmLoader::UNAVAILABLE_MESSAGE %></p>
 
   <div class="space-y-6">
     <% if credentials? %>
@@ -42,7 +43,7 @@
           <% if form.object.errors[:ai_model].any? %>
             <p class="text-sm text-danger"><%= form.object.errors[:ai_model].first %></p>
           <% else %>
-            <p class="text-sm text-muted">New models appear automatically. <%= link_to "Manage model lists", ai_credentials_path, class: "underline" %>.</p>
+            <p class="text-sm text-muted">Your saved model list remains available. <%= link_to "Manage model lists", ai_credentials_path, class: "underline" %>.</p>
           <% end %>
         </div>
       <% end %>

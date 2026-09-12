@@ -1,6 +1,4 @@
-# Append-only audit row for one LLM API call. Written by LlmClient
-# regardless of outcome so users see the true cost of AI features
-# including failed calls.
+# Durable accounting for individual AI requests, including failed attempts.
 class LlmUsage < ApplicationRecord
   # Aggregate stats use a bounded window so recent usage remains useful even if
   # a retention policy is introduced later.

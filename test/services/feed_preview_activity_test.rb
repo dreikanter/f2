@@ -1,155 +1,84 @@
 require "test_helper"
 
 class FeedPreviewActivityTest < ActiveSupport::TestCase
-  ENDPOINT = "https://api.openai.com/v1/responses"
-
   def credential
-    @credential ||= create(:ai_credential, :active, provider: "openai",
-                            available_models: [{ "id" => "new-model" }])
+    @credential ||= create(:ai_credential, :active, provider: "openai")
   end
 
   def preview
-    @preview ||= create(:feed_preview, user: credential.user, ai_credential: credential, ai_model: "new-model",
-                         feed_profile_key: "llm", params: { "prompt" => "Find one recent release announcement" })
-  end
-
-  def response(text, search: false)
-    output = [{ type: "message", role: "assistant", content: [{ type: "output_text", text: text }] }]
-    output.unshift(type: "web_search_call", status: "completed") if search
-    { status: 200, headers: { "Content-Type" => "application/json" }, body: {
-      status: "completed", output: output, usage: { input_tokens: 40, output_tokens: 20 }
-    }.to_json }
+    @preview ||= create(:feed_preview, user: credential.user, ai_credential: credential,
+                         feed_profile_key: "llm", params: { "prompt" => "A daily roundup" })
   end
 
   def saved_feed
     @saved_feed ||= create(:feed, :draft, user: credential.user, ai_credential: credential,
-                           ai_model: "new-model", feed_profile_key: "llm", params: { "prompt" => "Saved prompt" })
+                           feed_profile_key: "llm", params: { "prompt" => "Saved prompt" })
   end
 
-  def stub_native
-    stub_request(:post, ENDPOINT).to_return(
-      response("Release announcement: https://example.com/release", search: true),
-      response({ items: [{ body: "Release announcement", source_url: "https://example.com/release" }] }.to_json)
-    )
-  end
-
-  def execute
-    FeedPreviewWorkflow.new(preview, run_id: preview.run_id).execute
-  end
-
-  def activity
-    Event.where(type: "feed_preview", user: credential.user).sole
-  end
-
-  test "#execute should expose preview usage through one completed activity event without publishing" do
+  test "#finish! should transfer only its own usage to a new completed event" do
     unrelated = create(:llm_usage, user: credential.user, purpose: :preview)
-    stub_native
+    record = FeedPreviewActivity.new(preview)
+    started_id = record.event.id
+    usage = create(:llm_usage, user: credential.user, purpose: :preview, cost_estimate_cents: nil)
+    record.event.event_references.create!(reference: usage)
 
     assert_no_difference -> { Post.count } do
-      execute
+      record.finish!(status: "completed", stats: { normalized_posts: 1 })
     end
 
-    assert preview.reload.ready?
-    assert_includes preview.posts_data.sole["content"], "https://example.com/release"
-    assert_equal "completed", activity.metadata["status"]
-    assert_equal "info", activity.level
-    assert_equal credential, activity.subject
-    assert_equal 2, activity.metadata.dig("stats", "llm_calls")
-    assert_nil activity.metadata.dig("stats", "llm_cost_cents")
-    usages = activity.references.grep(LlmUsage)
-    assert_equal 2, usages.size
-    assert usages.all?(&:preview?)
-    assert usages.all? { |usage| usage.feed_id.nil? }
-    assert_equal 80, usages.sum(&:input_tokens)
-    assert_equal 1, usages.sum { |usage| usage.retrieval["search_calls"].to_i }
-    assert_not_includes usages.map(&:id), unrelated.id
-    assert_not_includes activity.metadata.to_json, preview.params["prompt"]
-    assert_not_includes activity.metadata.to_json, "Release announcement"
-  end
-
-  test "#execute should reference failed attempts and keep their unknown cost visible" do
-    preview.update!(feed: saved_feed)
-    stub_request(:post, ENDPOINT).to_return(status: 401, headers: { "Content-Type" => "application/json" },
-                                           body: { error: { message: "Invalid key" } }.to_json)
-
-    assert_raises(LlmClient::AuthError) { execute }
-
-    assert preview.reload.failed?
-    assert_equal "failed", activity.metadata["status"]
-    assert_equal "warning", activity.level
-    assert_equal "provider_error", activity.references.sole.outcome
-    assert_equal 1, activity.metadata.dig("stats", "llm_calls")
-    assert_nil activity.metadata.dig("stats", "llm_cost_cents")
-    assert_equal saved_feed, activity.subject
-    assert_equal saved_feed, activity.references.sole.feed
-  end
-
-  test "#execute should attribute saved feed preview activity and every attempt without saving form edits" do
-    preview.update!(feed: saved_feed)
-    saved_attributes = saved_feed.attributes
-    stub_native
-
-    assert_no_difference [-> { Post.count }, -> { Feed.count }, -> { FeedEntry.count }] do
-      execute
-    end
-
-    assert_equal saved_feed, activity.subject
-    assert_includes saved_feed.events, activity
-    assert_equal 2, saved_feed.llm_usages.count
-    assert_equal activity.references.grep(LlmUsage).map(&:id).sort, saved_feed.llm_usages.pluck(:id).sort
-    assert saved_feed.llm_usages.all?(&:preview?)
-    assert_equal saved_attributes, saved_feed.reload.attributes
-    assert_requested :post, ENDPOINT, body: /Find one recent release announcement/, times: 2
-  end
-
-  test "#execute should retain paid usage for a superseded preview without overwriting its replacement" do
-    preview.update!(feed: saved_feed)
-    original_run = preview.run_id
-    replacement_run = SecureRandom.uuid
-    replies = [response("Original joke"), response('{"items":[]}')]
-    stub_request(:post, ENDPOINT).to_return do
-      preview.update!(run_id: replacement_run, status: :pending)
-      replies.shift
-    end
-
-    FeedPreviewWorkflow.new(preview, run_id: original_run).execute
-
-    assert preview.reload.pending?
-    assert_equal replacement_run, preview.run_id
-    assert_nil preview.data
-    assert_equal "interrupted", activity.metadata["status"]
-    assert_equal 2, activity.references.grep(LlmUsage).size
-    assert_equal saved_feed, activity.subject
-    assert_equal 2, saved_feed.llm_usages.count
-  end
-
-  test "#execute should not create activity or usage again for an already completed run" do
-    stub_native
-    execute
-
-    assert_no_difference [-> { Event.count }, -> { LlmUsage.count }] do
-      execute
-    end
-
-    assert_equal "completed", activity.metadata["status"]
-    assert_requested :post, ENDPOINT, times: 2
-  end
-
-  test "#execute should replace the started event with a fresh terminal event for polling" do
-    started_id = nil
-    replies = [response("No matching source posts were found."), response('{"items":[]}')]
-    stub_request(:post, ENDPOINT).to_return do
-      started_id = activity.id
-      assert_equal "started", activity.metadata["status"]
-      replies.shift
-    end
-
-    execute
-
-    assert_not_equal started_id, activity.id
     assert_not Event.exists?(started_id)
-    assert_equal "completed", activity.metadata["status"]
-    assert_equal 2, activity.references.grep(LlmUsage).size
+    assert_not_equal started_id, record.event.id
+    assert_equal "completed", record.event.metadata["status"]
+    assert_equal "info", record.event.level
+    assert_equal credential, record.event.subject
+    assert_equal [usage], record.event.references
+    assert_not_includes record.event.references, unrelated
+    assert_equal 1, record.event.metadata.dig("stats", "llm_calls")
+    assert_nil record.event.metadata.dig("stats", "llm_cost_cents")
+    assert_not_includes record.event.metadata.to_json, preview.params["prompt"]
+  end
+
+  test "#finish! should preserve failed usage and attribute saved feed previews without editing the feed" do
+    preview.update!(feed: saved_feed)
+    original = saved_feed.attributes
+    record = FeedPreviewActivity.new(preview)
+    usage = create(:llm_usage, user: credential.user, feed: saved_feed, purpose: :preview,
+                              outcome: :provider_error, cost_estimate_cents: nil)
+    record.event.event_references.create!(reference: usage)
+
+    record.finish!(status: "failed", stats: {})
+
+    assert_equal "failed", record.event.metadata["status"]
+    assert_equal "warning", record.event.level
+    assert_equal saved_feed, record.event.subject
+    assert_equal [usage], record.event.references
+    assert_nil record.event.metadata.dig("stats", "llm_cost_cents")
+    assert_equal original, saved_feed.reload.attributes
+  end
+
+  test "#finish! should preserve usage for an interrupted preview" do
+    record = FeedPreviewActivity.new(preview)
+    usage = create(:llm_usage, user: credential.user, purpose: :preview)
+    record.event.event_references.create!(reference: usage)
+
+    record.finish!(status: "interrupted", stats: {})
+
+    assert_equal "interrupted", record.event.metadata["status"]
+    assert_equal "warning", record.event.level
+    assert_equal [usage], record.event.references
+  end
+
+  test "#finish! should not replace a terminal event twice" do
+    record = FeedPreviewActivity.new(preview)
+    record.finish!(status: "completed", stats: {})
+    terminal_id = record.event.id
+
+    assert_no_difference -> { Event.count } do
+      record.finish!(status: "failed", stats: {})
+    end
+
+    assert_equal terminal_id, record.event.id
+    assert_equal "completed", record.event.metadata["status"]
   end
 
   test "#finish! should retain external search references and known zero cost" do

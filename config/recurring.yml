@@ -10,11 +10,6 @@
 #     schedule: at 5am every day
 
 default: &default
-  refresh_ai_model_catalogs:
-    class: RefreshAiModelCatalogsJob
-    queue: default
-    schedule: every day at 2am
-
   prune_sessions:
     class: PruneSessionsJob
     queue: default

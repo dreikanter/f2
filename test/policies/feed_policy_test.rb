@@ -114,6 +114,19 @@ class FeedPolicyTest < ActiveSupport::TestCase
     assert_not policy.refresh?
   end
 
+  test "#refresh? should deny AI refresh while saved settings remain editable" do
+    credential = create(:ai_credential, :active, user: user,
+                            available_models: [{ "id" => "saved-model" }])
+    ai_feed = create(:feed, :enabled, user: user, feed_profile_key: "llm",
+                     params: { "prompt" => "A daily roundup" }, ai_credential: credential, ai_model: "saved-model")
+    policy = policy_for_user(user, ai_feed)
+
+    assert_not policy.refresh?
+    assert policy.show?
+    assert policy.update?
+    assert policy.destroy?
+  end
+
   test "#refresh? should deny refresh for non-owner" do
     enabled_feed = create(:feed, :enabled, user: user)
     policy = policy_for_user(other_user, enabled_feed)

@@ -11,6 +11,7 @@ class FeedSchedulerJob < ApplicationJob
 
   def refresh?(feed)
     return false unless feed.scheduled?
+    return false if FeedProfile.depends_on_ai?(feed.feed_profile_key)
 
     update_existing_schedule(feed.feed_schedule) == 1
   end

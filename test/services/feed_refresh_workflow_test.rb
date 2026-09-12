@@ -431,44 +431,37 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, digest_feed.posts.count, "same-period digests collapse to one post"
   end
 
-  test "#execute should disable the AI credential and related feeds on auth failure" do
-    llm_user = create(:user)
-    credential = create(:ai_credential, :active, user: llm_user)
-    test_feed = create(:feed, :enabled, feed_profile_key: "rss", user: llm_user, ai_credential: credential)
-
-    workflow = FeedRefreshWorkflow.new(test_feed)
-    loader = Object.new
-    loader.define_singleton_method(:load) { raise LlmClient::AuthError, "Unauthorized" }
-    test_feed.stub(:loader_instance, loader) do
-      assert_raises(LlmClient::AuthError) { workflow.execute }
-    end
-
-    assert_equal "inactive", credential.reload.state
-    assert_equal "Unauthorized", credential.last_error
-    assert_equal "disabled", test_feed.reload.state
-
-    failed_events = Event.where(subject: test_feed, type: "feed_refresh")
-    assert_equal 1, failed_events.count
-    assert_equal "failed", failed_events.first.metadata["status"]
-    deactivated_event = Event.find_by(subject: credential, type: "ai_credential_deactivated")
-    assert_not_nil deactivated_event
-    assert_equal "warning", deactivated_event.level
-    assert_equal llm_user, deactivated_event.user
-  end
-
-  test "#execute should not disable the credential for non-auth LLM errors" do
+  test "#execute should not disable an AI credential when an ordinary loader fails" do
     llm_user = create(:user)
     credential = create(:ai_credential, :active, user: llm_user)
     test_feed = create(:feed, feed_profile_key: "rss", user: llm_user, ai_credential: credential)
 
     workflow = FeedRefreshWorkflow.new(test_feed)
     loader = Object.new
-    loader.define_singleton_method(:load) { raise LlmClient::ProviderError, "server error" }
+    loader.define_singleton_method(:load) { raise Loader::Error, "server error" }
     test_feed.stub(:loader_instance, loader) do
-      assert_raises(LlmClient::ProviderError) { workflow.execute }
+      assert_raises(Loader::Error) { workflow.execute }
     end
 
     assert_equal "active", credential.reload.state
+  end
+
+  test "#execute should handle unavailable AI extraction without spending or deactivating credentials" do
+    credential = create(:ai_credential, :active, available_models: [{ "id" => "saved-model" }])
+    search = create(:search_credential, :active, user: credential.user)
+    feed = create(:feed, :enabled, user: credential.user, feed_profile_key: "llm",
+                   params: { "prompt" => "A daily roundup" }, ai_credential: credential,
+                   ai_model: "saved-model", search_credential: search)
+
+    assert_no_difference -> { LlmUsage.count } do
+      error = assert_raises(Loader::Error) { FeedRefreshWorkflow.new(feed).execute }
+      assert_equal Loader::LlmLoader::UNAVAILABLE_MESSAGE, error.message
+    end
+
+    assert_predicate credential.reload, :active?
+    assert_predicate search.reload, :active?
+    assert_equal "failed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
+    assert_not_requested :any, /./
   end
 
   def usage_writing_loader(test_feed, rss, costs: [3], error: nil)
@@ -515,10 +508,10 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   test "#execute should reference the run's LLM usage on the failed event" do
     test_feed = create(:feed, :enabled, feed_profile_key: "rss")
 
-    loader = usage_writing_loader(test_feed, empty_rss, costs: [5], error: LlmClient::ProviderError.new("server error"))
+    loader = usage_writing_loader(test_feed, empty_rss, costs: [5], error: Loader::Error.new("server error"))
 
     test_feed.stub(:loader_instance, loader) do
-      assert_raises(LlmClient::ProviderError) { FeedRefreshWorkflow.new(test_feed).execute }
+      assert_raises(Loader::Error) { FeedRefreshWorkflow.new(test_feed).execute }
     end
 
     event = Event.find_by!(subject: test_feed, type: "feed_refresh")

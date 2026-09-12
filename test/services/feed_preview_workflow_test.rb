@@ -134,31 +134,19 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
                      ai_model: "claude-sonnet-4-6", status: :pending, run_id: AI_RUN_ID)
 
     captured_feed = nil
-    captured_context = nil
-    fake_client = Class.new do
-      attr_reader :credential
-
-      def initialize(credential, callback)
-        @credential = credential
-        @callback = callback
-      end
-
-      def call(context, **_options)
-        @callback.call(context)
-        LlmClient::Result.new(payload: { "items" => [] }, usage_id: 1)
-      end
-    end
-
-    LlmClient.stub(:for, lambda { |feed|
+    captured_options = nil
+    loader = Struct.new(:load).new([])
+    Loader::LlmLoader.stub(:new, lambda { |feed, options|
       captured_feed = feed
-      fake_client.new(credential, ->(context) { captured_context = context })
+      captured_options = options
+      loader
     }) do
       FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
     end
 
     assert_equal credential.id, captured_feed.ai_credential_id
-    assert_equal "claude-sonnet-4-6", captured_context.model
-    assert_equal :preview, captured_context.purpose
+    assert_equal "claude-sonnet-4-6", captured_feed.ai_model
+    assert_equal :preview, captured_options[:purpose]
     assert_equal 2, preview.reload.data.dig("stats", "content_size")
   end
 end

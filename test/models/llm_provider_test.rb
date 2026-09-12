@@ -94,14 +94,6 @@ class LlmProviderTest < ActiveSupport::TestCase
     assert_nil config.openai_use_system_role
   end
 
-  test "#default_model should have a known rate for every provider" do
-    LlmProvider.all.each do |provider|
-      assert provider.default_model.present?, "#{provider.name} must declare a default_model"
-      assert LlmClient::RateTable.rate_for(provider: provider.name, model: provider.default_model),
-             "#{provider.name} default_model #{provider.default_model} must have a rate entry"
-    end
-  end
-
   test "#ruby_llm_provider should resolve to a registered RubyLLM provider" do
     LlmProvider.all.each do |provider|
       assert_not_nil RubyLLM::Provider.resolve(provider.ruby_llm_provider),

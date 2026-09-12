@@ -12,13 +12,13 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
 
   test "#create should refresh an owned catalog while the credential stays active" do
     sign_in_as(credential.user)
-    assert_enqueued_with(job: AiModelCatalogRefreshJob) do
+    assert_no_enqueued_jobs do
       post ai_credential_model_catalog_path(credential)
     end
     assert_redirected_to ai_credential_path(credential)
     follow_redirect!
     assert_select 'button[data-key="ai_credential.refresh-models"][disabled]'
-    assert_select '[data-key="ai_credential.models-refresh-status"]', text: /Refreshing models/
+    assert_select '[data-key="ai_credential.models-refresh-status"]', text: /saved list is still available/
     assert_includes response.body, "cached-model"
     assert_predicate credential.reload, :active?
   end
@@ -33,7 +33,7 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
 
   test "#show should poll without scheduling work and show the cached list on failure" do
     sign_in_as(credential.user)
-    run = credential.refresh_models_async
+    run = OperationRun.start!(subject: credential, kind: :models_refresh, timeout: 15.minutes)
     assert_no_enqueued_jobs { get ai_credential_model_catalog_path(credential) }
     assert_response :no_content
     run.fail!
@@ -45,7 +45,7 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
 
   test "#show validation should render model polling after successful validation" do
     sign_in_as(credential.user)
-    credential.refresh_models_async
+    OperationRun.start!(subject: credential, kind: :models_refresh, timeout: 15.minutes)
     get ai_credential_validation_path(credential), headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_includes response.body, ai_credential_model_catalog_path(credential)

@@ -176,6 +176,72 @@ module ApplicationHelper
     end
   end
 
+  # The account menu. The desktop dropdown divides Settings from the rest, so
+  # the entries arrive grouped; the mobile menu renders them as one card.
+  def user_menu_item_groups
+    return [] unless Current.user
+
+    [
+      [
+        {
+          name: "Settings",
+          path: settings_path,
+          active: current_page?(settings_path)
+        }
+      ],
+      [
+        {
+          name: "Freefeed Access Tokens",
+          path: access_tokens_path,
+          active: current_page?(access_tokens_path)
+        },
+        {
+          name: "AI Credentials",
+          path: ai_credentials_path,
+          active: current_page?(ai_credentials_path)
+        },
+        {
+          name: "Search Credentials",
+          path: search_credentials_path,
+          active: current_page?(search_credentials_path)
+        },
+        {
+          name: "Invites",
+          path: invites_path,
+          active: current_page?(invites_path)
+        },
+        {
+          name: "Changelog",
+          path: changelog_path,
+          active: current_page?(changelog_path)
+        }
+      ]
+    ]
+  end
+
+  def user_menu_items
+    user_menu_item_groups.flatten
+  end
+
+  def user_menu_link_classes
+    "block px-4 py-2 text-sm text-heading hover:bg-surface-sunken"
+  end
+
+  # One row in a mobile nav card: rounded at the ends, divided in between.
+  def mobile_nav_link_classes(active:, first:, last:)
+    class_names(
+      "block w-full px-4 py-4 cursor-pointer hover:bg-surface-sunken hover:text-heading " \
+      "focus:outline-none focus:ring-2 focus:ring-ring focus:text-heading",
+      {
+        "bg-surface-inverted text-on-brand hover:bg-surface-inverted-hover hover:text-on-brand focus:text-on-brand" => active,
+        "text-heading" => !active,
+        "rounded-t-lg" => first,
+        "rounded-b-lg" => last,
+        "border-b border-border" => !last
+      }
+    )
+  end
+
   def navbar_items
     return [] unless Current.user
 
