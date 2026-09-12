@@ -17,7 +17,7 @@ class PostDetailsComponentTest < ViewComponent::TestCase
     assert_equal result.css("dl > div > dt").size, result.css("dl > div > dd").size
 
     assert_equal %w[post.feed post.published post.reposted post.source_url post.uid post.freefeed_post_id],
-                 result.css("dl > div").map { |row| row["data-key"] }
+                 row_keys(result)
 
     assert_not_nil result.css('[data-key="post.reposted"]').first
     assert_includes result.css('[data-key="post.reposted.label"]').first.text, "Reposted"
@@ -29,7 +29,7 @@ class PostDetailsComponentTest < ViewComponent::TestCase
     result = render_inline(PostDetailsComponent.new(post: post))
 
     assert_equal %w[post.feed post.published post.source_url post.uid],
-                 result.css("dl > div").map { |row| row["data-key"] }
+                 row_keys(result)
   end
 
   test "#render should show validation errors between the source URL and UID" do
@@ -38,7 +38,7 @@ class PostDetailsComponentTest < ViewComponent::TestCase
     result = render_inline(PostDetailsComponent.new(post: post))
 
     assert_equal %w[post.feed post.published post.source_url post.validation_errors post.uid],
-                 result.css("dl > div").map { |row| row["data-key"] }
+                 row_keys(result)
     assert_equal ["no_images"], result.css('[data-key="post.validation_errors.value"] li').map(&:text)
   end
 
@@ -86,5 +86,12 @@ class PostDetailsComponentTest < ViewComponent::TestCase
     result = render_inline(PostDetailsComponent.new(post: post))
 
     assert_nil result.css('[data-key="post.freefeed_post_id.value"] a').first
+  end
+
+  private
+
+  def row_keys(result)
+    result.css('[data-key^="post."]:not([data-key$=".label"]):not([data-key$=".value"])')
+          .map { |row| row["data-key"] }
   end
 end
