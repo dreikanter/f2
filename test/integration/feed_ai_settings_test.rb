@@ -238,5 +238,6 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
 
     assert_select "input[type=checkbox][name='enable_feed'][disabled]"
     assert_select "[data-key='form.enable-blocked-note']", text: Loader::LlmLoader::UNAVAILABLE_MESSAGE
+    assert_select "[data-controller~='enable-gate']", count: 0
   end
 end

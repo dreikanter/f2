@@ -231,7 +231,7 @@ class FeedFormComponent < ViewComponent::Base
   # The token select flips the gate without a reload, so the checkbox follows
   # it live. Anything else missing keeps the locked state the server rendered.
   def enable_gate_data(form)
-    return {} if feed.enabled? || active_tokens.empty? || missing_ai_credentials(form).any?
+    return {} if feed.enabled? || active_tokens.empty? || ai_settings(form).section_visible?
 
     {
       controller: "enable-gate",
@@ -249,6 +249,7 @@ class FeedFormComponent < ViewComponent::Base
   end
 
   def enable_hint(form)
+    return Loader::LlmLoader::UNAVAILABLE_MESSAGE if ai_settings(form).section_visible?
     return ready_enable_hint unless enable_blocked?(form)
     return TOKEN_PICK_HINT if active_tokens.any? && enable_missing(form) == [TOKEN_REQUIREMENT]
 
