@@ -55,22 +55,25 @@ class LlmProviderTest < ActiveSupport::TestCase
   end
 
   test "#configure should set the api key on the ruby_llm-provider key" do
-    config = Struct.new(:anthropic_api_key).new
-    LlmProvider.find("anthropic").configure(config, "sk-ant-x")
-    assert_equal "sk-ant-x", config.anthropic_api_key
+    RubyLLM.context do |config|
+      LlmProvider.find("anthropic").configure(config, "sk-ant-x")
+      assert_equal "sk-ant-x", config.anthropic_api_key
+    end
   end
 
   test "#configure should set the openai key and base for moonshot" do
-    config = Struct.new(:openai_api_key, :openai_api_base, :openai_use_system_role).new
-    LlmProvider.find("moonshot").configure(config, "sk-moon-x")
-    assert_equal "sk-moon-x", config.openai_api_key
-    assert_equal "https://api.moonshot.ai/v1", config.openai_api_base
+    RubyLLM.context do |config|
+      LlmProvider.find("moonshot").configure(config, "sk-moon-x")
+      assert_equal "sk-moon-x", config.openai_api_key
+      assert_equal "https://api.moonshot.ai/v1", config.openai_api_base
+    end
   end
 
   test "#configure should pin system prompts to role system for providers that declare it" do
-    config = Struct.new(:openai_api_key, :openai_api_base, :openai_use_system_role).new
-    LlmProvider.find("moonshot").configure(config, "sk-moon-x")
-    assert config.openai_use_system_role
+    RubyLLM.context do |config|
+      LlmProvider.find("moonshot").configure(config, "sk-moon-x")
+      assert config.openai_use_system_role
+    end
   end
 
   test "#pin_system_role? should default to false" do
@@ -81,17 +84,37 @@ class LlmProviderTest < ActiveSupport::TestCase
   end
 
   test "#configure should leave native openai on the runtime's own system role and base" do
-    config = Struct.new(:openai_api_key, :openai_api_base, :openai_use_system_role).new
-    LlmProvider.find("openai").configure(config, "sk-openai-x")
-    assert_equal "sk-openai-x", config.openai_api_key
-    assert_nil config.openai_api_base
-    assert_nil config.openai_use_system_role
+    RubyLLM.context do |config|
+      LlmProvider.find("openai").configure(config, "sk-openai-x")
+      assert_equal "sk-openai-x", config.openai_api_key
+      assert_nil config.openai_api_base
+      assert_nil config.openai_use_system_role
+    end
   end
 
   test "#configure should leave the system-role flag alone for other providers" do
-    config = Struct.new(:openrouter_api_key, :openai_use_system_role).new
-    LlmProvider.find("openrouter").configure(config, "sk-or-x")
-    assert_nil config.openai_use_system_role
+    RubyLLM.context do |config|
+      LlmProvider.find("openrouter").configure(config, "sk-or-x")
+      assert_equal "sk-or-x", config.openrouter_api_key
+      assert_nil config.openai_use_system_role
+    end
+  end
+
+  test "#configure should keep provider credentials isolated between contexts" do
+    original = [RubyLLM.config.openai_api_key, RubyLLM.config.openai_api_base, RubyLLM.config.openai_use_system_role]
+
+    RubyLLM.context do |moonshot|
+      LlmProvider.find("moonshot").configure(moonshot, "sk-moon-x")
+      RubyLLM.context do |openai|
+        LlmProvider.find("openai").configure(openai, "sk-openai-x")
+        assert_nil openai.openai_api_base
+        assert_nil openai.openai_use_system_role
+        assert_equal "sk-openai-x", openai.openai_api_key
+        assert_equal "sk-moon-x", moonshot.openai_api_key
+      end
+    end
+
+    assert_equal original, [RubyLLM.config.openai_api_key, RubyLLM.config.openai_api_base, RubyLLM.config.openai_use_system_role]
   end
 
   test "#ruby_llm_provider should resolve to a registered RubyLLM provider" do
