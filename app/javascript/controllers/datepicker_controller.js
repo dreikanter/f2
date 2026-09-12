@@ -2,13 +2,15 @@ import { Controller } from "@hotwired/stimulus"
 import "flowbite"
 import { format } from "date-fns"
 
+// Flowbite's own format tokens, not date-fns': the same ISO shape spelled
+// differently by each library.
+const PICKER_FORMAT = "yyyy-mm-dd"
+
 // Attaches the Flowbite datepicker to its input. Flowbite only auto-inits
 // `datepicker` attributes on turbo:load, which never fires for markup
 // injected via Turbo Streams (e.g. the expanded feed form), so inputs opt
 // in through this controller instead.
 export default class extends Controller {
-  static values = { format: { type: String, default: "yyyy-mm-dd" } }
-
   connect() {
     if (!window.Datepicker || this.element.datepicker) return
 
@@ -18,7 +20,7 @@ export default class extends Controller {
 
     this.picker = new window.Datepicker(
       this.element,
-      { format: this.formatValue, autohide: true },
+      { format: PICKER_FORMAT, autohide: true },
       { id: this.element.id || this.element.name, override: true }
     )
   }
