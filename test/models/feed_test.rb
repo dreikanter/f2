@@ -593,12 +593,12 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_enabled?
   end
 
-  test "#can_be_enabled? should return true for an AI feed with an active credential and a model" do
+  test "#can_be_enabled? should reject AI feeds even with a working credential and model" do
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
 
-    assert feed.can_be_enabled?
+    assert_not feed.can_be_enabled?
   end
 
   test "#can_be_previewed? should be true for a non-AI profile with a source" do
@@ -607,36 +607,15 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.can_be_previewed?
   end
 
-  test "#can_be_previewed? should be true for an AI profile with an active credential and an available model" do
-    credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
-    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
-
-    assert feed.can_be_previewed?
-  end
-
-  test "#can_be_previewed? should be false for an AI profile without a model" do
-    credential = create(:ai_credential, :active)
-    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: nil)
+  test "#can_be_previewed? should reject AI previews while extraction is unavailable" do
+    credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "saved-model" }])
+    feed = build(:feed, user: user, feed_profile_key: "llm", ai_credential: credential,
+                       ai_model: "saved-model", params: { "prompt" => "A daily roundup" })
 
     assert_not feed.can_be_previewed?
-  end
-
-  test "#can_be_previewed? should stay true when the saved model is absent from the listing" do
-    credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
-    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "removed-model")
-
-    assert feed.can_be_previewed?
-  end
-
-  test "#can_be_previewed? should allow a newly listed model" do
-    credential = create(:ai_credential, :active, available_models: [{ "id" => "unverified-model" }])
-    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "unverified-model")
-
-    assert feed.can_be_previewed?
+    assert_not feed.enable
+    assert_includes feed.errors[:base], Loader::LlmLoader::UNAVAILABLE_MESSAGE
+    assert_equal "saved-model", feed.ai_model
   end
 
   test "#can_be_previewed? should be false for an AI profile without a credential" do
@@ -1478,7 +1457,7 @@ class FeedTest < ActiveSupport::TestCase
                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
     result = feed.missing_enablement_parts
 
-    assert_equal ["active AI credential"], result
+    assert_equal ["AI feed availability", "active AI credential"], result
   end
 
   test "#missing_enablement_parts should allow a missing search credential" do
@@ -1488,7 +1467,7 @@ class FeedTest < ActiveSupport::TestCase
                         ai_model: "claude-sonnet-4-6", search_credential: nil)
     result = feed.missing_enablement_parts
 
-    assert_empty result
+    assert_equal ["AI feed availability"], result
   end
 
   test "#missing_enablement_parts should allow an inactive search credential" do
@@ -1499,16 +1478,16 @@ class FeedTest < ActiveSupport::TestCase
                         ai_model: "claude-sonnet-4-6", search_credential: search_credential)
     result = feed.missing_enablement_parts
 
-    assert_empty result
+    assert_equal ["AI feed availability"], result
   end
 
-  test "#missing_enablement_parts should be empty for a ready AI feed" do
+  test "#missing_enablement_parts should explain AI unavailability for a configured feed" do
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
     result = feed.missing_enablement_parts
 
-    assert_equal [], result
+    assert_equal ["AI feed availability"], result
   end
 
   test "#missing_enablement_parts should not report source missing for an AI feed with a prompt" do

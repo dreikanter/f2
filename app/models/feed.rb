@@ -228,6 +228,7 @@ class Feed < ApplicationRecord
     parts << "schedule" if scheduled? && cron_expression.blank?
     return parts unless FeedProfile.depends_on_ai?(feed_profile_key)
 
+    parts << "AI feed availability"
     parts << "active AI credential" unless ai_credential&.active?
     parts << "AI model" if ai_model.blank?
     parts
@@ -238,6 +239,11 @@ class Feed < ApplicationRecord
   # feed, and the in-memory state is rolled back to its persisted value so
   # re-renders reflect DB truth.
   def enable
+    if FeedProfile.depends_on_ai?(feed_profile_key)
+      errors.add(:base, Loader::LlmLoader::UNAVAILABLE_MESSAGE)
+      return false
+    end
+
     transition_state(:enabled)
   end
 
@@ -246,11 +252,7 @@ class Feed < ApplicationRecord
   end
 
   def can_be_previewed?
-    return false unless source_input.present? && feed_profile_present?
-    return true unless FeedProfile.depends_on_ai?(feed_profile_key)
-    return false unless ai_credential&.active?
-
-    effective_ai_model.present?
+    source_input.present? && feed_profile_present? && !FeedProfile.depends_on_ai?(feed_profile_key)
   end
 
   def ai_model_supported?

@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-12
+
+- AI feeds and model discovery are temporarily unavailable; saved settings and past usage remain accessible.
+
 ## 2026-09-11
 
 - The Enable button now stays off for a feed that's still missing its source, matching the hint that asks you to add one.

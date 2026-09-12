@@ -54,7 +54,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
 
     assert_difference("AiCredential.count", 1) do
-      assert_enqueued_with(job: AiCredentialValidationJob) do
+      assert_no_enqueued_jobs do
         post ai_credentials_url, params: {
           ai_credential: {
             provider: "anthropic",
@@ -67,7 +67,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     saved = AiCredential.last
     assert_redirected_to ai_credential_path(saved)
-    assert_equal "validating", saved.state
+    assert_equal "inactive", saved.state
     assert_not_nil saved.active_operation_run(:validation)
   end
 
@@ -331,7 +331,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     active = create(:ai_credential, :active, user: user)
     new_key = "sk-ant-#{SecureRandom.hex(16)}"
 
-    assert_enqueued_with(job: AiCredentialValidationJob) do
+    assert_no_enqueued_jobs do
       patch ai_credential_url(active), params: {
         ai_credential: {
           display_name: active.display_name,
@@ -342,7 +342,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     active.reload
     assert_equal new_key, active.credential_data["api_key"]
-    assert_equal "validating", active.state
+    assert_equal "inactive", active.state
     assert_not_nil active.active_operation_run(:validation)
   end
 
