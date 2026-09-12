@@ -1,10 +1,10 @@
 require "test_helper"
 
-class AccessTokenValidationServiceTest < ActiveSupport::TestCase
+class AccessTokenValidationTest < ActiveSupport::TestCase
   def validation_service(token = access_token)
     token.update!(state: :validating)
     run = create(:operation_run, subject: token)
-    AccessTokenValidationService.new(run)
+    AccessTokenValidation.new(run)
   end
 
   def user
@@ -275,7 +275,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   test "#call should not write a successful result after the run is superseded" do
     access_token.update!(state: :validating)
     stale_run = create(:operation_run, subject: access_token, started_at: 1.minute.ago)
-    service = AccessTokenValidationService.new(stale_run)
+    service = AccessTokenValidation.new(stale_run)
     current_run = OperationRun.start!(subject: access_token, kind: :validation)
     stub_app_token_info
     stub_successful_account_calls

@@ -1,4 +1,4 @@
-class AccessTokenValidationService
+class AccessTokenValidation
   attr_reader :run
 
   # @param run [OperationRun] access-token validation run
