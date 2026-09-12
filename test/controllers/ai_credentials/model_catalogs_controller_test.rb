@@ -13,14 +13,17 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
   test "#create should ignore refresh requests for inactive credentials" do
     credential.update!(state: :inactive)
     sign_in_as(credential.user)
+
     assert_no_enqueued_jobs do
-      post ai_credential_model_catalog_path(credential)
+      assert_no_difference "OperationRun.count" do
+        post ai_credential_model_catalog_path(credential)
+      end
     end
+
     assert_redirected_to ai_credential_path(credential)
-    follow_redirect!
-    assert_select 'button[data-key="ai_credential.refresh-models"][disabled]'
-    assert_includes response.body, "cached-model"
     assert_predicate credential.reload, :inactive?
+    assert_equal ["cached-model"], credential.available_models.pluck("id")
+    assert_not_requested :any, /./
   end
 
   test "#create should queue OpenAI refresh and poll until the snapshot is ready" do
