@@ -50,11 +50,11 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='ai_credentials.credential-data.api_key']"
   end
 
-  test "#create should save and enqueue validation when params are valid" do
+  test "#create should save and settle unavailable validation when params are valid" do
     sign_in_as(user)
 
     assert_difference("AiCredential.count", 1) do
-      assert_enqueued_with(job: AiCredentialValidationJob) do
+      assert_no_enqueued_jobs do
         post ai_credentials_url, params: {
           ai_credential: {
             provider: "anthropic",
@@ -67,8 +67,9 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     saved = AiCredential.last
     assert_redirected_to ai_credential_path(saved)
-    assert_equal "validating", saved.state
-    assert_not_nil saved.active_operation_run(:validation)
+    assert_equal "inactive", saved.state
+    assert_nil saved.active_operation_run(:validation)
+    assert_predicate saved.latest_operation_run(:validation), :failed?
   end
 
   test "#new should accept and remember a feed_id owned by current_user" do
@@ -235,7 +236,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
       assert_select "h2", text: "Available models", count: 1
       assert_select "[data-key='ai_credential.models-refresh-status']", text: /Updated .* ago\./
       assert_select "form[action=?][data-controller='loading-button']", ai_credential_model_catalog_path(active) do
-        assert_select "button[data-key='ai_credential.refresh-models'][title='Refresh models'][type='submit']:not([disabled])"
+        assert_select "button[data-key='ai_credential.refresh-models'][title='Refresh models'][type='submit'][disabled]"
       end
     end
   end
@@ -326,12 +327,12 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_equal original_key, active.credential_data["api_key"]
   end
 
-  test "#update should replace a new key, reset state, and enqueue validation" do
+  test "#update should preserve a replacement key and settle unavailable validation" do
     sign_in_as(user)
     active = create(:ai_credential, :active, user: user)
     new_key = "sk-ant-#{SecureRandom.hex(16)}"
 
-    assert_enqueued_with(job: AiCredentialValidationJob) do
+    assert_no_enqueued_jobs do
       patch ai_credential_url(active), params: {
         ai_credential: {
           display_name: active.display_name,
@@ -342,8 +343,9 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     active.reload
     assert_equal new_key, active.credential_data["api_key"]
-    assert_equal "validating", active.state
-    assert_not_nil active.active_operation_run(:validation)
+    assert_equal "inactive", active.state
+    assert_nil active.active_operation_run(:validation)
+    assert_predicate active.latest_operation_run(:validation), :failed?
   end
 
   test "#update should keep existing credential_data when api_key is blank" do

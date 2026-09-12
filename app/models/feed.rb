@@ -211,12 +211,10 @@ class Feed < ApplicationRecord
   end
 
   def can_be_enabled?
-    missing_enablement_parts.empty?
+    !FeedProfile.depends_on_ai?(feed_profile_key) && missing_enablement_parts.empty?
   end
 
-  # What enabling still needs, in plain nouns for the UI to read out. The
-  # enable check is this list being empty, so what blocks a feed and what the
-  # user is told is missing cannot disagree.
+  # Missing setup fields, phrased as nouns for the UI.
   # @return [Array<String>] the missing requirements, empty when ready
   def missing_enablement_parts
     parts = []
@@ -238,6 +236,11 @@ class Feed < ApplicationRecord
   # feed, and the in-memory state is rolled back to its persisted value so
   # re-renders reflect DB truth.
   def enable
+    if FeedProfile.depends_on_ai?(feed_profile_key)
+      errors.add(:base, Loader::LlmLoader::UNAVAILABLE_MESSAGE)
+      return false
+    end
+
     transition_state(:enabled)
   end
 
@@ -246,11 +249,7 @@ class Feed < ApplicationRecord
   end
 
   def can_be_previewed?
-    return false unless source_input.present? && feed_profile_present?
-    return true unless FeedProfile.depends_on_ai?(feed_profile_key)
-    return false unless ai_credential&.active?
-
-    effective_ai_model.present?
+    source_input.present? && feed_profile_present? && !FeedProfile.depends_on_ai?(feed_profile_key)
   end
 
   def ai_model_supported?

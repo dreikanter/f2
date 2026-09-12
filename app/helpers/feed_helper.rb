@@ -28,6 +28,8 @@ module FeedHelper
   # finished and a piece (like the access token) stopped working later. Only
   # several parts earn the list; a lone one reads as a sentence.
   def feed_enable_hint(feed)
+    return Loader::LlmLoader::UNAVAILABLE_MESSAGE if FeedProfile.depends_on_ai?(feed.feed_profile_key)
+
     missing_parts = feed.missing_enablement_parts
     return "Complete setup to enable this feed" if missing_parts.empty?
     return "To enable this feed, add: #{missing_parts.to_sentence}." if missing_parts.many?
@@ -60,13 +62,11 @@ module FeedHelper
     end
   end
 
-  # Action menu items for the feed page header. Refresh applies only to an
-  # enabled feed that actually pulls from a source; the destructive actions
-  # open the confirmation modals rendered alongside the feed page, each behind
-  # a separator so a stray click doesn't land on one.
+  # Destructive actions open confirmation modals and sit behind separators
+  # to reduce accidental clicks.
   def feed_actions_menu_items(feed)
     items = []
-    items << { label: "Refresh", href: feed_refresh_path(feed), method: :post, data: { key: "feed.#{feed.id}.refresh" } } if feed.enabled? && feed.scheduled?
+    items << { label: "Refresh", href: feed_refresh_path(feed), method: :post, data: { key: "feed.#{feed.id}.refresh" } } if policy(feed).refresh?
     items << { label: "Edit", href: edit_feed_path(feed), data: { key: "feed.#{feed.id}.edit" } }
 
     if feed.target_group.present?

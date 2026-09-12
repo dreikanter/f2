@@ -7,12 +7,16 @@
      data-preview-done>
   <div class="space-y-1">
     <p class="font-semibold text-heading">We couldn't build a preview.</p>
-    <p class="text-body">Something went wrong fetching this source. Double-check it and give it another go.</p>
+    <p class="text-body">
+      <% if FeedProfile.depends_on_ai?(preview.feed_profile_key) %>
+        <%= Loader::LlmLoader::UNAVAILABLE_MESSAGE %>
+      <% else %>
+        Something went wrong fetching this source. Double-check it and give it another go.
+      <% end %>
+    </p>
   </div>
-  <button type="button"
-          class="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-heading shadow-sm transition hover:bg-surface-muted"
-          data-action="click->preview#refresh"
-          data-key="preview.try-again">
-    Try again
-  </button>
+  <%= tag.button "Try again", type: "button",
+                 disabled: FeedProfile.depends_on_ai?(preview.feed_profile_key),
+                 class: "inline-flex items-center gap-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-heading shadow-sm transition hover:bg-surface-muted disabled:opacity-50 disabled:cursor-not-allowed",
+                 data: { action: "click->preview#refresh", key: "preview.try-again" } %>
 </div>

@@ -27,6 +27,21 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
     end
   end
 
+  test ".perform_now should preserve due AI schedules while AI is unavailable" do
+    credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    feed = create(:feed, :enabled, user: credential.user, feed_profile_key: "llm",
+                                  ai_credential: credential, ai_model: "claude-sonnet-4-6",
+                                  params: { "prompt" => "ruby news" }, search_credential: nil)
+    schedule = create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
+
+    assert_no_enqueued_jobs(only: FeedRefreshJob) do
+      FeedSchedulerJob.perform_now
+    end
+
+    assert_equal 1.hour.ago, schedule.reload.next_run_at
+    assert_nil schedule.last_run_at
+  end
+
   test ".perform_now should skip feeds not yet due" do
     feed = create(:feed, :enabled)
     create(:feed_schedule, feed: feed, next_run_at: 1.hour.from_now)

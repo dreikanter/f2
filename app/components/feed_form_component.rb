@@ -201,7 +201,7 @@ class FeedFormComponent < ViewComponent::Base
   # errors would render nowhere; the checkbox locks off and says what's
   # missing. A still-enabled feed keeps its checkbox so pausing works.
   def enable_blocked?(form)
-    enable_missing(form).any? && !feed.enabled?
+    (ai_settings(form).section_visible? || enable_missing(form).any?) && !feed.enabled?
   end
 
   def enable_missing(form)
@@ -222,6 +222,8 @@ class FeedFormComponent < ViewComponent::Base
   end
 
   def enable_hint(form)
+    return Loader::LlmLoader::UNAVAILABLE_MESSAGE if ai_settings(form).section_visible?
+
     if enable_blocked?(form)
       "Add #{enable_missing(form).to_sentence} first, then you can enable this feed."
     elsif feed.scheduled?

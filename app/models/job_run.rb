@@ -2,9 +2,6 @@ class JobRun < ApplicationRecord
   # Allowlist for job names arriving in params, so a request can't enqueue an
   # arbitrary class. Registered jobs take no arguments.
   RUNNABLE_JOBS = [
-    AnthropicCapabilityProbeJob,
-    KimiCapabilityProbeJob,
-    OpenAiCapabilityProbeJob,
     SerperCapabilityProbeJob,
     BraveCapabilityProbeJob,
     TavilyCapabilityProbeJob,
@@ -24,7 +21,7 @@ class JobRun < ApplicationRecord
   validates :job_class, presence: true
 
   def self.runnable_jobs
-    Rails.env.staging? ? RUNNABLE_JOBS + [AiModelDiscoveryReportJob] : RUNNABLE_JOBS
+    RUNNABLE_JOBS
   end
 
   def self.runnable_job(name)

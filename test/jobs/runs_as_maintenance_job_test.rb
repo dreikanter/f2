@@ -2,7 +2,7 @@ require "test_helper"
 
 class RunsAsMaintenanceJobTest < ActiveSupport::TestCase
   test "#display_name should read the class name as prose without the Job suffix" do
-    assert_equal "Anthropic Capability Probe", AnthropicCapabilityProbeJob.display_name
+    assert_equal "Serper Capability Probe", SerperCapabilityProbeJob.display_name
     assert_equal "Purge Expired Events", PurgeExpiredEventsJob.display_name
   end
 

@@ -213,10 +213,10 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     assert_select "input[type=checkbox][name='enable_feed'][disabled]", count: 1
     assert_select "input[type=checkbox][name='enable_feed'][checked]", false,
                   "Enable checkbox should be unchecked while enabling is unavailable"
-    assert_select "[data-key='form.enable-blocked-note']", text: /AI credentials/
+    assert_select "[data-key='form.enable-blocked-note']", text: Loader::LlmLoader::UNAVAILABLE_MESSAGE
   end
 
-  test "#edit should allow enabling when only search credentials are missing" do
+  test "#edit should keep AI unavailable when search credentials are missing" do
     sign_in_as(user)
     feed_without_search = create(:feed,
                                  user: user,
@@ -227,16 +227,16 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
 
     get edit_feed_path(feed_without_search)
 
-    assert_select "input[type=checkbox][name='enable_feed'][disabled]", count: 0
-    assert_select "[data-key='form.enable-blocked-note']", count: 0
+    assert_select "input[type=checkbox][name='enable_feed'][disabled]", count: 1
+    assert_select "[data-key='form.enable-blocked-note']", text: Loader::LlmLoader::UNAVAILABLE_MESSAGE
   end
 
-  test "#edit should keep the Enable checkbox interactive when AI setup is complete" do
+  test "#edit should keep AI unavailable when setup is complete" do
     sign_in_as(user)
 
     get edit_feed_path(ai_feed)
 
-    assert_select "input[type=checkbox][name='enable_feed']:not([disabled])"
-    assert_select "[data-key='form.enable-blocked-note']", false
+    assert_select "input[type=checkbox][name='enable_feed'][disabled]"
+    assert_select "[data-key='form.enable-blocked-note']", text: Loader::LlmLoader::UNAVAILABLE_MESSAGE
   end
 end

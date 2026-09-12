@@ -714,6 +714,20 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#feed-header-menu-#{webhook_feed.id} a[data-key='feed.#{webhook_feed.id}.edit']", text: "Edit"
   end
 
+  test "#show should not offer Refresh for an enabled AI feed during the outage" do
+    sign_in_as(user)
+    credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    ai_feed = create(:feed, :enabled, user: user, feed_profile_key: "llm",
+                                     ai_credential: credential, ai_model: "claude-sonnet-4-6",
+                                     params: { "prompt" => "ruby news" }, search_credential: nil)
+
+    get feed_url(ai_feed)
+
+    assert_response :success
+    assert_select "[data-key='feed.#{ai_feed.id}.refresh']", count: 0
+    assert_select "[data-key='feed.#{ai_feed.id}.edit']", text: "Edit"
+  end
+
   test "#show should no longer render the More Actions danger zone section" do
     sign_in_as(user)
     get feed_url(feed)

@@ -1,10 +1,5 @@
 require "test_helper"
 
-# Integration test for User Story 2 (AI website extraction).
-# Covers the credential-present path, the credential-gate path, and the
-# preview-failure "save anyway" path. Stubs the LLM call at the
-# Loader::LlmLoader seam (per LlmClient contract: stage tests stub the
-# client, not RubyLLM directly).
 class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
   include CacheTestHelpers
   include ActiveJob::TestHelper
@@ -32,95 +27,38 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
     "https://no-rss-example.com/blog"
   end
 
-  def sample_items
-    [
-      { "uid" => "https://no-rss-example.com/blog/post-1",
-        "title" => "First post",
-        "body" => "Hello world",
-        "source_url" => "https://no-rss-example.com/blog/post-1",
-        "supplementary" => [],
-        "images" => [],
-        "published_at" => "2026-05-10T00:00:00Z" }
-    ]
-  end
-
-  # Stubs LlmClient.for so the loader receives a fake client whose #call
-  # returns / raises the prescripted result. Exposes #credential like the
-  # real client so the loader can resolve the model. Block-scoped, no
-  # monkey-patching of stage classes.
-  def with_llm_client(result, credential: self.credential, &block)
-    fake_client = Class.new do
-      attr_reader :credential
-
-      def initialize(result, credential)
-        @result = result
-        @credential = credential
-      end
-
-      def call(_ctx, **_opts)
-        case @result
-        when Exception then raise @result
-        when Hash then LlmClient::Result.new(payload: @result, usage_id: 1)
-        else raise ArgumentError, "unsupported stub result: #{@result.class}"
-        end
-      end
-    end.new(result, credential)
-
-    LlmClient.stub(:for, ->(*_args) { fake_client }, &block)
-  end
-
-  def detect(url)
-    stub_request(:get, url).to_return(status: 200, body: "<html><body>no rss here</body></html>")
-    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    perform_enqueued_jobs
-  end
-
-  test "#post should walk the AI happy path: detect, preview, save enabled" do
+  test "#post should reject AI execution while preserving a saved draft and selections" do
     sign_in_as(user)
     access_token
     credential
     search_credential
 
-    with_llm_client({ "items" => sample_items }) do
-      with_memory_cache do
-        detect(ai_url)
+    assert_no_difference -> { LlmUsage.count } do
+      post feed_previews_path, params: { profile_key: "llm", params: { prompt: ai_url },
+                                        ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6" }
+      perform_enqueued_jobs
+      assert_predicate FeedPreview.last, :failed?
+      get feed_preview_path(FeedPreview.last)
+      assert_includes response.body, Loader::LlmLoader::UNAVAILABLE_MESSAGE
+      assert_select '[data-key="preview.try-again"][disabled]'
 
-        get feed_identifications_path, params: { url: ai_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-        assert_response :success
-        assert_includes response.body, "Follow with AI"
 
-        post feed_previews_path, params: { profile_key: "llm", "params" => { "prompt" => ai_url },
-                               ai_credential_id: credential.id,
-                               search_credential_id: search_credential.id,
-                               ai_model: "claude-sonnet-4-6" }
-        assert_response :success
-        perform_enqueued_jobs
-
-        preview = FeedPreview.last
-        assert_predicate preview, :ready?
-
-        assert_difference("Feed.count", 1) do
-          post feeds_path, params: {
-            feed: {
-              params: { prompt: ai_url },
-              name: "No-RSS Blog",
-              feed_profile_key: "llm",
-              access_token_id: access_token.id,
-              target_group: "testgroup",
-              schedule_interval: "1h",
-              ai_credential_id: credential.id,
-              search_credential_id: search_credential.id,
-              ai_model: "claude-sonnet-4-6"
-            },
-            enable_feed: "1"
-          }
-        end
-
-        assert_equal "enabled", Feed.last.state
-        assert_nil FeedIdentification.find_by(user: user, input: ai_url),
-                   "FeedIdentification should be cleaned up after saving an AI feed from a URL"
-      end
+      post feeds_path, params: {
+        feed: { params: { prompt: ai_url }, name: "Saved AI feed", feed_profile_key: "llm",
+                access_token_id: access_token.id, target_group: "testgroup", schedule_interval: "1h",
+                ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6",
+                search_credential_id: search_credential.id },
+        enable_feed: "1"
+      }
     end
+
+    assert_response :unprocessable_entity
+    assert_predicate Feed.last, :draft?
+    assert_equal credential.id, Feed.last.ai_credential_id
+    assert_equal "claude-sonnet-4-6", Feed.last.ai_model
+    assert_equal search_credential.id, Feed.last.search_credential_id
+    assert_includes response.body, Loader::LlmLoader::UNAVAILABLE_MESSAGE
+    assert_not_requested :any, /./
   end
 
   test "#show should gate on credentials when an AI profile has no usable credential" do
