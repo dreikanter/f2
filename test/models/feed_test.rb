@@ -608,8 +608,8 @@ class FeedTest < ActiveSupport::TestCase
   end
 
   test "#can_be_previewed? should reject AI previews while extraction is unavailable" do
-    credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "saved-model" }])
-    feed = build(:feed, user: user, feed_profile_key: "llm", ai_credential: credential,
+    credential = create(:ai_credential, :active, available_models: [{ "id" => "saved-model" }])
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm", ai_credential: credential,
                        ai_model: "saved-model", params: { "prompt" => "A daily roundup" })
 
     assert_not feed.can_be_previewed?
@@ -1457,7 +1457,7 @@ class FeedTest < ActiveSupport::TestCase
                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
     result = feed.missing_enablement_parts
 
-    assert_equal ["AI feed availability", "active AI credential"], result
+    assert_equal ["active AI credential"], result
   end
 
   test "#missing_enablement_parts should allow a missing search credential" do
@@ -1467,7 +1467,7 @@ class FeedTest < ActiveSupport::TestCase
                         ai_model: "claude-sonnet-4-6", search_credential: nil)
     result = feed.missing_enablement_parts
 
-    assert_equal ["AI feed availability"], result
+    assert_equal [], result
   end
 
   test "#missing_enablement_parts should allow an inactive search credential" do
@@ -1478,16 +1478,16 @@ class FeedTest < ActiveSupport::TestCase
                         ai_model: "claude-sonnet-4-6", search_credential: search_credential)
     result = feed.missing_enablement_parts
 
-    assert_equal ["AI feed availability"], result
+    assert_equal [], result
   end
 
-  test "#missing_enablement_parts should explain AI unavailability for a configured feed" do
+  test "#missing_enablement_parts should be empty for a configured AI feed" do
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
     result = feed.missing_enablement_parts
 
-    assert_equal ["AI feed availability"], result
+    assert_equal [], result
   end
 
   test "#missing_enablement_parts should not report source missing for an AI feed with a prompt" do

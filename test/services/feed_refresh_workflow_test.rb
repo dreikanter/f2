@@ -446,6 +446,24 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "active", credential.reload.state
   end
 
+  test "#execute should handle unavailable AI extraction without spending or deactivating credentials" do
+    credential = create(:ai_credential, :active, available_models: [{ "id" => "saved-model" }])
+    search = create(:search_credential, :active, user: credential.user)
+    feed = create(:feed, :enabled, user: credential.user, feed_profile_key: "llm",
+                   params: { "prompt" => "A daily roundup" }, ai_credential: credential,
+                   ai_model: "saved-model", search_credential: search)
+
+    assert_no_difference -> { LlmUsage.count } do
+      error = assert_raises(Loader::Error) { FeedRefreshWorkflow.new(feed).execute }
+      assert_equal Loader::LlmLoader::UNAVAILABLE_MESSAGE, error.message
+    end
+
+    assert_predicate credential.reload, :active?
+    assert_predicate search.reload, :active?
+    assert_equal "failed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
+    assert_not_requested :any, /./
+  end
+
   def usage_writing_loader(test_feed, rss, costs: [3], error: nil)
     lambda do |refresh_event:|
       loader = Object.new

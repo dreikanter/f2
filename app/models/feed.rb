@@ -211,12 +211,10 @@ class Feed < ApplicationRecord
   end
 
   def can_be_enabled?
-    missing_enablement_parts.empty?
+    !FeedProfile.depends_on_ai?(feed_profile_key) && missing_enablement_parts.empty?
   end
 
-  # What enabling still needs, in plain nouns for the UI to read out. The
-  # enable check is this list being empty, so what blocks a feed and what the
-  # user is told is missing cannot disagree.
+  # Missing setup fields, phrased as nouns for the UI.
   # @return [Array<String>] the missing requirements, empty when ready
   def missing_enablement_parts
     parts = []
@@ -228,7 +226,6 @@ class Feed < ApplicationRecord
     parts << "schedule" if scheduled? && cron_expression.blank?
     return parts unless FeedProfile.depends_on_ai?(feed_profile_key)
 
-    parts << "AI feed availability"
     parts << "active AI credential" unless ai_credential&.active?
     parts << "AI model" if ai_model.blank?
     parts

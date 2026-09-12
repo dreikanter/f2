@@ -136,7 +136,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     captured_feed = nil
     captured_options = nil
     loader = Struct.new(:load).new([])
-    Loader::LlmLoader.stub(:new, lambda { |feed, **options|
+    Loader::LlmLoader.stub(:new, lambda { |feed, options|
       captured_feed = feed
       captured_options = options
       loader

@@ -38,6 +38,10 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
                                         ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6" }
       perform_enqueued_jobs
       assert_predicate FeedPreview.last, :failed?
+      get feed_preview_path(FeedPreview.last)
+      assert_includes response.body, Loader::LlmLoader::UNAVAILABLE_MESSAGE
+      assert_select '[data-key="preview.try-again"][disabled]'
+
 
       post feeds_path, params: {
         feed: { params: { prompt: ai_url }, name: "Saved AI feed", feed_profile_key: "llm",

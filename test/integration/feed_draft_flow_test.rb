@@ -1,7 +1,6 @@
 require "test_helper"
 
-# End-to-end integration test for saving an AI feed as a draft, adding each
-# required credential type, and enabling the completed feed.
+# Saving an AI draft and adding credentials remain available while extraction is paused.
 class FeedDraftFlowTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 
@@ -19,7 +18,7 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     "https://no-rss-example.com/blog"
   end
 
-  test "full flow: add AI credentials, then enable the draft without external search" do
+  test "full flow: save AI credentials and keep the feed as a draft while extraction is unavailable" do
     sign_in_as(user)
     access_token
 
@@ -62,52 +61,25 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     assert_equal ai_credential.id, draft.ai_credential_id
     assert_redirected_to ai_credential_path(ai_credential, feed_id: draft.id)
 
-    ai_credential.update!(
-      state: :active,
-      last_validated_at: Time.current,
-      available_models: [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }]
-    )
-
-    get edit_feed_path(draft)
+    assert_predicate ai_credential.reload, :inactive?
+    assert_predicate ai_credential.latest_operation_run(:validation), :failed?
+    assert_nil ai_credential.active_operation_run(:validation)
+    follow_redirect!
     assert_response :success
-    assert_select "button[value='save_as_draft_and_add_credentials']", count: 0
-    assert_select "[data-key='credentials.gate']", count: 0
-    assert_select "select[data-key='form.search-credential'] option[selected][value='']"
+    assert_includes response.body, AiModelCatalog::UNAVAILABLE_MESSAGE
 
     patch feed_path(draft), params: {
-      feed: {
-        access_token_id: access_token.id,
-        target_group: "testgroup",
-        schedule_interval: "1h",
-        ai_credential_id: ai_credential.id,
-        ai_model: "claude-sonnet-4-6"
-      },
+      feed: { name: "Renamed AI draft", params: { prompt: "follow a different blog" },
+              access_token_id: access_token.id, target_group: "testgroup" },
       enable_feed: "1"
     }
 
-    assert_redirected_to feed_path(draft)
-    draft.reload
-    assert_equal "enabled", draft.state
-    assert_equal "No-RSS Blog", draft.name
-    assert_nil draft.search_credential_id
-
-    patch feed_path(draft), params: {
-      feed: {
-        params: { prompt: "follow a different blog" },
-        feed_profile_key: "rss"
-      },
-      enable_feed: "1"
-    }
-    draft.reload
-    assert_equal "enabled", draft.state
+    assert_response :unprocessable_entity
+    assert_predicate draft.reload, :draft?
+    assert_equal "Renamed AI draft", draft.name
     assert_equal "follow a different blog", draft.source_input
-    assert_equal "llm", draft.feed_profile_key
-
-    get feeds_path
-    assert_response :success
-    assert_select "p", text: /1 active feed/
-    assert_select "[data-key=?] svg[aria-label=?]", "feed.#{draft.id}.status_icon", "Enabled"
-    assert_select "[data-key=?]", "feed.#{draft.id}.continue_setup", false
-    assert_select "a[href=?]", feed_path(draft), text: "No-RSS Blog"
+    assert_equal ai_credential.id, draft.ai_credential_id
+    assert_includes response.body, Loader::LlmLoader::UNAVAILABLE_MESSAGE
+    assert_not_requested :any, /./
   end
 end

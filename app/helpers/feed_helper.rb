@@ -28,6 +28,8 @@ module FeedHelper
   # finished and a piece (like the access token) stopped working later. Only
   # several parts earn the list; a lone one reads as a sentence.
   def feed_enable_hint(feed)
+    return Loader::LlmLoader::UNAVAILABLE_MESSAGE if FeedProfile.depends_on_ai?(feed.feed_profile_key)
+
     missing_parts = feed.missing_enablement_parts
     return "Complete setup to enable this feed" if missing_parts.empty?
     return "To enable this feed, add: #{missing_parts.to_sentence}." if missing_parts.many?

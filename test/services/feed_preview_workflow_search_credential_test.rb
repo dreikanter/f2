@@ -26,7 +26,7 @@ class FeedPreviewWorkflowSearchCredentialTest < ActiveSupport::TestCase
 
     captured_feed = nil
     loader = Struct.new(:load).new([])
-    Loader::LlmLoader.stub(:new, lambda { |feed, **_options|
+    Loader::LlmLoader.stub(:new, lambda { |feed, _options|
       captured_feed = feed
       loader
     }) do
