@@ -156,7 +156,7 @@ class FeedHelperTest < ActionView::TestCase
   end
 
   test "#feed_actions_menu_items should list refresh, edit, purge, and delete for an enabled feed" do
-    feed = create(:feed, :enabled, target_group: "testgroup")
+    feed = create(:feed, :enabled, user: user, target_group: "testgroup")
 
     labels = menu_labels(feed)
 
@@ -164,7 +164,7 @@ class FeedHelperTest < ActionView::TestCase
   end
 
   test "#feed_actions_menu_items should omit refresh for a feed that is not enabled" do
-    feed = create(:feed, :disabled, target_group: "testgroup")
+    feed = create(:feed, :disabled, user: user, target_group: "testgroup")
 
     labels = menu_labels(feed)
 
@@ -172,7 +172,7 @@ class FeedHelperTest < ActionView::TestCase
   end
 
   test "#feed_actions_menu_items should omit purge when the feed has no target group" do
-    feed = create(:feed, :enabled, target_group: "testgroup")
+    feed = create(:feed, :enabled, user: user, target_group: "testgroup")
     feed.target_group = nil
 
     labels = menu_labels(feed)
@@ -181,7 +181,7 @@ class FeedHelperTest < ActionView::TestCase
   end
 
   test "#feed_actions_menu_items should separate purge and delete from the actions above them" do
-    feed = create(:feed, :enabled, target_group: "testgroup")
+    feed = create(:feed, :enabled, user: user, target_group: "testgroup")
 
     items = feed_actions_menu_items(feed)
     separators = items.each_index.select { |index| items[index][:separator] }
@@ -190,7 +190,7 @@ class FeedHelperTest < ActionView::TestCase
   end
 
   test "#feed_actions_menu_items should keep the delete separator when purge is unavailable" do
-    feed = create(:feed, :enabled, target_group: "testgroup")
+    feed = create(:feed, :enabled, user: user, target_group: "testgroup")
     feed.target_group = nil
 
     items = feed_actions_menu_items(feed)
@@ -200,7 +200,7 @@ class FeedHelperTest < ActionView::TestCase
   end
 
   test "#feed_actions_menu_items should wire refresh to a POST and danger actions to their modals" do
-    feed = create(:feed, :enabled, target_group: "testgroup")
+    feed = create(:feed, :enabled, user: user, target_group: "testgroup")
 
     items = feed_actions_menu_items(feed).reject { |item| item[:separator] }.index_by { |item| item[:label] }
 
@@ -233,6 +233,14 @@ class FeedHelperTest < ActionView::TestCase
   end
 
   private
+
+  def user
+    @user ||= create(:user)
+  end
+
+  def policy(record)
+    Pundit.policy!(user, record)
+  end
 
   def menu_labels(feed)
     feed_actions_menu_items(feed).reject { |item| item[:separator] }.map { |item| item[:label] }
