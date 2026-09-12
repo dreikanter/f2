@@ -61,6 +61,8 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     assert_equal ai_credential.id, draft.ai_credential_id
     assert_redirected_to ai_credential_path(ai_credential, feed_id: draft.id)
 
+    AiCredentialValidationJob.perform_now(ai_credential.latest_operation_run(:validation))
+
     assert_predicate ai_credential.reload, :inactive?
     assert_predicate ai_credential.latest_operation_run(:validation), :failed?
     assert_nil ai_credential.active_operation_run(:validation)

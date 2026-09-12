@@ -10,7 +10,7 @@
                       controller: "loading-button",
                       action: "turbo:submit-start->loading-button#start turbo:submit-end->loading-button#end"
                     } do %>
-        <%= render RefreshButtonComponent.new(title: "Refresh models", loading: refreshing, disabled: !ai_credential.active? || !ai_credential.llm_provider.discovery_available?, compact: true, type: "submit",
+        <%= render RefreshButtonComponent.new(title: "Refresh models", loading: refreshing, disabled: !ai_credential.can_refresh_models?, compact: true, type: "submit",
                                               data: { key: "ai_credential.refresh-models" }) %>
       <% end %>
     </div>
@@ -19,7 +19,7 @@
         Refreshing models. Your credential and saved list remain usable.
       <% elsif ai_credential.latest_operation_run(:models_refresh)&.status.in?(%w[failed timed_out]) %>
         Couldn't refresh models. Your saved list is still available.
-      <% elsif !ai_credential.llm_provider.discovery_available? %>
+      <% elsif ai_credential.provider_unavailable? %>
         <%= AiModelCatalog::UNAVAILABLE_MESSAGE %>
       <% end %>
       <% if ai_credential.models_refreshed_at %>

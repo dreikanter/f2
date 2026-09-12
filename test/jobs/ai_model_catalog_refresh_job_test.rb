@@ -19,10 +19,11 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     assert_not_requested :any, /./
   end
 
-  test "#refresh_models_async should settle an explicit request without queued work" do
+  test "#refresh_models_async should reject an unavailable provider without creating work" do
     assert_no_enqueued_jobs do
-      run = credential.refresh_models_async(force: true)
-      assert_predicate run, :failed?
+      assert_no_difference "OperationRun.count" do
+        assert_nil credential.refresh_models_async(force: true)
+      end
     end
     assert_not credential.models_refreshing?
     assert_equal ["saved-model"], credential.reload.available_models.pluck("id")
@@ -39,8 +40,9 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
   end
 
   test "#perform should leave a superseded run and its replacement unchanged" do
-    old = OperationRun.start!(subject: credential, kind: :models_refresh)
-    current = credential.refresh_models_async(force: true)
+    old = OperationRun.start!(subject: openai_credential, kind: :models_refresh)
+    current = OperationRun.start!(subject: openai_credential, kind: :models_refresh)
+    current.fail!
 
     AiModelCatalogRefreshJob.perform_now(old)
     AiModelCatalogTimeoutJob.perform_now(current)

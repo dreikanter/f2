@@ -10,7 +10,7 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
     assert_redirected_to new_session_path
   end
 
-  test "#create should refresh an owned catalog while the credential stays active" do
+  test "#create should leave an unsupported credential and its saved catalog usable" do
     sign_in_as(credential.user)
     assert_no_enqueued_jobs do
       post ai_credential_model_catalog_path(credential)
@@ -18,7 +18,7 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
     assert_redirected_to ai_credential_path(credential)
     follow_redirect!
     assert_select 'button[data-key="ai_credential.refresh-models"][disabled]'
-    assert_select '[data-key="ai_credential.models-refresh-status"]', text: /saved list is still available/
+    assert_select '[data-key="ai_credential.models-refresh-status"]', text: AiModelCatalog::UNAVAILABLE_MESSAGE
     assert_includes response.body, "cached-model"
     assert_predicate credential.reload, :active?
   end

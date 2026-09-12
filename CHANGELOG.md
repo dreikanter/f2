@@ -4,8 +4,6 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-12
 
-- OpenAI credentials can validate their API keys and refresh available models again.
-
 - AI feed settings keep the Enable checkbox off and explain the temporary unavailability.
 - AI feeds and model discovery are temporarily unavailable; saved settings and past usage remain accessible, and enabled AI feeds retain their status.
 

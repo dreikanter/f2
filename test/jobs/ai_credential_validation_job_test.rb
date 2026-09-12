@@ -21,10 +21,15 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     assert_not_requested :any, /./
   end
 
-  test "#validate_async should settle a new credential without starting polling or queued work" do
+  test "#perform should settle unavailable validation through the normal job lifecycle" do
     credential = create(:ai_credential)
 
-    assert_no_enqueued_jobs { credential.validate_async(AiCredentialValidationJob) }
+    run = credential.validate_async(AiCredentialValidationJob)
+    assert_predicate credential.reload, :validating?
+    assert_enqueued_with(job: AiCredentialValidationJob, args: [run])
+    assert_enqueued_with(job: ProviderCredentialValidationTimeoutJob, args: [run], at: run.deadline_at)
+
+    AiCredentialValidationJob.perform_now(run)
 
     assert_predicate credential.reload, :inactive?
     assert_predicate credential.latest_operation_run(:validation), :failed?

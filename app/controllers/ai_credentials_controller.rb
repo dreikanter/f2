@@ -5,7 +5,7 @@ class AiCredentialsController < CredentialsController
   private
 
   def default_provider
-    LlmProvider.all.find(&:discovery_available?).name
+    LlmProvider.available.first.name
   end
 
   def credential_noun

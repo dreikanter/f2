@@ -88,6 +88,29 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_equal LlmProvider.find("anthropic"), credential.llm_provider
   end
 
+  test "#can_refresh_models? should require an active credential with an implementation" do
+    credential = build(:ai_credential, :active, provider: "openai")
+    assert credential.can_refresh_models?
+
+    credential.state = :inactive
+    assert_not credential.can_refresh_models?
+  end
+
+  test "#can_refresh_models? should keep saved unsupported credentials unavailable" do
+    credential = build(:ai_credential, :active, provider: "anthropic")
+
+    assert credential.provider_unavailable?
+    assert_not credential.can_refresh_models?
+    assert_equal "Anthropic", credential.provider_name
+  end
+
+  test "#ruby_llm_context should reject an unavailable provider without network calls" do
+    credential = build(:ai_credential, :active, provider: "anthropic")
+
+    assert_raises(AiModelCatalog::Unavailable) { credential.ruby_llm_context }
+    assert_not_requested :any, /./
+  end
+
   test "#ruby_llm_context should isolate credentials and disable SDK retries" do
     first = build(:ai_credential, provider: "openai", credential_data: { "api_key" => "first-key" })
     second = build(:ai_credential, provider: "openai", credential_data: { "api_key" => "second-key" })
