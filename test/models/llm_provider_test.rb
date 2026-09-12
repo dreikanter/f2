@@ -9,7 +9,7 @@ class LlmProviderTest < ActiveSupport::TestCase
   test "#find should return the OpenAI provider" do
     provider = LlmProvider.find(:openai)
 
-    assert_instance_of Ai::Providers::Openai, provider
+    assert_instance_of LlmProvider::Openai, provider
     assert_equal "openai", provider.name
     assert_equal "OpenAI", provider.display_name
     assert_equal "gpt-5.6-luna", provider.default_model

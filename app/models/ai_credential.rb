@@ -38,10 +38,7 @@ class AiCredential < ApplicationRecord
   end
 
   def ruby_llm_context
-    RubyLLM.context do |config|
-      llm_provider.configure(config, credential_data.fetch("api_key"))
-      config.max_retries = 0
-    end
+    llm_provider.context(api_key: credential_data.fetch("api_key"))
   end
 
   def refresh_models_async(force: false)

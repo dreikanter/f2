@@ -1,5 +1,5 @@
 module LlmProvider
-  PROVIDERS = { "openai" => Ai::Providers::Openai.new.freeze }.freeze
+  PROVIDERS = { "openai" => Openai.new.freeze }.freeze
 
   class << self
     def all
