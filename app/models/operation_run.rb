@@ -101,6 +101,11 @@ class OperationRun < ApplicationRecord
     settle!(:timed_out, &)
   end
 
+  # @return [Boolean] whether the run settled without succeeding
+  def unsuccessful?
+    failed? || timed_out?
+  end
+
   # @param stale_after [ActiveSupport::Duration, nil] fallback age for lost timeouts
   # @return [Boolean] whether polling should continue
   def in_progress?(stale_after: nil)
