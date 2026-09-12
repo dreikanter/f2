@@ -1,0 +1,8 @@
+{
+  "error": {
+    "message": "IP not authorized",
+    "type": "invalid_request_error",
+    "param": null,
+    "code": "ip_not_authorized"
+  }
+}

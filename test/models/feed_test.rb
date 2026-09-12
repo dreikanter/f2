@@ -940,14 +940,14 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "removed-model", feed.effective_ai_model
   end
 
-  test "#effective_ai_model should preserve the selected kimi version" do
-    credential = create(:ai_credential, :active, provider: "moonshot",
-                                                 available_models: [{ "id" => "kimi-k2.6" }, { "id" => "kimi-k2.5" }])
+  test "#effective_ai_model should preserve the selected model version" do
+    credential = create(:ai_credential, :active, provider: "openai",
+                                                 available_models: [{ "id" => "gpt-5.6-luna" }, { "id" => "gpt-5-mini" }])
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "x" }, ai_credential: credential, ai_model: "kimi-k2.5")
+                        params: { "prompt" => "x" }, ai_credential: credential, ai_model: "gpt-5-mini")
 
     assert feed.ai_model_supported?
-    assert_equal "kimi-k2.5", feed.effective_ai_model
+    assert_equal "gpt-5-mini", feed.effective_ai_model
   end
 
   test "#ai_model_supported? should follow the credential's snapshot" do

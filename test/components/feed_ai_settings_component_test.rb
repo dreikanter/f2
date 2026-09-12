@@ -20,8 +20,8 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
   end
 
   def unverified_credential
-    @unverified_credential ||= create(:ai_credential, :active, user: user, provider: "openrouter",
-                                                               available_models: [{ "id" => "anthropic/claude-sonnet-4-6" }])
+    @unverified_credential ||= create(:ai_credential, :active, user: user, provider: "openai",
+                                                               available_models: [{ "id" => "future-openai-model" }])
   end
 
   def ai_feed(**attrs)
