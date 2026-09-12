@@ -2,9 +2,10 @@ require "test_helper"
 require "rack/utils"
 
 class SortablePresenterTest < ActiveSupport::TestCase
-  test "#options should use defaults when params are missing" do
+  test "#options should show the resolved selection and toggle ascending order" do
     presenter = SortablePresenter.new(
-      params: {},
+      current_sort_field: "name",
+      current_direction: "asc",
       fields: {
         name: {
           title: "Name",
@@ -20,6 +21,7 @@ class SortablePresenterTest < ActiveSupport::TestCase
 
     option = presenter.options.first
     assert option.active?
+    assert_equal "arrow-up", option.icon_name
 
     expected = {
       "sort" => "name",
@@ -29,13 +31,10 @@ class SortablePresenterTest < ActiveSupport::TestCase
     assert_equal expected, query_params(option.path)
   end
 
-  test "#options should honor provided params and toggle direction" do
+  test "#options should toggle descending order and preserve link parameters" do
     presenter = SortablePresenter.new(
-      params: {
-        sort: "status",
-        direction: "desc",
-        extra: "1"
-      },
+      current_sort_field: "status",
+      current_direction: "desc",
       fields: {
         name: {
           title: "Name",
@@ -55,6 +54,13 @@ class SortablePresenterTest < ActiveSupport::TestCase
 
     assert_equal "status", active_option.field
     assert_equal "desc", active_option.active_direction
+    assert_equal "arrow-down", active_option.icon_name
+
+    inactive_option = presenter.options.find { |option| option.field == "name" }
+    assert_not inactive_option.active?
+    assert_nil inactive_option.active_direction
+    assert_nil inactive_option.icon_name
+    assert_equal({ "extra" => "1", "sort" => "name", "direction" => "asc" }, query_params(inactive_option.path))
 
     expected = {
       "extra" => "1",
@@ -63,26 +69,6 @@ class SortablePresenterTest < ActiveSupport::TestCase
     }
 
     assert_equal(expected, query_params(active_option.path))
-  end
-
-  test "#current_direction should fall back to defaults for invalid params" do
-    presenter = SortablePresenter.new(
-      params: {
-        sort: "invalid",
-        direction: "sideways"
-      },
-      fields: {
-        name: {
-          title: "Name",
-          order_by: "LOWER(items.name)",
-          direction: :asc
-        }
-      },
-      path_builder: ->(params) { "/items?#{params.to_query}" }
-    )
-
-    assert_equal "Name", presenter.current_title
-    assert_equal "asc", presenter.current_direction
   end
 
   private
