@@ -68,9 +68,9 @@ class FeedFormComponentTest < ViewComponent::TestCase
     assert_equal({ "rss" => "url" }, component(feed, candidates: [candidate("rss")]).preview_source_keys)
   end
 
-  test "#ai_prompt_editable? should be true only for AI-backed profiles" do
-    assert component(ai_feed).ai_prompt_editable?
-    assert_not component(feed).ai_prompt_editable?
+  test "#ai_profile? should be true only for AI-backed profiles" do
+    assert component(ai_feed).ai_profile?
+    assert_not component(feed).ai_profile?
   end
 
   test "#source_editable? should allow URL edits only when editing a deterministic feed" do
@@ -153,52 +153,43 @@ class FeedFormComponentTest < ViewComponent::TestCase
     assert_equal Feed::DEFAULT_SCHEDULE_INTERVAL, component(feed(cron_expression: nil)).selected_schedule_interval
   end
 
-  test "#enable_missing should list every missing setup piece" do
-    assert_equal ["a FreeFeed access token"], component(feed).enable_missing(nil)
-    assert_equal ["a FreeFeed access token", "AI credentials"],
-                 component(ai_feed).enable_missing(nil)
-  end
-
-  test "#enable_missing should ask for a token the feed doesn't hold yet" do
+  test "#enable_blocked? should require a token selected on the feed" do
     active_token
-    assert_equal ["a FreeFeed access token"], component(saved_feed(:without_access_token)).enable_missing(nil)
-  end
-
-  test "#enable_missing should be empty when the setup is complete" do
-    assert_empty component(feed(access_token: active_token)).enable_missing(nil)
+    assert component(saved_feed(:without_access_token)).enable_blocked?
+    assert_not component(feed(access_token: active_token)).enable_blocked?
   end
 
   test "#enable_hint should offer the pick when the account has tokens" do
     active_token
-    assert_equal FeedFormComponent::TOKEN_PICK_HINT, component(saved_feed(:without_access_token)).enable_hint(nil)
+    assert_equal FeedFormComponent::TOKEN_PICK_HINT, component(saved_feed(:without_access_token)).enable_hint
   end
 
   test "#enable_hint should ask for a first token when the account has none" do
     assert_equal "Add a FreeFeed access token first, then you can enable this feed.",
-                 component(feed).enable_hint(nil)
+                 component(feed).enable_hint
   end
 
   test "#enable_gate_data should mount the gate once a token can be picked" do
     active_token
-    assert_equal "enable-gate", component(saved_feed(:without_access_token)).enable_gate_data(nil)[:controller]
+    assert_equal "enable-gate", component(saved_feed(:without_access_token)).enable_gate_data[:controller]
   end
 
   test "#enable_gate_data should stay out while other pieces are missing" do
     active_token
-    assert_empty component(feed(:enabled)).enable_gate_data(nil)
-    assert_empty component(ai_feed).enable_gate_data(nil)
+    assert_empty component(feed(:enabled)).enable_gate_data
+    assert_empty component(ai_feed).enable_gate_data
   end
 
   test "#enable_gate_data should stay out without a token to pick" do
-    assert_empty component(feed).enable_gate_data(nil)
+    assert_empty component(feed).enable_gate_data
   end
 
   test "#enable_blocked? should lock the checkbox while setup pieces are missing" do
-    assert component(feed).enable_blocked?(nil)
+    assert component(feed).enable_blocked?
   end
 
   test "#enable_blocked? should keep an enabled feed's checkbox interactive" do
-    assert_not component(feed(:enabled)).enable_blocked?(nil)
+    assert_not component(feed(:enabled)).enable_blocked?
   end
 
   test "#submit_label should reflect the checking state" do
