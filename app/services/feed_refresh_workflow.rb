@@ -29,7 +29,7 @@ class FeedRefreshWorkflow
 
   def on_error(error)
     Metrics.increment("feed_refresh_total", status: "error", profile: feed.feed_profile_key)
-    record_error_stats(error, current_step: current_step)
+    record_error_stats(current_step: current_step)
     fail_refresh_event(error)
     feed.record_refresh_failure!
   end

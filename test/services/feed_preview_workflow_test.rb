@@ -107,11 +107,12 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   test "#execute should mark the preview failed and re-raise when a step fails" do
     stub_request(:get, FEED_URL).to_return(status: 500, body: "")
 
-    assert_raises(Loader::Error) do
-      FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID).execute
-    end
+    workflow = FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID)
+    assert_raises(Loader::Error) { workflow.execute }
 
     assert feed_preview.reload.failed?
+    assert_equal :load_feed_contents, workflow.stats[:failed_at_step]
+    assert_equal workflow.total_duration, workflow.stats[:total_duration]
   end
 
   test "#execute should halt before loading when the run is superseded" do

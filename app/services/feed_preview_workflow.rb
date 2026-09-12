@@ -32,7 +32,7 @@ class FeedPreviewWorkflow
   end
 
   def on_error(error)
-    record_error_stats(error, current_step: current_step)
+    record_error_stats(current_step: current_step)
 
     logger.error "FeedPreviewWorkflow error at #{current_step}: #{error.message}"
 

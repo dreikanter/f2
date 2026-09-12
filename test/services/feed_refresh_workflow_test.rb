@@ -346,6 +346,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     # Verify error stats were recorded
     assert workflow.stats[:started_at]
     assert_equal :load_feed_contents, workflow.stats[:failed_at_step]
+    assert_equal workflow.total_duration, workflow.stats[:total_duration]
 
     # Verify the started event was updated in place with the failure
     events = Event.where(subject: test_feed, type: "feed_refresh")
