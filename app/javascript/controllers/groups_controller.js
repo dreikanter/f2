@@ -1,6 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 import { csrfToken } from "controllers/helpers/csrf_token"
 
+// Stands in for the token id once the select is cleared. The endpoint resolves
+// it to no token and answers with the "pick a token" selector, so the previous
+// token's groups can't linger.
+const NO_TOKEN = "none"
+
 // Loads the target-group selector for the chosen access token: fetches the
 // groups endpoint and lets the returned turbo-stream replace the selector
 // partial (including its server-rendered error states).
@@ -63,9 +68,7 @@ export default class extends Controller {
   }
 
   async loadGroups(tokenId) {
-    if (!tokenId) return
-
-    const url = this.endpointValue.replace(":access_token_id", tokenId)
+    const url = this.endpointValue.replace(":access_token_id", tokenId || NO_TOKEN)
 
     try {
       const response = await fetch(url, { headers: { "Accept": "text/vnd.turbo-stream.html" } })

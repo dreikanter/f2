@@ -1076,7 +1076,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='form.enable-blocked-note']", text: /FreeFeed access token/
   end
 
-  test "#edit should explain the token swap when the feed's token is inactive" do
+  test "#edit should leave the token unpicked when the feed's token is inactive" do
     sign_in_as(user)
     access_token
     inactive_token = create(:access_token, :inactive, user: user)
@@ -1086,8 +1086,9 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='form.token-swap-note']", text: /stopped working/
-    assert_select "select#feed_access_token_id option[value='#{access_token.id}'][selected]"
-    assert_select "input[type=checkbox][name='enable_feed']:not([disabled])"
+    assert_select "select#feed_access_token_id option[selected]", count: 0
+    assert_select "input[type=checkbox][name='enable_feed'][disabled]", count: 1
+    assert_select "[data-key='form.enable-blocked-note']", text: /Pick an access token/
   end
 
   test "#edit should not show the token swap note when the feed's token is active" do

@@ -9,6 +9,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-09-11
 
 - The Enable button now stays off for a feed that's still missing its source, matching the hint that asks you to add one.
+- Editing a feed no longer fills in a different access token on its own. The field stays empty until you pick one, and the feed can't be enabled until you do.
+- The target group list now follows the access token you pick, and a group that token doesn't manage is no longer chosen for you.
 
 ## 2026-09-10
 

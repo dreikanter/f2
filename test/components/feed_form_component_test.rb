@@ -102,6 +102,14 @@ class FeedFormComponentTest < ViewComponent::TestCase
     assert_equal "We couldn't automatically detect a name. Please enter one.", component(feed(name: nil)).name_hint
   end
 
+  def active_token
+    @active_token ||= create(:access_token, :active, user: user)
+  end
+
+  def saved_feed(*traits, **attrs)
+    create(:feed, *traits, user: user, **attrs)
+  end
+
   test "#token_swap? should be true only when the feed's token went inactive" do
     assert component(feed(access_token: build(:access_token, :inactive, user: user))).token_swap?
     assert_not component(feed).token_swap?
@@ -109,15 +117,18 @@ class FeedFormComponentTest < ViewComponent::TestCase
   end
 
   test "#selected_token_id should keep the feed's own active token" do
-    token = create(:access_token, :active, user: user)
     create(:access_token, :active, user: user, host: "https://a.example.com")
-    assert_equal token.id, component(feed(access_token: token)).selected_token_id
+    assert_equal active_token.id, component(feed(access_token: active_token)).selected_token_id
   end
 
-  test "#selected_token_id should preselect a working token on a swap" do
-    replacement = create(:access_token, :active, user: user)
-    inactive = create(:access_token, :inactive, user: user)
-    assert_equal replacement.id, component(feed(access_token: inactive)).selected_token_id
+  test "#selected_token_id should stay blank once a feed loses its token" do
+    active_token
+    assert_nil component(saved_feed(:without_access_token)).selected_token_id
+    assert_nil component(saved_feed(access_token: create(:access_token, :inactive, user: user))).selected_token_id
+  end
+
+  test "#selected_token_id should default a feed being created to the first token" do
+    assert_equal active_token.id, component(feed(:without_access_token)).selected_token_id
   end
 
   test "#import_after_on? should switch on for a pending profile change" do
@@ -148,9 +159,38 @@ class FeedFormComponentTest < ViewComponent::TestCase
                  component(ai_feed).enable_missing(nil)
   end
 
+  test "#enable_missing should ask for a token the feed doesn't hold yet" do
+    active_token
+    assert_equal ["a FreeFeed access token"], component(saved_feed(:without_access_token)).enable_missing(nil)
+  end
+
   test "#enable_missing should be empty when the setup is complete" do
-    create(:access_token, :active, user: user)
-    assert_empty component(feed).enable_missing(nil)
+    assert_empty component(feed(access_token: active_token)).enable_missing(nil)
+  end
+
+  test "#enable_hint should offer the pick when the account has tokens" do
+    active_token
+    assert_equal FeedFormComponent::TOKEN_PICK_HINT, component(saved_feed(:without_access_token)).enable_hint(nil)
+  end
+
+  test "#enable_hint should ask for a first token when the account has none" do
+    assert_equal "Add a FreeFeed access token first, then you can enable this feed.",
+                 component(feed).enable_hint(nil)
+  end
+
+  test "#enable_gate_data should mount the gate once a token can be picked" do
+    active_token
+    assert_equal "enable-gate", component(saved_feed(:without_access_token)).enable_gate_data(nil)[:controller]
+  end
+
+  test "#enable_gate_data should stay out while other pieces are missing" do
+    active_token
+    assert_empty component(feed(:enabled)).enable_gate_data(nil)
+    assert_empty component(ai_feed).enable_gate_data(nil)
+  end
+
+  test "#enable_gate_data should stay out without a token to pick" do
+    assert_empty component(feed).enable_gate_data(nil)
   end
 
   test "#enable_blocked? should lock the checkbox while setup pieces are missing" do

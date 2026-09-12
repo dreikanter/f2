@@ -95,13 +95,37 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/alpha.*beta.*zebra/m, response.body)
   end
 
+  test "should not preselect a group the token doesn't manage" do
+    sign_in_as user
+
+    stub_request(:get, "#{active_token.host}/v4/managedGroups")
+      .to_return(status: 200, body: [{ "id" => "group1", "username" => "othergroup" }].to_json)
+
+    get access_token_groups_path(active_token), params: { feed_id: feed.id }
+
+    assert_response :success
+    assert_match(/Select a group/, response.body)
+    assert_no_match(/selected/, response.body)
+  end
+
   test "should render disabled selector for non-existent token" do
     sign_in_as user
 
     get access_token_groups_path(access_token_id: -1)
 
     assert_response :success
-    assert_match(/Unable to load groups/, response.body)
+    assert_match(/Pick an access token/, response.body)
+  end
+
+  # The form clears the selector through this path, so an id naming no token at
+  # all has to answer with the same "pick a token" state.
+  test "should render disabled selector for a cleared token select" do
+    sign_in_as user
+
+    get access_token_groups_path(access_token_id: "none")
+
+    assert_response :success
+    assert_match(/Pick an access token/, response.body)
   end
 
   test "should render disabled selector for other user's token" do
@@ -110,7 +134,7 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
     get access_token_groups_path(other_users_token)
 
     assert_response :success
-    assert_match(/Unable to load groups/, response.body)
+    assert_match(/Pick an access token/, response.body)
   end
 
   test "should render disabled selector for inactive token" do

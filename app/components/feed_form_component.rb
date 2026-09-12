@@ -4,6 +4,11 @@
 class FeedFormComponent < ViewComponent::Base
   POLLING_STOP_CONDITION = "[data-identification-state='complete'], [data-identification-state='error']"
 
+  # Enabling needs a token on the feed itself, so an empty select blocks it
+  # even when the account has tokens to spare.
+  TOKEN_REQUIREMENT = "a FreeFeed access token".freeze
+  TOKEN_PICK_HINT = "Pick an access token first, then you can enable this feed.".freeze
+
   def initialize(feed:, candidates: [], source_changed: false, profile_changed: false,
                  checking: false, source_error: nil, attempted_url: nil, source_discovered: false)
     @feed = feed
@@ -155,16 +160,20 @@ class FeedFormComponent < ViewComponent::Base
     @active_tokens ||= feed.user.access_tokens.active.order(:host)
   end
 
-  # An inactive token isn't offered, so preselect a working one and say so
-  # instead of letting the browser swap silently.
+  # A dead token isn't offered any more, so the dropdown opens blank; the note
+  # says why instead of leaving the gap unexplained.
   def token_swap?
     feed.access_token.present? && !feed.access_token.active?
   end
 
+  # A feed keeps its own working token. Once it loses one (deleted or dead) the
+  # field stays blank: swapping in an unrelated token would publish somewhere
+  # the user never picked. A feed being created has nothing to contradict, so
+  # the first token there is just a helpful default.
   def selected_token_id
-    return active_tokens.first&.id if token_swap?
+    return feed.access_token_id if feed.access_token&.active?
 
-    feed.access_token_id || active_tokens.first&.id
+    active_tokens.first&.id unless edit_mode?
   end
 
   def token_options
@@ -205,12 +214,30 @@ class FeedFormComponent < ViewComponent::Base
   end
 
   def enable_missing(form)
-    @enable_missing ||= [].tap do |missing|
-      missing << "a FreeFeed access token" if active_tokens.empty?
-      next unless ai_settings(form).section_visible?
+    missing = []
+    missing << TOKEN_REQUIREMENT if selected_token_id.blank?
+    missing + missing_ai_credentials(form)
+  end
 
-      missing << "AI credentials" unless ai_settings(form).credentials?
-    end
+  # Pieces the dropdowns can't supply: adding AI credentials means leaving the
+  # page, so the checkbox stays locked whatever the token select says.
+  def missing_ai_credentials(form)
+    return @missing_ai_credentials if defined?(@missing_ai_credentials)
+
+    settings = ai_settings(form)
+    @missing_ai_credentials = settings.section_visible? && !settings.credentials? ? ["AI credentials"] : []
+  end
+
+  # The token select flips the gate without a reload, so the checkbox follows
+  # it live. Anything else missing keeps the locked state the server rendered.
+  def enable_gate_data(form)
+    return {} if feed.enabled? || active_tokens.empty? || missing_ai_credentials(form).any?
+
+    {
+      controller: "enable-gate",
+      enable_gate_blocked_hint_value: TOKEN_PICK_HINT,
+      enable_gate_ready_hint_value: ready_enable_hint
+    }
   end
 
   def enable_checked?(form)
@@ -222,15 +249,10 @@ class FeedFormComponent < ViewComponent::Base
   end
 
   def enable_hint(form)
-    return Loader::LlmLoader::UNAVAILABLE_MESSAGE if ai_settings(form).section_visible?
+    return ready_enable_hint unless enable_blocked?(form)
+    return TOKEN_PICK_HINT if active_tokens.any? && enable_missing(form) == [TOKEN_REQUIREMENT]
 
-    if enable_blocked?(form)
-      "Add #{enable_missing(form).to_sentence} first, then you can enable this feed."
-    elsif feed.scheduled?
-      "Start checking for new posts and publish them to FreeFeed."
-    else
-      "Enable this feed so its webhook endpoint can publish to FreeFeed."
-    end
+    "Add #{enable_missing(form).to_sentence} first, then you can enable this feed."
   end
 
   def submit_label
@@ -243,6 +265,14 @@ class FeedFormComponent < ViewComponent::Base
   end
 
   private
+
+  def ready_enable_hint
+    if feed.scheduled?
+      "Start checking for new posts and publish them to FreeFeed."
+    else
+      "Enable this feed so its webhook endpoint can publish to FreeFeed."
+    end
+  end
 
   def identification_state
     return "checking" if checking?
