@@ -99,7 +99,8 @@ module EmailStorage
     def parse_time(value)
       return if value.blank?
       Time.iso8601(value.to_s)
-    rescue ArgumentError
+    rescue ArgumentError => e
+      Rails.error.report(e, context: { component: "email_storage", value: value })
       nil
     end
 
@@ -122,6 +123,7 @@ module EmailStorage
       parsed if parsed.is_a?(Hash)
     rescue JSON::ParserError, Errno::ENOENT, IOError => e
       Rails.logger.error "Failed to load email metadata from #{path}: #{e.message}"
+      Rails.error.report(e, context: { component: "email_storage", path: path.to_s })
       nil
     end
 
@@ -130,6 +132,7 @@ module EmailStorage
       File.exist?(path) ? File.read(path) : nil
     rescue Errno::ENOENT, IOError => e
       Rails.logger.error "Failed to load email #{extension} from #{path}: #{e.message}"
+      Rails.error.report(e, context: { component: "email_storage", path: path.to_s })
       nil
     end
 

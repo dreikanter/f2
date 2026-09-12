@@ -23,5 +23,6 @@ class PostWithdrawalJob < ApplicationJob
     reschedule_for_rate_limit(e.retry_after)
   rescue FreefeedClient::Error => e
     Rails.logger.error("Failed to withdraw FreeFeed post #{freefeed_post_id}: #{e.message}")
+    Rails.error.report(e, context: { feed_id: feed_id, post_id: post_id, freefeed_post_id: freefeed_post_id })
   end
 end

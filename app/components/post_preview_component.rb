@@ -15,9 +15,9 @@ class PostPreviewComponent < ViewComponent::Base
   def published_at
     @published_at ||= begin
       value = post_data["published_at"]
-      value.present? ? Time.zone.parse(value) : nil
-    rescue => error
-      Rails.logger.warn("Feed preview post published_at parse error for #{value.inspect}: #{error.message}")
+      value.present? ? Time.zone.parse(value.to_s) : nil
+    rescue ArgumentError => error
+      Rails.error.report(error, context: { component: "feed_preview", value: value.inspect })
       nil
     end
   end
