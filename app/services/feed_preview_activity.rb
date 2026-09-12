@@ -32,10 +32,15 @@ class FeedPreviewActivity
     end
 
     Event.transaction do
-      # A fresh terminal event is discoverable by the activity cursor poller.
-      completed = Event.create!(type: event.type, user: event.user, subject: event.subject,
-                                level: status == "completed" ? :info : :warning,
-                                message: error&.message.to_s, metadata: metadata)
+      completed = Event.create!(
+        type: event.type,
+        user: event.user,
+        subject: event.subject,
+        level: status == "completed" ? :info : :warning,
+        message: error&.message.to_s,
+        metadata: metadata
+      )
+
       event.event_references.update_all(event_id: completed.id, updated_at: Time.current)
       event.destroy!
       @event = completed
