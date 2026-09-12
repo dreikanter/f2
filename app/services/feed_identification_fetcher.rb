@@ -29,9 +29,7 @@ class FeedIdentificationFetcher
     settle(status: :no_feed, candidates: [])
   rescue StandardError => e
     # Unexpected: report it as a bug, then settle on the terminal state.
-    sanitized = sanitize_input_for_logging(@input)
-    @logger.error("Feed identification failed for #{sanitized}: #{e.class} - #{e.message}")
-    Rails.error.report(e, context: { input: sanitized })
+    Rails.error.report(e, context: { input: sanitize_input_for_logging(@input) })
     settle(status: :no_feed, candidates: [])
   end
 
