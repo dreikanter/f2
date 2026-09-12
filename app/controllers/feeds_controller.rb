@@ -89,7 +89,7 @@ class FeedsController < ApplicationController
     # confirmed one falls through to the normal save below (with the source
     # applied), so enable/pause/schedule bookkeeping stays in one place. Capture
     # the decision before assign_attributes moves source_input onto the new URL.
-    source_change = mode_a_source_change?
+    source_change = deterministic_source_change?
     return propose_source_redetection if source_change && !source_change_confirmed?
 
     @feed.assign_attributes(update_feed_params)
@@ -183,7 +183,7 @@ class FeedsController < ApplicationController
 
   # True when a live deterministic feed's submitted source URL differs from the
   # one it's anchored to. This is the only case that routes through re-detection.
-  def mode_a_source_change?
+  def deterministic_source_change?
     return false unless @feed.persisted? && !@feed.draft?
     return false if FeedProfile.depends_on_ai?(@feed.feed_profile_key)
 
@@ -327,7 +327,7 @@ class FeedsController < ApplicationController
   end
 
   def confirmed_source_change?
-    mode_a_source_change? && source_change_confirmed?
+    deterministic_source_change? && source_change_confirmed?
   end
 
   # Schema-driven so a profile-specific option isn't filtered out before it
