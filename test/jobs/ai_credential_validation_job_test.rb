@@ -78,6 +78,8 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     assert Event.exists?(subject: openai_credential, type: "ai_credential_deactivated")
     assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
     assert_not_includes openai_credential.last_error, "sk-sample-secret"
+    assert_equal({ "fallback_state" => "active", "error" => "OpenAI rejected this API key. Check or replace it.",
+                   "category" => "invalid_key", "status" => 401 }, run.context)
   end
 
   test "#perform should preserve the prior state and snapshot on an IP restriction" do
@@ -107,6 +109,9 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     assert_predicate openai_credential.reload, :inactive?
     assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
     assert_not Event.exists?(subject: openai_credential, type: "ai_credential_deactivated")
+    assert_equal({ "fallback_state" => "inactive", "error" => "Couldn't list OpenAI models (HTTP 503). Try again later.",
+                   "category" => "provider", "status" => 503 }, run.context)
+    assert_equal run.context["error"], openai_credential.last_error
   end
 
   test "#perform should reject a success received for a replaced key" do
@@ -133,6 +138,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     assert_predicate run.reload, :failed?
     assert_predicate openai_credential.reload, :active?
     assert_not Event.exists?(subject: openai_credential, type: "ai_credential_deactivated")
+    assert_equal({ "fallback_state" => "active" }, run.context)
   end
 
   test "#perform should discard a response received after its deadline" do

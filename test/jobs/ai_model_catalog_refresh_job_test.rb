@@ -58,7 +58,7 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     AiModelCatalogRefreshJob.perform_now(run)
 
     assert_predicate run.reload, :failed?
-    assert_equal "malformed", run.context["category"]
+    assert_equal({ "error" => "OpenAI returned an invalid model list.", "category" => "malformed" }, run.context)
     assert_equal original, openai_credential.reload.attributes
   end
 
@@ -71,7 +71,8 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     AiModelCatalogRefreshJob.perform_now(run)
 
     assert_predicate run.reload, :failed?
-    assert_equal 503, run.context["status"]
+    assert_equal({ "error" => "Couldn't list OpenAI models (HTTP 503). Try again later.",
+                   "category" => "provider", "status" => 503 }, run.context)
     assert_equal original, openai_credential.reload.attributes
     assert_predicate feed.reload, :enabled?
   end
@@ -87,6 +88,9 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     assert_predicate openai_credential.reload, :inactive?
     assert_predicate feed.reload, :disabled?
     assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
+    assert_equal({ "error" => "OpenAI rejected this API key. Check or replace it.",
+                   "category" => "invalid_key", "status" => 401 }, run.context)
+    assert_equal run.context["error"], openai_credential.last_error
   end
 
   test "#perform should not replace the catalog after key rotation" do
@@ -112,6 +116,7 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
     assert_predicate run.reload, :failed?
     assert_predicate openai_credential.reload, :active?
     assert_not Event.exists?(subject: openai_credential, type: "ai_credential_deactivated")
+    assert_empty run.context
   end
 
   test "#perform should discard a response after timeout" do

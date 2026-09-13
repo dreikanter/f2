@@ -37,7 +37,7 @@ class AiModelCatalogTest < ActiveSupport::TestCase
   test "#fetch should reject a malformed list without accepting its valid prefix" do
     stub_openai_models(key: "first-key", fixture: "malformed")
 
-    error = assert_raises(AiModelCatalog::Error) { AiModelCatalog.fetch(credential) }
+    error = assert_raises(LlmProvider::Error) { AiModelCatalog.fetch(credential) }
 
     assert_equal :malformed, error.category
     assert_not error.invalid_key?
@@ -46,7 +46,7 @@ class AiModelCatalogTest < ActiveSupport::TestCase
   test "#fetch should sanitize invalid JSON including its exception cause" do
     stub_request(:get, "https://api.openai.com/v1/models").to_return(body: "sk-sample-secret")
 
-    error = assert_raises(AiModelCatalog::Error) { AiModelCatalog.fetch(credential) }
+    error = assert_raises(LlmProvider::Error) { AiModelCatalog.fetch(credential) }
 
     assert_equal :malformed, error.category
     assert_not_includes error.full_message, "sk-sample-secret"
@@ -56,7 +56,7 @@ class AiModelCatalogTest < ActiveSupport::TestCase
   test "#fetch should classify only an explicitly rejected key as invalid" do
     stub_openai_models(key: "first-key", fixture: "invalid_key", status: 401)
 
-    error = assert_raises(AiModelCatalog::Error) { AiModelCatalog.fetch(credential) }
+    error = assert_raises(LlmProvider::Error) { AiModelCatalog.fetch(credential) }
 
     assert error.invalid_key?
     assert_equal 401, error.status
@@ -66,7 +66,7 @@ class AiModelCatalogTest < ActiveSupport::TestCase
   test "#fetch should preserve IP restrictions as permission errors" do
     stub_openai_models(key: "first-key", fixture: "ip_restriction", status: 401)
 
-    error = assert_raises(AiModelCatalog::Error) { AiModelCatalog.fetch(credential) }
+    error = assert_raises(LlmProvider::Error) { AiModelCatalog.fetch(credential) }
 
     assert_equal :permission, error.category
     assert_not error.invalid_key?
@@ -75,7 +75,7 @@ class AiModelCatalogTest < ActiveSupport::TestCase
   test "#fetch should preserve access restrictions as permission errors" do
     stub_openai_models(key: "first-key", fixture: "permission", status: 403)
 
-    error = assert_raises(AiModelCatalog::Error) { AiModelCatalog.fetch(credential) }
+    error = assert_raises(LlmProvider::Error) { AiModelCatalog.fetch(credential) }
 
     assert_equal :permission, error.category
     assert_not error.invalid_key?
@@ -84,7 +84,7 @@ class AiModelCatalogTest < ActiveSupport::TestCase
   test "#fetch should classify quota exhaustion without invalidating the key" do
     stub_openai_models(key: "first-key", fixture: "quota", status: 429)
 
-    error = assert_raises(AiModelCatalog::Error) { AiModelCatalog.fetch(credential) }
+    error = assert_raises(LlmProvider::Error) { AiModelCatalog.fetch(credential) }
 
     assert_equal :rate_limit, error.category
     assert_not error.invalid_key?
@@ -93,7 +93,7 @@ class AiModelCatalogTest < ActiveSupport::TestCase
   test "#fetch should handle an HTTP failure without a JSON error body" do
     stub_request(:get, "https://api.openai.com/v1/models").to_return(status: 502, body: "Bad gateway")
 
-    error = assert_raises(AiModelCatalog::Error) { AiModelCatalog.fetch(credential) }
+    error = assert_raises(LlmProvider::Error) { AiModelCatalog.fetch(credential) }
 
     assert_equal :provider, error.category
     assert_equal 502, error.status
@@ -102,7 +102,7 @@ class AiModelCatalogTest < ActiveSupport::TestCase
   test "#fetch should sanitize transport failures" do
     stub_request(:get, "https://api.openai.com/v1/models").to_timeout
 
-    error = assert_raises(AiModelCatalog::Error) { AiModelCatalog.fetch(credential) }
+    error = assert_raises(LlmProvider::Error) { AiModelCatalog.fetch(credential) }
 
     assert_equal :connection, error.category
     assert_nil error.cause
@@ -112,7 +112,7 @@ class AiModelCatalogTest < ActiveSupport::TestCase
     stub_request(:get, "https://api.openai.com/v1/models")
       .to_return(status: 302, headers: { "Location" => "https://example.com/models" })
 
-    assert_raises(AiModelCatalog::Error) { AiModelCatalog.fetch(credential) }
+    assert_raises(LlmProvider::Error) { AiModelCatalog.fetch(credential) }
     assert_not_requested :get, "https://example.com/models"
   end
 end

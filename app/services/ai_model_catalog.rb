@@ -1,18 +1,4 @@
 class AiModelCatalog
-  class Error < StandardError
-    attr_reader :category, :status
-
-    def initialize(message, category:, status: nil)
-      @category = category
-      @status = status
-      super(message)
-    end
-
-    def invalid_key?
-      category == :invalid_key
-    end
-  end
-
   def self.fetch(credential)
     new(credential).fetch
   end
