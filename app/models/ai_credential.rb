@@ -56,6 +56,13 @@ class AiCredential < ApplicationRecord
     latest_operation_run(:models_refresh)&.in_progress?(stale_after: MODEL_REFRESH_TIMEOUT) || false
   end
 
+  def models_refresh_failed?
+    run = latest_operation_run(:models_refresh)
+    return false unless run&.unsuccessful?
+
+    models_refreshed_at.nil? || run.finished_at > models_refreshed_at
+  end
+
   def supports_model?(model_id)
     return false if model_id.blank?
 
