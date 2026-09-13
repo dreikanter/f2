@@ -1,6 +1,6 @@
 <%# locals: (ai_credential:, feed_id: nil) %>
 <% refreshing = ai_credential.models_refreshing? %>
-<%= tag.div class: "space-y-3", data: { model_catalog_done: refreshing ? nil : true } do %>
+<div class="space-y-3">
   <div>
     <div class="flex items-start gap-2">
       <%= h2 "Available models" %>
@@ -26,4 +26,4 @@
     </p>
   </div>
   <%= render AiCredentialModelsComponent.new(ai_credential: ai_credential) %>
-<% end %>
+</div>
