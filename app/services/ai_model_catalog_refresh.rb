@@ -1,15 +1,9 @@
 # Refreshes an active credential's catalog for an OperationRun. Preserves the
 # saved state on transient failure and deactivates a confirmed invalid key.
 class AiModelCatalogRefresh
-  attr_reader :run
-
   # @param run [OperationRun] model catalog refresh being performed
   def initialize(run)
     @run = run
-  end
-
-  def credential
-    run.subject
   end
 
   def call
@@ -26,6 +20,12 @@ class AiModelCatalogRefresh
   end
 
   private
+
+  attr_reader :run
+
+  def credential
+    run.subject
+  end
 
   def with_current_credential(original_data)
     credential.with_lock do
