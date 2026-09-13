@@ -32,13 +32,6 @@ class AiCredential < ApplicationRecord
     available_models.find { |model| model["id"] == model_id }&.fetch("metadata", {}) || {}
   end
 
-  def validate_async(validation_job)
-    run = OperationRun.start!(subject: self, kind: :validation,
-                              context: { fallback_state: active? ? :active : :inactive })
-    validation_job.perform_now(run)
-    run
-  end
-
   def ruby_llm_context
     build_llm_client.context
   end

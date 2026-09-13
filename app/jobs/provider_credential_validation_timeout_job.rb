@@ -3,8 +3,6 @@ class ProviderCredentialValidationTimeoutJob < ApplicationJob
 
   # @param run [OperationRun] validation being timed out
   def perform(run)
-    run.timeout! do |credential|
-      credential.update!(state: run.context.fetch("fallback_state"))
-    end
+    run.subject.timeout_validation!(run: run)
   end
 end
