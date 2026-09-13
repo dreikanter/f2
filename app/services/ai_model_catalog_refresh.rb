@@ -1,0 +1,49 @@
+class AiModelCatalogRefresh
+  attr_reader :run
+
+  # @param run [OperationRun] model catalog refresh being performed
+  def initialize(run)
+    @run = run
+  end
+
+  def credential
+    run.subject
+  end
+
+  def call
+    return unless run.reload.running?
+    return run.timeout! if run.deadline_at && run.deadline_at <= Time.current
+
+    original_key = credential.credential_data.fetch("api_key")
+    models = AiModelCatalog.fetch(credential)
+
+    with_current_credential(original_key) { save_catalog(models) }
+  rescue LlmProvider::Error => error
+    Rails.error.report(error, context: { credential_id: credential.id })
+    with_current_credential(original_key) { fail_refresh(error) }
+  end
+
+  private
+
+  def with_current_credential(original_key)
+    credential.with_lock do
+      return run.fail! unless credential.active? && credential.credential_data["api_key"] == original_key
+      return run.timeout! if run.deadline_at && run.deadline_at <= Time.current
+
+      yield
+    end
+  end
+
+  def save_catalog(models)
+    run.succeed! do |credential|
+      credential.update!(available_models: models, models_refreshed_at: Time.current)
+    end
+  end
+
+  def fail_refresh(error)
+    run.fail! do |credential|
+      run.update!(context: run.context.merge(error.details))
+      credential.deactivate!(last_error: error.message) if error.invalid_key?
+    end
+  end
+end
