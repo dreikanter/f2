@@ -1,0 +1,33 @@
+{
+  "id": "response_completed",
+  "model": "gpt-5-nano",
+  "status": "completed",
+  "output": [
+    {
+      "type": "web_search_call",
+      "id": "search_fixture",
+      "status": "completed",
+      "action": { "type": "search", "query": "News" }
+    },
+    {
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "{\"items\":[]}",
+          "annotations": [
+            {
+              "type": "url_citation",
+              "url": "https://example.com/source",
+              "title": "Source",
+              "start_index": 0,
+              "end_index": 12
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "usage": { "input_tokens": 40, "output_tokens": 20 }
+}

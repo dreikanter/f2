@@ -4,6 +4,8 @@
 class AiCredential < ApplicationRecord
   include ProviderCredential
 
+  has_many :llm_chats, dependent: :nullify
+
   REMOVED_EVENT_TYPE = "feed_ai_credential_removed"
   DEACTIVATED_EVENT_TYPE = "ai_credential_deactivated"
   MODEL_CATALOG_FRESHNESS = 1.day

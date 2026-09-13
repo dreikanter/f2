@@ -17,6 +17,7 @@ class User < ApplicationRecord
   has_many :ai_credentials, dependent: :destroy
   has_many :search_credentials, dependent: :destroy
   has_many :llm_usages, dependent: :destroy
+  has_many :llm_chats, dependent: :destroy
   has_many :events, dependent: :nullify
   belongs_to :default_ai_credential, class_name: "AiCredential", optional: true
   belongs_to :default_search_credential, class_name: "SearchCredential", optional: true
