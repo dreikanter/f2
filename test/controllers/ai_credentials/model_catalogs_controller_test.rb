@@ -107,6 +107,6 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
 
     assert_response :success
     assert_select 'a[data-key="ai_credential.return-to"][href=?]', edit_feed_path(feed)
-    assert_select 'form[action=?]', ai_credential_model_catalog_path(credential, feed_id: feed.id)
+    assert_select "form[action=?]", ai_credential_model_catalog_path(credential, feed_id: feed.id)
   end
 end
