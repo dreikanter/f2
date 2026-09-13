@@ -8,7 +8,7 @@ class AiCredentialValidation
 
   def call
     return unless run.reload.running?
-    return credential.timeout_validation!(run: run) if run.deadline_at && run.deadline_at <= Time.current
+    return run.timeout_credential_validation! if run.deadline_at && run.deadline_at <= Time.current
 
     original_data = credential.credential_data.deep_dup
     models = AiModelCatalog.fetch(credential)
@@ -30,7 +30,7 @@ class AiCredentialValidation
   def with_current_credential(original_data)
     credential.with_lock do
       return run.fail! unless credential.credential_data == original_data
-      return credential.timeout_validation!(run: run) if run.deadline_at && run.deadline_at <= Time.current
+      return run.timeout_credential_validation! if run.deadline_at && run.deadline_at <= Time.current
 
       yield
     end

@@ -57,15 +57,6 @@ module ProviderCredential
     run
   end
 
-  # @param run [OperationRun] validation being timed out
-  def timeout_validation!(run:)
-    return false unless run.subject == self
-
-    run.timeout! do |credential|
-      credential.update!(state: run.context.fetch("fallback_state"))
-    end
-  end
-
   # Deactivation and required-feed transitions share one transaction.
   def deactivate!(last_error: nil, run: nil)
     if run
