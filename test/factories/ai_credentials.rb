@@ -4,15 +4,15 @@ FactoryBot.define do
     provider { "openai" }
     sequence(:display_name) { |n| "OpenAI credential #{n}" }
     credential_data { { "api_key" => "sk-test-#{SecureRandom.hex(16)}" } }
-    state { :pending }
+    active { false }
 
     trait :active do
-      state { :active }
+      active { true }
       last_validated_at { 1.hour.ago }
     end
 
     trait :inactive do
-      state { :inactive }
+      active { false }
       last_error { "Invalid API key" }
     end
 

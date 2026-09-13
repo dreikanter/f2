@@ -18,7 +18,10 @@ module ProviderCredential
 
     encrypts :credential_data
 
-    enum :state, { pending: 0, validating: 1, active: 2, inactive: 3 }
+    scope :active, -> { where(active: true) }
+
+    before_update :mark_credentials_unverified, if: :will_save_change_to_credential_data?
+    after_update :supersede_obsolete_operations, if: :saved_change_to_credential_data?
 
     validates :display_name,
               presence: true,
@@ -40,14 +43,13 @@ module ProviderCredential
   # Opens a fresh run before enqueueing so a queue stall is covered by the same
   # timeout as a worker that disappears after starting.
   def validate_async(validation_job)
-    fallback_state = active? ? :active : :inactive
     run = OperationRun.start!(
       subject: self,
       kind: :validation,
-      timeout: VALIDATION_TIMEOUT,
-      context: { fallback_state: fallback_state }
+      timeout: VALIDATION_TIMEOUT
     ) do |credential|
-      credential.update!(state: :validating, last_error: nil)
+      credential.update!(last_error: nil)
+      credential.active_operation_run(:models_refresh)&.supersede!
     end
 
     validation_job.perform_later(run)
@@ -57,13 +59,15 @@ module ProviderCredential
     run
   end
 
-  # @param run [OperationRun] validation being timed out
-  def timeout_validation!(run:)
-    return false unless run.subject == self
+  def validation_in_progress?
+    latest_operation_run(:validation)&.in_progress? || false
+  end
 
-    run.timeout! do |credential|
-      credential.update!(state: run.context.fetch("fallback_state"))
-    end
+  def validation_error
+    run = latest_operation_run(:validation)
+    return "The credential check timed out. Try again." if run&.timed_out? || run&.deadline_reached? && run.running?
+
+    last_error if run&.failed?
   end
 
   # Deactivation and required-feed transitions share one transaction.
@@ -83,8 +87,18 @@ module ProviderCredential
 
   private
 
+  def mark_credentials_unverified
+    self.active = false
+  end
+
+  def supersede_obsolete_operations
+    operation_runs.active.where(kind: [:validation, :models_refresh]).update_all(
+      status: :superseded, finished_at: Time.current, updated_at: Time.current
+    )
+  end
+
   def deactivate_locked!(last_error:)
-    update!(state: :inactive, last_validated_at: Time.current, last_error: last_error)
+    update!(active: false, last_validated_at: Time.current, last_error: last_error)
 
     Event.create!(
       type: self.class::DEACTIVATED_EVENT_TYPE,

@@ -1,8 +1,6 @@
 # Fetches model IDs through a credential's provider client and enriches them
 # with advisory SDK metadata for validation and catalog-refresh operations.
 class AiModelCatalog
-  UNAVAILABLE_MESSAGE = "AI model discovery is temporarily unavailable. Your saved settings are still available.".freeze
-
   def self.fetch(credential)
     new(credential).fetch
   end

@@ -2,32 +2,33 @@ class GroupsRefreshControlComponent < ViewComponent::Base
   TITLE = "Refresh groups".freeze
   TIMEOUT_NOTE = "This is taking longer than expected — try again in a moment.".freeze
 
-  # The refresh control for a token's group list, in every state it can appear
-  # in: idle, refreshing, and the timed-out fallback the polling controller
-  # reveals once a refresh outlives its poll budget.
+  # The refresh control for a token's group list. An overdue response shows the
+  # timeout note immediately; the polling controller can also reveal it when
+  # its poll budget runs out.
   #
-  # Every state renders the same RefreshButtonComponent, so the control keeps
-  # its box and nothing around it moves when the state changes. The refreshing
+  # Idle and refreshing states use RefreshButtonComponent, so the control
+  # keeps its size when a refresh starts. The refreshing
   # button is disabled, so it can't kick off a second refresh.
   #
   # Wiring the trigger stays with the caller (a form submit on the access token
   # page, a Stimulus click inside the feed form), and its attributes are passed
   # through. `key_prefix` namespaces the testing hooks ("access_token", "feed").
-  def initialize(key_prefix:, refreshing: false, available: true, compact: false, **trigger_attrs)
+  def initialize(key_prefix:, refreshing: false, overdue: false, available: true, compact: false, **trigger_attrs)
     @key_prefix = key_prefix
     @refreshing = refreshing
+    @overdue = overdue
     @available = available
     @compact = compact
     @trigger_attrs = trigger_attrs
   end
 
   def render?
-    refreshing || available
+    refreshing || overdue || available
   end
 
   private
 
-  attr_reader :key_prefix, :refreshing, :available
+  attr_reader :key_prefix, :refreshing, :overdue, :available
 
   def loading_button
     RefreshButtonComponent.new(title: TITLE, loading: true, compact: @compact,
@@ -46,7 +47,7 @@ class GroupsRefreshControlComponent < ViewComponent::Base
 
   def timeout_note_attributes
     {
-      hidden: true,
+      hidden: !overdue,
       class: "w-full text-sm text-warning",
       data: { polling_target: "timeoutMessage", key: "#{key_prefix}.groups-refresh-timeout" }
     }

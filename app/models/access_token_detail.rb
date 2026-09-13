@@ -4,15 +4,16 @@ class AccessTokenDetail < ApplicationRecord
 
   belongs_to :access_token
 
-  # Recover if the scheduled timeout is lost or fails to settle the run.
-  GROUPS_REFRESH_STALE_AFTER = 15.minutes
-
   def group_names
     managed_groups.map { |group| group["username"] }.compact
   end
 
   def groups_refresh_running?
-    active_operation_run(:groups_refresh)&.in_progress?(stale_after: GROUPS_REFRESH_STALE_AFTER) || false
+    active_operation_run(:groups_refresh)&.in_progress? || false
+  end
+
+  def groups_refresh_overdue?
+    active_operation_run(:groups_refresh)&.deadline_reached? || false
   end
 
   def groups_refresh_failed?

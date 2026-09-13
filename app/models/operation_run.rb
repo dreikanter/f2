@@ -1,6 +1,6 @@
 class OperationRun < ApplicationRecord
   ACTIVE_STATUSES = %i[queued running].freeze
-  TERMINAL_STATUSES = %i[succeeded failed timed_out].freeze
+  TERMINAL_STATUSES = %i[succeeded failed timed_out superseded].freeze
 
   belongs_to :subject, polymorphic: true
 
@@ -70,22 +70,6 @@ class OperationRun < ApplicationRecord
     true
   end
 
-  # @param terminal_status [Symbol, String] successful or unsuccessful outcome
-  # @return [Boolean] whether this run won the terminal transition
-  def settle!(terminal_status)
-    terminal_status = terminal_status.to_s.to_sym
-    raise ArgumentError, "invalid terminal status: #{terminal_status}" unless terminal_status.in?(TERMINAL_STATUSES)
-
-    with_subject_lock do
-      return false unless queued? || running?
-
-      yield subject if block_given?
-      update!(status: terminal_status, finished_at: Time.current)
-    end
-
-    true
-  end
-
   # @return [Boolean] whether the run completed successfully
   def succeed!(&)
     settle!(:succeeded, &)
@@ -101,21 +85,43 @@ class OperationRun < ApplicationRecord
     settle!(:timed_out, &)
   end
 
+  # @return [Boolean] whether the run was replaced by newer work
+  def supersede!
+    settle!(:superseded)
+  end
+
+  # @return [Boolean] whether the run has reached its deadline
+  def deadline_reached?
+    deadline_at.present? && deadline_at <= Time.current
+  end
+
   # @return [Boolean] whether the run settled without succeeding
   def unsuccessful?
     failed? || timed_out?
   end
 
-  # @param stale_after [ActiveSupport::Duration, nil] fallback age for lost timeouts
   # @return [Boolean] whether polling should continue
-  def in_progress?(stale_after: nil)
-    return false unless queued? || running?
-    return true unless stale_after
-
-    (started_at || created_at) > stale_after.ago
+  def in_progress?
+    (queued? || running?) && !deadline_reached?
   end
 
   private
+
+  # @param terminal_status [Symbol, String] successful or unsuccessful outcome
+  # @return [Boolean] whether this run won the terminal transition
+  def settle!(terminal_status)
+    terminal_status = terminal_status.to_s.to_sym
+    raise ArgumentError, "invalid terminal status: #{terminal_status}" unless terminal_status.in?(TERMINAL_STATUSES)
+
+    with_subject_lock do
+      return false unless queued? || running?
+
+      yield subject if block_given?
+      update!(status: terminal_status, finished_at: Time.current)
+    end
+
+    true
+  end
 
   def with_subject_lock
     transaction do

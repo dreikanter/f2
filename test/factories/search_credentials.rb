@@ -4,15 +4,15 @@ FactoryBot.define do
     provider { "serper" }
     sequence(:display_name) { |n| "Serper credential #{n}" }
     credential_data { { "api_key" => "serper-#{SecureRandom.hex(16)}" } }
-    state { :pending }
+    active { false }
 
     trait :active do
-      state { :active }
+      active { true }
       last_validated_at { 1.hour.ago }
     end
 
     trait :inactive do
-      state { :inactive }
+      active { false }
       last_error { "Invalid API key" }
     end
 

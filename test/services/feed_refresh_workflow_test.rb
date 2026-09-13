@@ -444,7 +444,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       assert_raises(Loader::Error) { workflow.execute }
     end
 
-    assert_equal "active", credential.reload.state
+    assert_predicate credential.reload, :active?
   end
 
   test "#execute should handle unavailable AI extraction without spending or deactivating credentials" do

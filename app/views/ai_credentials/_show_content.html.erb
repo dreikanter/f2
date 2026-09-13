@@ -2,7 +2,7 @@
 <div class="space-y-6" data-key="ai_credential.show">
   <%= render PageHeaderComponent.new(title: ai_credential.display_name) do |header| %>
     <% header.with_breadcrumb(label: "AI credentials", url: ai_credentials_path) %>
-    <% unless ai_credential.pending? || ai_credential.validating? %>
+    <% unless ai_credential.validation_in_progress? %>
       <% header.with_context_paragraph do %>
         <%= render credential_state_badge(ai_credential) %>
       <% end %>
@@ -17,30 +17,47 @@
 
   <%= render CredentialDeleteModalComponent.new(credential: ai_credential) %>
 
-  <% case ai_credential.state %>
-  <% when "pending", "validating" %>
-    <%# aria-busy disables pointer events, so it stays on the waiting block;
-        on the page it would take the breadcrumb and menus down with it. %>
-    <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3"
-         data-key="ai_credential.validating" aria-busy="true">
-      <div class="flex-shrink-0">
-        <%= render SpinnerComponent.new %>
+  <% if ai_credential.active? && ai_credential.validation_error.present? %>
+    <%= render AlertComponent.new(variant: :warning, data: { key: "ai_credential.validation_error" }) do %>
+      <%= ai_credential.validation_error %>
+    <% end %>
+  <% end %>
+
+  <% if ai_credential.validation_in_progress? %>
+    <div data-controller="polling"
+         data-polling-endpoint-value="<%= ai_credential_validation_path(ai_credential, feed_id: feed_id) %>"
+         data-polling-interval-value="<%= polling_interval_ms %>"
+         data-polling-max-polls-value="<%= polling_max_polls %>"
+         data-polling-indicate-busy-value="false">
+      <%# aria-busy disables pointer events, so it stays on the waiting block;
+          on the page it would take the breadcrumb and menus down with it. %>
+      <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3"
+           data-key="ai_credential.validating" aria-busy="true">
+        <div class="flex-shrink-0">
+          <%= render SpinnerComponent.new %>
+        </div>
+        <div class="space-y-1">
+          <p class="font-semibold text-heading">Checking your credential…</p>
+          <p class="text-body">This usually takes a few seconds.</p>
+        </div>
       </div>
-      <div class="space-y-1">
-        <p class="font-semibold text-heading">Checking your credential…</p>
-        <p class="text-body">This usually takes a few seconds.</p>
+      <div data-polling-target="timeoutMessage" hidden class="mt-4">
+        <%= render AlertComponent.new(variant: :warning) do %>
+          <p class="font-semibold">The credential check is taking longer than expected.</p>
+          <p><%= link_to "Refresh the page", ai_credential_path(ai_credential, feed_id: feed_id), data: { turbo: false }, class: "underline underline-offset-2" %> to check the current status.</p>
+        <% end %>
       </div>
     </div>
-  <% when "active" %>
+  <% elsif ai_credential.active? %>
     <%= render AiCredentialDetailsComponent.new(ai_credential: ai_credential) %>
 
-    <%= render "ai_credentials/model_catalog", ai_credential: ai_credential %>
-  <% when "inactive" %>
+    <%= render "ai_credentials/model_catalog", ai_credential: ai_credential, feed_id: feed_id %>
+  <% else %>
     <p class="max-w-2xl text-body" data-key="ai_credential.inactive">
-      <% if ai_credential.last_error.present? %>
-        <%= ai_credential.last_error %>
+      <% if (error = ai_credential.validation_error.presence || ai_credential.last_error.presence) %>
+        <%= error %>
       <% else %>
-        This key didn't work. Grab a fresh key from your provider's dashboard and add it again.
+        This credential has not been verified. Edit it to check the key again.
       <% end %>
     </p>
 

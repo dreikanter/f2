@@ -1,8 +1,8 @@
-<%# locals: (feed:, groups:, token: nil, token_error: nil, selected: nil, refreshing: false, refresh_failed: false) %>
+<%# locals: (feed:, groups:, token: nil, token_error: nil, selected: nil, refreshing: false, refresh_failed: false, refresh_overdue: false) %>
 <%# `selected` carries the form's unsaved choice through a background groups
     refresh, so replacing the selector doesn't reset it. While a refresh runs,
     the wrapper hosts the polling controller; the groups-refresh endpoint
-    answers with the settled selector, which disconnects the poller. %>
+    replaces the selector on completion or expiry, disconnecting the poller. %>
 <% selected_group = selected.presence || feed.target_group %>
 <%# The saved group may belong to a token that is no longer selected, and a
     group nothing matches must not fall through to whichever option happens to
@@ -36,6 +36,7 @@
           form; a Stimulus click stands in for the submit. %>
       <%= render GroupsRefreshControlComponent.new(key_prefix: "feed",
                                                    refreshing: refreshing,
+                                                   overdue: refresh_overdue,
                                                    available: token&.active?,
                                                    data: {
                                                      controller: "loading-button",
@@ -64,7 +65,7 @@
         <% end %>
       </p>
     <% else %>
-      <% unless refreshing %>
+      <% unless refreshing || refresh_overdue %>
         <% if token.nil? %>
           <%# Not an error: this is how the picker rests until a token is chosen. %>
           <p class="text-sm text-muted" data-key="feed.groups-need-token">

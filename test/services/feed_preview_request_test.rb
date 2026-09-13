@@ -139,7 +139,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   end
 
   test "#create should ignore an inactive search credential" do
-    search_credential.update!(state: :inactive)
+    search_credential.update!(active: false)
 
     result = request(**ai_attributes, search_credential_id: search_credential.id).create
 
@@ -320,7 +320,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
 
   test "#refresh should reject a revoked AI credential despite an active alternative" do
     existing = request(**ai_attributes).create.preview
-    ai_credential.update!(state: :inactive)
+    ai_credential.update!(active: false)
     create(:ai_credential, :active, user: user)
 
     assert_no_enqueued_jobs do
@@ -333,7 +333,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
 
   test "#refresh should preserve an inactive search selection without substituting the default" do
     existing = request(**ai_attributes, search_credential_id: search_credential.id).create.preview
-    search_credential.update!(state: :inactive)
+    search_credential.update!(active: false)
     create(:search_credential, :active, :default, user: user)
 
     assert_enqueued_jobs 1, only: FeedPreviewJob do

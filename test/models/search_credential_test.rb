@@ -107,28 +107,16 @@ class SearchCredentialTest < ActiveSupport::TestCase
     assert_equal ["brave", "brave-key"], arguments
   end
 
-  test "#validating!, #active!, and #inactive! should transition the credential state" do
-    credential = create(:search_credential, user: user)
-
-    assert credential.pending?
-    credential.validating!
-    assert credential.validating?
-    credential.active!
-    assert credential.active?
-    credential.inactive!
-    assert credential.inactive?
-  end
-
   test "#validate_async should open a run and schedule its worker and timeout" do
     credential = create(:search_credential, user: user)
 
     freeze_time do
       run = credential.validate_async(SearchCredentialValidationJob)
 
-      assert credential.reload.validating?
+      assert credential.reload.validation_in_progress?
       assert_equal credential, run.subject
       assert_equal Time.current, run.started_at
-      assert_equal "inactive", run.context.fetch("fallback_state")
+      assert_not credential.active?
       assert_enqueued_with(
         job: SearchCredentialValidationJob,
         args: [run]
@@ -150,7 +138,7 @@ class SearchCredentialTest < ActiveSupport::TestCase
 
     credential.reload
     event = Event.order(:created_at).last
-    assert credential.inactive?
+    assert_not credential.active?
     assert_equal "Serper: HTTP 401", credential.last_error
     assert_not_nil credential.last_validated_at
     assert_equal "search_credential_deactivated", event.type

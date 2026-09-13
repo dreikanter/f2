@@ -1,6 +1,8 @@
 require "test_helper"
 
 class AiCredentialTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   class ClientCredentialsProvider < LlmProvider::Base
     def credential_errors
       credential_data.values_at("client_id", "client_secret").all?(&:present?) ? [] : ["Enter the client ID and secret"]
@@ -134,13 +136,13 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_not_requested :any, /./
   end
 
-  test "#ruby_llm_context should isolate credentials and disable SDK retries" do
+  test "#build_llm_client should provide isolated SDK contexts without retries" do
     first = build(:ai_credential, provider: "openai", credential_data: { "api_key" => "first-key" })
     second = build(:ai_credential, provider: "openai", credential_data: { "api_key" => "second-key" })
     original_key = RubyLLM.config.openai_api_key
 
-    first_context = first.ruby_llm_context
-    second_context = second.ruby_llm_context
+    first_context = first.build_llm_client.context
+    second_context = second.build_llm_client.context
 
     assert_equal "first-key", first_context.config.openai_api_key
     assert_equal "second-key", second_context.config.openai_api_key
@@ -232,7 +234,7 @@ class AiCredentialTest < ActiveSupport::TestCase
 
     credential.reload
     event = Event.order(:created_at).last
-    assert credential.inactive?
+    assert_not credential.active?
     assert_equal "OpenAI: HTTP 401", credential.last_error
     assert_not_nil credential.last_validated_at
     assert_equal "ai_credential_deactivated", event.type
@@ -258,5 +260,67 @@ class AiCredentialTest < ActiveSupport::TestCase
       { "id" => "unknown" }
     ])
     assert_equal ["text", "unknown"], credential.supported_models.pluck("id")
+  end
+
+  test "#refresh_models_async should ignore inactive credentials" do
+    credential = create(:ai_credential, :inactive, available_models: [{ "id" => "saved-model" }])
+    original = credential.attributes
+
+    assert_no_enqueued_jobs do
+      assert_no_difference "OperationRun.count" do
+        credential.refresh_models_async(force: true)
+      end
+    end
+
+    assert_equal original, credential.reload.attributes
+  end
+
+  test "#refresh_models_async should ignore a forced refresh during validation" do
+    credential = create(:ai_credential, :active)
+    validation_run = credential.validate_async(AiCredentialValidationJob)
+
+    assert_no_enqueued_jobs do
+      assert_no_difference "OperationRun.count" do
+        assert_nil credential.refresh_models_async(force: true)
+      end
+    end
+
+    assert_predicate validation_run.reload, :running?
+    assert_predicate credential.reload, :active?
+  end
+
+  test "#refresh_models_async should allow refresh after the validation deadline" do
+    credential = create(:ai_credential, :active)
+    validation_run = credential.validate_async(AiCredentialValidationJob)
+
+    travel_to validation_run.deadline_at + 1.second do
+      assert_enqueued_with(job: AiModelCatalogRefreshJob) { credential.refresh_models_async }
+    end
+  end
+
+  test "#refresh_models_async should reuse an active run even for a forced refresh" do
+    credential = create(:ai_credential, :active)
+    run = credential.refresh_models_async
+
+    assert_no_enqueued_jobs { assert_equal run, credential.refresh_models_async(force: true) }
+  end
+
+  test "#refresh_models_async should wait an hour before retrying automatically" do
+    freeze_time do
+      credential = create(:ai_credential, :active)
+      credential.refresh_models_async.fail!
+
+      assert_no_enqueued_jobs { assert_nil credential.refresh_models_async }
+
+      travel 1.hour
+      assert_enqueued_with(job: AiModelCatalogRefreshJob) { credential.refresh_models_async }
+    end
+  end
+
+  test "#refresh_models_async should allow a forced refresh during the retry delay" do
+    credential = create(:ai_credential, :active)
+    credential.refresh_models_async.fail!
+
+    assert_enqueued_with(job: AiModelCatalogRefreshJob) { credential.refresh_models_async(force: true) }
   end
 end

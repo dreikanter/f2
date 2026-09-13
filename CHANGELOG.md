@@ -2,6 +2,12 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-13
+
+- Keep feeds enabled when an outdated model refresh fails during a newer credential check.
+- Keep working AI and search credentials usable while checking them again; show when a check times out.
+- Show a timeout notice when refreshing available groups takes too long.
+
 ## 2026-09-12
 
 - AI feed settings keep the Enable checkbox off and explain the temporary unavailability.

@@ -15,8 +15,8 @@ class AiModelCatalogTest < ActiveSupport::TestCase
     assert_equal %w[gpt-5.6-luna future-openai-model text-embedding-3-small], credential.available_models.pluck("id")
     assert_equal %w[gpt-5.6-luna future-openai-model], credential.supported_models.pluck("id")
     assert_equal "GPT-5.6 Luna", credential.available_models.first["name"]
-    assert_equal 1_050_000, credential.model_metadata("gpt-5.6-luna")["context_window"]
-    assert_equal({}, credential.model_metadata("future-openai-model"))
+    assert_equal 1_050_000, credential.available_models.first.dig("metadata", "context_window")
+    assert_nil credential.available_models.second["metadata"]
     assert_requested request, times: 1
     assert_not_requested :post, /./
   end

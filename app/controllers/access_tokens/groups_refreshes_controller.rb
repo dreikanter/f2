@@ -1,9 +1,9 @@
 # On-demand refresh of a token's postable groups. `create` marks the refresh
 # running and enqueues the background fetch; `show` is the polling endpoint
 # that stays silent while the job runs and answers with the re-rendered
-# fragment once it settles. Which fragment depends on where the refresh was
-# requested: the token page's Available Groups section, or the feed form's
-# target-group selector (context=feed_form).
+# fragment once it settles or reaches its deadline. The fragment depends on
+# where the refresh was requested: the token page's Available Groups section,
+# or the feed form's target-group selector (context=feed_form).
 class AccessTokens::GroupsRefreshesController < ApplicationController
   include StatePolling
 
@@ -37,19 +37,25 @@ class AccessTokens::GroupsRefreshesController < ApplicationController
   end
 
   def render_fragment(refreshing:)
-    failed = !refreshing && detail.groups_refresh_failed?
+    overdue = !refreshing && detail.groups_refresh_overdue?
+    failed = !refreshing && !overdue && detail.groups_refresh_failed?
 
     if params[:context] == "feed_form"
       render turbo_stream: turbo_stream.replace(
         "target-group-selector",
         partial: "feeds/target_group_selector",
-        locals: selector_locals(refreshing: refreshing, failed: failed)
+        locals: selector_locals(refreshing: refreshing, failed: failed, overdue: overdue)
       )
     else
       render turbo_stream: turbo_stream.replace(
         "available-groups",
         partial: "access_tokens/available_groups",
-        locals: { access_token: access_token, refreshing: refreshing, refresh_failed: failed }
+        locals: {
+          access_token: access_token,
+          refreshing: refreshing,
+          refresh_failed: failed,
+          refresh_overdue: overdue
+        }
       )
     end
   end
@@ -58,7 +64,7 @@ class AccessTokens::GroupsRefreshesController < ApplicationController
   # persisted group list (the refresh job's output) instead of fetching live,
   # and threads the form's unsaved selection through so the replace doesn't
   # reset it.
-  def selector_locals(refreshing:, failed:)
+  def selector_locals(refreshing:, failed:, overdue:)
     groups = detail.group_names.sort
 
     {
@@ -68,7 +74,8 @@ class AccessTokens::GroupsRefreshesController < ApplicationController
       token_error: empty_groups_error(groups, failed),
       selected: params[:selected].presence,
       refreshing: refreshing,
-      refresh_failed: failed
+      refresh_failed: failed,
+      refresh_overdue: overdue
     }
   end
 

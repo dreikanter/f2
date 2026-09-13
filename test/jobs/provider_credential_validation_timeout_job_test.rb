@@ -1,34 +1,27 @@
 require "test_helper"
 
 class ProviderCredentialValidationTimeoutJobTest < ActiveJob::TestCase
-  test "#perform should settle a new credential to its fallback state" do
-    credential = create(:ai_credential, state: :validating)
-    run = create(:operation_run, subject: credential, context: { fallback_state: "inactive" })
+  test "#perform should time out validation while leaving a new credential inactive" do
+    credential = create(:ai_credential)
+    run = credential.validate_async(AiCredentialValidationJob)
 
-    ProviderCredentialValidationTimeoutJob.perform_now(run)
+    travel_to run.deadline_at do
+      ProviderCredentialValidationTimeoutJob.perform_now(run)
+    end
 
-    assert_predicate credential.reload, :inactive?
+    assert_not_predicate credential.reload, :active?
     assert_predicate run.reload, :timed_out?
   end
 
   test "#perform should preserve an active credential after an inconclusive run" do
-    credential = create(:search_credential, state: :validating)
-    run = create(:operation_run, subject: credential, context: { fallback_state: "active" })
+    credential = create(:search_credential, :active)
+    run = credential.validate_async(SearchCredentialValidationJob)
 
-    ProviderCredentialValidationTimeoutJob.perform_now(run)
+    travel_to run.deadline_at do
+      ProviderCredentialValidationTimeoutJob.perform_now(run)
+    end
 
     assert_predicate credential.reload, :active?
     assert_predicate run.reload, :timed_out?
-  end
-
-  test "#perform should ignore a superseded run" do
-    credential = create(:search_credential, state: :validating)
-    run = create(:operation_run, subject: credential, status: :superseded, finished_at: Time.current,
-                                 context: { fallback_state: "inactive" })
-    original_attributes = credential.attributes.slice("state", "updated_at")
-
-    ProviderCredentialValidationTimeoutJob.perform_now(run)
-
-    assert_equal original_attributes, credential.reload.attributes.slice(*original_attributes.keys)
   end
 end

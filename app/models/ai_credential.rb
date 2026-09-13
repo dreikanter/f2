@@ -6,6 +6,8 @@ class AiCredential < ApplicationRecord
 
   REMOVED_EVENT_TYPE = "feed_ai_credential_removed"
   DEACTIVATED_EVENT_TYPE = "ai_credential_deactivated"
+  MODEL_CATALOG_FRESHNESS = 1.day
+  MODEL_REFRESH_TIMEOUT = 15.minutes
 
   validates :provider, presence: true, inclusion: { in: ->(_) { LlmProvider.names } }
   validate :provider_credentials_valid
@@ -18,9 +20,6 @@ class AiCredential < ApplicationRecord
     LlmProvider.find(provider).fetch(:display_name)
   end
 
-  MODEL_CATALOG_FRESHNESS = 1.day
-  MODEL_REFRESH_TIMEOUT = 15.minutes
-
   def supported_models
     available_models.reject do |model|
       outputs = model.dig("metadata", "output_modalities")
@@ -28,24 +27,33 @@ class AiCredential < ApplicationRecord
     end
   end
 
-  def model_metadata(model_id)
-    available_models.find { |model| model["id"] == model_id }&.fetch("metadata", {}) || {}
-  end
-
-  def ruby_llm_context
-    build_llm_client.context
-  end
-
   def refresh_models_async(force: false)
-    return unless force && active?
+    with_lock do
+      return unless active?
+      return if validation_in_progress?
 
-    run = OperationRun.start!(subject: self, kind: :models_refresh)
-    AiModelCatalogRefreshJob.perform_now(run)
-    run
+      recent = latest_operation_run(:models_refresh)
+      return recent if recent&.in_progress?
+      return if !force && models_refreshed_at && models_refreshed_at > MODEL_CATALOG_FRESHNESS.ago
+      # Space out automatic retries during provider outages.
+      return if !force && recent && recent.created_at > 1.hour.ago
+
+      run = OperationRun.start!(subject: self, kind: :models_refresh, timeout: MODEL_REFRESH_TIMEOUT)
+      AiModelCatalogRefreshJob.perform_later(run)
+      AiModelCatalogTimeoutJob.set(wait_until: run.deadline_at).perform_later(run)
+      run
+    end
   end
 
   def models_refreshing?
-    latest_operation_run(:models_refresh)&.in_progress?(stale_after: MODEL_REFRESH_TIMEOUT) || false
+    latest_operation_run(:models_refresh)&.in_progress? || false
+  end
+
+  def models_refresh_failed?
+    run = latest_operation_run(:models_refresh)
+    return false unless run&.unsuccessful?
+
+    models_refreshed_at.nil? || run.finished_at > models_refreshed_at
   end
 
   def supports_model?(model_id)

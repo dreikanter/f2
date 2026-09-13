@@ -3,7 +3,7 @@
 <div id="ai-credential-show" class="space-y-6" data-key="admin.ai_credential.show">
   <%= render PageHeaderComponent.new(title: @ai_credential.display_name) do |header| %>
     <% header.with_breadcrumb(label: "Admin Panel", url: admin_path) %>
-    <% unless @ai_credential.pending? || @ai_credential.validating? %>
+    <% unless @ai_credential.validation_in_progress? %>
       <% header.with_context_paragraph do %>
         <%= render credential_state_badge(@ai_credential) %>
       <% end %>
@@ -14,8 +14,13 @@
     <% end %>
   <% end %>
 
-  <% case @ai_credential.state %>
-  <% when "pending", "validating" %>
+  <% if @ai_credential.active? && @ai_credential.validation_error.present? %>
+    <%= render AlertComponent.new(variant: :warning, data: { key: "ai_credential.validation_error" }) do %>
+      <%= @ai_credential.validation_error %>
+    <% end %>
+  <% end %>
+
+  <% if @ai_credential.validation_in_progress? %>
     <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3"
          data-key="ai_credential.validating">
       <div class="flex-shrink-0">
@@ -26,7 +31,7 @@
         <p class="text-body">This usually takes a few seconds.</p>
       </div>
     </div>
-  <% when "active" %>
+  <% elsif @ai_credential.active? %>
     <%= render AiCredentialDetailsComponent.new(ai_credential: @ai_credential) %>
 
     <% if @ai_credential.available_models.any? %>
@@ -35,10 +40,10 @@
         <%= render AiCredentialModelsComponent.new(ai_credential: @ai_credential) %>
       </section>
     <% end %>
-  <% when "inactive" %>
+  <% else %>
     <p class="max-w-2xl text-body" data-key="ai_credential.inactive">
-      <% if @ai_credential.last_error.present? %>
-        <%= @ai_credential.last_error %>
+      <% if (error = @ai_credential.validation_error.presence || @ai_credential.last_error.presence) %>
+        <%= error %>
       <% else %>
         This key didn't pass validation.
       <% end %>

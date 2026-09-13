@@ -505,7 +505,7 @@ class Feed < ApplicationRecord
     if ai_credential.nil?
       errors.add(:ai_credential, "must be selected for AI-backed feeds")
     elsif !ai_credential.active?
-      errors.add(:ai_credential, "must be active (currently #{ai_credential.state})")
+      errors.add(:ai_credential, "must be active")
     elsif ai_model.blank?
       errors.add(:ai_model, "Choose a model for this feed.")
     elsif (ai_model_changed? || ai_credential_id_changed?) && !ai_model_supported?

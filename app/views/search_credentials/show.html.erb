@@ -1,6 +1,6 @@
 <% content_for :title, "Search Credential" %>
 
-<% if @credential.pending? || @credential.validating? %>
+<% if @credential.validation_in_progress? %>
   <div
     data-controller="polling"
     data-polling-endpoint-value="<%= search_credential_validation_path(@credential, feed_id: @feed&.id) %>"

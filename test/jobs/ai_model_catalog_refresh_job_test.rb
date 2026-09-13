@@ -1,49 +1,31 @@
 require "test_helper"
 
 class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
-  def credential
-    @credential ||= create(:ai_credential, :active, available_models: [{ "id" => "saved-model" }])
+  include OpenaiModelsTestHelpers
+
+  def openai_credential
+    @openai_credential ||= create(
+      :ai_credential,
+      :active,
+      available_models: [{ "id" => "saved-model" }],
+      models_refreshed_at: 1.day.ago
+    )
   end
 
-  test "#perform should settle pending work and preserve the saved catalog and key" do
-    run = OperationRun.start!(subject: credential, kind: :models_refresh, timeout: 15.minutes)
-    original = credential.attributes
+  test "#perform should update the snapshot without changing credential validation" do
+    freeze_time do
+      original = openai_credential.attributes.except("available_models", "models_refreshed_at", "updated_at")
+      request = stub_openai_models(key: openai_credential.credential_data["api_key"])
+      run = openai_credential.refresh_models_async(force: true)
+      assert_enqueued_with(job: AiModelCatalogTimeoutJob, args: [run], at: run.deadline_at)
 
-    AiModelCatalogRefreshJob.perform_now(run)
+      perform_enqueued_jobs(only: AiModelCatalogRefreshJob)
 
-    assert_predicate run.reload, :failed?
-    assert_equal AiModelCatalog::UNAVAILABLE_MESSAGE, run.context["error"]
-    assert_equal original, credential.reload.attributes
-    assert_not_requested :any, /./
-  end
-
-  test "#refresh_models_async should settle an explicit request without queued work" do
-    assert_no_enqueued_jobs do
-      run = credential.refresh_models_async(force: true)
-      assert_predicate run, :failed?
+      assert_predicate run.reload, :succeeded?
+      assert_equal %w[gpt-5.6-luna future-openai-model text-embedding-3-small], openai_credential.reload.available_models.pluck("id")
+      assert_equal Time.current, openai_credential.models_refreshed_at
+      assert_equal original, openai_credential.attributes.slice(*original.keys)
+      assert_requested request, times: 1
     end
-    assert_not credential.models_refreshing?
-    assert_equal ["saved-model"], credential.reload.available_models.pluck("id")
-  end
-
-  test "#perform should stop automatic catalog scheduling" do
-    credential
-    assert_no_enqueued_jobs do
-      assert_no_difference -> { OperationRun.count } do
-        RefreshAiModelCatalogsJob.perform_now
-      end
-    end
-    assert_not_requested :any, /./
-  end
-
-  test "#perform should leave a superseded run and its replacement unchanged" do
-    old = OperationRun.start!(subject: credential, kind: :models_refresh)
-    current = credential.refresh_models_async(force: true)
-
-    AiModelCatalogRefreshJob.perform_now(old)
-    AiModelCatalogTimeoutJob.perform_now(current)
-
-    assert_predicate old.reload, :superseded?
-    assert_predicate current.reload, :failed?
   end
 end

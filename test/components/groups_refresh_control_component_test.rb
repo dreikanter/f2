@@ -22,6 +22,13 @@ class GroupsRefreshControlComponentTest < ViewComponent::TestCase
     assert_empty result.css("button")
   end
 
+  test "#render should show an overdue notice without offering a refresh for an inactive token" do
+    result = render_inline(GroupsRefreshControlComponent.new(key_prefix: "access_token", overdue: true, available: false))
+
+    assert_empty result.css("button")
+    assert_match(/taking longer than expected/, result.css('[data-key="access_token.groups-refresh-timeout"]:not([hidden])').text)
+  end
+
   test "#render should show a disabled spinning button while refreshing" do
     result = render_inline(GroupsRefreshControlComponent.new(key_prefix: "access_token", refreshing: true,
                                                             compact: true, type: "submit"))
