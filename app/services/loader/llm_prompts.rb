@@ -1,6 +1,9 @@
 module Loader
-  # System instruction templates for AI feed extraction and structured post output.
-  # Each template carries grounding rules and treats retrieved content as untrusted.
+  # Keep extraction instructions in the system role, separate from user prompts
+  # and untrusted retrieved content, to reduce prompt-injection risk. Grounding
+  # rules discourage fabricated source posts; prompts provide defense in depth.
+  # Deterministic code must enforce hard guarantees such as attachment validation
+  # and output limits.
   module LlmPrompts
     ANSWERS = <<~TEXT.strip
       Follow the requested result: requests to find or list existing source posts

@@ -1,6 +1,5 @@
 module Loader
-  # AI feed pipeline entry point. Currently rejects loading while extraction
-  # is unavailable.
+  # AI extraction entry point for the shared feed pipeline.
   class LlmLoader < Base
     UNAVAILABLE_MESSAGE = "AI feeds are temporarily unavailable.".freeze
 
