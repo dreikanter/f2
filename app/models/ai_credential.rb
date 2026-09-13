@@ -27,14 +27,6 @@ class AiCredential < ApplicationRecord
     end
   end
 
-  def model_metadata(model_id)
-    available_models.find { |model| model["id"] == model_id }&.fetch("metadata", {}) || {}
-  end
-
-  def ruby_llm_context
-    build_llm_client.context
-  end
-
   def refresh_models_async(force: false)
     with_lock do
       return unless active?

@@ -136,13 +136,13 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_not_requested :any, /./
   end
 
-  test "#ruby_llm_context should isolate credentials and disable SDK retries" do
+  test "#build_llm_client should provide isolated SDK contexts without retries" do
     first = build(:ai_credential, provider: "openai", credential_data: { "api_key" => "first-key" })
     second = build(:ai_credential, provider: "openai", credential_data: { "api_key" => "second-key" })
     original_key = RubyLLM.config.openai_api_key
 
-    first_context = first.ruby_llm_context
-    second_context = second.ruby_llm_context
+    first_context = first.build_llm_client.context
+    second_context = second.build_llm_client.context
 
     assert_equal "first-key", first_context.config.openai_api_key
     assert_equal "second-key", second_context.config.openai_api_key

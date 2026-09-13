@@ -70,22 +70,6 @@ class OperationRun < ApplicationRecord
     true
   end
 
-  # @param terminal_status [Symbol, String] successful or unsuccessful outcome
-  # @return [Boolean] whether this run won the terminal transition
-  def settle!(terminal_status)
-    terminal_status = terminal_status.to_s.to_sym
-    raise ArgumentError, "invalid terminal status: #{terminal_status}" unless terminal_status.in?(TERMINAL_STATUSES)
-
-    with_subject_lock do
-      return false unless queued? || running?
-
-      yield subject if block_given?
-      update!(status: terminal_status, finished_at: Time.current)
-    end
-
-    true
-  end
-
   # @return [Boolean] whether the run completed successfully
   def succeed!(&)
     settle!(:succeeded, &)
@@ -122,6 +106,22 @@ class OperationRun < ApplicationRecord
   end
 
   private
+
+  # @param terminal_status [Symbol, String] successful or unsuccessful outcome
+  # @return [Boolean] whether this run won the terminal transition
+  def settle!(terminal_status)
+    terminal_status = terminal_status.to_s.to_sym
+    raise ArgumentError, "invalid terminal status: #{terminal_status}" unless terminal_status.in?(TERMINAL_STATUSES)
+
+    with_subject_lock do
+      return false unless queued? || running?
+
+      yield subject if block_given?
+      update!(status: terminal_status, finished_at: Time.current)
+    end
+
+    true
+  end
 
   def with_subject_lock
     transaction do

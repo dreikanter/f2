@@ -40,7 +40,7 @@ class OperationRunTest < ActiveSupport::TestCase
     assert run.claim!(timeout: 5.minutes) { flunk "an already-running run should not be started twice" }
   end
 
-  test "#settle! should run a terminal write once" do
+  test "#succeed! should apply the result and reject later transitions" do
     token = create(:access_token, state: :validating)
     run = create(:operation_run, subject: token)
 
