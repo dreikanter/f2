@@ -1,6 +1,8 @@
 require "test_helper"
 
 class AiCredentialTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   class ClientCredentialsProvider < LlmProvider::Base
     def credential_errors
       credential_data.values_at("client_id", "client_secret").all?(&:present?) ? [] : ["Enter the client ID and secret"]
@@ -258,5 +260,26 @@ class AiCredentialTest < ActiveSupport::TestCase
       { "id" => "unknown" }
     ])
     assert_equal ["text", "unknown"], credential.supported_models.pluck("id")
+  end
+
+  test "#refresh_models_async should ignore inactive credentials" do
+    credential = create(:ai_credential, :inactive, available_models: [{ "id" => "saved-model" }])
+    assert_no_enqueued_jobs do
+      assert_no_difference "OperationRun.count" do
+        assert_nil credential.refresh_models_async(force: true)
+      end
+    end
+    assert_not credential.models_refreshing?
+    assert_equal ["saved-model"], credential.reload.available_models.pluck("id")
+  end
+
+  test "#refresh_models_async should reuse an active run and throttle automatic retries" do
+    credential = create(:ai_credential, :active)
+    run = credential.refresh_models_async
+    assert_no_enqueued_jobs { assert_equal run, credential.refresh_models_async(force: true) }
+    run.fail!
+
+    assert_no_enqueued_jobs { assert_nil credential.refresh_models_async }
+    assert_enqueued_with(job: AiModelCatalogRefreshJob) { credential.refresh_models_async(force: true) }
   end
 end

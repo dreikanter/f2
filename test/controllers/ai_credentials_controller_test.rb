@@ -238,7 +238,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
       assert_select "h2", text: "Available models", count: 1
       assert_select "[data-key='ai_credential.models-refresh-status']", text: /Updated .* ago\./
       assert_select "form[action=?][data-controller='loading-button']", ai_credential_model_catalog_path(active) do
-        assert_select "button[data-key='ai_credential.refresh-models'][title='Refresh models'][type='submit'][disabled]"
+        assert_select "button[data-key='ai_credential.refresh-models'][title='Refresh models'][type='submit']:not([disabled])"
       end
     end
   end

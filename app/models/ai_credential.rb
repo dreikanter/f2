@@ -37,11 +37,19 @@ class AiCredential < ApplicationRecord
   end
 
   def refresh_models_async(force: false)
-    return unless force && active?
+    with_lock do
+      return unless active?
 
-    run = OperationRun.start!(subject: self, kind: :models_refresh)
-    AiModelCatalogRefreshJob.perform_now(run)
-    run
+      recent = latest_operation_run(:models_refresh)
+      return recent if recent&.in_progress?(stale_after: MODEL_REFRESH_TIMEOUT)
+      return if !force && models_refreshed_at && models_refreshed_at > MODEL_CATALOG_FRESHNESS.ago
+      return if !force && recent && recent.created_at > 1.hour.ago
+
+      run = OperationRun.start!(subject: self, kind: :models_refresh, timeout: MODEL_REFRESH_TIMEOUT)
+      AiModelCatalogRefreshJob.perform_later(run)
+      AiModelCatalogTimeoutJob.set(wait_until: run.deadline_at).perform_later(run)
+      run
+    end
   end
 
   def models_refreshing?

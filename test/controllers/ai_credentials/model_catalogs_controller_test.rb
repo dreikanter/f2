@@ -1,6 +1,8 @@
 require "test_helper"
 
 class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTest
+  include OpenaiModelsTestHelpers
+
   def credential
     @credential ||= create(:ai_credential, :active, available_models: [{ "id" => "cached-model" }])
   end
@@ -10,17 +12,37 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
     assert_redirected_to new_session_path
   end
 
-  test "#create should refresh an owned catalog while the credential stays active" do
+  test "#create should ignore refresh requests for inactive credentials" do
+    credential.update!(state: :inactive)
     sign_in_as(credential.user)
+
     assert_no_enqueued_jobs do
+      assert_no_difference "OperationRun.count" do
+        post ai_credential_model_catalog_path(credential)
+      end
+    end
+
+    assert_redirected_to ai_credential_path(credential)
+    assert_predicate credential.reload, :inactive?
+    assert_equal ["cached-model"], credential.available_models.pluck("id")
+    assert_not_requested :any, /./
+  end
+
+  test "#create should queue OpenAI refresh and poll until the snapshot is ready" do
+    sign_in_as(credential.user)
+    assert_enqueued_with(job: AiModelCatalogRefreshJob) do
       post ai_credential_model_catalog_path(credential)
     end
     assert_redirected_to ai_credential_path(credential)
-    follow_redirect!
-    assert_select 'button[data-key="ai_credential.refresh-models"][disabled]'
-    assert_select '[data-key="ai_credential.models-refresh-status"]', text: /saved list is still available/
+    get ai_credential_model_catalog_path(credential)
+    assert_response :no_content
+
+    credential.latest_operation_run(:models_refresh).succeed!
+    get ai_credential_model_catalog_path(credential)
+    assert_response :success
     assert_includes response.body, "cached-model"
-    assert_predicate credential.reload, :active?
+    assert_select 'button[data-key="ai_credential.refresh-models"]:not([disabled])'
+    assert_not_requested :any, /./
   end
 
   test "#create and show should reject another user's credential" do
@@ -29,6 +51,27 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
     assert_response :not_found
     get ai_credential_model_catalog_path(credential)
     assert_response :not_found
+  end
+
+  test "#show should replace the credential state and explanation after a rejected key" do
+    sign_in_as(credential.user)
+    stub_openai_models(key: credential.credential_data.fetch("api_key"), fixture: "invalid_key", status: 401)
+    post ai_credential_model_catalog_path(credential)
+    get ai_credential_path(credential)
+    assert_select '[data-credential-state="active"]'
+
+    AiModelCatalogRefreshJob.perform_now(credential.latest_operation_run(:models_refresh))
+
+    assert_no_enqueued_jobs { get ai_credential_model_catalog_path(credential) }
+
+    assert_response :success
+    assert_select 'turbo-stream[action="update"][target="ai-credential-show"]' do
+      assert_select '[data-credential-state="inactive"]'
+      assert_select '[data-key="ai_credential.inactive"]', text: "OpenAI rejected this API key. Check or replace it."
+      assert_select '[data-credential-state="active"]', count: 0
+      assert_select '[data-key="ai_credential.refresh-models"]', count: 0
+    end
+    assert_not_includes response.body, "sk-sample-secret"
   end
 
   test "#show should poll without scheduling work and show the cached list on failure" do
@@ -49,5 +92,21 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
     get ai_credential_validation_path(credential), headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_includes response.body, ai_credential_model_catalog_path(credential)
+  end
+
+  test "#show should preserve the return to feed link through refresh and polling" do
+    feed = create(:feed, user: credential.user, ai_credential: credential)
+    sign_in_as(credential.user)
+    post ai_credential_model_catalog_path(credential, feed_id: feed.id)
+    assert_redirected_to ai_credential_path(credential, feed_id: feed.id)
+    follow_redirect!
+    assert_select '[data-controller="polling"][data-polling-endpoint-value=?]', ai_credential_model_catalog_path(credential, feed_id: feed.id)
+
+    credential.latest_operation_run(:models_refresh).succeed!
+    get ai_credential_model_catalog_path(credential, feed_id: feed.id)
+
+    assert_response :success
+    assert_select 'a[data-key="ai_credential.return-to"][href=?]', edit_feed_path(feed)
+    assert_select "form[action=?]", ai_credential_model_catalog_path(credential, feed_id: feed.id)
   end
 end

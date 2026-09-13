@@ -40,6 +40,11 @@ default: &default
     queue: default
     schedule: every day at 4am
 
+  refresh_ai_model_catalogs:
+    class: RefreshAiModelCatalogsJob
+    queue: default
+    schedule: every hour
+
   purge_expired_events:
     class: PurgeExpiredEventsJob
     queue: default
