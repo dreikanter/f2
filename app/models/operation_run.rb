@@ -114,7 +114,7 @@ class OperationRun < ApplicationRecord
   end
 
   # @return [Boolean] whether the run has reached its deadline
-  def timeout?
+  def deadline_reached?
     deadline_at.present? && deadline_at <= Time.current
   end
 
