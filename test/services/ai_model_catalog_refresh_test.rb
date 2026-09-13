@@ -175,4 +175,34 @@ class AiModelCatalogRefreshTest < ActiveSupport::TestCase
     assert_predicate feed.reload, :enabled?
     assert_empty run.context
   end
+
+  test "#call should discard a rejection before newer validation finishes" do
+    feed = create(:feed, :enabled, user: openai_credential.user, ai_credential: openai_credential)
+    run = openai_credential.refresh_models_async(force: true)
+    key = openai_credential.credential_data.fetch("api_key")
+    validation_run = nil
+    stub_openai_models(key: key, fixture: "invalid_key", status: 401) do
+      validation_run = AiCredential.find(openai_credential.id).validate_async(AiCredentialValidationJob)
+    end
+
+    AiModelCatalogRefresh.new(run).call
+
+    assert_predicate run.reload, :superseded?
+    assert_empty run.context
+    assert_predicate validation_run.reload, :running?
+    assert_empty validation_run.context
+    assert_predicate openai_credential.reload, :active?
+    assert_nil openai_credential.last_error
+    assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
+    assert_predicate feed.reload, :enabled?
+    assert_not Event.exists?(subject: openai_credential, type: "ai_credential_deactivated")
+
+    stub_openai_models(key: key, fixture: "empty")
+    AiCredentialValidation.new(validation_run).call
+
+    assert_predicate validation_run.reload, :succeeded?
+    assert_predicate openai_credential.reload, :active?
+    assert_empty openai_credential.available_models
+    assert_predicate feed.reload, :enabled?
+  end
 end

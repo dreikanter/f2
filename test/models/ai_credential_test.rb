@@ -275,6 +275,29 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_equal original, credential.reload.attributes
   end
 
+  test "#refresh_models_async should ignore a forced refresh during validation" do
+    credential = create(:ai_credential, :active)
+    validation_run = credential.validate_async(AiCredentialValidationJob)
+
+    assert_no_enqueued_jobs do
+      assert_no_difference "OperationRun.count" do
+        assert_nil credential.refresh_models_async(force: true)
+      end
+    end
+
+    assert_predicate validation_run.reload, :running?
+    assert_predicate credential.reload, :active?
+  end
+
+  test "#refresh_models_async should allow refresh after the validation deadline" do
+    credential = create(:ai_credential, :active)
+    validation_run = credential.validate_async(AiCredentialValidationJob)
+
+    travel_to validation_run.deadline_at do
+      assert_enqueued_with(job: AiModelCatalogRefreshJob) { credential.refresh_models_async }
+    end
+  end
+
   test "#refresh_models_async should reuse an active run even for a forced refresh" do
     credential = create(:ai_credential, :active)
     run = credential.refresh_models_async

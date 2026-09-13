@@ -49,6 +49,7 @@ module ProviderCredential
       timeout: VALIDATION_TIMEOUT
     ) do |credential|
       credential.update!(last_error: nil)
+      credential.active_operation_run(:models_refresh)&.supersede!
     end
 
     validation_job.perform_later(run)
