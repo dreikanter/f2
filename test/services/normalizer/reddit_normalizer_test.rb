@@ -3,6 +3,41 @@ require "test_helper"
 class Normalizer::RedditNormalizerTest < ActiveSupport::TestCase
   include FixtureFeedEntries
 
+  test "#normalize should read Reddit Atom content through the actual RSS processor" do
+    sample_feed = build(:feed, feed_profile_key: "reddit", url: "https://example.com/discussions")
+    entry = Processor::RssProcessor.new(sample_feed, file_fixture("feeds/reddit/content.atom").read).process.entries.sole
+
+    post = Normalizer::RedditNormalizer.new(entry).normalize
+
+    assert_equal "Sample article\n\nSample discussion body. - https://example.com/discussion", post.content
+    assert_equal ["https://example.org/article"], post.comments
+    assert_equal Time.utc(2026, 9, 9, 10), entry.published_at
+  end
+
+  test "#normalize should preserve the article destination separately from the discussion" do
+    entry = build(:feed_entry, raw_data: {
+      "title" => "Sample story",
+      "link" => "https://example.com/discussion",
+      "summary" => '<a href="https://example.org/story">[link]</a> <a href="https://example.com/discussion">[comments]</a>'
+    })
+
+    post = Normalizer::RedditNormalizer.new(entry).normalize
+
+    assert_equal "Sample story - https://example.com/discussion", post.content
+    assert_equal ["https://example.org/story"], post.comments
+  end
+
+  test "#normalize should omit duplicate discussion links and unsafe article URLs" do
+    entry = build(:feed_entry, raw_data: {
+      "link" => "https://example.com/discussion",
+      "summary" => '<a href="https://example.com/discussion">[link]</a> <a href="javascript:alert(1)">[link]</a>'
+    })
+
+    post = Normalizer::RedditNormalizer.new(entry).normalize
+
+    assert_empty post.comments
+  end
+
   def fixture_dir
     "feeds/reddit"
   end
