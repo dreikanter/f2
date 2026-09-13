@@ -34,6 +34,20 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_includes credential.errors[:base], "Enter your API key"
   end
 
+  test "#save should reject an API key array" do
+    credential = build(:ai_credential, user: user, credential_data: { "api_key" => ["sk-test-key"] })
+
+    refute credential.save
+    assert_includes credential.errors[:base], "Enter your API key"
+  end
+
+  test "#save should reject an API key hash" do
+    credential = build(:ai_credential, user: user, credential_data: { "api_key" => { "value" => "sk-test-key" } })
+
+    refute credential.save
+    assert_includes credential.errors[:base], "Enter your API key"
+  end
+
   test "#valid? should let the provider interpret credentials without an API key" do
     config = { display_name: "Client credentials", default_model: "example-model", client_class: ClientCredentialsProvider }
     stub_const(LlmProvider, :PROVIDERS, LlmProvider::PROVIDERS.merge("client_credentials" => config)) do

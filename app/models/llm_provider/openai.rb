@@ -3,7 +3,7 @@ module LlmProvider
   # Normalizes provider failures for credential validation and catalog refresh.
   class Openai < Base
     def credential_errors
-      api_key.present? ? [] : ["Enter your API key"]
+      api_key.is_a?(String) && api_key.present? ? [] : ["Enter your API key"]
     end
 
     def models
