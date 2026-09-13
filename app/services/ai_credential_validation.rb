@@ -1,15 +1,9 @@
 # Runs credential validation through free model discovery. Settles the supplied
 # OperationRun by activating the key and saving its catalog or applying failure policy.
 class AiCredentialValidation
-  attr_reader :run
-
   # @param run [OperationRun] validation being performed
   def initialize(run)
     @run = run
-  end
-
-  def credential
-    run.subject
   end
 
   def call
@@ -26,6 +20,12 @@ class AiCredentialValidation
   end
 
   private
+
+  attr_reader :run
+
+  def credential
+    run.subject
+  end
 
   def with_current_credential(original_data)
     credential.with_lock do
