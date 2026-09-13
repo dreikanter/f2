@@ -293,7 +293,7 @@ class AiCredentialTest < ActiveSupport::TestCase
     credential = create(:ai_credential, :active)
     validation_run = credential.validate_async(AiCredentialValidationJob)
 
-    travel_to validation_run.deadline_at do
+    travel_to validation_run.deadline_at + 1.second do
       assert_enqueued_with(job: AiModelCatalogRefreshJob) { credential.refresh_models_async }
     end
   end

@@ -331,7 +331,6 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     completed = active.validate_async(AiCredentialValidationJob)
     completed.succeed!
     validation = active.validate_async(AiCredentialValidationJob)
-    refresh = active.refresh_models_async(force: true)
     new_key = "sk-ant-#{SecureRandom.hex(16)}"
 
     assert_no_difference "Event.count" do
@@ -349,9 +348,25 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_predicate active, :validation_in_progress?
     assert_enqueued_with(job: AiCredentialValidationJob, args: [active.active_operation_run(:validation)])
     assert_predicate validation.reload, :superseded?
-    assert_predicate refresh.reload, :superseded?
     assert_predicate completed.reload, :succeeded?
     assert_predicate feed.reload, :enabled?
+  end
+
+  test "#update should supersede a catalog refresh when replacing the key" do
+    sign_in_as(user)
+    active = create(:ai_credential, :active, user: user)
+    refresh = active.refresh_models_async(force: true)
+
+    patch ai_credential_url(active), params: {
+      ai_credential: {
+        credential_data: { api_key: "replacement-key" }
+      }
+    }
+
+    assert_redirected_to ai_credential_path(active)
+    assert_predicate refresh.reload, :superseded?
+    assert_not_predicate active.reload, :active?
+    assert_predicate active, :validation_in_progress?
   end
 
   test "#update should keep existing credential_data when api_key is blank" do
