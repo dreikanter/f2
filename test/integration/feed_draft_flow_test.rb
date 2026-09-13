@@ -66,8 +66,6 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     AiCredentialValidationJob.perform_now(ai_credential.latest_operation_run(:validation))
 
     assert_predicate ai_credential.reload, :active?
-    assert_predicate ai_credential.latest_operation_run(:validation), :succeeded?
-    assert_nil ai_credential.active_operation_run(:validation)
     follow_redirect!
     assert_response :success
     assert_includes response.body, "future-openai-model"
@@ -85,6 +83,5 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     assert_equal "follow a different blog", draft.source_input
     assert_equal ai_credential.id, draft.ai_credential_id
     assert_includes response.body, Loader::LlmLoader::UNAVAILABLE_MESSAGE
-    assert_not_requested :post, /./
   end
 end

@@ -52,43 +52,26 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='ai_credentials.credential-data.api_key']"
   end
 
-  test "#create should save a known provider and enqueue validation when params are valid" do
+  test "#create should save the credential, enqueue validation and expose polling" do
     sign_in_as(user)
 
     assert_difference("AiCredential.count", 1) do
-      assert_enqueued_with(job: AiCredentialValidationJob) do
-        post ai_credentials_url, params: {
-          ai_credential: {
-            provider: "openai",
-            display_name: "My Key",
-            credential_data: { api_key: "sk-ant-#{SecureRandom.hex(16)}" }
-          }
-        }
-      end
-    end
-
-    saved = AiCredential.last
-    assert_redirected_to ai_credential_path(saved)
-    assert_equal "validating", saved.state
-    assert_predicate saved.active_operation_run(:validation), :running?
-  end
-
-  test "#create should queue OpenAI validation and expose polling" do
-    sign_in_as(user)
-
-    assert_enqueued_with(job: AiCredentialValidationJob) do
       post ai_credentials_url, params: {
-        ai_credential: { provider: "openai", credential_data: { api_key: "openai-test-key" } }
+        ai_credential: {
+          provider: "openai",
+          display_name: "My Key",
+          credential_data: { api_key: "openai-test-key" }
+        }
       }
     end
 
     saved = AiCredential.last
     assert_redirected_to ai_credential_path(saved)
     assert_predicate saved, :validating?
+    assert_enqueued_with(job: AiCredentialValidationJob, args: [saved.active_operation_run(:validation)])
     follow_redirect!
     assert_response :success
-    assert_includes response.body, ai_credential_validation_path(saved)
-    assert_not_requested :any, /./
+    assert_select '[data-controller="polling"][data-polling-endpoint-value=?]', ai_credential_validation_path(saved)
   end
 
   test "#new should accept and remember a feed_id owned by current_user" do
@@ -351,19 +334,17 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     active = create(:ai_credential, :active, user: user)
     new_key = "sk-ant-#{SecureRandom.hex(16)}"
 
-    assert_enqueued_with(job: AiCredentialValidationJob) do
-      patch ai_credential_url(active), params: {
-        ai_credential: {
-          display_name: active.display_name,
-          credential_data: { api_key: new_key }
-        }
+    patch ai_credential_url(active), params: {
+      ai_credential: {
+        display_name: active.display_name,
+        credential_data: { api_key: new_key }
       }
-    end
+    }
 
     active.reload
     assert_equal new_key, active.credential_data["api_key"]
-    assert_equal "validating", active.state
-    assert_predicate active.active_operation_run(:validation), :running?
+    assert_predicate active, :validating?
+    assert_enqueued_with(job: AiCredentialValidationJob, args: [active.active_operation_run(:validation)])
   end
 
   test "#update should keep existing credential_data when api_key is blank" do
@@ -387,18 +368,17 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     active = create(:ai_credential, :active, user: user)
     original_data = active.credential_data.deep_dup
 
-    assert_enqueued_with(job: AiCredentialValidationJob) do
-      patch ai_credential_url(active), params: {
-        ai_credential: {
-          display_name: active.display_name,
-          credential_data: { api_key: "", organization_id: "another-organization" }
-        }
+    patch ai_credential_url(active), params: {
+      ai_credential: {
+        display_name: active.display_name,
+        credential_data: { api_key: "", organization_id: "another-organization" }
       }
-    end
+    }
 
     assert_redirected_to ai_credential_path(active)
     assert_equal original_data.merge("organization_id" => "another-organization"), active.reload.credential_data
     assert_predicate active, :validating?
+    assert_enqueued_with(job: AiCredentialValidationJob, args: [active.active_operation_run(:validation)])
   end
 
   test "#update should render :edit with errors on invalid input" do

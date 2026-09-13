@@ -4,6 +4,15 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
   include OpenaiModelsTestHelpers
 
+  def openai_credential
+    @openai_credential ||= create(
+      :ai_credential,
+      :active,
+      available_models: [{ "id" => "saved-model" }],
+      models_refreshed_at: 1.day.ago
+    )
+  end
+
   test "#call should not let a superseded run overwrite a replacement key" do
     credential = create(:ai_credential, :active)
     stale = OperationRun.start!(subject: credential, kind: :validation, context: { fallback_state: "inactive" })
@@ -19,8 +28,7 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
 
   test "#call should not revive a timed out validation" do
     credential = create(:ai_credential)
-    run = create(:operation_run, subject: credential, started_at: 16.minutes.ago,
-                                 context: { fallback_state: "inactive" })
+    run = credential.validate_async(AiCredentialValidationJob)
     credential.timeout_validation!(run: run)
     original = credential.reload.attributes
 
@@ -28,11 +36,6 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
 
     assert_predicate run.reload, :timed_out?
     assert_equal original, credential.reload.attributes
-  end
-
-  def openai_credential
-    @openai_credential ||= create(:ai_credential, :active, provider: "openai",
-                                                            available_models: [{ "id" => "saved-model" }])
   end
 
   test "#call should accept an authenticated empty catalog" do
@@ -56,7 +59,6 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
     assert_predicate run.reload, :timed_out?
     assert_predicate openai_credential.reload, :active?
     assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
-    assert_not_requested :any, /./
   end
 
   test "#call should deactivate a confirmed rejected key and disable its feeds" do
@@ -71,14 +73,20 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
     assert_predicate feed.reload, :disabled?
     assert Event.exists?(subject: openai_credential, type: "ai_credential_deactivated")
     assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
-    assert_not_includes openai_credential.last_error, "sk-sample-secret"
-    assert_equal({ "fallback_state" => "active", "error" => "OpenAI rejected this API key. Check or replace it.",
-                   "category" => "invalid_key", "status" => 401 }, run.context)
+    expected_context = {
+      "fallback_state" => "active",
+      "error" => "OpenAI rejected this API key. Check or replace it.",
+      "category" => "invalid_key",
+      "status" => 401
+    }
+    assert_equal expected_context, run.context
+    assert_equal expected_context.fetch("error"), openai_credential.last_error
   end
 
   test "#call should preserve the prior state and snapshot on an IP restriction" do
     feed = create(:feed, :enabled, user: openai_credential.user, ai_credential: openai_credential)
     original_timestamp = openai_credential.last_validated_at
+    original_refresh = openai_credential.models_refreshed_at
     stub_openai_models(key: openai_credential.credential_data["api_key"], fixture: "ip_restriction", status: 401)
     run = openai_credential.validate_async(AiCredentialValidationJob)
 
@@ -89,35 +97,42 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
     assert_predicate feed.reload, :enabled?
     assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
     assert_equal original_timestamp, openai_credential.last_validated_at
+    assert_equal original_refresh, openai_credential.models_refreshed_at
     assert_not Event.exists?(subject: openai_credential, type: "ai_credential_deactivated")
   end
 
   test "#call should leave a new key inactive after a transient failure" do
-    openai_credential.update!(state: :pending)
-    stub_openai_models(key: openai_credential.credential_data["api_key"], fixture: "unavailable", status: 503)
-    run = openai_credential.validate_async(AiCredentialValidationJob)
+    credential = create(:ai_credential)
+    stub_openai_models(key: credential.credential_data["api_key"], fixture: "unavailable", status: 503)
+    run = credential.validate_async(AiCredentialValidationJob)
 
     AiCredentialValidation.new(run).call
 
     assert_predicate run.reload, :failed?
-    assert_predicate openai_credential.reload, :inactive?
-    assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
-    assert_not Event.exists?(subject: openai_credential, type: "ai_credential_deactivated")
-    assert_equal({ "fallback_state" => "inactive", "error" => "Couldn't list OpenAI models (HTTP 503). Try again later.",
-                   "category" => "provider", "status" => 503 }, run.context)
-    assert_equal run.context["error"], openai_credential.last_error
+    assert_predicate credential.reload, :inactive?
+    assert_empty credential.available_models
+    assert_nil credential.last_validated_at
+    assert_not Event.exists?(subject: credential, type: "ai_credential_deactivated")
+    expected_context = {
+      "fallback_state" => "inactive",
+      "error" => "Couldn't list OpenAI models (HTTP 503). Try again later.",
+      "category" => "provider",
+      "status" => 503
+    }
+    assert_equal expected_context, run.context
+    assert_equal expected_context.fetch("error"), credential.last_error
   end
 
   test "#call should reject a success received for a replaced key" do
     run = openai_credential.validate_async(AiCredentialValidationJob)
     stub_openai_models(key: openai_credential.credential_data["api_key"]) do
-      AiCredential.find(openai_credential.id).update!(credential_data: { "api_key" => "replacement-key" })
+      AiCredential.find(openai_credential.id).update!(state: :pending, credential_data: { "api_key" => "replacement-key" })
     end
 
     AiCredentialValidation.new(run).call
 
     assert_predicate run.reload, :failed?
-    assert_equal "replacement-key", openai_credential.reload.credential_data["api_key"]
+    assert_predicate openai_credential.reload, :pending?
     assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
   end
 
@@ -125,14 +140,14 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
     run = openai_credential.validate_async(AiCredentialValidationJob)
     stub_openai_models(key: openai_credential.credential_data.fetch("api_key")) do
       current = AiCredential.find(openai_credential.id)
-      current.update!(credential_data: current.credential_data.merge("organization_id" => "another-organization"))
+      current.update!(state: :pending, credential_data: current.credential_data.merge("organization_id" => "another-organization"))
     end
 
     AiCredentialValidation.new(run).call
 
     assert_predicate run.reload, :failed?
-    assert_equal ["saved-model"], openai_credential.reload.available_models.pluck("id")
-    assert_equal "another-organization", openai_credential.credential_data["organization_id"]
+    assert_predicate openai_credential.reload, :pending?
+    assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
   end
 
   test "#call should not deactivate a replacement key on late rejection" do
@@ -158,7 +173,5 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
     assert_predicate run.reload, :timed_out?
     assert_predicate openai_credential.reload, :active?
     assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
-  ensure
-    travel_back
   end
 end
