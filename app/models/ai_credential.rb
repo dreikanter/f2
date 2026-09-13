@@ -40,7 +40,7 @@ class AiCredential < ApplicationRecord
       return unless active?
 
       recent = latest_operation_run(:models_refresh)
-      return recent if recent&.in_progress?(stale_after: MODEL_REFRESH_TIMEOUT)
+      return recent if recent&.in_progress?
       return if !force && models_refreshed_at && models_refreshed_at > MODEL_CATALOG_FRESHNESS.ago
       # Space out automatic retries during provider outages.
       return if !force && recent && recent.created_at > 1.hour.ago
@@ -53,7 +53,7 @@ class AiCredential < ApplicationRecord
   end
 
   def models_refreshing?
-    latest_operation_run(:models_refresh)&.in_progress?(stale_after: MODEL_REFRESH_TIMEOUT) || false
+    latest_operation_run(:models_refresh)&.in_progress? || false
   end
 
   def models_refresh_failed?

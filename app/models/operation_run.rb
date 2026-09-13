@@ -116,13 +116,9 @@ class OperationRun < ApplicationRecord
     failed? || timed_out?
   end
 
-  # @param stale_after [ActiveSupport::Duration, nil] fallback age for lost timeouts
   # @return [Boolean] whether polling should continue
-  def in_progress?(stale_after: nil)
-    return false unless queued? || running?
-    return true unless stale_after
-
-    (started_at || created_at) > stale_after.ago
+  def in_progress?
+    (queued? || running?) && !deadline_reached?
   end
 
   private

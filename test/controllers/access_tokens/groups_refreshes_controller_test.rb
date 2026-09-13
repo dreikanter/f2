@@ -14,8 +14,8 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
                        managed_groups: [{ "username" => "oldgroup" }])
   end
 
-  def mark_refresh_running(detail = self.detail, started_at: Time.current)
-    create(:operation_run, subject: detail, kind: :groups_refresh, started_at: started_at)
+  def mark_refresh_running(detail = self.detail)
+    create(:operation_run, subject: detail, kind: :groups_refresh)
   end
 
   test "#create should require authentication" do
@@ -58,8 +58,10 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
     assert_match(/data-controller="polling"/, response.body)
   end
 
-  test "#create should replace an abandoned run" do
-    abandoned_run = mark_refresh_running(started_at: AccessTokenDetail::GROUPS_REFRESH_STALE_AFTER.ago - 1.minute)
+  test "#create should replace a run that has reached its deadline" do
+    freeze_time
+    expired_run = mark_refresh_running
+    travel_to expired_run.deadline_at
     sign_in_as user
 
     assert_enqueued_with(job: TokenGroupsRefreshJob) do
@@ -69,7 +71,7 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
     assert_response :success
     detail.reload
     assert detail.groups_refresh_running?
-    assert_predicate abandoned_run.reload, :superseded?
+    assert_predicate expired_run.reload, :superseded?
     run = detail.active_operation_run(:groups_refresh)
     assert_enqueued_with(job: TokenGroupsRefreshTimeoutJob,
                          args: [run])

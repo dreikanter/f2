@@ -22,12 +22,14 @@ class AccessTokenDetailTest < ActiveSupport::TestCase
     assert detail.groups_refresh_running?
   end
 
-  test "#groups_refresh_running? should treat an old run as abandoned" do
-    detail = create(:access_token_detail)
-    create(:operation_run, subject: detail, kind: :groups_refresh,
-                           started_at: AccessTokenDetail::GROUPS_REFRESH_STALE_AFTER.ago)
+  test "#groups_refresh_running? should stop at the deadline even if the timeout job has not run" do
+    freeze_time do
+      detail = create(:access_token_detail)
+      detail.start_groups_refresh!
+      run = detail.active_operation_run(:groups_refresh)
 
-    travel 1.minute do
+      travel_to run.deadline_at
+
       assert_not detail.groups_refresh_running?
     end
   end

@@ -52,11 +52,32 @@ class OperationRunTest < ActiveSupport::TestCase
     assert_not_nil run.finished_at
   end
 
-  test "#in_progress? should support a stale-job fallback" do
-    run = create(:operation_run, started_at: 16.minutes.ago)
+  test "#in_progress? should use the recorded deadline regardless of age" do
+    freeze_time do
+      run = build(:operation_run, started_at: 1.hour.ago, deadline_at: 1.minute.from_now)
 
-    assert run.in_progress?
-    assert_not run.in_progress?(stale_after: 15.minutes)
+      assert_predicate run, :in_progress?
+
+      travel_to run.deadline_at
+
+      assert_not_predicate run, :in_progress?
+    end
+  end
+
+  test "#in_progress? should keep queued runs without a deadline in progress" do
+    run = build(:operation_run, status: :queued, created_at: 1.day.ago, started_at: nil, deadline_at: nil)
+
+    assert_predicate run, :in_progress?
+  end
+
+  test "#in_progress? should exclude terminal runs before their deadline" do
+    run = build(:operation_run, deadline_at: 1.minute.from_now)
+
+    %i[succeeded failed timed_out superseded].each do |status|
+      run.status = status
+
+      assert_not_predicate run, :in_progress?, status.to_s
+    end
   end
 
   test "#unsuccessful? should cover both unsuccessful terminal statuses" do
