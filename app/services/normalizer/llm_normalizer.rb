@@ -1,8 +1,6 @@
 module Normalizer
-  # Normalizer for the AI extraction profile. The AI work happens at the
-  # loader stage, so raw_data already carries the universal-post fields
-  # (FeedProfile::UNIVERSAL_OUTPUT_SCHEMA); this maps them straight onto
-  # Post. No LLM call happens here.
+  # Maps AI extraction output in FeedProfile::UNIVERSAL_OUTPUT_SCHEMA format
+  # onto Post fields, applying the feed pipeline's content validation.
   class LlmNormalizer < Base
     private
 

@@ -1,3 +1,5 @@
+# Feed-level summary of recent AI and web-search activity, combining stored
+# request counts and cost estimates for the feed's statistics panel.
 class FeedLlmStatsComponent < StatsPanelComponent
   def initialize(feed:)
     @feed = feed
