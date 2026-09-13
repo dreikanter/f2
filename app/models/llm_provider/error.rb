@@ -15,7 +15,11 @@ module LlmProvider
     end
 
     def details
-      { error: message, category: category, status: status }.compact
+      {
+        error: message,
+        category: category,
+        status: status
+      }.compact
     end
   end
 end
