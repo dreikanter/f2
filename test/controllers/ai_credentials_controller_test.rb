@@ -359,6 +359,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     patch ai_credential_url(active), params: {
       ai_credential: {
+        display_name: active.display_name,
         credential_data: { api_key: "replacement-key" }
       }
     }
