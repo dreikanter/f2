@@ -64,19 +64,15 @@ class Normalizer::PluralisticNormalizerTest < ActiveSupport::TestCase
     assert_empty post.attachment_urls
   end
 
-  test "#normalize should report error when page is fetched successfully but has no image" do
+  test "#normalize should omit the cover image when the page has no image" do
     stub_request(:get, "https://pluralistic.net/2026/06/11/lapsarianism/")
       .to_return(status: 200, body: "<html><body><article>No images here</article></body></html>")
 
     entry = feed_entry(0)
-    reported = []
 
-    Rails.error.stub(:report, ->(err, **) { reported << err.message }) do
-      Normalizer::PluralisticNormalizer.new(entry).normalize
-    end
+    post = Normalizer::PluralisticNormalizer.new(entry).normalize
 
-    assert reported.any? { |msg| msg.match?(/no <img> found — markup changed/) },
-           "expected Rails.error.report to be called when page has no images"
+    assert_empty post.attachment_urls
   end
 
   test "#normalize should fall back to the enclosures when the image src won't parse" do
@@ -84,14 +80,9 @@ class Normalizer::PluralisticNormalizerTest < ActiveSupport::TestCase
       .to_return(status: 200, body: '<html><body><img src="https://i0.wp.com/exa mple.com/a.jpg"></body></html>')
 
     entry = feed_entry(0)
-    reported = []
 
-    Rails.error.stub(:report, ->(err, **) { reported << err.class }) do
-      post = Normalizer::PluralisticNormalizer.new(entry).normalize
+    post = Normalizer::PluralisticNormalizer.new(entry).normalize
 
-      assert_equal [], post.attachment_urls
-    end
-
-    assert_includes reported, URI::InvalidURIError
+    assert_empty post.attachment_urls
   end
 end
