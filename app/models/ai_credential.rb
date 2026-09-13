@@ -6,6 +6,8 @@ class AiCredential < ApplicationRecord
 
   REMOVED_EVENT_TYPE = "feed_ai_credential_removed"
   DEACTIVATED_EVENT_TYPE = "ai_credential_deactivated"
+  MODEL_CATALOG_FRESHNESS = 1.day
+  MODEL_REFRESH_TIMEOUT = 15.minutes
 
   validates :provider, presence: true, inclusion: { in: ->(_) { LlmProvider.names } }
   validate :provider_credentials_valid
@@ -17,9 +19,6 @@ class AiCredential < ApplicationRecord
   def provider_name
     LlmProvider.find(provider).fetch(:display_name)
   end
-
-  MODEL_CATALOG_FRESHNESS = 1.day
-  MODEL_REFRESH_TIMEOUT = 15.minutes
 
   def supported_models
     available_models.reject do |model|

@@ -264,22 +264,40 @@ class AiCredentialTest < ActiveSupport::TestCase
 
   test "#refresh_models_async should ignore inactive credentials" do
     credential = create(:ai_credential, :inactive, available_models: [{ "id" => "saved-model" }])
+    original = credential.attributes
+
     assert_no_enqueued_jobs do
       assert_no_difference "OperationRun.count" do
-        assert_nil credential.refresh_models_async(force: true)
+        credential.refresh_models_async(force: true)
       end
     end
-    assert_not credential.models_refreshing?
-    assert_equal ["saved-model"], credential.reload.available_models.pluck("id")
+
+    assert_equal original, credential.reload.attributes
   end
 
-  test "#refresh_models_async should reuse an active run and throttle automatic retries" do
+  test "#refresh_models_async should reuse an active run even for a forced refresh" do
     credential = create(:ai_credential, :active)
     run = credential.refresh_models_async
-    assert_no_enqueued_jobs { assert_equal run, credential.refresh_models_async(force: true) }
-    run.fail!
 
-    assert_no_enqueued_jobs { assert_nil credential.refresh_models_async }
+    assert_no_enqueued_jobs { assert_equal run, credential.refresh_models_async(force: true) }
+  end
+
+  test "#refresh_models_async should wait an hour before retrying automatically" do
+    freeze_time do
+      credential = create(:ai_credential, :active)
+      credential.refresh_models_async.fail!
+
+      assert_no_enqueued_jobs { assert_nil credential.refresh_models_async }
+
+      travel 1.hour
+      assert_enqueued_with(job: AiModelCatalogRefreshJob) { credential.refresh_models_async }
+    end
+  end
+
+  test "#refresh_models_async should allow a forced refresh during the retry delay" do
+    credential = create(:ai_credential, :active)
+    credential.refresh_models_async.fail!
+
     assert_enqueued_with(job: AiModelCatalogRefreshJob) { credential.refresh_models_async(force: true) }
   end
 end

@@ -4,22 +4,28 @@ class AiModelCatalogRefreshJobTest < ActiveJob::TestCase
   include OpenaiModelsTestHelpers
 
   def openai_credential
-    @openai_credential ||= create(:ai_credential, :active, provider: "openai",
-                                                            available_models: [{ "id" => "saved-model" }])
+    @openai_credential ||= create(
+      :ai_credential,
+      :active,
+      available_models: [{ "id" => "saved-model" }],
+      models_refreshed_at: 1.day.ago
+    )
   end
 
   test "#perform should update the snapshot without changing credential validation" do
-    original = openai_credential.attributes.except("available_models", "models_refreshed_at", "updated_at")
-    stub_openai_models(key: openai_credential.credential_data["api_key"])
-    run = openai_credential.refresh_models_async(force: true)
-    assert_enqueued_with(job: AiModelCatalogRefreshJob, args: [run])
-    assert_enqueued_with(job: AiModelCatalogTimeoutJob, args: [run], at: run.deadline_at)
+    freeze_time do
+      original = openai_credential.attributes.except("available_models", "models_refreshed_at", "updated_at")
+      request = stub_openai_models(key: openai_credential.credential_data["api_key"])
+      run = openai_credential.refresh_models_async(force: true)
+      assert_enqueued_with(job: AiModelCatalogTimeoutJob, args: [run], at: run.deadline_at)
 
-    AiModelCatalogRefreshJob.perform_now(run)
+      perform_enqueued_jobs(only: AiModelCatalogRefreshJob)
 
-    assert_predicate run.reload, :succeeded?
-    assert_not openai_credential.reload.models_refreshing?
-    assert openai_credential.supports_model?("future-openai-model")
-    assert_equal original, openai_credential.attributes.slice(*original.keys)
+      assert_predicate run.reload, :succeeded?
+      assert_equal %w[gpt-5.6-luna future-openai-model text-embedding-3-small], openai_credential.reload.available_models.pluck("id")
+      assert_equal Time.current, openai_credential.models_refreshed_at
+      assert_equal original, openai_credential.attributes.slice(*original.keys)
+      assert_requested request, times: 1
+    end
   end
 end
