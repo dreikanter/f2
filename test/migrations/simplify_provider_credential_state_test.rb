@@ -8,7 +8,9 @@ class SimplifyProviderCredentialStateTest < ActiveSupport::TestCase
 
     migration.migrate(:down)
     [AiCredential, SearchCredential].each do |model|
-      assert connection.column_exists?(model.table_name, :state, :integer, default: 0, null: false)
+      model.reset_column_information
+      assert_equal 0, model.new[:state]
+      assert connection.column_exists?(model.table_name, :state, :integer, null: false)
       assert connection.index_exists?(model.table_name, [:user_id, :state])
       assert_not connection.column_exists?(model.table_name, :active)
     end
@@ -16,8 +18,8 @@ class SimplifyProviderCredentialStateTest < ActiveSupport::TestCase
     migration.migrate(:up)
     [AiCredential, SearchCredential].each do |model|
       model.reset_column_information
-      assert_not model.new.active?
-      assert connection.column_exists?(model.table_name, :active, :boolean, default: false, null: false)
+      assert_equal false, model.new.active
+      assert connection.column_exists?(model.table_name, :active, :boolean, null: false)
       assert connection.index_exists?(model.table_name, [:user_id, :active])
       assert_not connection.column_exists?(model.table_name, :state)
     end
