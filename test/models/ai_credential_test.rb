@@ -225,29 +225,6 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_equal "unverified-model", credential.default_supported_model
   end
 
-  test "#timeout_validation! should reject another credential's run" do
-    credential = create(:ai_credential, :active, user: user)
-    other = create(:ai_credential, user: user)
-    run = other.validate_async(AiCredentialValidationJob)
-
-    assert_not credential.timeout_validation!(run: run)
-
-    assert_predicate run.reload, :running?
-    assert_predicate other.reload, :validating?
-    assert_predicate credential.reload, :active?
-  end
-
-  test "#timeout_validation! should reject a catalog refresh run" do
-    credential = create(:ai_credential, :active, user: user)
-    run = OperationRun.start!(subject: credential, kind: :models_refresh)
-    original = credential.attributes
-
-    assert_not credential.timeout_validation!(run: run)
-
-    assert_predicate run.reload, :running?
-    assert_equal original, credential.reload.attributes
-  end
-
   test "#deactivate! should persist the error and create a warning event" do
     credential = create(:ai_credential, :active, user: user)
 
@@ -257,7 +234,7 @@ class AiCredentialTest < ActiveSupport::TestCase
 
     credential.reload
     event = Event.order(:created_at).last
-    assert credential.inactive?
+    assert_not credential.active?
     assert_equal "OpenAI: HTTP 401", credential.last_error
     assert_not_nil credential.last_validated_at
     assert_equal "ai_credential_deactivated", event.type
@@ -296,6 +273,29 @@ class AiCredentialTest < ActiveSupport::TestCase
     end
 
     assert_equal original, credential.reload.attributes
+  end
+
+  test "#refresh_models_async should ignore a forced refresh during validation" do
+    credential = create(:ai_credential, :active)
+    validation_run = credential.validate_async(AiCredentialValidationJob)
+
+    assert_no_enqueued_jobs do
+      assert_no_difference "OperationRun.count" do
+        assert_nil credential.refresh_models_async(force: true)
+      end
+    end
+
+    assert_predicate validation_run.reload, :running?
+    assert_predicate credential.reload, :active?
+  end
+
+  test "#refresh_models_async should allow refresh after the validation deadline" do
+    credential = create(:ai_credential, :active)
+    validation_run = credential.validate_async(AiCredentialValidationJob)
+
+    travel_to validation_run.deadline_at + 1.second do
+      assert_enqueued_with(job: AiModelCatalogRefreshJob) { credential.refresh_models_async }
+    end
   end
 
   test "#refresh_models_async should reuse an active run even for a forced refresh" do

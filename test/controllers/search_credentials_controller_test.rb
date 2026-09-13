@@ -72,7 +72,8 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     saved = SearchCredential.last
     assert_redirected_to search_credential_path(saved)
-    assert_equal "validating", saved.state
+    assert_not_predicate saved, :active?
+    assert_predicate saved, :validation_in_progress?
     assert_not_nil saved.active_operation_run(:validation)
     assert_equal user, saved.user
   end
@@ -143,26 +144,28 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='search_credential.make-default']", count: 0
   end
 
-  test "#show should render the pending state with polling" do
+  test "#show should render an unverified credential without polling" do
     sign_in_as(user)
-    pending = create(:search_credential, user: user, state: :pending)
+    pending = create(:search_credential, user: user, active: false)
 
     get search_credential_url(pending)
 
     assert_response :success
-    assert_select "[data-controller='polling']"
-    assert_select "[data-key='search_credential.validating']"
+    assert_select "[data-controller='polling']", count: 0
+    assert_select "[data-key='search_credential.inactive']"
   end
 
   test "#show should render the validating state with polling" do
     sign_in_as(user)
-    validating = create(:search_credential, user: user, state: :validating)
+    validating = create(:search_credential, :active, user: user)
+    validating.validate_async(SearchCredentialValidationJob)
 
     get search_credential_url(validating)
 
     assert_response :success
     assert_select "[data-controller='polling']"
     assert_select "[data-key='search_credential.validating']"
+    assert_predicate validating.reload, :active?
   end
 
   test "#show should render the active state without polling" do
@@ -220,6 +223,7 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
   test "#update should rename without resetting state or enqueuing validation" do
     sign_in_as(user)
     active = create(:search_credential, :active, user: user)
+    run = active.validate_async(SearchCredentialValidationJob)
     original_key = active.credential_data["api_key"]
 
     assert_no_enqueued_jobs only: SearchCredentialValidationJob do
@@ -234,16 +238,19 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
     active.reload
     assert_redirected_to search_credential_path(active)
     assert_equal "Renamed Search Key", active.display_name
-    assert_equal "active", active.state
+    assert_predicate active, :active?
     assert_equal original_key, active.credential_data["api_key"]
+    assert_predicate run.reload, :running?
   end
 
   test "#update should replace a new key, reset state, and enqueue validation" do
     sign_in_as(user)
     active = create(:search_credential, :active, user: user)
+    feed = create(:feed, :enabled, user: user, search_credential: active)
+    validation = active.validate_async(SearchCredentialValidationJob)
     new_key = "serper-#{SecureRandom.hex(16)}"
 
-    assert_enqueued_with(job: SearchCredentialValidationJob) do
+    assert_no_difference "Event.count" do
       patch search_credential_url(active), params: {
         search_credential: {
           display_name: active.display_name,
@@ -255,8 +262,11 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
     active.reload
     assert_redirected_to search_credential_path(active)
     assert_equal new_key, active.credential_data["api_key"]
-    assert_equal "validating", active.state
-    assert_not_nil active.active_operation_run(:validation)
+    assert_not_predicate active, :active?
+    assert_predicate active, :validation_in_progress?
+    assert_enqueued_with(job: SearchCredentialValidationJob, args: [active.active_operation_run(:validation)])
+    assert_predicate validation.reload, :superseded?
+    assert_predicate feed.reload, :enabled?
   end
 
   test "#update should render edit with errors on invalid input" do

@@ -14,4 +14,15 @@ class RefreshAiModelCatalogsJobTest < ActiveJob::TestCase
     assert_enqueued_with(job: AiModelCatalogRefreshJob, args: [missing.active_operation_run(:models_refresh)])
     assert_enqueued_with(job: AiModelCatalogRefreshJob, args: [stale.active_operation_run(:models_refresh)])
   end
+
+  test "#perform should skip active credentials during validation" do
+    credential = create(:ai_credential, :active)
+    credential.validate_async(AiCredentialValidationJob)
+
+    assert_no_enqueued_jobs do
+      assert_no_difference "OperationRun.count" do
+        RefreshAiModelCatalogsJob.perform_now
+      end
+    end
+  end
 end

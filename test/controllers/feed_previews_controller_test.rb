@@ -237,7 +237,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
                                                 ai_credential: stored_credential,
                                                 search_credential: search_credential,
                                                 ai_model: "claude-sonnet-4-6")
-    stored_credential.update!(state: :inactive)
+    stored_credential.update!(active: false)
 
     assert_no_enqueued_jobs do
       patch feed_preview_url(preview),

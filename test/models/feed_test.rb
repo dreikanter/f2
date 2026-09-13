@@ -848,7 +848,7 @@ class FeedTest < ActiveSupport::TestCase
     feed.state = :enabled
 
     assert_not feed.valid?
-    assert_includes feed.errors[:ai_credential], "must be active (currently inactive)"
+    assert_includes feed.errors[:ai_credential], "must be active"
   end
 
   test "#valid? should accept an active credential with an available model when enabling an AI feed" do

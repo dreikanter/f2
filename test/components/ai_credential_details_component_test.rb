@@ -27,7 +27,7 @@ class AiCredentialDetailsComponentTest < ViewComponent::TestCase
   end
 
   test "#render should not show last used when last_validated_at is absent" do
-    credential = create(:ai_credential, state: :pending)
+    credential = create(:ai_credential, active: false)
 
     result = render_inline(AiCredentialDetailsComponent.new(ai_credential: credential))
 

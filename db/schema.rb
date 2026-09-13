@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_11_130000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_13_220000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -44,15 +44,15 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_11_130000) do
     t.string "provider", null: false
     t.string "display_name", null: false
     t.jsonb "credential_data", default: {}, null: false
-    t.integer "state", default: 0, null: false
     t.datetime "last_validated_at"
     t.text "last_error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.jsonb "available_models", default: [], null: false
     t.datetime "models_refreshed_at"
+    t.boolean "active", default: false, null: false
+    t.index ["user_id", "active"], name: "index_ai_credentials_on_user_id_and_active"
     t.index ["user_id", "provider", "display_name"], name: "index_ai_credentials_on_user_id_and_provider_and_display_name", unique: true
-    t.index ["user_id", "state"], name: "index_ai_credentials_on_user_id_and_state"
   end
 
   create_table "event_references", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -317,13 +317,13 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_11_130000) do
     t.string "provider", null: false
     t.string "display_name", null: false
     t.jsonb "credential_data", default: {}, null: false
-    t.integer "state", default: 0, null: false
     t.datetime "last_validated_at"
     t.text "last_error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "active", default: false, null: false
     t.index ["user_id", "provider", "display_name"], name: "index_search_credentials_on_owner_provider_name", unique: true
-    t.index ["user_id", "state"], name: "index_search_credentials_on_user_id_and_state"
+    t.index ["user_id", "active"], name: "index_search_credentials_on_user_id_and_active"
   end
 
   create_table "sessions", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|

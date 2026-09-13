@@ -22,10 +22,9 @@ class CredentialHelperTest < ActionView::TestCase
   end
 
   test "#credential_state_badge should stay silent while a check is in flight" do
-    credentials = [
-      create(:access_token, user: user, state: :validating),
-      create(:ai_credential, user: user, state: :validating)
-    ]
+    ai_credential = create(:ai_credential, :active, user: user)
+    ai_credential.validate_async(AiCredentialValidationJob)
+    credentials = [create(:access_token, user: user, state: :validating), ai_credential]
 
     credentials.each { |credential| assert_nil credential_state_badge(credential) }
   end

@@ -67,7 +67,8 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     saved = AiCredential.last
     assert_redirected_to ai_credential_path(saved)
-    assert_predicate saved, :validating?
+    assert_not_predicate saved, :active?
+    assert_predicate saved, :validation_in_progress?
     assert_enqueued_with(job: AiCredentialValidationJob, args: [saved.active_operation_run(:validation)])
     follow_redirect!
     assert_response :success
@@ -213,15 +214,17 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='ai_credential.make-default']", count: 0
   end
 
-  test "#show should render the polling shell for a pending credential" do
+  test "#show should poll revalidation while keeping the credential active" do
     sign_in_as(user)
-    pending = create(:ai_credential, user: user, state: :pending)
+    active = create(:ai_credential, :active, user: user)
+    active.validate_async(AiCredentialValidationJob)
 
-    get ai_credential_url(pending)
+    get ai_credential_url(active)
 
     assert_response :success
     assert_select "[data-controller='polling']"
     assert_select "[data-key='ai_credential.validating']"
+    assert_predicate active.reload, :active?
   end
 
   test "#show should render without polling when the active credential catalog is fresh" do
@@ -261,17 +264,6 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", edit_feed_path(draft.id), text: "Continue setting up your feed"
   end
 
-  test "#show should not render Continue setting up your feed link when credential is pending" do
-    sign_in_as(user)
-    pending = create(:ai_credential, user: user, state: :pending)
-    draft = create(:feed, :draft, user: user)
-
-    get ai_credential_url(pending, feed_id: draft.id)
-
-    assert_response :success
-    assert_select "a", text: "Continue setting up your feed", count: 0
-  end
-
   test "#show should render a back-to-feed link when credential is inactive and feed_id is owned" do
     sign_in_as(user)
     inactive = create(:ai_credential, :inactive, user: user)
@@ -281,6 +273,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "a[href=?]", edit_feed_path(draft.id), text: "Back to your feed"
+    assert_select "a", text: "Continue setting up your feed", count: 0
   end
 
   test "#show should not render Continue setting up your feed link when feed_id is missing" do
@@ -312,6 +305,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
   test "#update should rename without credential_data or enqueuing validation" do
     sign_in_as(user)
     active = create(:ai_credential, :active, user: user)
+    run = active.validate_async(AiCredentialValidationJob)
     original_key = active.credential_data["api_key"]
 
     assert_no_enqueued_jobs only: AiCredentialValidationJob do
@@ -325,26 +319,55 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     active.reload
     assert_redirected_to ai_credential_path(active)
     assert_equal "Renamed Key", active.display_name
-    assert_equal "active", active.state
+    assert_predicate active, :active?
     assert_equal original_key, active.credential_data["api_key"]
+    assert_predicate run.reload, :running?
   end
 
   test "#update should preserve a replacement key and enqueue validation" do
     sign_in_as(user)
     active = create(:ai_credential, :active, user: user)
+    feed = create(:feed, :enabled, user: user, ai_credential: active)
+    completed = active.validate_async(AiCredentialValidationJob)
+    completed.succeed!
+    validation = active.validate_async(AiCredentialValidationJob)
     new_key = "sk-ant-#{SecureRandom.hex(16)}"
+
+    assert_no_difference "Event.count" do
+      patch ai_credential_url(active), params: {
+        ai_credential: {
+          display_name: active.display_name,
+          credential_data: { api_key: new_key }
+        }
+      }
+    end
+
+    active.reload
+    assert_equal new_key, active.credential_data["api_key"]
+    assert_not_predicate active, :active?
+    assert_predicate active, :validation_in_progress?
+    assert_enqueued_with(job: AiCredentialValidationJob, args: [active.active_operation_run(:validation)])
+    assert_predicate validation.reload, :superseded?
+    assert_predicate completed.reload, :succeeded?
+    assert_predicate feed.reload, :enabled?
+  end
+
+  test "#update should supersede a catalog refresh when replacing the key" do
+    sign_in_as(user)
+    active = create(:ai_credential, :active, user: user)
+    refresh = active.refresh_models_async(force: true)
 
     patch ai_credential_url(active), params: {
       ai_credential: {
         display_name: active.display_name,
-        credential_data: { api_key: new_key }
+        credential_data: { api_key: "replacement-key" }
       }
     }
 
-    active.reload
-    assert_equal new_key, active.credential_data["api_key"]
-    assert_predicate active, :validating?
-    assert_enqueued_with(job: AiCredentialValidationJob, args: [active.active_operation_run(:validation)])
+    assert_redirected_to ai_credential_path(active)
+    assert_predicate refresh.reload, :superseded?
+    assert_not_predicate active.reload, :active?
+    assert_predicate active, :validation_in_progress?
   end
 
   test "#update should keep existing credential_data when api_key is blank" do
@@ -352,15 +375,18 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     active = create(:ai_credential, :active, user: user)
     original_key = active.credential_data["api_key"]
 
-    patch ai_credential_url(active), params: {
-      ai_credential: {
-        display_name: active.display_name,
-        credential_data: { api_key: "" }
+    assert_no_enqueued_jobs only: AiCredentialValidationJob do
+      patch ai_credential_url(active), params: {
+        ai_credential: {
+          display_name: active.display_name,
+          credential_data: { api_key: "" }
+        }
       }
-    }
+    end
 
     active.reload
     assert_equal original_key, active.credential_data["api_key"]
+    assert_predicate active, :active?
   end
 
   test "#update should revalidate changes to other credential fields and preserve blank secrets" do
@@ -377,7 +403,8 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to ai_credential_path(active)
     assert_equal original_data.merge("organization_id" => "another-organization"), active.reload.credential_data
-    assert_predicate active, :validating?
+    assert_not_predicate active, :active?
+    assert_predicate active, :validation_in_progress?
     assert_enqueued_with(job: AiCredentialValidationJob, args: [active.active_operation_run(:validation)])
   end
 

@@ -30,6 +30,7 @@ class AiCredential < ApplicationRecord
   def refresh_models_async(force: false)
     with_lock do
       return unless active?
+      return if validation_in_progress?
 
       recent = latest_operation_run(:models_refresh)
       return recent if recent&.in_progress?

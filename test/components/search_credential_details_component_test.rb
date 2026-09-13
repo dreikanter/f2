@@ -27,7 +27,7 @@ class SearchCredentialDetailsComponentTest < ViewComponent::TestCase
   end
 
   test "#render should not show last checked when last_validated_at is absent" do
-    credential = create(:search_credential, state: :pending)
+    credential = create(:search_credential, active: false)
 
     result = render_inline(SearchCredentialDetailsComponent.new(search_credential: credential))
 

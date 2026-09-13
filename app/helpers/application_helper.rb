@@ -158,9 +158,7 @@ module ApplicationHelper
     content_tag(:svg, path_data.html_safe, **options)
   end
 
-  # State icon for records sharing the pending/validating/active/inactive
-  # lifecycle (access tokens, AI credentials). Mirrors feed_status_icon's role
-  # as the leading glyph in a list row.
+  # Leading glyph for credential and access-token list rows.
   #
   # An unsettled record reads as "unknown", not "working on it": list pages
   # don't poll, so whatever they render is a snapshot that won't move on its
