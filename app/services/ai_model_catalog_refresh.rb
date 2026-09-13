@@ -1,3 +1,5 @@
+# Refreshes an active credential's catalog for an OperationRun. Preserves the
+# saved state on transient failure and deactivates a confirmed invalid key.
 class AiModelCatalogRefresh
   attr_reader :run
 

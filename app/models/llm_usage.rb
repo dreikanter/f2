@@ -1,4 +1,5 @@
-# Durable accounting for individual AI requests, including failed attempts.
+# Stored accounting for AI request attempts. Event details and feed summaries
+# use these records to report outcomes, token counts, and estimated costs.
 class LlmUsage < ApplicationRecord
   # Aggregate stats use a bounded window so recent usage remains useful even if
   # a retention policy is introduced later.

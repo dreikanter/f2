@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# Provider configuration and client factory. The UI reads provider metadata here;
+# operations build clients bound to individual credentials' API keys.
 module LlmProvider
   PROVIDERS = {
     "openai" => {

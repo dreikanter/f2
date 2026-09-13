@@ -1,4 +1,6 @@
 module LlmProvider
+  # OpenAI client for free model discovery and authenticated SDK contexts.
+  # Normalizes provider failures for credential validation and catalog refresh.
   class Openai < Base
     def models
       response = HttpClient.build(timeout: 30, follow_redirects: false).get(

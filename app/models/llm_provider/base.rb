@@ -1,4 +1,6 @@
 module LlmProvider
+  # Abstract client bound to one API key. Supplies isolated SDK contexts and the
+  # model-discovery interface implemented by each provider.
   class Base
     # @param api_key [String] key used to authenticate provider requests
     # @return [Base] provider client bound to the key

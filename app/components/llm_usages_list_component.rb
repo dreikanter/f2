@@ -1,3 +1,4 @@
+# An event's AI request breakdown, rendered as individual usage rows.
 class LlmUsagesListComponent < ListComponent
   def initialize(usages:)
     super()

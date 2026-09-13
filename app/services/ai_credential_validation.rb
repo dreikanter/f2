@@ -1,3 +1,5 @@
+# Runs credential validation through free model discovery. Settles the supplied
+# OperationRun by activating the key and saving its catalog or applying failure policy.
 class AiCredentialValidation
   attr_reader :run
 
