@@ -39,7 +39,7 @@ module EventsHelper
     key = key.to_s
 
     if key.end_with?("_at")
-      time = Time.zone.parse(value.to_s) rescue nil
+      time = parsed_stat_time(value)
       time ? datetime_with_duration_tag(time) : value
     elsif key.end_with?("_duration")
       format_event_duration(value.to_f)
@@ -65,6 +65,15 @@ module EventsHelper
   end
 
   private
+
+  # Stats are a free-form snapshot, so a _at key may hold something that isn't
+  # a timestamp at all. That falls through to the raw value; anything else
+  # going wrong here is a bug and should surface.
+  def parsed_stat_time(value)
+    Time.zone.parse(value.to_s)
+  rescue ArgumentError
+    nil
+  end
 
   # "Feed ce23f": a humanized entity type with a short linked id. Either
   # half may be missing: a type-only filter renders just the label, an id
