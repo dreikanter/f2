@@ -59,7 +59,7 @@ class GlobalStatsComponent < StatsPanelComponent
   end
 
   def posts_published_last_week_count
-    Post.published.where(published_at: 6.days.ago.beginning_of_day..Time.current.end_of_day).count
+    Post.published_last_week.count
   end
 
   def most_recent_repost_at

@@ -1,14 +1,6 @@
 require "test_helper"
 
 class Development::JobsControllerTest < ActionDispatch::IntegrationTest
-  def dev_user
-    @dev_user ||= create(:user, :dev)
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   test "#index should require authentication" do
     get development_jobs_path
 
@@ -40,13 +32,13 @@ class Development::JobsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="development.jobs.PurgeExpiredEventsJob"] form', count: 0
   end
 
-  test "#index should offer model discovery reports only on staging" do
+  test "#index should omit retired AI diagnostics on staging" do
     sign_in_as(dev_user)
 
     Rails.stub(:env, ActiveSupport::EnvironmentInquirer.new("staging")) do
       get development_jobs_path
       assert_response :success
-      assert_select '[data-key="development.jobs.AiModelDiscoveryReportJob"]'
+      assert_select '[data-key="development.jobs.AiModelDiscoveryReportJob"]', count: 0
     end
 
     Rails.stub(:env, ActiveSupport::EnvironmentInquirer.new("production")) do

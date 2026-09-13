@@ -6,7 +6,7 @@ require "test_helper"
 # Previewing is optional; a feed can be enabled with or without a recent preview.
 class SmartFeedCreationStateGatingTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   def access_token

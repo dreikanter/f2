@@ -29,6 +29,21 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     end
   end
 
+  test "#perform should preserve enabled AI feeds when a queued refresh runs during the outage" do
+    credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    feed = create(:feed, :enabled, user: credential.user, feed_profile_key: "llm",
+                                  ai_credential: credential, ai_model: "claude-sonnet-4-6",
+                                  params: { "prompt" => "ruby news" }, search_credential: nil,
+                                  consecutive_failures: Feed::MAX_CONSECUTIVE_FAILURES - 1)
+
+    assert_no_difference("Event.count") do
+      FeedRefreshJob.perform_now(feed.id)
+    end
+
+    assert feed.reload.enabled?
+    assert_equal Feed::MAX_CONSECUTIVE_FAILURES - 1, feed.consecutive_failures
+  end
+
   test "increments loader_errors_total metric when the loader raises Loader::Error" do
     WebMock.stub_request(:get, feed.url).to_return(status: 500)
 

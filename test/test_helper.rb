@@ -60,6 +60,7 @@ end
 module ActiveSupport
   class TestCase
     include FactoryBot::Syntax::Methods
+    include UserTestHelpers
     include SnapshotTesting
     include RateLimitTestHelper
 

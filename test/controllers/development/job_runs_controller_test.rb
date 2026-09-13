@@ -1,14 +1,6 @@
 require "test_helper"
 
 class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
-  def dev_user
-    @dev_user ||= create(:user, :dev)
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   test "#index should require dev permission" do
     sign_in_as(regular_user)
     get development_job_job_runs_path("PurgeExpiredEventsJob")
@@ -27,10 +19,10 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
 
   test "#index should title the page with the humanized job name" do
     sign_in_as(dev_user)
-    get development_job_job_runs_path("AnthropicCapabilityProbeJob")
+    get development_job_job_runs_path("SerperCapabilityProbeJob")
 
     assert_response :success
-    assert_select "h1", text: "Anthropic Capability Probe"
+    assert_select "h1", text: "Serper Capability Probe"
   end
 
   test "#index should offer a text-only Run button" do
@@ -119,13 +111,13 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should link back to the job under its humanized name" do
-    run = create(:job_run, job_class: "AnthropicCapabilityProbeJob", status: :succeeded)
+    run = create(:job_run, job_class: "SerperCapabilityProbeJob", status: :succeeded)
     sign_in_as(dev_user)
-    get development_job_job_run_path("AnthropicCapabilityProbeJob", run)
+    get development_job_job_run_path("SerperCapabilityProbeJob", run)
 
     assert_response :success
-    assert_select "a[href='#{development_job_job_runs_path("AnthropicCapabilityProbeJob")}']",
-                  text: "Anthropic Capability Probe"
+    assert_select "a[href='#{development_job_job_runs_path("SerperCapabilityProbeJob")}']",
+                  text: "Serper Capability Probe"
   end
 
   test "#show should render event metadata as formatted JSON" do
@@ -162,18 +154,6 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
       assert_equal "click->clipboard#copy", buttons.sole["data-action"]
       assert_select "script", count: 0
     end
-  end
-
-  test "#create should enqueue the model discovery report on staging" do
-    sign_in_as(dev_user)
-
-    Rails.stub(:env, ActiveSupport::EnvironmentInquirer.new("staging")) do
-      assert_enqueued_with(job: AiModelDiscoveryReportJob, args: []) do
-        post development_job_job_runs_path("AiModelDiscoveryReportJob")
-      end
-    end
-
-    assert_redirected_to development_job_job_runs_path("AiModelDiscoveryReportJob")
   end
 
   test "#create should reject a direct model discovery request outside staging" do

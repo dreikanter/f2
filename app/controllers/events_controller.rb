@@ -1,11 +1,7 @@
 class EventsController < ApplicationController
   include EventFiltering
   include EventCursorPagination
-  include EventReferencedPosts
-  include EventReferencedLlmUsages
-  include EventReferencedWebSearches
-
-  MAX_RECENT_POSTS = 10
+  include EventDisplay
 
   def index
     @filter = optional_filter
@@ -17,12 +13,7 @@ class EventsController < ApplicationController
   end
 
   def show
-    @event = owned_events.find(params[:id])
-    @referenced_posts = referenced_posts(@event).limit(MAX_RECENT_POSTS)
-    @referenced_llm_usages = referenced_llm_usages(@event)
-    @referenced_web_searches = referenced_web_searches(@event)
-    @previous_event = adjacent_event(:older)
-    @next_event = adjacent_event(:newer)
+    load_event(owned_events.find(params[:id]))
   end
 
   private
@@ -31,15 +22,9 @@ class EventsController < ApplicationController
     Event.where(user: Current.user).user_relevant
   end
 
-  # Navigates the user's own log along the natural timeline direction:
-  # "previous" is the next-older event, "next" is the next-newer one.
-  def adjacent_event(direction)
-    if direction == :newer
-      owned_events.where(cursor_condition(">", @event.id)).order(created_at: :asc, id: :asc).first
-    else
-      owned_events.where(cursor_condition("<", @event.id)).order(created_at: :desc, id: :desc).first
-    end
-  end
+  # The user's own log, unfiltered: the previous and next links walk the whole
+  # timeline rather than whatever the index was last narrowed to.
+  alias_method :navigable_events, :owned_events
 
   def events_scope
     apply_filters(owned_events)

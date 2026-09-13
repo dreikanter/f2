@@ -19,6 +19,4 @@ class FreefeedClient
       raise Error, "Invalid user statistics response: #{e.message}"
     end
   end
-
-  include SubscriberStatistics
 end

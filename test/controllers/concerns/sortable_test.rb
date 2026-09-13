@@ -33,6 +33,7 @@ module SortableTestControllers
 
     def presenter_payload(presenter)
       {
+        order: sortable_order.to_sql,
         current_title: presenter.current_title,
         current_direction: presenter.current_direction,
         options: presenter.options.map do |option|
@@ -81,6 +82,7 @@ class SortableTest < ActionDispatch::IntegrationTest
       response_data = response.parsed_body
       assert_equal "Name", response_data["current_title"]
       assert_equal "asc", response_data["current_direction"]
+      assert_equal "LOWER(items.name) ASC", response_data["order"]
 
       option = response_data["options"].detect { |item| item["active"] }
       assert_equal "name", option["field"]
@@ -90,17 +92,18 @@ class SortableTest < ActionDispatch::IntegrationTest
 
   test "#sortable_presenter should respect sort params" do
     with_sortable_routes do
-      get "/sortable_test_demo_index", params: { sort: "created_at", direction: "desc" }
+      get "/sortable_test_demo_index", params: { sort: "created_at", direction: "asc" }
 
       response_data = response.parsed_body
 
       assert_equal "Created", response_data["current_title"]
-      assert_equal "desc", response_data["current_direction"]
+      assert_equal "asc", response_data["current_direction"]
+      assert_equal "items.created_at ASC", response_data["order"]
 
       active_option = response_data["options"].detect { |item| item["active"] }
 
       assert_equal "created_at", active_option["field"]
-      assert_equal "desc", active_option["active_direction"]
+      assert_equal "asc", active_option["active_direction"]
 
       name_option = response_data["options"].detect { |item| item["field"] == "name" }
 
@@ -116,6 +119,7 @@ class SortableTest < ActionDispatch::IntegrationTest
 
       assert_equal "Created", response_data["current_title"]
       assert_equal "desc", response_data["current_direction"]
+      assert_equal "items.created_at DESC", response_data["order"]
 
       active_option = response_data["options"].detect { |item| item["active"] }
 
@@ -126,17 +130,33 @@ class SortableTest < ActionDispatch::IntegrationTest
 
   test "#sortable_presenter should ignore unknown field names" do
     with_sortable_routes do
-      get "/sortable_test_demo_index", params: { sort: "unknown", direction: "asc" }
+      get "/sortable_test_demo_index", params: { sort: "unknown", direction: "desc" }
 
       response_data = response.parsed_body
 
       assert_equal "Name", response_data["current_title"]
-      assert_equal "asc", response_data["current_direction"]
+      assert_equal "desc", response_data["current_direction"]
+      assert_equal "LOWER(items.name) DESC", response_data["order"]
 
       default_option = response_data["options"].detect { |item| item["active"] }
 
       assert_equal "name", default_option["field"]
-      assert_equal "asc", default_option["active_direction"]
+      assert_equal "desc", default_option["active_direction"]
+    end
+  end
+
+  test "#sortable_presenter should use defaults when both params are invalid" do
+    with_sortable_routes do
+      get "/sortable_test_demo_index", params: { sort: "unknown", direction: "sideways" }
+
+      response_data = response.parsed_body
+      assert_equal "Name", response_data["current_title"]
+      assert_equal "asc", response_data["current_direction"]
+      assert_equal "LOWER(items.name) ASC", response_data["order"]
+
+      option = response_data["options"].detect { |item| item["active"] }
+      assert_equal "name", option["field"]
+      assert_equal "asc", option["active_direction"]
     end
   end
 

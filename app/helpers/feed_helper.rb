@@ -24,26 +24,13 @@ module FeedHelper
             target: "_blank", rel: "noopener"
   end
 
-  def feed_missing_enablement_parts(feed)
-    missing_parts = []
-    missing_parts << "source" unless feed.sourceless? || feed.source_input.present?
-    missing_parts << "name" unless feed.name.present?
-    missing_parts << "feed profile" unless feed.feed_profile_present?
-    missing_parts << "active access token" unless feed.access_token&.active?
-    missing_parts << "target group" unless feed.target_group.present?
-    missing_parts << "schedule" if feed.scheduled? && feed.cron_expression.blank?
-    if FeedProfile.depends_on_ai?(feed.feed_profile_key)
-      missing_parts << "active AI credential" unless feed.ai_credential&.active?
-      missing_parts << "AI model" unless feed.ai_model.present?
-    end
-    missing_parts
-  end
-
   # Names what's actually missing: "Complete setup" misleads when setup was
   # finished and a piece (like the access token) stopped working later. Only
   # several parts earn the list; a lone one reads as a sentence.
   def feed_enable_hint(feed)
-    missing_parts = feed_missing_enablement_parts(feed)
+    return Loader::LlmLoader::UNAVAILABLE_MESSAGE if FeedProfile.depends_on_ai?(feed.feed_profile_key)
+
+    missing_parts = feed.missing_enablement_parts
     return "Complete setup to enable this feed" if missing_parts.empty?
     return "To enable this feed, add: #{missing_parts.to_sentence}." if missing_parts.many?
 
@@ -75,13 +62,11 @@ module FeedHelper
     end
   end
 
-  # Action menu items for the feed page header. Refresh applies only to an
-  # enabled feed that actually pulls from a source; the destructive actions
-  # open the confirmation modals rendered alongside the feed page, each behind
-  # a separator so a stray click doesn't land on one.
+  # Destructive actions open confirmation modals and sit behind separators
+  # to reduce accidental clicks.
   def feed_actions_menu_items(feed)
     items = []
-    items << { label: "Refresh", href: feed_refresh_path(feed), method: :post, data: { key: "feed.#{feed.id}.refresh" } } if feed.enabled? && feed.scheduled?
+    items << { label: "Refresh", href: feed_refresh_path(feed), method: :post, data: { key: "feed.#{feed.id}.refresh" } } if policy(feed).refresh?
     items << { label: "Edit", href: edit_feed_path(feed), data: { key: "feed.#{feed.id}.edit" } }
 
     if feed.target_group.present?

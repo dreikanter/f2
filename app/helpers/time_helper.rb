@@ -61,12 +61,13 @@ module TimeHelper
     )
   end
 
-  def short_time_ago_tag(time)
+  def short_time_ago_tag(time, css_class: nil)
     return nil unless time
 
     content_tag(
       :time,
       short_time_ago(time),
+      class: css_class,
       datetime: time.rfc3339,
       title: long_time_format(time)
     )
@@ -84,6 +85,23 @@ module TimeHelper
     content_tag(
       :time,
       phrase,
+      datetime: time.rfc3339,
+      title: long_time_format(time)
+    )
+  end
+
+  # Relative time spelled out ("2 days ago", or "just now" for a timestamp that
+  # isn't in the past yet), wrapped in a <time> element with the exact
+  # timestamp as a tooltip. The long phrasing suits places that mirror another
+  # site's wording.
+  def time_ago_phrase_tag(time)
+    return nil unless time
+
+    phrase = time_ago(time)
+
+    content_tag(
+      :time,
+      phrase ? "#{phrase} ago" : "just now",
       datetime: time.rfc3339,
       title: long_time_format(time)
     )

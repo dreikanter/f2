@@ -2,7 +2,7 @@ require "test_helper"
 
 class Settings::EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   test "should confirm email change with valid token" do

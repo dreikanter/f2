@@ -4,7 +4,8 @@ require "view_component/test_case"
 class SortDropdownComponentTest < ViewComponent::TestCase
   def presenter
     @presenter ||= SortablePresenter.new(
-      params: { sort: "name", direction: "asc" },
+      current_sort_field: "name",
+      current_direction: "asc",
       fields: { name: { title: "Name", direction: :asc }, created_at: { title: "Created", direction: :desc } },
       path_builder: ->(params) { "/things?#{params.to_query}" }
     )

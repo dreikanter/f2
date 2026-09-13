@@ -1,25 +1,47 @@
 require "test_helper"
 require "view_component/test_case"
 
+# Rows get their dom_id by overriding li_id, the way the real subclasses do.
+class IdentifiedListItemComponent < ListItemComponent
+  def initialize(dom_id, **options)
+    super(**options)
+    @dom_id = dom_id
+  end
+
+  private
+
+  def li_id
+    @dom_id
+  end
+end
+
 class ListItemComponentTest < ViewComponent::TestCase
-  test "#call should render an li carrying id, data and css_class" do
-    result = render_inline(ListItemComponent.new(id: "row-1", css_class: "bg-warning-subtle", data: { key: "list.row" })) do |item|
+  test "#call should render an li carrying data and css_class" do
+    result = render_inline(ListItemComponent.new(css_class: "bg-warning-subtle", data: { key: "list.row" })) do |item|
       item.with_primary { "Primary".html_safe }
     end
 
-    li = result.at_css("li#row-1")
+    li = result.at_css("li")
     assert_not_nil li
     assert_equal "list.row", li["data-key"]
     assert_includes li["class"], "bg-warning-subtle"
     assert_includes li["class"], "px-5 py-3"
   end
 
-  test "#call should round the first and last row corners" do
-    result = render_inline(ListItemComponent.new(id: "row-1")) do |item|
+  test "#call should render the dom_id a subclass supplies" do
+    result = render_inline(IdentifiedListItemComponent.new("row-1")) do |item|
       item.with_primary { "Primary".html_safe }
     end
 
-    li = result.at_css("li#row-1")
+    assert_not_nil result.at_css("li#row-1")
+  end
+
+  test "#call should round the first and last row corners" do
+    result = render_inline(ListItemComponent.new) do |item|
+      item.with_primary { "Primary".html_safe }
+    end
+
+    li = result.at_css("li")
     assert_includes li["class"], "first:rounded-t-lg"
     assert_includes li["class"], "last:rounded-b-lg"
   end
@@ -69,7 +91,7 @@ class ListItemComponentTest < ViewComponent::TestCase
 
   test "#call should integrate with ListComponent as a list item" do
     result = render_inline(ListComponent.new) do |list|
-      item = ListItemComponent.new(id: "row-9")
+      item = IdentifiedListItemComponent.new("row-9")
       item.with_primary { "In a list".html_safe }
       list.with_item(item)
     end

@@ -1,6 +1,6 @@
 class FeedIdentification < ApplicationRecord
-  POLLING_INTERVAL_MS = 2500
-  TIMEOUT_AFTER = 85.seconds
+  include PolledRun
+
   RETENTION = 7.days
 
   belongs_to :user
@@ -68,16 +68,7 @@ class FeedIdentification < ApplicationRecord
   # @param run_id [String] run token captured by the timeout job
   # @return [FeedIdentification] self
   def timeout!(run_id:)
-    updated = self.class.where(id: id, status: :processing, run_id: run_id)
-                        .update_all(status: :timed_out, run_id: SecureRandom.uuid, updated_at: Time.current)
-    reload if updated.positive?
-    self
-  end
-
-  def self.polling_max_polls
-    # The first poll is immediate. Two extra polls leave one interval for Solid
-    # Queue to dispatch a due timeout and let the final poll render its result.
-    TIMEOUT_AFTER.in_milliseconds.div(POLLING_INTERVAL_MS) + 2
+    settle_timeout!(run_id: run_id, status: :timed_out, from: :processing)
   end
 
   # The candidate the chooser preselects and the new-feed form is built from: the

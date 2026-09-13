@@ -32,7 +32,7 @@
       <div class="flex items-center gap-3 pt-2">
         <%= form.submit "Delete",
               data: { post_delete_target: "submit", action: "modal#confirm" },
-              class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-danger bg-danger px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-danger-hover focus:outline-none focus:ring-2 focus:ring-danger-hover focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
+              class: helpers.danger_button_classes %>
         <%= tag.button "Cancel",
               type: "button",
               class: class_names(helpers.secondary_button_classes(compact: true), "cursor-pointer"),

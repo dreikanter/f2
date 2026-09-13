@@ -5,10 +5,6 @@ class InviteTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  def other_user
-    @other_user ||= create(:user)
-  end
-
   test ".create should create invite with valid attributes" do
     invite = Invite.create(created_by_user: user)
     assert invite.persisted?

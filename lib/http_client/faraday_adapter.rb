@@ -2,7 +2,6 @@ require "faraday"
 require "faraday/follow_redirects"
 require "faraday/multipart"
 require "net/http"
-require_relative "base"
 
 module HttpClient
   class FaradayAdapter < Base

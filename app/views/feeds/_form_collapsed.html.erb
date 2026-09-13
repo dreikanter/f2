@@ -18,7 +18,7 @@
     wrapper_data.merge!(
       controller: "mode-switch polling",
       polling_indicate_busy_value: false,
-      polling_endpoint_value: feed_identifications_path(url: url),
+      polling_endpoint_value: feed_identification_path(url: url),
       polling_interval_value: FeedIdentification::POLLING_INTERVAL_MS,
       polling_max_polls_value: FeedIdentification.polling_max_polls,
       polling_stop_condition_value: FeedFormComponent::POLLING_STOP_CONDITION
@@ -40,7 +40,7 @@
 
         <%= tag.div class: "ps-7", hidden: mode != "link",
                     data: { key: "entry.panel-link", mode: "link", mode_switch_target: "panel" } do %>
-          <%= form_with url: feed_identifications_path, method: :post, id: "entry-link-form", class: "aria-busy:opacity-100" do |f| %>
+          <%= form_with url: feed_identification_path, method: :post, id: "entry-link-form", class: "aria-busy:opacity-100" do |f| %>
             <div class="space-y-2">
               <%# The radio label is the group's one visible label; the field
                   keeps its name for assistive tech only. %>
@@ -82,7 +82,7 @@
 
         <%= tag.div class: "ps-7", hidden: mode != "ai",
                     data: { key: "entry.panel-ai", mode: "ai", mode_switch_target: "panel" } do %>
-          <%= form_with url: feed_identifications_path, method: :post, id: "entry-ai-form" do |f| %>
+          <%= form_with url: feed_identification_path, method: :post, id: "entry-ai-form" do |f| %>
             <div class="space-y-2">
               <%= f.text_area :prompt,
                               id: "entry-ai-input",
@@ -115,7 +115,7 @@
 
         <%= tag.div class: "ps-7", hidden: mode != "webhook",
                     data: { key: "entry.panel-webhook", mode: "webhook", mode_switch_target: "panel" } do %>
-          <%= form_with url: feed_identifications_path, method: :post, id: "entry-webhook-form" do |f| %>
+          <%= form_with url: feed_identification_path, method: :post, id: "entry-webhook-form" do |f| %>
             <div class="space-y-2">
               <%= f.hidden_field :webhook, value: "1" %>
               <% if error && mode == "webhook" %>
@@ -135,7 +135,7 @@
     <% if checking %>
       <%= submit_tag "Checking…", form: "entry-link-form", disabled: true,
                      class: "#{primary_button_classes} disabled:bg-brand disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-brand" %>
-      <%= link_to "Cancel", feed_identifications_path(url: url), class: secondary_button_classes,
+      <%= link_to "Cancel", feed_identification_path(url: url), class: secondary_button_classes,
                   data: { turbo_method: :delete, key: "entry.cancel-check" } %>
     <% else %>
       <%= submit_tag "Continue", form: "entry-link-form", class: primary_button_classes,

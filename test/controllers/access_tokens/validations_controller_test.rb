@@ -2,7 +2,7 @@ require "test_helper"
 
 class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   def access_token

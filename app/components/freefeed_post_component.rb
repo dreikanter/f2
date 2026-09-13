@@ -37,16 +37,9 @@ class FreefeedPostComponent < ViewComponent::Base
     post.freefeed_post_url
   end
 
+  # FreeFeed spells the age out, so the preview does too.
   def timestamp_tag
-    time = post.published_at
-    phrase = helpers.time_ago(time)
-
-    helpers.content_tag(
-      :time,
-      phrase ? "#{phrase} ago" : "just now",
-      datetime: time.rfc3339,
-      title: helpers.long_time_format(time)
-    )
+    helpers.time_ago_phrase_tag(post.published_at)
   end
 
   def attachment_urls
@@ -55,18 +48,6 @@ class FreefeedPostComponent < ViewComponent::Base
 
   def comments
     post.comments
-  end
-
-  def thumbnail_url(url)
-    ImgproxyUrl.preview(url)
-  end
-
-  def thumbnail_srcset(url)
-    ImgproxyUrl.preview_srcset(url)
-  end
-
-  def thumbnail_size
-    ImgproxyUrl::THUMBNAIL_SIZE
   end
 
   def extract_filename(url)

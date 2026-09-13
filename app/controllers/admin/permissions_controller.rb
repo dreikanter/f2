@@ -29,12 +29,11 @@ class Admin::PermissionsController < ApplicationController
     user.admin? && !permitted_names.include?(Permission::ADMIN)
   end
 
+  # Counted inside the caller's transaction so a concurrent demotion can't
+  # leave the site with no admin. Postgres rejects FOR UPDATE alongside an
+  # aggregate, so the locked rows are plucked and counted here.
   def only_admin?
-    User.joins(:permissions)
-      .where(permissions: { name: Permission::ADMIN })
-      .lock
-      .pluck(:id)
-      .size == 1
+    User.admins.lock.pluck(:id).size == 1
   end
 
   def sync_permissions(user)
