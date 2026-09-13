@@ -43,6 +43,7 @@ class AiCredential < ApplicationRecord
       recent = latest_operation_run(:models_refresh)
       return recent if recent&.in_progress?(stale_after: MODEL_REFRESH_TIMEOUT)
       return if !force && models_refreshed_at && models_refreshed_at > MODEL_CATALOG_FRESHNESS.ago
+      # Space out automatic retries during provider outages.
       return if !force && recent && recent.created_at > 1.hour.ago
 
       run = OperationRun.start!(subject: self, kind: :models_refresh, timeout: MODEL_REFRESH_TIMEOUT)
