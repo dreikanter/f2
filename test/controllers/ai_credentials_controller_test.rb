@@ -47,6 +47,8 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-key='ai_credentials.new']"
     assert_select "[data-key='ai_credentials.provider']"
+    assert_select "option[value='openai'][selected]:not([disabled])"
+    assert_select "[data-key='ai_credentials.provider'] option", count: 1
     assert_select "[data-key='ai_credentials.credential-data.api_key']"
   end
 
@@ -57,7 +59,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
       assert_no_enqueued_jobs do
         post ai_credentials_url, params: {
           ai_credential: {
-            provider: "anthropic",
+            provider: "openai",
             display_name: "My Key",
             credential_data: { api_key: "sk-ant-#{SecureRandom.hex(16)}" }
           }
@@ -100,7 +102,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     post ai_credentials_url, params: {
       feed_id: draft.id,
       ai_credential: {
-        provider: "anthropic",
+        provider: "openai",
         display_name: "My Key",
         credential_data: { api_key: "sk-ant-#{SecureRandom.hex(16)}" }
       }
@@ -119,7 +121,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     post ai_credentials_url, params: {
       feed_id: other_draft.id,
       ai_credential: {
-        provider: "anthropic",
+        provider: "openai",
         display_name: "My Key",
         credential_data: { api_key: "sk-ant-#{SecureRandom.hex(16)}" }
       }
@@ -136,7 +138,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     post ai_credentials_url, params: {
       feed_id: draft.id,
       ai_credential: {
-        provider: "anthropic",
+        provider: "openai",
         display_name: "My Key",
         credential_data: { api_key: "sk-ant-#{SecureRandom.hex(16)}" }
       }
@@ -152,7 +154,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_difference("AiCredential.count", 1) do
       post ai_credentials_url, params: {
         ai_credential: {
-          provider: "anthropic",
+          provider: "openai",
           display_name: "",
           credential_data: { api_key: "sk-ant-#{SecureRandom.hex(16)}" }
         }
@@ -160,7 +162,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     end
 
     saved = AiCredential.last
-    assert saved.display_name.start_with?("Anthropic ")
+    assert saved.display_name.start_with?("Openai ")
     assert_equal 3, saved.display_name.split.count
   end
 
@@ -170,7 +172,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference("AiCredential.count") do
       post ai_credentials_url, params: {
         ai_credential: {
-          provider: "anthropic",
+          provider: "openai",
           display_name: "My Key",
           credential_data: { api_key: "" }
         }
@@ -362,6 +364,26 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     active.reload
     assert_equal original_key, active.credential_data["api_key"]
+  end
+
+  test "#update should revalidate changes to other credential fields and preserve blank secrets" do
+    sign_in_as(user)
+    active = create(:ai_credential, :active, user: user)
+    original_data = active.credential_data.deep_dup
+
+    assert_no_enqueued_jobs do
+      patch ai_credential_url(active), params: {
+        ai_credential: {
+          display_name: active.display_name,
+          credential_data: { api_key: "", organization_id: "another-organization" }
+        }
+      }
+    end
+
+    assert_redirected_to ai_credential_path(active)
+    assert_equal original_data.merge("organization_id" => "another-organization"), active.reload.credential_data
+    assert_predicate active, :inactive?
+    assert_predicate active.latest_operation_run(:validation), :failed?
   end
 
   test "#update should render :edit with errors on invalid input" do

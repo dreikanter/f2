@@ -1,7 +1,6 @@
-# A user's API credential for one AI provider. `credential_data` stores
-# provider-specific fields (e.g. `{ "api_key" => "..." }`) and is encrypted at
-# rest. Lifecycle, naming, and feed teardown come from ProviderCredential;
-# model discovery and advisory metadata are specific to AI credentials.
+# A user's encrypted credentials and model catalog for one AI provider. Provider
+# clients interpret credential fields; ProviderCredential supplies the shared
+# lifecycle, naming, and feed teardown.
 class AiCredential < ApplicationRecord
   include ProviderCredential
 
@@ -9,27 +8,23 @@ class AiCredential < ApplicationRecord
   DEACTIVATED_EVENT_TYPE = "ai_credential_deactivated"
 
   validates :provider, presence: true, inclusion: { in: ->(_) { LlmProvider.names } }
+  validate :provider_credentials_valid
 
-  def llm_provider
-    LlmProvider.find(provider)
+  def build_llm_client
+    LlmProvider.build(provider, credential_data: credential_data)
   end
 
   def provider_name
-    llm_provider.display_name
+    LlmProvider.find(provider).fetch(:display_name)
   end
 
   MODEL_CATALOG_FRESHNESS = 1.day
   MODEL_REFRESH_TIMEOUT = 15.minutes
-  NON_CONVERSATIONAL_TASKS = %w[
-    embedding completion image_generation image_edit video_generation
-    audio_transcription audio_speech realtime moderation rerank search ocr guardrail vector_store
-  ].freeze
 
   def supported_models
     available_models.reject do |model|
-      task = model.dig("metadata", "task", "mode")
       outputs = model.dig("metadata", "output_modalities")
-      NON_CONVERSATIONAL_TASKS.include?(task) || (outputs.is_a?(Array) && outputs.any? && !outputs.include?("text"))
+      outputs.is_a?(Array) && outputs.any? && !outputs.include?("text")
     end
   end
 
@@ -42,6 +37,10 @@ class AiCredential < ApplicationRecord
                               context: { fallback_state: active? ? :active : :inactive })
     validation_job.perform_now(run)
     run
+  end
+
+  def ruby_llm_context
+    build_llm_client.context
   end
 
   def refresh_models_async(force: false)
@@ -63,9 +62,17 @@ class AiCredential < ApplicationRecord
   end
 
   def default_supported_model
-    provider_default = llm_provider.default_model
+    provider_default = LlmProvider.find(provider).fetch(:default_model)
     return provider_default if supports_model?(provider_default)
 
     supported_models.first&.fetch("id")
+  end
+
+  private
+
+  def provider_credentials_valid
+    return unless LlmProvider.names.include?(provider)
+
+    build_llm_client.credential_errors.each { |message| errors.add(:base, message) }
   end
 end

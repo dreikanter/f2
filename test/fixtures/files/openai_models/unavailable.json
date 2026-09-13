@@ -1,0 +1,8 @@
+{
+  "error": {
+    "message": "Service unavailable",
+    "type": "server_error",
+    "param": null,
+    "code": null
+  }
+}

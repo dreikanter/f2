@@ -20,8 +20,8 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
   end
 
   def unverified_credential
-    @unverified_credential ||= create(:ai_credential, :active, user: user, provider: "openrouter",
-                                                               available_models: [{ "id" => "anthropic/claude-sonnet-4-6" }])
+    @unverified_credential ||= create(:ai_credential, :active, user: user, provider: "openai",
+                                                               available_models: [{ "id" => "future-openai-model" }])
   end
 
   def ai_feed(**attrs)
@@ -126,9 +126,9 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
     assert_not component(feed).model_unavailable?
   end
 
-  test "#models_by_credential should omit specialized tasks from new choices while retaining a saved selection" do
+  test "#models_by_credential should omit non-text models from new choices while retaining a saved selection" do
     credential.update!(available_models: [
-      { "id" => "image-model", "metadata" => { "task" => { "mode" => "image_generation" } } },
+      { "id" => "image-model", "metadata" => { "output_modalities" => ["image"] } },
       { "id" => "future-model" }
     ])
     fresh = component(ai_feed(ai_credential: credential))
