@@ -3,12 +3,13 @@ require "test_helper"
 # Integration test for the JSON Feed happy path.
 # Walks paste → detection → preview cache → save → enabled feed.
 class SmartFeedCreationJsonFeedTest < ActionDispatch::IntegrationTest
+  include CacheTestHelpers
   include ActiveJob::TestHelper
 
   setup { clear_enqueued_jobs }
 
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   def access_token
@@ -37,14 +38,6 @@ class SmartFeedCreationJsonFeedTest < ActionDispatch::IntegrationTest
         ]
       }
     JSON
-  end
-
-  def with_memory_cache
-    previous = Rails.cache
-    Rails.cache = ActiveSupport::Cache::MemoryStore.new
-    yield
-  ensure
-    Rails.cache = previous
   end
 
   test "#post should drive JSON Feed happy path: paste, detect, preview, save enabled" do

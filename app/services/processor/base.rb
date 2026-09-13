@@ -26,5 +26,22 @@ module Processor
     private
 
     attr_reader :feed, :raw_data
+
+    # Entry timestamps arrive in source-specific shapes. A blank or unreadable
+    # value drops the timestamp rather than failing the entry.
+    def parse_time(value)
+      return value if value.is_a?(Time) || value.is_a?(ActiveSupport::TimeWithZone)
+      return nil if value.blank?
+
+      parse_timestamp(value)
+    rescue ArgumentError
+      nil
+    end
+
+    # @param value [String] the raw timestamp
+    # @return [Time, nil] the parsed timestamp
+    def parse_timestamp(value)
+      Time.zone.parse(value.to_s)
+    end
   end
 end

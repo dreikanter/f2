@@ -1,14 +1,6 @@
 require "test_helper"
 
 class Development::ComponentsControllerTest < ActionDispatch::IntegrationTest
-  def dev_user
-    @dev_user ||= create(:user, :dev)
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   test "#show should render the UI elements reference" do
     sign_in_as(dev_user)
 

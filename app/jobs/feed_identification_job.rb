@@ -11,6 +11,6 @@ class FeedIdentificationJob < ApplicationJob
                                                 configuration_digest: configuration_digest)
     return unless identification
 
-    FeedIdentificationFetcher.new(feed_identification: identification, run_id: run_id).identify
+    FeedIdentificationFetcher.new(feed_identification: identification, run_id: run_id).call
   end
 end

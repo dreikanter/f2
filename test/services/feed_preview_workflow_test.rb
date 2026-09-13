@@ -107,11 +107,39 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   test "#execute should mark the preview failed and re-raise when a step fails" do
     stub_request(:get, FEED_URL).to_return(status: 500, body: "")
 
-    assert_raises(Loader::Error) do
-      FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID).execute
-    end
+    workflow = FeedPreviewWorkflow.new(feed_preview, run_id: RUN_ID)
+    assert_raises(Loader::Error) { workflow.execute }
 
     assert feed_preview.reload.failed?
+    assert_equal :load_feed_contents, workflow.stats[:failed_at_step]
+    assert_equal workflow.total_duration, workflow.stats[:total_duration]
+  end
+
+  test "#execute should persist AI preview failure details in the activity event" do
+    credential = create(:ai_credential, :active, user: user)
+    preview = create(:feed_preview, user: user, feed_profile_key: "llm",
+                     params: { "prompt" => "A daily roundup" }, ai_credential: credential,
+                     status: :pending, run_id: AI_RUN_ID)
+    loader = Object.new
+    def loader.load
+      raise Loader::Error, "Provider request timed out"
+    end
+
+    workflow = FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID)
+    error = Loader::LlmLoader.stub(:new, loader) do
+      assert_raises(Loader::Error) { workflow.execute }
+    end
+
+    assert preview.reload.failed?
+    event = Event.find_by!(type: "feed_preview", subject: credential)
+    assert_equal "failed", event.metadata["status"]
+    assert_equal error.message, event.message
+    assert_equal "Loader::Error", event.metadata.dig("error", "class")
+    assert_equal error.message, event.metadata.dig("error", "message")
+    assert_equal "load_feed_contents", event.metadata.dig("error", "stage")
+    assert_equal error.backtrace, event.metadata.dig("error", "backtrace")
+    assert_equal "load_feed_contents", event.metadata.dig("stats", "failed_at_step")
+    assert_not event.metadata.fetch("stats").key?("error")
   end
 
   test "#execute should halt before loading when the run is superseded" do
@@ -134,31 +162,19 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
                      ai_model: "claude-sonnet-4-6", status: :pending, run_id: AI_RUN_ID)
 
     captured_feed = nil
-    captured_context = nil
-    fake_client = Class.new do
-      attr_reader :credential
-
-      def initialize(credential, callback)
-        @credential = credential
-        @callback = callback
-      end
-
-      def call(context, **_options)
-        @callback.call(context)
-        LlmClient::Result.new(payload: { "items" => [] }, usage_id: 1)
-      end
-    end
-
-    LlmClient.stub(:for, lambda { |feed|
+    captured_options = nil
+    loader = Struct.new(:load).new([])
+    Loader::LlmLoader.stub(:new, lambda { |feed, options|
       captured_feed = feed
-      fake_client.new(credential, ->(context) { captured_context = context })
+      captured_options = options
+      loader
     }) do
       FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
     end
 
     assert_equal credential.id, captured_feed.ai_credential_id
-    assert_equal "claude-sonnet-4-6", captured_context.model
-    assert_equal :preview, captured_context.purpose
+    assert_equal "claude-sonnet-4-6", captured_feed.ai_model
+    assert_equal :preview, captured_options[:purpose]
     assert_equal 2, preview.reload.data.dig("stats", "content_size")
   end
 end

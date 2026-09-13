@@ -26,107 +26,6 @@ class FeedHelperTest < ActionView::TestCase
     assert_nil feed_target_group_link(feed)
   end
 
-  test "#feed_missing_enablement_parts should return both missing parts" do
-    feed = build(:feed, :without_access_token)
-    result = feed_missing_enablement_parts(feed)
-
-    assert_equal ["active access token", "target group"], result
-  end
-
-  test "#feed_missing_enablement_parts should return missing access token only" do
-    feed = build(:feed, :without_access_token, target_group: "test_group")
-    result = feed_missing_enablement_parts(feed)
-
-    assert_equal ["active access token"], result
-  end
-
-  test "#feed_missing_enablement_parts should return missing target group only" do
-    access_token = create(:access_token, :active)
-    feed = build(:feed, access_token: access_token, target_group: nil)
-    result = feed_missing_enablement_parts(feed)
-
-    assert_equal ["target group"], result
-  end
-
-  test "#feed_missing_enablement_parts should return missing access token when inactive" do
-    access_token = create(:access_token, :inactive)
-    feed = build(:feed, access_token: access_token, target_group: "test_group")
-    result = feed_missing_enablement_parts(feed)
-
-    assert_equal ["active access token"], result
-  end
-
-  test "#feed_missing_enablement_parts should return empty array when all requirements met" do
-    access_token = create(:access_token, :active)
-    feed = build(:feed, access_token: access_token, target_group: "test_group")
-    result = feed_missing_enablement_parts(feed)
-
-    assert_equal [], result
-  end
-
-  test "#feed_missing_enablement_parts should not expect source or schedule for a webhook feed" do
-    feed = build(:feed, :webhook, name: "")
-    result = feed_missing_enablement_parts(feed)
-
-    assert_equal ["name"], result
-  end
-
-  test "#feed_missing_enablement_parts should include name when blank" do
-    access_token = create(:access_token, :active)
-    feed = build(:feed, access_token: access_token, target_group: "test_group", name: "")
-    result = feed_missing_enablement_parts(feed)
-
-    assert_includes result, "name"
-  end
-
-  test "#feed_missing_enablement_parts should include AI credential and model for an AI feed" do
-    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "ruby news" },
-                        ai_credential: nil, ai_model: nil)
-    result = feed_missing_enablement_parts(feed)
-
-    assert_includes result, "active AI credential"
-    assert_includes result, "AI model"
-  end
-
-  test "#feed_missing_enablement_parts should report an inactive AI credential" do
-    credential = create(:ai_credential, :inactive)
-    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
-    result = feed_missing_enablement_parts(feed)
-
-    assert_equal ["active AI credential"], result
-  end
-
-  test "#feed_missing_enablement_parts should allow a missing search credential" do
-    credential = create(:ai_credential, :active)
-    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "ruby news" }, ai_credential: credential,
-                        ai_model: "claude-sonnet-4-6", search_credential: nil)
-    result = feed_missing_enablement_parts(feed)
-
-    assert_empty result
-  end
-
-  test "#feed_missing_enablement_parts should allow an inactive search credential" do
-    credential = create(:ai_credential, :active)
-    search_credential = create(:search_credential, :inactive, user: credential.user)
-    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "ruby news" }, ai_credential: credential,
-                        ai_model: "claude-sonnet-4-6", search_credential: search_credential)
-    result = feed_missing_enablement_parts(feed)
-
-    assert_empty result
-  end
-
-  test "#feed_missing_enablement_parts should be empty for a ready AI feed" do
-    credential = create(:ai_credential, :active)
-    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
-    result = feed_missing_enablement_parts(feed)
-
-    assert_equal [], result
-  end
-
   test "#feed_enable_hint should list what the feed is missing" do
     feed = build(:feed, :without_access_token, target_group: "testgroup")
 
@@ -146,13 +45,13 @@ class FeedHelperTest < ActionView::TestCase
     assert_equal "To enable this feed, add: name, active access token, and target group.", feed_enable_hint(feed)
   end
 
-  test "#feed_enable_hint should allow enabling without search credentials" do
+  test "#feed_enable_hint should explain temporary AI unavailability" do
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: credential,
                         ai_model: "claude-sonnet-4-6", search_credential: nil)
 
-    assert_equal "Complete setup to enable this feed", feed_enable_hint(feed)
+    assert_equal Loader::LlmLoader::UNAVAILABLE_MESSAGE, feed_enable_hint(feed)
   end
 
   test "#feed_enable_hint should fall back to a generic prompt when nothing is missing" do
@@ -257,7 +156,7 @@ class FeedHelperTest < ActionView::TestCase
   end
 
   test "#feed_actions_menu_items should list refresh, edit, purge, and delete for an enabled feed" do
-    feed = create(:feed, :enabled, target_group: "testgroup")
+    feed = create(:feed, :enabled, user: user, target_group: "testgroup")
 
     labels = menu_labels(feed)
 
@@ -265,7 +164,7 @@ class FeedHelperTest < ActionView::TestCase
   end
 
   test "#feed_actions_menu_items should omit refresh for a feed that is not enabled" do
-    feed = create(:feed, :disabled, target_group: "testgroup")
+    feed = create(:feed, :disabled, user: user, target_group: "testgroup")
 
     labels = menu_labels(feed)
 
@@ -273,7 +172,7 @@ class FeedHelperTest < ActionView::TestCase
   end
 
   test "#feed_actions_menu_items should omit purge when the feed has no target group" do
-    feed = create(:feed, :enabled, target_group: "testgroup")
+    feed = create(:feed, :enabled, user: user, target_group: "testgroup")
     feed.target_group = nil
 
     labels = menu_labels(feed)
@@ -282,7 +181,7 @@ class FeedHelperTest < ActionView::TestCase
   end
 
   test "#feed_actions_menu_items should separate purge and delete from the actions above them" do
-    feed = create(:feed, :enabled, target_group: "testgroup")
+    feed = create(:feed, :enabled, user: user, target_group: "testgroup")
 
     items = feed_actions_menu_items(feed)
     separators = items.each_index.select { |index| items[index][:separator] }
@@ -291,7 +190,7 @@ class FeedHelperTest < ActionView::TestCase
   end
 
   test "#feed_actions_menu_items should keep the delete separator when purge is unavailable" do
-    feed = create(:feed, :enabled, target_group: "testgroup")
+    feed = create(:feed, :enabled, user: user, target_group: "testgroup")
     feed.target_group = nil
 
     items = feed_actions_menu_items(feed)
@@ -301,7 +200,7 @@ class FeedHelperTest < ActionView::TestCase
   end
 
   test "#feed_actions_menu_items should wire refresh to a POST and danger actions to their modals" do
-    feed = create(:feed, :enabled, target_group: "testgroup")
+    feed = create(:feed, :enabled, user: user, target_group: "testgroup")
 
     items = feed_actions_menu_items(feed).reject { |item| item[:separator] }.index_by { |item| item[:label] }
 
@@ -309,25 +208,6 @@ class FeedHelperTest < ActionView::TestCase
     assert_equal feed_refresh_path(feed), items["Refresh"][:href]
     assert_equal "purge-modal-#{feed.id}", items["Purge feed…"].dig(:data, :modal_trigger_modal_id_value)
     assert_equal "delete-feed-modal-#{feed.id}", items["Delete feed…"].dig(:data, :modal_trigger_modal_id_value)
-  end
-
-  test "#feed_missing_enablement_parts should not report source missing for an AI feed with a prompt" do
-    access_token = create(:access_token, :active)
-    feed = build(:feed, access_token: access_token, target_group: "testgroup",
-                        feed_profile_key: "llm",
-                        params: { "prompt" => "climate change news" })
-    result = feed_missing_enablement_parts(feed)
-
-    assert_not_includes result, "source"
-  end
-
-  test "#feed_missing_enablement_parts should report source missing when neither url nor query present" do
-    access_token = create(:access_token, :active)
-    feed = build(:feed, access_token: access_token, target_group: "testgroup",
-                        params: {})
-    result = feed_missing_enablement_parts(feed)
-
-    assert_includes result, "source"
   end
 
   test "#webhook_curl_example should include the endpoint URL and the token" do
@@ -353,6 +233,14 @@ class FeedHelperTest < ActionView::TestCase
   end
 
   private
+
+  def user
+    @user ||= create(:user)
+  end
+
+  def policy(record)
+    Pundit.policy!(user, record)
+  end
 
   def menu_labels(feed)
     feed_actions_menu_items(feed).reject { |item| item[:separator] }.map { |item| item[:label] }

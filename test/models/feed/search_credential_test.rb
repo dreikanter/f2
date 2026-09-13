@@ -10,15 +10,13 @@ class Feed::SearchCredentialTest < ActiveSupport::TestCase
     assert_includes feed.errors[:search_credential], "must belong to the same user"
   end
 
-  test "#valid? and #can_be_previewed? should allow a missing or inactive search credential on enabled AI feeds" do
+  test "#valid? should allow saved settings with a missing or inactive search credential" do
     feed = build_ai_feed(search_credential: nil)
 
     assert feed.valid?, feed.errors.full_messages.to_sentence
-    assert feed.can_be_previewed?
 
     feed.search_credential = create(:search_credential, :inactive, user: feed.user)
     assert feed.valid?, feed.errors.full_messages.to_sentence
-    assert feed.can_be_previewed?
   end
 
   test "#valid? should not require a search credential on non-AI feeds" do
@@ -28,22 +26,11 @@ class Feed::SearchCredentialTest < ActiveSupport::TestCase
     assert_empty feed.errors[:search_credential]
   end
 
-  test "#can_be_enabled? should allow an active or missing search credential" do
-    active = create(:search_credential, :active)
-    feed = build_ai_feed(user: active.user, search_credential: active)
-
-    assert feed.can_be_enabled?
-
-    feed.search_credential = nil
-    assert feed.can_be_enabled?
-  end
-
   private
 
   def build_ai_feed(user: create(:user), search_credential:)
     profile_key = FeedProfile.ai_profile_keys.first
-    ai_credential = create(:ai_credential, :active, user: user)
-    ai_credential.define_singleton_method(:supports_model?) { |_model| true }
+    ai_credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "test-model" }])
 
     build(
       :feed,

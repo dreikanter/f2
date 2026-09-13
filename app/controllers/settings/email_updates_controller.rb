@@ -10,8 +10,7 @@ class Settings::EmailUpdatesController < ApplicationController
     return redirect_with_rate_limit unless @user.can_change_email?
 
     if @user.update(unconfirmed_email: new_email)
-      ProfileMailer.email_change_confirmation(@user).deliver_later
-      Event.create!(type: "mail.profile_mailer.email_change_confirmation", user: @user, subject: @user, level: :info)
+      ProfileMailer.deliver_to(:email_change_confirmation, @user)
       redirect_with_confirmation_sent
     else
       redirect_with_duplicate_email

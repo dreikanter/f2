@@ -8,11 +8,8 @@ Rails.application.routes.draw do
       resource :test_email, only: :create
     end
 
-    resources :sent_emails, only: [:index, :show], format: false do
-      collection do
-        delete :purge
-      end
-    end
+    resources :sent_emails, only: [:index, :show], format: false
+    resource :sent_emails_purge, only: :destroy
 
     resources :jobs, only: :index do
       resources :job_runs, only: [:index, :create, :show]

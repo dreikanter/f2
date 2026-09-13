@@ -6,7 +6,7 @@ class SearchCredentials::FeedDetourTest < ActionDispatch::IntegrationTest
   setup { clear_enqueued_jobs }
 
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   test "new keeps an owned feed detour" do

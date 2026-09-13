@@ -27,6 +27,8 @@ class User < ApplicationRecord
 
   enum :state, { inactive: 0, active: 2, suspended: 3 }, default: :inactive
 
+  scope :admins, -> { joins(:permissions).where(permissions: { name: Permission::ADMIN }) }
+
   validates :email_address, presence: true
   validates :password, length: { minimum: PASSWORD_MIN_LENGTH, maximum: PASSWORD_MAX_LENGTH }, allow_nil: true
   validates :available_invites, numericality: { greater_than_or_equal_to: 0 }
@@ -145,8 +147,9 @@ class User < ApplicationRecord
     published_posts.maximum(:reposted_at)
   end
 
+  # @return [Integer] published posts dated in the last 7 days, by source date
   def posts_published_last_week_count
-    published_posts.where(published_at: 6.days.ago.beginning_of_day..Time.current.end_of_day).count
+    imported_posts.published_last_week.count
   end
 
   private

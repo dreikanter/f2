@@ -8,7 +8,7 @@ class FeedIdentificationsFormTest < ActionDispatch::IntegrationTest
   end
 
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   test "#create should open the webhook form without detection copy" do

@@ -1,11 +1,4 @@
-# Code-only registry of AI providers `LlmClient` can talk to. Parallels
-# `FeedProfile`. Tells `LlmClient` which RubyLLM provider key to use.
-# Every provider authenticates with a single API key; if one ever needs
-# more fields, add them for that provider specifically rather than
-# generalizing back to a schema.
-#
-# Provider-specific model names live here and nowhere above: `default_model`
-# is what a feed uses when it carries no explicit override.
+# Provider identities and defaults used by saved credentials and feed settings.
 class LlmProvider
   attr_reader :name, :display_name, :ruby_llm_provider, :default_model, :api_base
 

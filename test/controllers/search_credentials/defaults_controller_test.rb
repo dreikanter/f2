@@ -2,11 +2,7 @@ require "test_helper"
 
 class SearchCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
-  end
-
-  def other_user
-    @other_user ||= create(:user)
+    @user ||= regular_user
   end
 
   test "#update should set the credential as the user's default" do

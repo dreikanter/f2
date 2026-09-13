@@ -24,18 +24,30 @@ module ApplicationHelper
     "#{classes} disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed"
   end
 
-  def primary_button_classes(compact: false)
+  def primary_button_classes(compact: false, text_size: "text-base")
     padding = compact ? "px-4 py-2" : "px-6 py-3"
-    "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand #{padding} text-base " \
+    "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand #{padding} #{text_size} " \
       "font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none " \
       "focus:ring-2 focus:ring-ring focus:ring-offset-1"
   end
 
-  def secondary_button_classes(compact: false)
+  # `disabled` renders the same control as an inert element: no hover or focus
+  # affordances, since a disabled span never gets either.
+  def secondary_button_classes(compact: false, disabled: false)
     padding = compact ? "px-4 py-2" : "px-6 py-3"
-    "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface " \
-      "#{padding} text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted " \
-      "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+    base = "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface " \
+           "#{padding} text-base font-semibold text-body shadow-sm"
+    return "#{base} opacity-50 cursor-not-allowed" if disabled
+
+    "#{base} transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+  end
+
+  def danger_button_classes(compact: true)
+    padding = compact ? "px-4 py-2" : "px-6 py-3"
+    "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-danger bg-danger " \
+      "#{padding} text-base font-semibold text-on-brand shadow-sm transition hover:bg-danger-hover " \
+      "focus:outline-none focus:ring-2 focus:ring-danger-hover focus:ring-offset-1 cursor-pointer " \
+      "disabled:cursor-not-allowed disabled:opacity-50"
   end
 
   def icon_button_classes
@@ -162,6 +174,72 @@ module ApplicationHelper
     else
       icon("circle-question-mark", css_class: "size-4 text-muted", title: "Not checked yet", aria_label: "Not checked yet")
     end
+  end
+
+  # The account menu. The desktop dropdown divides Settings from the rest, so
+  # the entries arrive grouped; the mobile menu renders them as one card.
+  def user_menu_item_groups
+    return [] unless Current.user
+
+    [
+      [
+        {
+          name: "Settings",
+          path: settings_path,
+          active: current_page?(settings_path)
+        }
+      ],
+      [
+        {
+          name: "Freefeed Access Tokens",
+          path: access_tokens_path,
+          active: current_page?(access_tokens_path)
+        },
+        {
+          name: "AI Credentials",
+          path: ai_credentials_path,
+          active: current_page?(ai_credentials_path)
+        },
+        {
+          name: "Search Credentials",
+          path: search_credentials_path,
+          active: current_page?(search_credentials_path)
+        },
+        {
+          name: "Invites",
+          path: invites_path,
+          active: current_page?(invites_path)
+        },
+        {
+          name: "Changelog",
+          path: changelog_path,
+          active: current_page?(changelog_path)
+        }
+      ]
+    ]
+  end
+
+  def user_menu_items
+    user_menu_item_groups.flatten
+  end
+
+  def user_menu_link_classes
+    "block px-4 py-2 text-sm text-heading hover:bg-surface-sunken"
+  end
+
+  # One row in a mobile nav card: rounded at the ends, divided in between.
+  def mobile_nav_link_classes(active:, first:, last:)
+    class_names(
+      "block w-full px-4 py-4 cursor-pointer hover:bg-surface-sunken hover:text-heading " \
+      "focus:outline-none focus:ring-2 focus:ring-ring focus:text-heading",
+      {
+        "bg-surface-inverted text-on-brand hover:bg-surface-inverted-hover hover:text-on-brand focus:text-on-brand" => active,
+        "text-heading" => !active,
+        "rounded-t-lg" => first,
+        "rounded-b-lg" => last,
+        "border-b border-border" => !last
+      }
+    )
   end
 
   def navbar_items

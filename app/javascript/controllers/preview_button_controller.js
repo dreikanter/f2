@@ -118,8 +118,7 @@ export default class extends Controller {
       return this._isAiProfile(profileKey) ? "Add a prompt to preview." : "Add a source URL to preview."
     }
     if (this._isAiProfile(profileKey)) {
-      if (!this._aiCredentialValue()) return "Choose an AI provider to preview."
-      if (!this._aiModelValue()) return "Choose a model to preview."
+      return "AI feeds are temporarily unavailable."
     }
     return null
   }

@@ -9,7 +9,7 @@ class CredentialGateTest < ActionDispatch::IntegrationTest
   setup { clear_enqueued_jobs }
 
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   test "credential gate asks only for AI credentials when no credentials exist" do

@@ -1,11 +1,7 @@
 class Admin::EventsController < ApplicationController
   include EventFiltering
   include EventCursorPagination
-  include EventReferencedPosts
-  include EventReferencedLlmUsages
-  include EventReferencedWebSearches
-
-  MAX_RECENT_POSTS = 10
+  include EventDisplay
 
   def index
     authorize Event
@@ -20,12 +16,7 @@ class Admin::EventsController < ApplicationController
 
   def show
     authorize Event
-    @event = Event.find(params[:id])
-    @referenced_posts = referenced_posts(@event).limit(MAX_RECENT_POSTS)
-    @referenced_llm_usages = referenced_llm_usages(@event)
-    @referenced_web_searches = referenced_web_searches(@event)
-    @previous_event = previous_event(@event)
-    @next_event = next_event(@event)
+    load_event(Event.find(params[:id]))
   end
 
   private
@@ -44,17 +35,12 @@ class Admin::EventsController < ApplicationController
     helpers.render(Admin::EventsListComponent.new(events: @events, endpoint: @log_endpoint, older_url: @older_url, newer_url: @newer_url))
   end
 
-  def previous_event(event)
-    events_scope.where(cursor_condition("<", event.id)).order(created_at: :desc, id: :desc).first
-  end
-
-  def next_event(event)
-    events_scope.where(cursor_condition(">", event.id)).order(created_at: :asc, id: :asc).first
-  end
-
   def events_scope
     apply_filters(policy_scope(Event))
   end
+
+  # The admin log navigates within the filter the operator is looking at.
+  alias_method :navigable_events, :events_scope
 
   def permitted_filter_keys
     super + [:user_id]

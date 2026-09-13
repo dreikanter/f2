@@ -9,19 +9,7 @@ class CredentialPolicyTest < ActiveSupport::TestCase
   }.freeze
 
   def owner
-    @owner ||= create(:user)
-  end
-
-  def other_user
-    @other_user ||= create(:user)
-  end
-
-  def admin_user
-    @admin_user ||= begin
-      user = create(:user)
-      create(:permission, user: user, name: "admin")
-      user
-    end
+    @owner ||= regular_user
   end
 
   def each_policy

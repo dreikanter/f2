@@ -8,7 +8,8 @@ module Sortable
   # @return [SortablePresenter] sort controls presenter
   def sortable_presenter
     SortablePresenter.new(
-      params: params,
+      current_sort_field: sortable_field,
+      current_direction: sortable_direction,
       fields: sortable_fields,
       path_builder: ->(sortable_params) { sortable_path(sortable_params) }
     )

@@ -11,7 +11,7 @@ class SmartFeedCreationVocabularyTest < ActionDispatch::IntegrationTest
   setup { clear_enqueued_jobs }
 
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   def credential

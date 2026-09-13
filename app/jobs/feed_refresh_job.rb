@@ -11,6 +11,7 @@ class FeedRefreshJob < ApplicationJob
 
     # Webhook feeds have no loader to run; drop stray kicks.
     return if feed.feed_profile_key == "webhook"
+    return if FeedProfile.depends_on_ai?(feed.feed_profile_key)
 
     Feed.with_advisory_lock!("feed_refresh_#{feed.id}", timeout_seconds: 0) do
       FeedRefreshWorkflow.new(feed, manual: manual).execute

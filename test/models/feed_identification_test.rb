@@ -113,16 +113,6 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     assert_equal winner.started_at, winner.reload.started_at, "the winner's detection should not be restarted"
   end
 
-  test ".polling_max_polls should preserve the polling interval and timeout budget" do
-    assert_equal 2500, FeedIdentification::POLLING_INTERVAL_MS
-    assert_equal 85.seconds, FeedIdentification::TIMEOUT_AFTER
-    assert_equal 36, FeedIdentification.polling_max_polls
-
-    final_poll_at = (FeedIdentification.polling_max_polls - 1) * FeedIdentification::POLLING_INTERVAL_MS
-    assert_equal FeedIdentification::POLLING_INTERVAL_MS,
-                 final_poll_at - FeedIdentification::TIMEOUT_AFTER.in_milliseconds
-  end
-
 
   def identification(candidates)
     FeedIdentification.new(user: user, input: "https://example.com/feed.xml", candidates: candidates)

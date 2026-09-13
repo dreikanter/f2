@@ -5,10 +5,6 @@ class InvitesControllerTest < ActionDispatch::IntegrationTest
     @user ||= create(:user, available_invites: 5)
   end
 
-  def other_user
-    @other_user ||= create(:user)
-  end
-
   def invite
     @invite ||= create(:invite, created_by_user: user)
   end

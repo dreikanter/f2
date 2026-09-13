@@ -1,14 +1,14 @@
 require "test_helper"
 
 class FeedIdentificationFetcherTest < ActiveSupport::TestCase
-  test "#identify should not settle results under another worker configuration" do
+  test "#call should not settle results under another worker configuration" do
     url = "https://wumo.com/wumo?view=rss"
     identification = create(:feed_identification, input: url, started_at: Time.current)
     attributes = identification.attributes
     stub_request(:get, url).to_return(status: 200, body: file_fixture("feeds/wumo/current.xml").read)
 
     stub_const(FeedProfile, :PROFILES, FeedProfile::PROFILES.except("wumo")) do
-      FeedIdentificationFetcher.new(feed_identification: identification, run_id: identification.run_id).identify
+      FeedIdentificationFetcher.new(feed_identification: identification, run_id: identification.run_id).call
     end
 
     assert_requested :get, url
@@ -23,7 +23,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  test "#identify should successfully identify RSS feed and update record" do
+  test "#call should successfully identify RSS feed and update record" do
     url = "http://example.com/feed.xml"
 
     rss_content = <<~XML
@@ -45,7 +45,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_return(status: 200, body: rss_content, headers: { "Content-Type" => "application/xml" })
 
-    fetcher(url).identify
+    fetcher(url).call
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
@@ -56,7 +56,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal "Test RSS Feed", suggested["title"]
   end
 
-  test "#identify should successfully identify XKCD feed and update record" do
+  test "#call should successfully identify XKCD feed and update record" do
     url = "https://xkcd.com/rss.xml"
 
     rss_content = <<~XML
@@ -73,7 +73,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_return(status: 200, body: rss_content, headers: { "Content-Type" => "application/xml" })
 
-    fetcher(url).identify
+    fetcher(url).call
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
@@ -81,7 +81,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal "xkcd", feed_identification.candidates.first["profile_key"]
   end
 
-  test "#identify should handle title extraction failure gracefully" do
+  test "#call should handle title extraction failure gracefully" do
     url = "http://example.com/feed.xml"
 
     rss_content = <<~XML
@@ -96,7 +96,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_return(status: 200, body: rss_content, headers: { "Content-Type" => "application/xml" })
 
-    fetcher(url).identify
+    fetcher(url).call
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
@@ -106,18 +106,18 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal "failed", feed_identification.candidates.first["test_status"]
   end
 
-  test "#identify should refuse a non-public URL without fetching it" do
+  test "#call should refuse a non-public URL without fetching it" do
     url = "http://127.0.0.1/feed.xml"
     stub_request(:get, url) # should never be hit
 
-    fetcher(url).identify
+    fetcher(url).call
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_equal "no_feed", feed_identification.status
     assert_not_requested :get, url
   end
 
-  test "#identify should settle as no_feed when no structured profile matches" do
+  test "#call should settle as no_feed when no structured profile matches" do
     # The AI profile registers no matcher, so a reachable page with no
     # standard feed yields no candidates; the entry flow offers the AI bridge.
     url = "http://example.com/unknown.txt"
@@ -125,87 +125,87 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_return(status: 200, body: "Not a valid feed format", headers: { "Content-Type" => "text/plain" })
 
-    fetcher(url).identify
+    fetcher(url).call
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "no_feed", feed_identification.status
   end
 
-  test "#identify should mark a bad response status as no_feed (reachable, terminal)" do
+  test "#call should mark a bad response status as no_feed (reachable, terminal)" do
     url = "http://example.com/error.xml"
 
     stub_request(:get, url)
       .to_return(status: 500, body: "Internal Server Error")
 
-    fetcher(url).identify
+    fetcher(url).call
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "no_feed", feed_identification.status
   end
 
-  test "#identify should mark a redirect loop as no_feed" do
+  test "#call should mark a redirect loop as no_feed" do
     url = "http://example.com/loop.xml"
 
     stub_request(:get, url)
       .to_raise(HttpClient::TooManyRedirectsError.new("too many redirects"))
 
-    fetcher(url).identify
+    fetcher(url).call
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_equal "no_feed", feed_identification.status
   end
 
-  test "#identify should mark a connection failure as unreachable (transient)" do
+  test "#call should mark a connection failure as unreachable (transient)" do
     url = "http://example.com/timeout.xml"
 
     stub_request(:get, url)
       .to_raise(HttpClient::TimeoutError.new("Connection timeout"))
 
-    fetcher(url).identify
+    fetcher(url).call
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "unreachable", feed_identification.status
   end
 
-  test "#identify should log the failure class and status for diagnosis" do
+  test "#call should log the failure class and status for diagnosis" do
     url = "http://example.com/error.xml"
     stub_request(:get, url).to_return(status: 404, body: "Not Found")
 
     log = StringIO.new
-    fetcher(url, logger: ActiveSupport::Logger.new(log)).identify
+    fetcher(url, logger: ActiveSupport::Logger.new(log)).call
 
     assert_match(/ResponseStatusError \(HTTP 404\)/, log.string)
   end
 
-  test "#identify should settle as no_feed and report an unexpected failure" do
+  test "#call should settle as no_feed and report an unexpected failure" do
     url = "http://example.com/feed.xml"
     stub_request(:get, url).to_return(status: 200, body: "<rss></rss>")
 
     FeedProfileDetector.stub(:call, proc { raise "boom" }) do
-      fetcher(url).identify
+      fetcher(url).call
     end
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_equal "no_feed", feed_identification.status
   end
 
-  test "#identify should settle as no_feed when no candidates are detected" do
+  test "#call should settle as no_feed when no candidates are detected" do
     url = "http://example.com/feed.xml"
     stub_request(:get, url).to_return(status: 200, body: "x")
 
     empty_result = Struct.new(:candidates).new([])
     FeedProfileDetector.stub(:call, empty_result) do
-      fetcher(url).identify
+      fetcher(url).call
     end
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_equal "no_feed", feed_identification.status
   end
 
-  test "#identify should persist a ranked candidates array on success" do
+  test "#call should persist a ranked candidates array on success" do
     url = "http://example.com/feed.xml"
 
     rss_content = <<~XML
@@ -219,7 +219,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     stub_request(:get, url).to_return(status: 200, body: rss_content)
 
-    fetcher(url).identify
+    fetcher(url).call
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_equal %w[rss], feed_identification.candidates.map { |c| c["profile_key"] }
@@ -233,7 +233,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal 0, candidate["posts_found"]
   end
 
-  test "#identify should fetch each source URL once across matching and testing" do
+  test "#call should fetch each source URL once across matching and testing" do
     url = "http://example.com/feed.xml"
 
     rss_content = <<~XML
@@ -245,12 +245,12 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     stub_request(:get, url).to_return(status: 200, body: rss_content)
 
-    fetcher(url).identify
+    fetcher(url).call
 
     assert_requested :get, url, times: 1
   end
 
-  test "#identify should persist multiple candidates ranked when multiple match" do
+  test "#call should persist multiple candidates ranked when multiple match" do
     url = "https://xkcd.com/rss.xml"
 
     rss_content = <<~XML
@@ -264,31 +264,31 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     stub_request(:get, url).to_return(status: 200, body: rss_content)
 
-    fetcher(url).identify
+    fetcher(url).call
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     profile_keys = feed_identification.candidates.map { |c| c["profile_key"] }
     assert_equal %w[xkcd rss], profile_keys, "xkcd > rss for xkcd.com URLs"
   end
 
-  test "#identify should not tag directly identified candidates with a resolved URL" do
+  test "#call should not tag directly identified candidates with a resolved URL" do
     url = "http://example.com/feed.xml"
     stub_request(:get, url).to_return(status: 200, body: rss_body("Direct Feed"))
 
-    fetcher(url).identify
+    fetcher(url).call
 
     candidate = FeedIdentification.find_by(user: user, input: url).candidates.first
     assert_nil candidate["resolved_url"]
   end
 
-  test "#identify should discover the feed a page advertises" do
+  test "#call should discover the feed a page advertises" do
     page_url = "http://example.com/blog"
     feed_url = "http://example.com/feed.xml"
 
     stub_request(:get, page_url).to_return(status: 200, body: page_body(%(<link rel="alternate" type="application/rss+xml" href="/feed.xml">)))
     stub_request(:get, feed_url).to_return(status: 200, body: rss_body("Discovered Feed"))
 
-    fetcher(page_url).identify
+    fetcher(page_url).call
 
     feed_identification = FeedIdentification.find_by(user: user, input: page_url)
     assert_equal "working", feed_identification.status
@@ -300,19 +300,19 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal feed_url, feed_identification.source_url_for("rss")
   end
 
-  test "#identify should resolve relative feed links against the final redirected URL" do
+  test "#call should resolve relative feed links against the final redirected URL" do
     stub_request(:get, "http://example.com/").to_return(status: 301, headers: { "Location" => "http://www.example.com/blog/" })
     stub_request(:get, "http://www.example.com/blog/").to_return(status: 200, body: page_body(%(<link rel="alternate" type="application/rss+xml" href="feed.xml">)))
     stub_request(:get, "http://www.example.com/blog/feed.xml").to_return(status: 200, body: rss_body("Moved Feed"))
 
-    fetcher("http://example.com/").identify
+    fetcher("http://example.com/").call
 
     feed_identification = FeedIdentification.find_by(user: user, input: "http://example.com/")
     assert_equal "working", feed_identification.status
     assert_equal "http://www.example.com/blog/feed.xml", feed_identification.suggested_candidate.resolved_url
   end
 
-  test "#identify should keep trying advertised feeds until one works" do
+  test "#call should keep trying advertised feeds until one works" do
     page_url = "http://example.com/blog"
     links = <<~HTML
       <link rel="alternate" type="application/rss+xml" href="/missing.xml">
@@ -323,14 +323,14 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, "http://example.com/missing.xml").to_return(status: 404)
     stub_request(:get, "http://example.com/feed.xml").to_return(status: 200, body: rss_body("Second Feed"))
 
-    fetcher(page_url).identify
+    fetcher(page_url).call
 
     feed_identification = FeedIdentification.find_by(user: user, input: page_url)
     assert_equal "working", feed_identification.status
     assert_equal "http://example.com/feed.xml", feed_identification.suggested_candidate.resolved_url
   end
 
-  test "#identify should stop at the first advertised feed that works" do
+  test "#call should stop at the first advertised feed that works" do
     page_url = "http://example.com/blog"
     links = <<~HTML
       <link rel="alternate" type="application/rss+xml" href="/feed.xml">
@@ -341,26 +341,26 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, "http://example.com/feed.xml").to_return(status: 200, body: rss_body("Main Feed"))
     stub_request(:get, "http://example.com/comments.xml").to_return(status: 200, body: rss_body("Comments Feed"))
 
-    fetcher(page_url).identify
+    fetcher(page_url).call
 
     feed_identification = FeedIdentification.find_by(user: user, input: page_url)
     assert_equal %w[http://example.com/feed.xml], feed_identification.working_candidates.map(&:resolved_url).uniq
     assert_not_requested :get, "http://example.com/comments.xml"
   end
 
-  test "#identify should stay no_feed when no advertised feed works" do
+  test "#call should stay no_feed when no advertised feed works" do
     page_url = "http://example.com/blog"
 
     stub_request(:get, page_url).to_return(status: 200, body: page_body(%(<link rel="alternate" type="application/rss+xml" href="/gone.xml">)))
     stub_request(:get, "http://example.com/gone.xml").to_return(status: 404)
 
-    fetcher(page_url).identify
+    fetcher(page_url).call
 
     feed_identification = FeedIdentification.find_by(user: user, input: page_url)
     assert_equal "no_feed", feed_identification.status
   end
 
-  test "#identify should settle as unreachable when every candidate dies on the network" do
+  test "#call should settle as unreachable when every candidate dies on the network" do
     url = "http://example.com/feed.xml"
     stub_request(:get, url).to_return(status: 200, body: "x")
 
@@ -369,7 +369,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     FeedProfileDetector.stub(:call, detected) do
       CandidateTester.stub(:new, ->(**) { Struct.new(:call).new(verdict) }) do
-        fetcher(url).identify
+        fetcher(url).call
       end
     end
 
@@ -378,7 +378,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal "unreachable", feed_identification.candidates.first["test_status"]
   end
 
-  test "#identify should settle as no_feed when candidates mix network and parse failures" do
+  test "#call should settle as no_feed when candidates mix network and parse failures" do
     url = "http://example.com/feed.xml"
     stub_request(:get, url).to_return(status: 200, body: "x")
 
@@ -393,27 +393,27 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     FeedProfileDetector.stub(:call, detected) do
       CandidateTester.stub(:new, ->(**) { Struct.new(:call).new(verdicts.shift) }) do
-        fetcher(url).identify
+        fetcher(url).call
       end
     end
 
     assert_equal "no_feed", FeedIdentification.find_by(user: user, input: url).status
   end
 
-  test "#identify should not follow an advertised feed's redirect to a private address" do
+  test "#call should not follow an advertised feed's redirect to a private address" do
     page_url = "http://example.com/blog"
 
     stub_request(:get, page_url).to_return(status: 200, body: page_body(%(<link rel="alternate" type="application/rss+xml" href="/feed.xml">)))
     stub_request(:get, "http://example.com/feed.xml")
       .to_return(status: 302, headers: { "Location" => "http://127.0.0.1/feed.xml" })
 
-    fetcher(page_url).identify
+    fetcher(page_url).call
 
     assert_equal "no_feed", FeedIdentification.find_by(user: user, input: page_url).status
     assert_not_requested :get, "http://127.0.0.1/feed.xml"
   end
 
-  test "#identify should fall back to advertised feeds when a matched candidate fails its test" do
+  test "#call should fall back to advertised feeds when a matched candidate fails its test" do
     page_url = "http://example.com/blog"
     html = <<~HTML
       <html><head>
@@ -427,25 +427,25 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, page_url).to_return(status: 200, body: html)
     stub_request(:get, "http://example.com/feed.xml").to_return(status: 200, body: rss_body("Real Feed"))
 
-    fetcher(page_url).identify
+    fetcher(page_url).call
 
     feed_identification = FeedIdentification.find_by(user: user, input: page_url)
     assert_equal "working", feed_identification.status
     assert_equal "http://example.com/feed.xml", feed_identification.suggested_candidate.resolved_url
   end
 
-  test "#identify should never fetch a non-public advertised feed URL" do
+  test "#call should never fetch a non-public advertised feed URL" do
     page_url = "http://example.com/blog"
 
     stub_request(:get, page_url).to_return(status: 200, body: page_body(%(<link rel="alternate" type="application/rss+xml" href="http://127.0.0.1/feed.xml">)))
 
-    fetcher(page_url).identify
+    fetcher(page_url).call
 
     assert_equal "no_feed", FeedIdentification.find_by(user: user, input: page_url).status
     assert_not_requested :get, "http://127.0.0.1/feed.xml"
   end
 
-  test "#identify should ignore a result after timeout rotates run_id" do
+  test "#call should ignore a result after timeout rotates run_id" do
     url = "http://example.com/feed.xml"
     run_id = SecureRandom.uuid
     identification = create(:feed_identification, user: user, input: url, status: :processing,
@@ -458,14 +458,14 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url).to_return(status: 200, body: rss_body("Late Feed"))
 
     FeedIdentificationTimeoutJob.perform_now(identification.id, run_id)
-    stale_fetcher.identify
+    stale_fetcher.call
 
     assert_predicate identification.reload, :timed_out?
     assert_empty identification.candidates
     refute_equal run_id, identification.run_id
   end
 
-  test "#identify should ignore an error transition from a superseded run" do
+  test "#call should ignore an error transition from a superseded run" do
     url = "http://example.com/feed.xml"
     stale_run_id = SecureRandom.uuid
     identification = create(:feed_identification, user: user, input: url, status: :processing,
@@ -479,7 +479,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     original_attributes = identification.attributes.slice("status", "run_id", "candidates", "updated_at")
     stub_request(:get, url).to_timeout
 
-    stale_fetcher.identify
+    stale_fetcher.call
 
     assert_equal original_attributes,
                  identification.reload.attributes.slice("status", "run_id", "candidates", "updated_at")

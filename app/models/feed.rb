@@ -211,8 +211,24 @@ class Feed < ApplicationRecord
   end
 
   def can_be_enabled?
-    name.present? && access_token&.active? && target_group.present? && feed_profile_present? &&
-      (!scheduled? || cron_expression.present?) && ai_enablement_requirements_met?
+    !FeedProfile.depends_on_ai?(feed_profile_key) && missing_enablement_parts.empty?
+  end
+
+  # Missing setup fields, phrased as nouns for the UI.
+  # @return [Array<String>] the missing requirements, empty when ready
+  def missing_enablement_parts
+    parts = []
+    parts << "source" unless sourceless? || source_input.present?
+    parts << "name" if name.blank?
+    parts << "feed profile" unless feed_profile_present?
+    parts << "active access token" unless access_token&.active?
+    parts << "target group" if target_group.blank?
+    parts << "schedule" if scheduled? && cron_expression.blank?
+    return parts unless FeedProfile.depends_on_ai?(feed_profile_key)
+
+    parts << "active AI credential" unless ai_credential&.active?
+    parts << "AI model" if ai_model.blank?
+    parts
   end
 
   # Promote the feed to enabled, running the enabled-state validators. If
@@ -220,6 +236,11 @@ class Feed < ApplicationRecord
   # feed, and the in-memory state is rolled back to its persisted value so
   # re-renders reflect DB truth.
   def enable
+    if FeedProfile.depends_on_ai?(feed_profile_key)
+      errors.add(:base, Loader::LlmLoader::UNAVAILABLE_MESSAGE)
+      return false
+    end
+
     transition_state(:enabled)
   end
 
@@ -228,11 +249,7 @@ class Feed < ApplicationRecord
   end
 
   def can_be_previewed?
-    return false unless source_input.present? && feed_profile_present?
-    return true unless FeedProfile.depends_on_ai?(feed_profile_key)
-    return false unless ai_credential&.active?
-
-    effective_ai_model.present?
+    source_input.present? && feed_profile_present? && !FeedProfile.depends_on_ai?(feed_profile_key)
   end
 
   def ai_model_supported?
@@ -279,11 +296,9 @@ class Feed < ApplicationRecord
     posts.published.maximum(:reposted_at)
   end
 
-  # Today plus the six preceding days, snapped to day boundaries so the count
-  # doesn't shift with the time of day.
   # @return [Integer] published posts dated in the last 7 days, by source date
   def posts_published_last_week_count
-    posts.published.where(published_at: 6.days.ago.beginning_of_day..Time.current.end_of_day).count
+    posts.published_last_week.count
   end
 
   # Single source of truth for the cached post counters. Post's create/destroy
@@ -363,12 +378,6 @@ class Feed < ApplicationRecord
 
     self.state = state_was
     false
-  end
-
-  def ai_enablement_requirements_met?
-    return true unless FeedProfile.depends_on_ai?(feed_profile_key)
-
-    ai_credential&.active? && ai_model.present?
   end
 
   # Records a feed_auto_disabled event stamped with the streak length, so the

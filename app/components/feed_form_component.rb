@@ -4,6 +4,10 @@
 class FeedFormComponent < ViewComponent::Base
   POLLING_STOP_CONDITION = "[data-identification-state='complete'], [data-identification-state='error']"
 
+  # Enabling needs a token on the feed itself, so an empty select blocks it
+  # even when the account has tokens to spare.
+  TOKEN_PICK_HINT = "Pick an access token first, then you can enable this feed.".freeze
+
   def initialize(feed:, candidates: [], source_changed: false, profile_changed: false,
                  checking: false, source_error: nil, attempted_url: nil, source_discovered: false)
     @feed = feed
@@ -91,15 +95,13 @@ class FeedFormComponent < ViewComponent::Base
     feed.source_input_url? ? "Source URL" : "Source prompt"
   end
 
-  # An AI feed's prompt is its source and stays editable even on a live
-  # feed; the uid scheme is unchanged, so no duplicate risk.
-  def ai_prompt_editable?
+  def ai_profile?
     FeedProfile.depends_on_ai?(feed.feed_profile_key)
   end
 
-  # A changed URL re-runs detection before saving.
+  # AI prompts stay editable; a changed URL requires fresh detection.
   def source_editable?
-    edit_mode? && !ai_prompt_editable?
+    edit_mode? && !ai_profile?
   end
 
   # A disabled source field submits nothing, so the source travels as a hidden
@@ -155,16 +157,20 @@ class FeedFormComponent < ViewComponent::Base
     @active_tokens ||= feed.user.access_tokens.active.order(:host)
   end
 
-  # An inactive token isn't offered, so preselect a working one and say so
-  # instead of letting the browser swap silently.
+  # A dead token isn't offered any more, so the dropdown opens blank; the note
+  # says why instead of leaving the gap unexplained.
   def token_swap?
     feed.access_token.present? && !feed.access_token.active?
   end
 
+  # A feed keeps its own working token. Once it loses one (deleted or dead) the
+  # field stays blank: swapping in an unrelated token would publish somewhere
+  # the user never picked. A feed being created has nothing to contradict, so
+  # the first token there is just a helpful default.
   def selected_token_id
-    return active_tokens.first&.id if token_swap?
+    return feed.access_token_id if feed.access_token&.active?
 
-    feed.access_token_id || active_tokens.first&.id
+    active_tokens.first&.id unless edit_mode?
   end
 
   def token_options
@@ -191,44 +197,36 @@ class FeedFormComponent < ViewComponent::Base
     feed.import_after_time.presence || "00:00"
   end
 
-  # Memoized so the rendered section and the enable-gate checks share one
-  # instance (and its credential lookups).
-  def ai_settings(form)
-    @ai_settings ||= FeedAiSettingsComponent.new(feed: feed, form: form)
+  # An enabled feed keeps its checkbox interactive so it can still be paused.
+  def enable_blocked?
+    !feed.enabled? && (ai_profile? || selected_token_id.blank?)
   end
 
-  # With required credentials missing, enabling can only fail and the
-  # errors would render nowhere; the checkbox locks off and says what's
-  # missing. A still-enabled feed keeps its checkbox so pausing works.
-  def enable_blocked?(form)
-    enable_missing(form).any? && !feed.enabled?
+  # The token select controls enabling only when token selection can unblock it.
+  def enable_gate_data
+    return {} if feed.enabled? || active_tokens.empty? || ai_profile?
+
+    {
+      controller: "enable-gate",
+      enable_gate_blocked_hint_value: TOKEN_PICK_HINT,
+      enable_gate_ready_hint_value: ready_enable_hint
+    }
   end
 
-  def enable_missing(form)
-    @enable_missing ||= [].tap do |missing|
-      missing << "a FreeFeed access token" if active_tokens.empty?
-      next unless ai_settings(form).section_visible?
-
-      missing << "AI credentials" unless ai_settings(form).credentials?
-    end
+  def enable_checked?
+    !enable_blocked? && (helpers.params[:enable_feed] == "1" || feed.enabled?)
   end
 
-  def enable_checked?(form)
-    !enable_blocked?(form) && (helpers.params[:enable_feed] == "1" || feed.enabled?)
+  def enable_label_classes
+    "block font-semibold #{enable_blocked? ? 'text-muted' : 'text-heading'} mb-0"
   end
 
-  def enable_label_classes(form)
-    "block font-semibold #{enable_blocked?(form) ? 'text-muted' : 'text-heading'} mb-0"
-  end
+  def enable_hint
+    return Loader::LlmLoader::UNAVAILABLE_MESSAGE if ai_profile?
+    return ready_enable_hint unless enable_blocked?
+    return TOKEN_PICK_HINT if active_tokens.any?
 
-  def enable_hint(form)
-    if enable_blocked?(form)
-      "Add #{enable_missing(form).to_sentence} first, then you can enable this feed."
-    elsif feed.scheduled?
-      "Start checking for new posts and publish them to FreeFeed."
-    else
-      "Enable this feed so its webhook endpoint can publish to FreeFeed."
-    end
+    "Add a FreeFeed access token first, then you can enable this feed."
   end
 
   def submit_label
@@ -241,6 +239,14 @@ class FeedFormComponent < ViewComponent::Base
   end
 
   private
+
+  def ready_enable_hint
+    if feed.scheduled?
+      "Start checking for new posts and publish them to FreeFeed."
+    else
+      "Enable this feed so its webhook endpoint can publish to FreeFeed."
+    end
+  end
 
   def identification_state
     return "checking" if checking?

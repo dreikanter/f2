@@ -106,7 +106,6 @@ class PostPublishJob < ApplicationJob
       message: error.message,
       metadata: { post_id: post.id, freefeed_post_id: post.freefeed_post_id }
     )
-    Rails.logger.error "Failed to publish comments for post #{post.id}: #{error.message}"
     Rails.error.report(error, context: { post: post.attributes, feed: feed.attributes })
     schedule_next(feed)
   end
@@ -132,8 +131,11 @@ class PostPublishJob < ApplicationJob
     post.post_publication&.destroy!
     post.update!(status: :failed)
     Metrics.increment("posts_published_total", status: "failed")
-    Rails.logger.error "Failed to publish post #{post.id}: #{error.message}"
-    Rails.error.report(error, context: { post: post.attributes, feed: feed.attributes }) if report
+    if report
+      Rails.error.report(error, context: { post: post.attributes, feed: feed.attributes })
+    else
+      Rails.logger.error "Failed to publish post #{post.id}: #{error.message}"
+    end
     schedule_next(feed)
   end
 

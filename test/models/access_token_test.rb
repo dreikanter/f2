@@ -371,7 +371,7 @@ class AccessTokenTest < ActiveSupport::TestCase
 
     run = create(:operation_run, subject: access_token)
     access_token.update!(state: :validating)
-    service = AccessTokenValidationService.new(run)
+    service = AccessTokenValidation.new(run)
     service.call
 
     access_token.reload

@@ -260,4 +260,26 @@ class PostTest < ActiveSupport::TestCase
       post.destroy
     end
   end
+
+  test ".published_last_week should cover whole days regardless of the time of day" do
+    travel_to Time.zone.parse("2026-05-08 23:30:00") do
+      within = create(:post, :published, feed: feed, published_at: 6.days.ago.beginning_of_day)
+      before = create(:post, :published, feed: feed, published_at: 7.days.ago.end_of_day)
+      later = create(:post, :published, feed: feed, published_at: Time.current.end_of_day)
+
+      ids = Post.published_last_week.pluck(:id)
+
+      assert_includes ids, within.id
+      assert_includes ids, later.id
+      assert_not_includes ids, before.id
+    end
+  end
+
+  test ".published_last_week should exclude posts that were never published" do
+    travel_to Time.zone.parse("2026-05-08 12:00:00") do
+      enqueued = create(:post, feed: feed, status: :enqueued, published_at: Time.current)
+
+      assert_not_includes Post.published_last_week.pluck(:id), enqueued.id
+    end
+  end
 end

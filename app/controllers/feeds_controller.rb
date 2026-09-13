@@ -5,8 +5,6 @@ class FeedsController < ApplicationController
   include StatePolling
   include FeedListing
 
-  before_action :refresh_model_catalogs, only: %i[new edit]
-
   # Operational fields, editable on any feed.
   ALWAYS_PERMITTED_PARAMS = %i[
     name
@@ -29,10 +27,10 @@ class FeedsController < ApplicationController
 
   def index
     authorize Feed
-    scope = policy_scope(Feed)
-    @active_feed_count = scope.enabled.count
-    @inactive_feed_count = scope.disabled.count
-    @draft_feed_count = scope.draft.count
+    counts = policy_scope(Feed).group(:state).count
+    @active_feed_count = counts.fetch("enabled", 0)
+    @inactive_feed_count = counts.fetch("disabled", 0)
+    @draft_feed_count = counts.fetch("draft", 0)
     @sortable_presenter = sortable_presenter
     @feeds = paginate_scope
     @has_active_token = current_user.access_tokens.active.exists?
@@ -140,10 +138,6 @@ class FeedsController < ApplicationController
   # Entry mode on the new-feed page, normalized from the ?mode tab links.
   def mode
     %w[ai webhook].include?(params[:mode]) ? params[:mode] : "link"
-  end
-
-  def refresh_model_catalogs
-    current_user.ai_credentials.active.find_each(&:refresh_models_async)
   end
 
   def enable_feed?
