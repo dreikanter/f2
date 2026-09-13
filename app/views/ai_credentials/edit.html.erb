@@ -21,7 +21,7 @@
         <div class="space-y-2">
           <%= label_tag "ai_credential_provider", "AI Provider", class: form_label_classes %>
           <%= text_field_tag "ai_credential_provider",
-                             @credential.llm_provider.display_name,
+                             @credential.provider_name,
                              disabled: true,
                              class: input_field_classes(disabled: true) %>
         </div>
@@ -29,7 +29,7 @@
         <div class="space-y-2">
           <%= f.label :display_name, "Name", class: form_label_classes %>
           <%= f.text_field :display_name,
-                           placeholder: "Personal Anthropic key",
+                           placeholder: "Personal key",
                            autofocus: true,
                            class: input_field_classes,
                            required: true,

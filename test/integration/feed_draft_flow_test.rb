@@ -49,8 +49,8 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
       post ai_credentials_path, params: {
         feed_id: draft.id,
         ai_credential: {
-          provider: "anthropic",
-          display_name: "My Anthropic key",
+          provider: "openai",
+          display_name: "My OpenAI key",
           credential_data: { api_key: "sk-ant-#{SecureRandom.hex(16)}" }
         }
       }

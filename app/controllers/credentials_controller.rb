@@ -52,12 +52,12 @@ class CredentialsController < ApplicationController
     @credential = find_credential
     authorize @credential
 
-    # A blank key field means "keep the current key", so only a submitted key
-    # is worth re-checking; renaming a credential leaves its state alone.
-    key_changed = credential_data_from_params["api_key"].present?
+    # Blank credential fields keep their saved values; supplied values trigger
+    # revalidation, while a display-name change leaves the state alone.
+    credential_updates = credential_data_from_params.reject { |_, value| value.nil? || (value.is_a?(String) && value.blank?) }
 
-    if @credential.update(updated_credential_attrs(key_changed: key_changed))
-      @credential.validate_async(validation_job) if key_changed
+    if @credential.update(updated_credential_attrs(credential_updates: credential_updates))
+      @credential.validate_async(validation_job) if credential_updates.present?
       redirect_to polymorphic_path(@credential)
     else
       render :edit, status: :unprocessable_entity
@@ -81,12 +81,12 @@ class CredentialsController < ApplicationController
     raise NotImplementedError, "#{self.class.name} must implement #credential_noun"
   end
 
-  def updated_credential_attrs(key_changed:)
+  def updated_credential_attrs(credential_updates:)
     attrs = { display_name: credential_params[:display_name] }
-    return attrs unless key_changed
+    return attrs if credential_updates.empty?
 
     attrs.merge(
-      credential_data: credential_data_from_params,
+      credential_data: @credential.credential_data.merge(credential_updates),
       state: :pending
     )
   end

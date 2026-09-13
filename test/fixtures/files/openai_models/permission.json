@@ -1,0 +1,8 @@
+{
+  "error": {
+    "message": "Insufficient permissions",
+    "type": "invalid_request_error",
+    "param": null,
+    "code": "insufficient_permissions"
+  }
+}
