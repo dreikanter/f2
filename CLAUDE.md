@@ -43,6 +43,7 @@ File formatting:
 
 - Always add trailing line breaks to source files (Ruby, JS, CSS, HTML, etc.) unless there is a specific reason not to.
 - This ensures consistent formatting and prevents RuboCop/linter warnings.
+- For multiline hashes, put each key-value pair on its own line, with the opening and closing braces on separate lines from the entries.
 
 Routing:
 
