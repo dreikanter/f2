@@ -15,7 +15,7 @@ class FeedIdentificationsFormTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
 
     assert_no_enqueued_jobs(only: FeedIdentificationJob) do
-      post feed_identifications_path,
+      post feed_identification_path,
            params: { webhook: "1" },
            headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
@@ -39,7 +39,7 @@ class FeedIdentificationsFormTest < ActionDispatch::IntegrationTest
   test "#create should show the checking status and disable submission" do
     sign_in_as(user)
 
-    post feed_identifications_path,
+    post feed_identification_path,
          params: { url: "http://example.com/feed.xml" },
          headers: { "Accept" => "text/vnd.turbo-stream.html" }
 

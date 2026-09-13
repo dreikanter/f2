@@ -17,7 +17,7 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
 
     assert_no_enqueued_jobs(only: FeedIdentificationJob) do
-      post feed_identifications_path, params: { prompt: "climate change" },
+      post feed_identification_path, params: { prompt: "climate change" },
                                       headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
@@ -29,7 +29,7 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
   test "Mode A hints at the AI mode and carries the text over when the input isn't a link" do
     sign_in_as(user)
 
-    post feed_identifications_path, params: { url: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identification_path, params: { url: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, 'data-identification-state="error"'

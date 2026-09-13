@@ -47,12 +47,12 @@ class SmartFeedCreationJsonFeedTest < ActionDispatch::IntegrationTest
       .to_return(status: 200, body: json_body, headers: { "Content-Type" => "application/feed+json" })
 
     with_memory_cache do
-      post feed_identifications_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      post feed_identification_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
 
       perform_enqueued_jobs
 
-      get feed_identifications_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      get feed_identification_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
       assert_includes response.body, 'data-identification-state="complete"'
       assert_includes response.body, "JSON Feed"
