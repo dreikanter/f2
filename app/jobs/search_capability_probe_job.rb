@@ -74,6 +74,6 @@ class SearchCapabilityProbeJob < ApplicationJob
                  message: "#{provider}: #{summary}",
                  level: outcome[:passed] ? :info : :warning,
                  provider: provider, credential_id: credential.id,
-                 credential_state: credential.state, passed: outcome[:passed])
+                 credential_active: credential.active?, passed: outcome[:passed])
   end
 end

@@ -85,18 +85,14 @@ class CredentialsController < ApplicationController
     attrs = { display_name: credential_params[:display_name] }
     return attrs if credential_updates.empty?
 
-    attrs.merge(
-      credential_data: @credential.credential_data.merge(credential_updates),
-      state: :pending
-    )
+    attrs.merge(credential_data: @credential.credential_data.merge(credential_updates))
   end
 
   def build_credential
     owned_credentials.build(
       provider: credential_params[:provider],
       display_name: credential_params[:display_name],
-      credential_data: credential_data_from_params,
-      state: :pending
+      credential_data: credential_data_from_params
     )
   end
 

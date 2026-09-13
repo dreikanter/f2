@@ -67,7 +67,8 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     saved = AiCredential.last
     assert_redirected_to ai_credential_path(saved)
-    assert_predicate saved, :validating?
+    assert_not_predicate saved, :active?
+    assert_predicate saved, :validation_in_progress?
     assert_enqueued_with(job: AiCredentialValidationJob, args: [saved.active_operation_run(:validation)])
     follow_redirect!
     assert_response :success
@@ -213,9 +214,10 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='ai_credential.make-default']", count: 0
   end
 
-  test "#show should render the polling shell for a pending credential" do
+  test "#show should render the polling shell during credential validation" do
     sign_in_as(user)
-    pending = create(:ai_credential, user: user, state: :pending)
+    pending = create(:ai_credential, user: user)
+    pending.validate_async(AiCredentialValidationJob)
 
     get ai_credential_url(pending)
 
@@ -261,9 +263,9 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", edit_feed_path(draft.id), text: "Continue setting up your feed"
   end
 
-  test "#show should not render Continue setting up your feed link when credential is pending" do
+  test "#show should not render Continue setting up your feed link when credential is unverified" do
     sign_in_as(user)
-    pending = create(:ai_credential, user: user, state: :pending)
+    pending = create(:ai_credential, user: user, active: false)
     draft = create(:feed, :draft, user: user)
 
     get ai_credential_url(pending, feed_id: draft.id)
@@ -325,7 +327,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     active.reload
     assert_redirected_to ai_credential_path(active)
     assert_equal "Renamed Key", active.display_name
-    assert_equal "active", active.state
+    assert_predicate active, :active?
     assert_equal original_key, active.credential_data["api_key"]
   end
 
@@ -343,7 +345,8 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     active.reload
     assert_equal new_key, active.credential_data["api_key"]
-    assert_predicate active, :validating?
+    assert_not_predicate active, :active?
+    assert_predicate active, :validation_in_progress?
     assert_enqueued_with(job: AiCredentialValidationJob, args: [active.active_operation_run(:validation)])
   end
 
@@ -377,7 +380,8 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to ai_credential_path(active)
     assert_equal original_data.merge("organization_id" => "another-organization"), active.reload.credential_data
-    assert_predicate active, :validating?
+    assert_not_predicate active, :active?
+    assert_predicate active, :validation_in_progress?
     assert_enqueued_with(job: AiCredentialValidationJob, args: [active.active_operation_run(:validation)])
   end
 

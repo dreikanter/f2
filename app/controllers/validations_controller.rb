@@ -13,7 +13,7 @@ class ValidationsController < ApplicationController
 
     # Stay silent while validation is still in flight so the poller leaves the
     # spinner running instead of redrawing (and restarting) it every cycle.
-    return head :no_content if record.pending? || record.validating?
+    return head :no_content if record.validation_in_progress?
 
     render turbo_stream: turbo_stream.update(
       "#{param_key.dasherize}-show",

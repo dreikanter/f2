@@ -1,4 +1,4 @@
-# A settings-list row for any API credential exposing state, display_name, and
+# A settings-list row for any API credential exposing usability, validation progress, display_name, and
 # provider_name. Default selection is an optional capability: records defining
 # #default? receive the badge and action; access tokens do not.
 class CredentialListItemComponent < ListItemComponent
@@ -35,7 +35,7 @@ class CredentialListItemComponent < ListItemComponent
   end
 
   def icon_element
-    helpers.tag.span(helpers.credential_state_icon(credential.state),
+    helpers.tag.span(helpers.credential_state_icon(helpers.credential_state(credential)),
                      class: "inline-flex shrink-0",
                      data: { key: "#{key_prefix}.#{credential.id}.state_icon" })
   end

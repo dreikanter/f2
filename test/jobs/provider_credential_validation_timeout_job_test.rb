@@ -1,13 +1,13 @@
 require "test_helper"
 
 class ProviderCredentialValidationTimeoutJobTest < ActiveJob::TestCase
-  test "#perform should settle a new credential to its fallback state" do
+  test "#perform should time out validation while leaving a new credential inactive" do
     credential = create(:ai_credential)
     run = credential.validate_async(AiCredentialValidationJob)
 
     ProviderCredentialValidationTimeoutJob.perform_now(run)
 
-    assert_predicate credential.reload, :inactive?
+    assert_not_predicate credential.reload, :active?
     assert_predicate run.reload, :timed_out?
   end
 
@@ -37,7 +37,7 @@ class ProviderCredentialValidationTimeoutJobTest < ActiveJob::TestCase
   test "#perform should preserve a completed validation" do
     credential = create(:ai_credential)
     run = credential.validate_async(AiCredentialValidationJob)
-    run.succeed! { |current| current.update!(state: :active) }
+    run.succeed! { |current| current.update!(active: true) }
     original = credential.reload.attributes
 
     ProviderCredentialValidationTimeoutJob.perform_now(run)

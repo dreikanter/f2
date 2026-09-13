@@ -72,7 +72,8 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     saved = SearchCredential.last
     assert_redirected_to search_credential_path(saved)
-    assert_equal "validating", saved.state
+    assert_not_predicate saved, :active?
+    assert_predicate saved, :validation_in_progress?
     assert_not_nil saved.active_operation_run(:validation)
     assert_equal user, saved.user
   end
@@ -143,20 +144,21 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='search_credential.make-default']", count: 0
   end
 
-  test "#show should render the pending state with polling" do
+  test "#show should render an unverified credential without polling" do
     sign_in_as(user)
-    pending = create(:search_credential, user: user, state: :pending)
+    pending = create(:search_credential, user: user, active: false)
 
     get search_credential_url(pending)
 
     assert_response :success
-    assert_select "[data-controller='polling']"
-    assert_select "[data-key='search_credential.validating']"
+    assert_select "[data-controller='polling']", count: 0
+    assert_select "[data-key='search_credential.inactive']"
   end
 
   test "#show should render the validating state with polling" do
     sign_in_as(user)
-    validating = create(:search_credential, user: user, state: :validating)
+    validating = create(:search_credential, :active, user: user)
+    validating.validate_async(SearchCredentialValidationJob)
 
     get search_credential_url(validating)
 
@@ -234,7 +236,7 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
     active.reload
     assert_redirected_to search_credential_path(active)
     assert_equal "Renamed Search Key", active.display_name
-    assert_equal "active", active.state
+    assert_predicate active, :active?
     assert_equal original_key, active.credential_data["api_key"]
   end
 
@@ -255,7 +257,8 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
     active.reload
     assert_redirected_to search_credential_path(active)
     assert_equal new_key, active.credential_data["api_key"]
-    assert_equal "validating", active.state
+    assert_not_predicate active, :active?
+    assert_predicate active, :validation_in_progress?
     assert_not_nil active.active_operation_run(:validation)
   end
 

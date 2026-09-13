@@ -80,7 +80,7 @@ class AiModelCatalogRefreshTest < ActiveSupport::TestCase
     AiModelCatalogRefresh.new(run).call
 
     assert_predicate run.reload, :failed?
-    assert_predicate openai_credential.reload, :inactive?
+    assert_not_predicate openai_credential.reload, :active?
     assert_predicate feed.reload, :disabled?
     assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
     expected_context = {
@@ -95,13 +95,13 @@ class AiModelCatalogRefreshTest < ActiveSupport::TestCase
   test "#call should not replace the catalog after key rotation" do
     run = openai_credential.refresh_models_async(force: true)
     stub_openai_models(key: openai_credential.credential_data["api_key"]) do
-      AiCredential.find(openai_credential.id).update!(state: :pending, credential_data: { "api_key" => "replacement-key" })
+      AiCredential.find(openai_credential.id).update!(credential_data: { "api_key" => "replacement-key" })
     end
 
     AiModelCatalogRefresh.new(run).call
 
     assert_predicate run.reload, :superseded?
-    assert_predicate openai_credential.reload, :pending?
+    assert_not_predicate openai_credential.reload, :active?
     assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
   end
 
@@ -114,7 +114,7 @@ class AiModelCatalogRefreshTest < ActiveSupport::TestCase
     AiModelCatalogRefresh.new(run).call
 
     assert_predicate run.reload, :superseded?
-    assert_predicate openai_credential.reload, :active?
+    assert_not_predicate openai_credential.reload, :active?
     assert_not Event.exists?(subject: openai_credential, type: "ai_credential_deactivated")
     assert_empty run.context
   end
@@ -129,7 +129,7 @@ class AiModelCatalogRefreshTest < ActiveSupport::TestCase
     AiModelCatalogRefresh.new(run).call
 
     assert_predicate run.reload, :superseded?
-    assert_predicate openai_credential.reload, :active?
+    assert_not_predicate openai_credential.reload, :active?
     assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
     assert_not Event.exists?(subject: openai_credential, type: "ai_credential_deactivated")
     assert_empty run.context

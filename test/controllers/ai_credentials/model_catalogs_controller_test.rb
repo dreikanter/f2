@@ -13,7 +13,7 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
   end
 
   test "#create should ignore refresh requests for inactive credentials" do
-    credential.update!(state: :inactive)
+    credential.update!(active: false)
     sign_in_as(credential.user)
 
     assert_no_enqueued_jobs { post ai_credential_model_catalog_path(credential) }

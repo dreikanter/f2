@@ -203,6 +203,10 @@ class AccessToken < ApplicationRecord
     with_lock { disable_token_and_feeds_locked!(event_type: event_type, attributes: attributes) }
   end
 
+  def validation_in_progress?
+    pending? || validating?
+  end
+
   private
 
   # Drop the limiter bucket when this token is gone. Account-scoped subjects can

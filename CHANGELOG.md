@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-13
 
+- Keep working AI and search credentials usable while checking them again; show when a check times out.
 - Show a timeout notice when refreshing available groups takes too long.
 
 ## 2026-09-12

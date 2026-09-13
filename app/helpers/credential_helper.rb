@@ -1,14 +1,19 @@
 module CredentialHelper
-  # API credentials share the pending/validating/active/inactive lifecycle, so
-  # they share one badge vocabulary.
   STATE_BADGES = {
     "active" => { text: "Valid", color: :success },
     "inactive" => { text: "Inactive", color: :danger }
   }.freeze
 
   def credential_state_badge(credential)
-    state_badge(credential.state, key: "#{credential.model_name.param_key}.state_badge",
-                                   data: { credential_state: credential.state })
+    state = credential_state(credential)
+    state_badge(state, key: "#{credential.model_name.param_key}.state_badge",
+                       data: { credential_state: state })
+  end
+
+  def credential_state(credential)
+    return if credential.validation_in_progress?
+
+    credential.active? ? "active" : "inactive"
   end
 
   # Shared action menu for credential list rows and show-page headers.
