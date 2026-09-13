@@ -135,7 +135,10 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "#show should render the settled groups section once the refresh completes" do
-    detail.update!(managed_groups: [{ "username" => "newgroup" }])
+    freeze_time
+    run = mark_refresh_running
+    detail.replace_managed_groups_and_finish_refresh!([{ "username" => "newgroup" }])
+    travel_to run.deadline_at
     sign_in_as user
 
     get access_token_groups_refresh_path(access_token)
@@ -145,6 +148,29 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
     assert_match(/newgroup/, response.body)
     assert_match(/access_token\.refresh-groups/, response.body)
     assert_no_match(/data-controller="polling"/, response.body)
+    assert_select '[data-key="access_token.groups-refresh-timeout"]', count: 0
+  end
+
+  test "#show should show an overdue refresh without settling it" do
+    freeze_time
+    detail.start_groups_refresh!
+    run = detail.active_operation_run(:groups_refresh)
+    run_attributes = run.attributes
+    detail_attributes = detail.attributes
+    travel_to run.deadline_at
+    sign_in_as user
+
+    get access_token_groups_refresh_path(access_token)
+
+    assert_response :success
+    assert_select 'turbo-stream[action="replace"][target="available-groups"]' do
+      assert_select '[data-key="access_token.groups-refresh-timeout"]:not([hidden])', text: /taking longer than expected/
+      assert_select '[data-key="access_token.refresh-groups"]:not([hidden]):not([disabled])'
+      assert_select '[data-controller="polling"]', count: 0
+      assert_select "li a", text: "oldgroup"
+    end
+    assert_equal run_attributes, run.reload.attributes
+    assert_equal detail_attributes, detail.reload.attributes
   end
 
   test "#show should surface a failed refresh" do
@@ -197,6 +223,38 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
     assert_match(/target="target-group-selector"/, response.body)
     assert_match(/<option selected="selected" value="beta">beta<\/option>/, response.body)
     assert_match(/feed\.refresh-groups/, response.body)
+  end
+
+  test "#show should preserve the unsaved selection when a refresh is overdue" do
+    freeze_time
+    run = mark_refresh_running
+    travel_to run.deadline_at
+    sign_in_as user
+
+    get access_token_groups_refresh_path(access_token, context: "feed_form", selected: "unsaved-pick")
+
+    assert_response :success
+    assert_select 'turbo-stream[action="replace"][target="target-group-selector"]' do
+      assert_select '[data-key="feed.groups-refresh-timeout"]:not([hidden])', text: /taking longer than expected/
+      assert_select '[data-key="feed.refresh-groups"]:not([hidden]):not([disabled])'
+      assert_select '[data-controller="polling"]', count: 0
+      assert_select "option[selected]", text: "unsaved-pick"
+      assert_select 'option[value="oldgroup"]'
+    end
+  end
+
+  test "#show should not claim the account has no groups when its refresh is overdue" do
+    freeze_time
+    detail.update!(managed_groups: [])
+    run = mark_refresh_running
+    travel_to run.deadline_at
+    sign_in_as user
+
+    get access_token_groups_refresh_path(access_token, context: "feed_form")
+
+    assert_response :success
+    assert_select '[data-key="feed.groups-refresh-timeout"]:not([hidden])', text: /taking longer than expected/
+    assert_no_match(/doesn't manage any groups yet/, response.body)
   end
 
   test "#show should keep a selection that is missing from the refreshed list" do

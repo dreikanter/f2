@@ -12,6 +12,10 @@ class AccessTokenDetail < ApplicationRecord
     active_operation_run(:groups_refresh)&.in_progress? || false
   end
 
+  def groups_refresh_overdue?
+    active_operation_run(:groups_refresh)&.deadline_reached? || false
+  end
+
   def groups_refresh_failed?
     run = latest_operation_run(:groups_refresh)
     return false unless run

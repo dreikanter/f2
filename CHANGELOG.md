@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-13
+
+- Show a timeout notice when refreshing available groups takes too long.
+
 ## 2026-09-12
 
 - AI feed settings keep the Enable checkbox off and explain the temporary unavailability.
