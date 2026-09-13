@@ -49,8 +49,8 @@ class Feed < ApplicationRecord
   }, default: :draft
 
   # Set true by the edit controller only after a settled detection confirmed the
-  # new source. Lets `source_change_reverified` reject a Mode A source
-  # move that never passed through identification.
+  # new source. Lets `source_change_reverified` reject a source move that never
+  # passed through identification.
   attr_accessor :source_verified
 
   after_update :create_schedule_on_enable

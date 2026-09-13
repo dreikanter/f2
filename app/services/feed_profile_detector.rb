@@ -14,9 +14,9 @@ class FeedProfileDetector
     @fetched_body = fetched_body
   end
 
-  # Detection is URL-only and deterministic: the input is always a Mode A source
-  # URL (SourceLink canonicalized it upstream). The AI profile registers no
-  # matcher, so it can never appear here.
+  # Detection is URL-only and deterministic: the input is always a source URL
+  # (SourceLink canonicalized it upstream). The AI profile registers no matcher,
+  # so it can never appear here.
   def call
     matches = collect_matches
     ranked = rank(matches)

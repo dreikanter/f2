@@ -167,7 +167,7 @@ class FeedProfileTest < ActiveSupport::TestCase
 
   test ".matchers should never include the AI profile (structural exclusion)" do
     # The AI profile registers no matcher, so detection can't select it.
-    # It's reachable only via Mode B, never by auto-detection.
+    # It's reachable only by choosing "Follow with AI", never by auto-detection.
     keys = FeedProfile.matchers.map(&:profile_key)
     assert_not_includes keys, "llm"
   end

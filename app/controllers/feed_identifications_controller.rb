@@ -8,7 +8,7 @@ class FeedIdentificationsController < ApplicationController
     # Sourceless mode: nothing to detect, the webhook profile is the destination.
     return handle_webhook_submission if webhook_mode?
 
-    # Mode B (an explicit "Follow with AI") goes straight to a draft AI feed.
+    # An explicit "Follow with AI" goes straight to a draft AI feed.
     return handle_prompt_submission if ai_mode?
 
     return render(blank_input_error) if raw_url.blank?

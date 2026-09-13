@@ -263,7 +263,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "select[name='feed[schedule_interval]']", count: 0
   end
 
-  test "#create should bridge a Mode B prompt straight to a draft AI feed" do
+  test "#create should bridge an AI prompt straight to a draft AI feed" do
     sign_in_as(user)
 
     assert_no_enqueued_jobs(only: FeedIdentificationJob) do
@@ -275,7 +275,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "ai safety news"
   end
 
-  test "#create should hint at the AI mode and carry the text over when a Mode A input isn't a link" do
+  test "#create should hint at the AI mode and carry the text over when the link input isn't a link" do
     sign_in_as(user)
 
     assert_no_enqueued_jobs(only: FeedIdentificationJob) do
