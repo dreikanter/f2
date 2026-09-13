@@ -19,8 +19,6 @@
         Refreshing models. Your credential and saved list remain usable.
       <% elsif ai_credential.latest_operation_run(:models_refresh)&.unsuccessful? %>
         Couldn't refresh models. Your saved list is still available.
-      <% else %>
-        <%= AiModelCatalog::UNAVAILABLE_MESSAGE %>
       <% end %>
       <% if ai_credential.models_refreshed_at %>
         Updated <%= time_ago_in_words(ai_credential.models_refreshed_at) %> ago.

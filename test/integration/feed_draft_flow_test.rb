@@ -71,6 +71,7 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_response :success
     assert_includes response.body, "future-openai-model"
+    assert_not_includes response.body, "AI model discovery is temporarily unavailable."
 
     patch feed_path(draft), params: {
       feed: { name: "Renamed AI draft", params: { prompt: "follow a different blog" },
