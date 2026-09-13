@@ -29,7 +29,7 @@ class AiModelCatalogRefresh
 
   def with_current_credential(original_data)
     credential.with_lock do
-      return run.fail! unless credential.active? && credential.credential_data == original_data
+      return run.supersede! unless credential.active? && credential.credential_data == original_data
       return run.timeout! if run.deadline_at && run.deadline_at <= Time.current
 
       yield

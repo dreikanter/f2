@@ -1,6 +1,6 @@
 class OperationRun < ApplicationRecord
   ACTIVE_STATUSES = %i[queued running].freeze
-  TERMINAL_STATUSES = %i[succeeded failed timed_out].freeze
+  TERMINAL_STATUSES = %i[succeeded failed timed_out superseded].freeze
 
   belongs_to :subject, polymorphic: true
 
@@ -99,6 +99,11 @@ class OperationRun < ApplicationRecord
   # @return [Boolean] whether the run timed out
   def timeout!(&)
     settle!(:timed_out, &)
+  end
+
+  # @return [Boolean] whether the run was replaced by newer work
+  def supersede!
+    settle!(:superseded)
   end
 
   # @return [Boolean] whether the credential validation timed out

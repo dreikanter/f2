@@ -40,6 +40,7 @@ class AiCredentialValidation
     run.succeed! do |credential|
       credential.update!(state: :active, available_models: models, models_refreshed_at: Time.current,
                          last_validated_at: Time.current, last_error: nil)
+      credential.active_operation_run(:models_refresh)&.supersede!
     end
   end
 
