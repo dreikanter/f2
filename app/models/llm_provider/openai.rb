@@ -1,7 +1,11 @@
 module LlmProvider
-  # OpenAI client for free model discovery and authenticated SDK contexts.
+  # Interprets OpenAI credentials for free model discovery and SDK contexts.
   # Normalizes provider failures for credential validation and catalog refresh.
   class Openai < Base
+    def credential_errors
+      api_key.present? ? [] : ["Enter your API key"]
+    end
+
     def models
       response = HttpClient.build(timeout: 30, follow_redirects: false).get(
         "https://api.openai.com/v1/models",
@@ -19,6 +23,10 @@ module LlmProvider
     end
 
     private
+
+    def api_key
+      credential_data&.fetch("api_key", nil)
+    end
 
     def configure(config)
       config.openai_api_key = api_key

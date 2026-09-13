@@ -8,6 +8,7 @@ class SearchCredential < ApplicationRecord
   DEACTIVATED_EVENT_TYPE = "search_credential_deactivated"
 
   validates :provider, presence: true, inclusion: { in: ->(_) { WebSearchProvider::REGISTRY.keys } }
+  validate :api_key_present
 
   def required_for_feeds?
     false
@@ -25,5 +26,13 @@ class SearchCredential < ApplicationRecord
 
   def estimated_search_cost_cents(call_count)
     BigDecimal(WebSearchProvider.cents_per_1k_requests_for(provider).to_s) * call_count / 1000
+  end
+
+  private
+
+  def api_key_present
+    return if provider.blank?
+
+    errors.add(:base, "Enter your API key") if credential_data.blank? || credential_data["api_key"].blank?
   end
 end

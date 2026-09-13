@@ -121,6 +121,20 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
     assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
   end
 
+  test "#call should discard a catalog when another credential field changes" do
+    run = openai_credential.validate_async(AiCredentialValidationJob)
+    stub_openai_models(key: openai_credential.credential_data.fetch("api_key")) do
+      current = AiCredential.find(openai_credential.id)
+      current.update!(credential_data: current.credential_data.merge("organization_id" => "another-organization"))
+    end
+
+    AiCredentialValidation.new(run).call
+
+    assert_predicate run.reload, :failed?
+    assert_equal ["saved-model"], openai_credential.reload.available_models.pluck("id")
+    assert_equal "another-organization", openai_credential.credential_data["organization_id"]
+  end
+
   test "#call should not deactivate a replacement key on late rejection" do
     run = openai_credential.validate_async(AiCredentialValidationJob)
     stub_openai_models(key: openai_credential.credential_data["api_key"], fixture: "invalid_key", status: 401) do

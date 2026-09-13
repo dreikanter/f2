@@ -1,7 +1,6 @@
-# A user's API credential for one AI provider. `credential_data` stores
-# provider-specific fields (e.g. `{ "api_key" => "..." }`) and is encrypted at
-# rest. Lifecycle, naming, and feed teardown come from ProviderCredential;
-# model discovery and advisory metadata are specific to AI credentials.
+# A user's encrypted credentials and model catalog for one AI provider. Provider
+# clients interpret credential fields; ProviderCredential supplies the shared
+# lifecycle, naming, and feed teardown.
 class AiCredential < ApplicationRecord
   include ProviderCredential
 
@@ -9,9 +8,10 @@ class AiCredential < ApplicationRecord
   DEACTIVATED_EVENT_TYPE = "ai_credential_deactivated"
 
   validates :provider, presence: true, inclusion: { in: ->(_) { LlmProvider.names } }
+  validate :provider_credentials_valid
 
   def build_llm_client
-    LlmProvider.build(provider, api_key: credential_data.fetch("api_key"))
+    LlmProvider.build(provider, credential_data: credential_data)
   end
 
   def provider_name
@@ -67,5 +67,13 @@ class AiCredential < ApplicationRecord
     return provider_default if supports_model?(provider_default)
 
     supported_models.first&.fetch("id")
+  end
+
+  private
+
+  def provider_credentials_valid
+    return unless LlmProvider.names.include?(provider)
+
+    build_llm_client.credential_errors.each { |message| errors.add(:base, message) }
   end
 end

@@ -90,6 +90,22 @@ class AiModelCatalogRefreshTest < ActiveSupport::TestCase
     assert_empty run.context
   end
 
+  test "#call should discard a rejection when another credential field changes" do
+    run = openai_credential.refresh_models_async(force: true)
+    stub_openai_models(key: openai_credential.credential_data.fetch("api_key"), fixture: "invalid_key", status: 401) do
+      current = AiCredential.find(openai_credential.id)
+      current.update!(credential_data: current.credential_data.merge("organization_id" => "another-organization"))
+    end
+
+    AiModelCatalogRefresh.new(run).call
+
+    assert_predicate run.reload, :failed?
+    assert_predicate openai_credential.reload, :active?
+    assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
+    assert_not Event.exists?(subject: openai_credential, type: "ai_credential_deactivated")
+    assert_empty run.context
+  end
+
   test "#call should discard a response after timeout" do
     run = openai_credential.refresh_models_async(force: true)
     stub_openai_models(key: openai_credential.credential_data["api_key"]) { run.timeout! }

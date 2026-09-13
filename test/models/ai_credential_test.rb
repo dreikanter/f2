@@ -3,6 +3,12 @@ require "test_helper"
 class AiCredentialTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
+  class ClientCredentialsProvider < LlmProvider::Base
+    def credential_errors
+      credential_data.values_at("client_id", "client_secret").all?(&:present?) ? [] : ["Enter the client ID and secret"]
+    end
+  end
+
   def user
     @user ||= create(:user)
   end
@@ -28,6 +34,23 @@ class AiCredentialTest < ActiveSupport::TestCase
     credential = build(:ai_credential, user: user, credential_data: {})
     refute credential.valid?
     assert_includes credential.errors[:base], "Enter your API key"
+  end
+
+  test "#valid? should let the provider interpret credentials without an API key" do
+    config = { display_name: "Client credentials", default_model: "example-model", client_class: ClientCredentialsProvider }
+    stub_const(LlmProvider, :PROVIDERS, LlmProvider::PROVIDERS.merge("client_credentials" => config)) do
+      credential = build(:ai_credential, provider: "client_credentials",
+                                        credential_data: { "client_id" => "example-client", "client_secret" => "example-secret" })
+
+      assert credential.valid?, credential.errors.full_messages.inspect
+      assert_instance_of ClientCredentialsProvider, credential.build_llm_client
+
+      credential.credential_data.delete("client_secret")
+
+      assert_not credential.valid?
+      assert_includes credential.errors[:base], "Enter the client ID and secret"
+      assert_not_requested :any, /./
+    end
   end
 
   test "#valid? should enforce display_name uniqueness per (user, provider)" do
@@ -87,10 +110,11 @@ class AiCredentialTest < ActiveSupport::TestCase
 
   test "#build_llm_client should use the current key without changing an existing client" do
     credential = create(:ai_credential, user: user, provider: "openai")
-    original_key = credential.credential_data.fetch("api_key")
+    original_key = credential.credential_data.fetch("api_key").dup
     client = credential.build_llm_client
 
-    credential.update!(credential_data: { "api_key" => "replacement-key" })
+    credential.credential_data["api_key"].replace("replacement-key")
+    credential.save!
 
     assert_instance_of LlmProvider::Openai, client
     assert_equal original_key, client.context.config.openai_api_key

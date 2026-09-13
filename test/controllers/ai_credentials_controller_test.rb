@@ -382,6 +382,25 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_equal original_key, active.credential_data["api_key"]
   end
 
+  test "#update should revalidate changes to other credential fields and preserve blank secrets" do
+    sign_in_as(user)
+    active = create(:ai_credential, :active, user: user)
+    original_data = active.credential_data.deep_dup
+
+    assert_enqueued_with(job: AiCredentialValidationJob) do
+      patch ai_credential_url(active), params: {
+        ai_credential: {
+          display_name: active.display_name,
+          credential_data: { api_key: "", organization_id: "another-organization" }
+        }
+      }
+    end
+
+    assert_redirected_to ai_credential_path(active)
+    assert_equal original_data.merge("organization_id" => "another-organization"), active.reload.credential_data
+    assert_predicate active, :validating?
+  end
+
   test "#update should render :edit with errors on invalid input" do
     sign_in_as(user)
     get edit_ai_credential_url(credential)

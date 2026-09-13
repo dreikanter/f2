@@ -16,20 +16,20 @@ class AiModelCatalogRefresh
     return unless run.reload.running?
     return run.timeout! if run.deadline_at && run.deadline_at <= Time.current
 
-    original_key = credential.credential_data.fetch("api_key")
+    original_data = credential.credential_data.deep_dup
     models = AiModelCatalog.fetch(credential)
 
-    with_current_credential(original_key) { save_catalog(models) }
+    with_current_credential(original_data) { save_catalog(models) }
   rescue LlmProvider::Error => error
     Rails.error.report(error, context: { credential_id: credential.id })
-    with_current_credential(original_key) { fail_refresh(error) }
+    with_current_credential(original_data) { fail_refresh(error) }
   end
 
   private
 
-  def with_current_credential(original_key)
+  def with_current_credential(original_data)
     credential.with_lock do
-      return run.fail! unless credential.active? && credential.credential_data["api_key"] == original_key
+      return run.fail! unless credential.active? && credential.credential_data == original_data
       return run.timeout! if run.deadline_at && run.deadline_at <= Time.current
 
       yield

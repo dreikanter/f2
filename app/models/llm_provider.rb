@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Provider configuration and client factory. The UI reads provider metadata here;
-# operations build clients bound to individual credentials' API keys.
+# operations pass opaque credential data for each provider to interpret.
 module LlmProvider
   PROVIDERS = {
     "openai" => {
@@ -24,8 +24,8 @@ module LlmProvider
       PROVIDERS.fetch(name.to_s)
     end
 
-    def build(name, api_key:)
-      find(name).fetch(:client_class).new(api_key: api_key)
+    def build(name, credential_data:)
+      find(name).fetch(:client_class).new(credential_data: credential_data)
     end
   end
 end

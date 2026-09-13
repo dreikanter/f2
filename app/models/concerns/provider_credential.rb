@@ -25,8 +25,6 @@ module ProviderCredential
               length: { maximum: DISPLAY_NAME_MAX_LENGTH },
               uniqueness: { scope: [:user_id, :provider] }
 
-    validate :api_key_present
-
     before_validation :assign_name_if_blank, on: :create
     before_destroy :disable_dependent_feeds
   end
@@ -113,12 +111,6 @@ module ProviderCredential
   def generate_unique_name
     existing = self.class.where(user_id: user_id, provider: provider).pluck(:display_name).map(&:downcase).to_set
     CredentialNameGenerator.new(provider, existing).generate.split.map(&:capitalize).join(" ")
-  end
-
-  def api_key_present
-    return if provider.blank?
-
-    errors.add(:base, "Enter your API key") if credential_data.blank? || credential_data["api_key"].blank?
   end
 
   # Optional credentials leave feeds running and record removal-only events.
