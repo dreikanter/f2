@@ -45,6 +45,11 @@ default: &default
     queue: default
     schedule: every hour
 
+  maintain_llm_chats:
+    class: MaintainLlmChatsJob
+    queue: default
+    schedule: every hour
+
   purge_expired_events:
     class: PurgeExpiredEventsJob
     queue: default

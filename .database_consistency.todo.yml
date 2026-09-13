@@ -64,6 +64,17 @@ JobRun:
     # nothing user-supplied to validate.
     UniqueIndexChecker:
       enabled: false
+LlmChat:
+  ruby_llm_model_id:
+    # wontfix: RubyLLM resolves this association in before_save, after
+    # validations. Its generated schema requires the resolved model.
+    NullConstraintChecker:
+      enabled: false
+  model:
+    # wontfix: the restrictive FK keeps referenced registry models available
+    # for history; RubyLLM marks them unlisted instead of deleting them.
+    MissingDependentDestroyChecker:
+      enabled: false
 OperationRun:
   index_operation_runs_on_active_subject_and_kind:
     # wontfix: completed history may repeat a subject and kind. OperationRun
