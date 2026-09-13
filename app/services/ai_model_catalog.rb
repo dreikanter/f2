@@ -28,8 +28,7 @@ class AiModelCatalog
         "max_output_tokens" => model.max_output_tokens,
         "output_modalities" => model.modalities.output.presence,
         "tool_call" => model.supports?(:function_calling),
-        "structured_output" => model.supports?(:structured_output),
-        "task" => model.metadata["task"]
+        "structured_output" => model.supports?(:structured_output)
       }.compact
     }
   end

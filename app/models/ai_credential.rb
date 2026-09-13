@@ -20,16 +20,11 @@ class AiCredential < ApplicationRecord
 
   MODEL_CATALOG_FRESHNESS = 1.day
   MODEL_REFRESH_TIMEOUT = 15.minutes
-  NON_CONVERSATIONAL_TASKS = %w[
-    embedding completion image_generation image_edit video_generation
-    audio_transcription audio_speech realtime moderation rerank search ocr guardrail vector_store
-  ].freeze
 
   def supported_models
     available_models.reject do |model|
-      task = model.dig("metadata", "task", "mode")
       outputs = model.dig("metadata", "output_modalities")
-      NON_CONVERSATIONAL_TASKS.include?(task) || (outputs.is_a?(Array) && outputs.any? && !outputs.include?("text"))
+      outputs.is_a?(Array) && outputs.any? && !outputs.include?("text")
     end
   end
 
