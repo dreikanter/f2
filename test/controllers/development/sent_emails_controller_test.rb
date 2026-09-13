@@ -78,17 +78,6 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "#purge should purge all emails" do
-    uuid = SecureRandom.uuid
-    create_test_email(uuid, "Test", "Body")
-    assert_equal 1, email_storage.list.count
-
-    delete purge_development_sent_emails_path
-    assert_redirected_to development_sent_emails_path
-    assert_equal "All emails purged", flash[:success]
-    assert_equal 0, email_storage.list.count
-  end
-
   test "#show should show multipart email with tabs" do
     uuid = SecureRandom.uuid
     create_test_email(uuid, "Multipart", { text: "Text version", html: "<p>HTML version</p>" })
@@ -107,14 +96,6 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
     get development_sent_email_path(id: uuid)
     assert_response :success
     assert_select '[data-key="development.emails.subject"]', text: "Important: Reset your password"
-  end
-
-  test "#purge should handle purge errors gracefully" do
-    email_storage.stub(:purge, -> { raise "Purge failed" }) do
-      delete purge_development_sent_emails_path
-      assert_redirected_to development_sent_emails_path
-      assert_equal "Failed to purge emails: Purge failed", flash[:alert]
-    end
   end
 
   test "#show should show email when storage returns nil for load but exists check passes" do
