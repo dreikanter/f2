@@ -6,6 +6,7 @@ module LlmProvider
       api_key.is_a?(String) && api_key.present? ? [] : ["Enter your API key"]
     end
 
+    # @return [Array<String>] unique model IDs available to these credentials
     def models
       response = HttpClient.build(timeout: 30, follow_redirects: false).get(
         "https://api.openai.com/v1/models",
