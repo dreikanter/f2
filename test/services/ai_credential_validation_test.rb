@@ -29,10 +29,11 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
   test "#call should not revive a timed out validation" do
     credential = create(:ai_credential)
     run = credential.validate_async(AiCredentialValidationJob)
-    run.timeout_credential_validation!
+    validation = AiCredentialValidation.new(run)
+    validation.timeout!
     original = credential.reload.attributes
 
-    AiCredentialValidation.new(run).call
+    validation.call
 
     assert_predicate run.reload, :timed_out?
     assert_equal original, credential.reload.attributes

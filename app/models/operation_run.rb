@@ -106,13 +106,6 @@ class OperationRun < ApplicationRecord
     settle!(:superseded)
   end
 
-  # @return [Boolean] whether the credential validation timed out
-  def timeout_credential_validation!
-    timeout! do |credential|
-      credential.update!(state: context.fetch("fallback_state"))
-    end
-  end
-
   # @return [Boolean] whether the run has reached its deadline
   def deadline_reached?
     deadline_at.present? && deadline_at <= Time.current

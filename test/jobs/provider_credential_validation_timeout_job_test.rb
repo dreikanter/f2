@@ -2,8 +2,8 @@ require "test_helper"
 
 class ProviderCredentialValidationTimeoutJobTest < ActiveJob::TestCase
   test "#perform should settle a new credential to its fallback state" do
-    credential = create(:ai_credential, state: :validating)
-    run = create(:operation_run, subject: credential, context: { fallback_state: "inactive" })
+    credential = create(:ai_credential)
+    run = credential.validate_async(AiCredentialValidationJob)
 
     ProviderCredentialValidationTimeoutJob.perform_now(run)
 
@@ -12,8 +12,8 @@ class ProviderCredentialValidationTimeoutJobTest < ActiveJob::TestCase
   end
 
   test "#perform should preserve an active credential after an inconclusive run" do
-    credential = create(:search_credential, state: :validating)
-    run = create(:operation_run, subject: credential, context: { fallback_state: "active" })
+    credential = create(:search_credential, :active)
+    run = credential.validate_async(SearchCredentialValidationJob)
 
     ProviderCredentialValidationTimeoutJob.perform_now(run)
 
@@ -22,13 +22,27 @@ class ProviderCredentialValidationTimeoutJobTest < ActiveJob::TestCase
   end
 
   test "#perform should ignore a superseded run" do
-    credential = create(:search_credential, state: :validating)
-    run = create(:operation_run, subject: credential, status: :superseded, finished_at: Time.current,
-                                 context: { fallback_state: "inactive" })
-    original_attributes = credential.attributes.slice("state", "updated_at")
+    credential = create(:search_credential)
+    run = credential.validate_async(SearchCredentialValidationJob)
+    current = credential.validate_async(SearchCredentialValidationJob)
+    original = credential.attributes
 
     ProviderCredentialValidationTimeoutJob.perform_now(run)
 
-    assert_equal original_attributes, credential.reload.attributes.slice(*original_attributes.keys)
+    assert_predicate run.reload, :superseded?
+    assert_predicate current.reload, :running?
+    assert_equal original, credential.reload.attributes
+  end
+
+  test "#perform should preserve a completed validation" do
+    credential = create(:ai_credential)
+    run = credential.validate_async(AiCredentialValidationJob)
+    run.succeed! { |current| current.update!(state: :active) }
+    original = credential.reload.attributes
+
+    ProviderCredentialValidationTimeoutJob.perform_now(run)
+
+    assert_predicate run.reload, :succeeded?
+    assert_equal original, credential.reload.attributes
   end
 end

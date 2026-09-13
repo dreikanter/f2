@@ -8,7 +8,7 @@ class AiCredentialValidation
 
   def call
     return unless run.reload.running?
-    return run.timeout_credential_validation! if run.deadline_reached?
+    return timeout! if run.deadline_reached?
 
     original_data = credential.credential_data.deep_dup
     models = AiModelCatalog.fetch(credential)
@@ -17,6 +17,11 @@ class AiCredentialValidation
   rescue LlmProvider::Error => error
     Rails.error.report(error, context: { credential_id: credential.id })
     with_current_credential(original_data) { fail_validation(error) }
+  end
+
+  # @return [Boolean] whether the credential validation timed out
+  def timeout!
+    credential.timeout_validation!(run: run)
   end
 
   private
@@ -30,7 +35,7 @@ class AiCredentialValidation
   def with_current_credential(original_data)
     credential.with_lock do
       return run.fail! unless credential.credential_data == original_data
-      return run.timeout_credential_validation! if run.deadline_reached?
+      return timeout! if run.deadline_reached?
 
       yield
     end
