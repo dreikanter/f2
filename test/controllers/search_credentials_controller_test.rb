@@ -165,6 +165,7 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-controller='polling']"
     assert_select "[data-key='search_credential.validating']"
+    assert_predicate validating.reload, :active?
   end
 
   test "#show should render the active state without polling" do
@@ -222,6 +223,7 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
   test "#update should rename without resetting state or enqueuing validation" do
     sign_in_as(user)
     active = create(:search_credential, :active, user: user)
+    run = active.validate_async(SearchCredentialValidationJob)
     original_key = active.credential_data["api_key"]
 
     assert_no_enqueued_jobs only: SearchCredentialValidationJob do
@@ -238,14 +240,17 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Renamed Search Key", active.display_name
     assert_predicate active, :active?
     assert_equal original_key, active.credential_data["api_key"]
+    assert_predicate run.reload, :running?
   end
 
   test "#update should replace a new key, reset state, and enqueue validation" do
     sign_in_as(user)
     active = create(:search_credential, :active, user: user)
+    feed = create(:feed, :enabled, user: user, search_credential: active)
+    validation = active.validate_async(SearchCredentialValidationJob)
     new_key = "serper-#{SecureRandom.hex(16)}"
 
-    assert_enqueued_with(job: SearchCredentialValidationJob) do
+    assert_no_difference "Event.count" do
       patch search_credential_url(active), params: {
         search_credential: {
           display_name: active.display_name,
@@ -259,7 +264,9 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_equal new_key, active.credential_data["api_key"]
     assert_not_predicate active, :active?
     assert_predicate active, :validation_in_progress?
-    assert_not_nil active.active_operation_run(:validation)
+    assert_enqueued_with(job: SearchCredentialValidationJob, args: [active.active_operation_run(:validation)])
+    assert_predicate validation.reload, :superseded?
+    assert_predicate feed.reload, :enabled?
   end
 
   test "#update should render edit with errors on invalid input" do

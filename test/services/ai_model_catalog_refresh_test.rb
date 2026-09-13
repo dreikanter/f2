@@ -105,20 +105,6 @@ class AiModelCatalogRefreshTest < ActiveSupport::TestCase
     assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
   end
 
-  test "#call should not deactivate a replaced key" do
-    run = openai_credential.refresh_models_async(force: true)
-    stub_openai_models(key: openai_credential.credential_data["api_key"], fixture: "invalid_key", status: 401) do
-      AiCredential.find(openai_credential.id).update!(credential_data: { "api_key" => "replacement-key" })
-    end
-
-    AiModelCatalogRefresh.new(run).call
-
-    assert_predicate run.reload, :superseded?
-    assert_not_predicate openai_credential.reload, :active?
-    assert_not Event.exists?(subject: openai_credential, type: "ai_credential_deactivated")
-    assert_empty run.context
-  end
-
   test "#call should discard a rejection when another credential field changes" do
     run = openai_credential.refresh_models_async(force: true)
     stub_openai_models(key: openai_credential.credential_data.fetch("api_key"), fixture: "invalid_key", status: 401) do

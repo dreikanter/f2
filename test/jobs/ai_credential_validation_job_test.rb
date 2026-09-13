@@ -4,12 +4,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
   include OpenaiModelsTestHelpers
 
   def openai_credential
-    @openai_credential ||= create(
-      :ai_credential,
-      :active,
-      available_models: [{ "id" => "saved-model" }],
-      models_refreshed_at: 1.day.ago
-    )
+    @openai_credential ||= create(:ai_credential)
   end
 
   test "#perform should validate OpenAI and save its free listing in one request" do

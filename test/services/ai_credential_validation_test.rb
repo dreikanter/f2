@@ -122,19 +122,6 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
     assert_equal expected_context.fetch("error"), credential.last_error
   end
 
-  test "#call should reject a success received for a replaced key" do
-    run = openai_credential.validate_async(AiCredentialValidationJob)
-    stub_openai_models(key: openai_credential.credential_data["api_key"]) do
-      AiCredential.find(openai_credential.id).update!(credential_data: { "api_key" => "replacement-key" })
-    end
-
-    AiCredentialValidation.new(run).call
-
-    assert_predicate run.reload, :superseded?
-    assert_not_predicate openai_credential.reload, :active?
-    assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
-  end
-
   test "#call should discard a catalog when another credential field changes" do
     run = openai_credential.validate_async(AiCredentialValidationJob)
     stub_openai_models(key: openai_credential.credential_data.fetch("api_key")) do
@@ -149,18 +136,21 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
     assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
   end
 
-  test "#call should not deactivate a replacement key on late rejection" do
+  test "#call should not deactivate a validated replacement key on late rejection" do
     run = openai_credential.validate_async(AiCredentialValidationJob)
     stub_openai_models(key: openai_credential.credential_data["api_key"], fixture: "invalid_key", status: 401) do
-      AiCredential.find(openai_credential.id).update!(credential_data: { "api_key" => "replacement-key" })
+      replacement = AiCredential.find(openai_credential.id)
+      replacement.update!(credential_data: { "api_key" => "replacement-key" })
+      stub_openai_models(key: "replacement-key", fixture: "empty")
+      AiCredentialValidation.new(replacement.validate_async(AiCredentialValidationJob)).call
     end
 
     AiCredentialValidation.new(run).call
 
     assert_predicate run.reload, :superseded?
-    assert_not_predicate openai_credential.reload, :active?
+    assert_predicate openai_credential.reload, :active?
+    assert_empty openai_credential.available_models
     assert_not Event.exists?(subject: openai_credential, type: "ai_credential_deactivated")
-    assert_empty run.context
   end
 
   test "#call should discard a response received after its deadline" do

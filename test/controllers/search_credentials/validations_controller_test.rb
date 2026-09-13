@@ -26,29 +26,29 @@ class SearchCredentials::ValidationsControllerTest < ActionDispatch::Integration
     assert_select '[data-key="search_credential.validating"]', count: 0
   end
 
-  test "#show should return no content while still validating" do
+  test "#show should poll revalidation then render the result" do
     sign_in_as(user)
-    validating = create(:search_credential, :active, user: user)
-    validating.validate_async(SearchCredentialValidationJob)
+    active = create(:search_credential, :active, user: user)
+    run = active.validate_async(SearchCredentialValidationJob)
 
-    get search_credential_validation_url(validating),
+    get search_credential_validation_url(active),
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :no_content
     assert_empty response.body
-  end
+    assert_predicate active.reload, :active?
 
-  test "#show should render the turbo stream once validation resolves" do
-    sign_in_as(user)
-    active = create(:search_credential, :active, user: user)
+    run.succeed!
 
     get search_credential_validation_url(active),
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
-    assert_includes response.body, "search-credential-show"
-    assert_includes response.body, "search_credential.state_badge"
+    assert_select 'turbo-stream[action="update"][target="search-credential-show"]' do
+      assert_select '[data-credential-state="active"]'
+      assert_select '[data-key="search_credential.validating"]', count: 0
+    end
   end
 
   test "#show should 404 for another user's credential" do
@@ -80,11 +80,11 @@ class SearchCredentials::ValidationsControllerTest < ActionDispatch::Integration
     assert_equal original_run, run.reload.attributes
   end
 
-  test "#show should render validation failure while retaining an active credential" do
+  test "#show should render a timeout while retaining an active credential" do
     sign_in_as(user)
     active = create(:search_credential, :active, user: user)
     run = active.validate_async(SearchCredentialValidationJob)
-    run.timeout!
+    travel_to(run.deadline_at) { run.timeout! }
 
     get search_credential_validation_url(active), headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
