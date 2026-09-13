@@ -21,7 +21,7 @@
         <div class="space-y-2">
           <%= f.label :provider, "AI Provider", class: form_label_classes %>
           <%= f.select :provider,
-                       LlmProvider.all.map { |provider| [provider.display_name, provider.name] },
+                       LlmProvider.all.map { |name, config| [config.fetch(:display_name), name] },
                        {},
                        autofocus: true,
                        class: input_field_classes,

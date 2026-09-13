@@ -1,27 +1,25 @@
 module LlmProvider
   class Base
-    attr_reader :name, :display_name, :default_model
-
-    def initialize(name:, display_name:, default_model:)
-      @name = name
-      @display_name = display_name
-      @default_model = default_model
+    def initialize(api_key:)
+      @api_key = api_key
     end
 
-    def context(api_key:)
+    def context
       RubyLLM.context do |config|
-        configure(config, api_key)
+        configure(config)
         config.max_retries = 0
       end
     end
 
-    def models(api_key:)
+    def models
       raise NotImplementedError, "Subclasses must implement #models"
     end
 
     private
 
-    def configure(config, api_key)
+    attr_reader :api_key
+
+    def configure(config)
       raise NotImplementedError, "Subclasses must implement #configure"
     end
   end

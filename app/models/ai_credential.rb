@@ -10,12 +10,12 @@ class AiCredential < ApplicationRecord
 
   validates :provider, presence: true, inclusion: { in: ->(_) { LlmProvider.names } }
 
-  def llm_provider
-    LlmProvider.find(provider)
+  def build_llm_client
+    LlmProvider.build(provider, api_key: credential_data.fetch("api_key"))
   end
 
   def provider_name
-    llm_provider.display_name
+    LlmProvider.find(provider).fetch(:display_name)
   end
 
   MODEL_CATALOG_FRESHNESS = 1.day
@@ -33,7 +33,7 @@ class AiCredential < ApplicationRecord
   end
 
   def ruby_llm_context
-    llm_provider.context(api_key: credential_data.fetch("api_key"))
+    build_llm_client.context
   end
 
   def refresh_models_async(force: false)
@@ -63,7 +63,7 @@ class AiCredential < ApplicationRecord
   end
 
   def default_supported_model
-    provider_default = llm_provider.default_model
+    provider_default = LlmProvider.find(provider).fetch(:default_model)
     return provider_default if supports_model?(provider_default)
 
     supported_models.first&.fetch("id")

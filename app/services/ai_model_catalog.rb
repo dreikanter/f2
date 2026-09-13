@@ -4,13 +4,13 @@ class AiModelCatalog
   end
 
   def initialize(credential)
-    @provider = credential.llm_provider
-    @api_key = credential.credential_data.fetch("api_key")
+    @provider_name = credential.provider
+    @client = credential.build_llm_client
   end
 
   def fetch
-    ids = @provider.models(api_key: @api_key)
-    metadata = RubyLLM.models.by_provider(@provider.name).index_by(&:id)
+    ids = @client.models
+    metadata = RubyLLM.models.by_provider(@provider_name).index_by(&:id)
     ids.map { |id| catalog_entry(id, metadata[id]) }
   end
 

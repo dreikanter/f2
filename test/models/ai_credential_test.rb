@@ -85,9 +85,17 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_equal credential.id, user.reload.default_ai_credential_id
   end
 
-  test "#llm_provider should return the registry entry for the provider attribute" do
+  test "#build_llm_client should use the current key without changing an existing client" do
     credential = create(:ai_credential, user: user, provider: "openai")
-    assert_equal LlmProvider.find("openai"), credential.llm_provider
+    original_key = credential.credential_data.fetch("api_key")
+    client = credential.build_llm_client
+
+    credential.update!(credential_data: { "api_key" => "replacement-key" })
+
+    assert_instance_of LlmProvider::Openai, client
+    assert_equal original_key, client.context.config.openai_api_key
+    assert_equal "replacement-key", credential.build_llm_client.context.config.openai_api_key
+    assert_not_requested :any, /./
   end
 
   test "#ruby_llm_context should isolate credentials and disable SDK retries" do

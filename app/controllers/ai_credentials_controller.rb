@@ -5,7 +5,7 @@ class AiCredentialsController < CredentialsController
   private
 
   def default_provider
-    LlmProvider.all.first.name
+    LlmProvider.names.first
   end
 
   def credential_noun

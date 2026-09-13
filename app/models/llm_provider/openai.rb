@@ -1,10 +1,6 @@
 module LlmProvider
   class Openai < Base
-    def initialize
-      super(name: "openai", display_name: "OpenAI", default_model: "gpt-5.6-luna")
-    end
-
-    def models(api_key:)
+    def models
       response = HttpClient.build(timeout: 30, follow_redirects: false).get(
         "https://api.openai.com/v1/models",
         headers: { "Authorization" => "Bearer #{api_key}", "Accept" => "application/json" }
@@ -22,7 +18,7 @@ module LlmProvider
 
     private
 
-    def configure(config, api_key)
+    def configure(config)
       config.openai_api_key = api_key
     end
 

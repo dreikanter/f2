@@ -1,9 +1,17 @@
+# frozen_string_literal: true
+
 module LlmProvider
-  PROVIDERS = { "openai" => Openai.new.freeze }.freeze
+  PROVIDERS = {
+    "openai" => {
+      display_name: "OpenAI",
+      default_model: "gpt-5.6-luna",
+      client_class: Openai
+    }.freeze
+  }.freeze
 
   class << self
     def all
-      PROVIDERS.values
+      PROVIDERS
     end
 
     def names
@@ -12,6 +20,10 @@ module LlmProvider
 
     def find(name)
       PROVIDERS.fetch(name.to_s)
+    end
+
+    def build(name, api_key:)
+      find(name).fetch(:client_class).new(api_key: api_key)
     end
   end
 end
