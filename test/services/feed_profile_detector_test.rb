@@ -18,7 +18,7 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
 
   test ".call should return no candidates when no deterministic matcher fires" do
     # The AI profile registers no matcher, so a page with no standard feed yields
-    # nothing — the entry flow offers the AI bridge, detection never selects it.
+    # nothing; the entry flow offers the AI bridge, detection never selects it.
     result = FeedProfileDetector.call(input: "https://example.com/page", fetched_body: "<html><body/></html>")
     assert_empty result.candidates
   end
@@ -105,27 +105,10 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
            "expected Rails.error.report to capture the title-extraction failure"
   end
 
-  test ".call should set and clear Thread.current[:llm_detection_phase]" do
-    captured_flag = nil
-    spy = build_matcher_class("SpyProfileMatcher", specificity: 1) do
-      define_method(:match?) do
-        captured_flag = Thread.current[:llm_detection_phase]
-        false
-      end
-    end
-
-    FeedProfile.stub(:matchers, [spy]) do
-      FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: "")
-    end
-
-    assert captured_flag, "flag should be set while matchers run"
-    assert_nil Thread.current[:llm_detection_phase], "flag must be cleared after call"
-  end
-
   # Guards the shape persisted to FeedIdentification#candidates: Rails'
   # native Data#as_json must keep yielding string keys, so a future
   # field/type change can't silently break it.
-  test "DetectionCandidate should serialize to the persisted candidate hash" do
+  test "#as_json should serialize a DetectionCandidate to the persisted candidate hash" do
     candidate = FeedProfileDetector::DetectionCandidate.new(
       profile_key: "rss",
       title: "Example Blog"

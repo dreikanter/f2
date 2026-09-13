@@ -10,7 +10,7 @@ class FileDeliveryTest < ActiveSupport::TestCase
     @delivery ||= FileDelivery.new(email_storage: email_storage)
   end
 
-  test "delivers email and saves to storage" do
+  test "#deliver! should save the email to storage" do
     mail = Mail.new do
       from "sender@example.com"
       to "recipient@example.com"
@@ -35,7 +35,7 @@ class FileDeliveryTest < ActiveSupport::TestCase
     assert_equal "Test Body", loaded[:body]
   end
 
-  test "handles multipart emails" do
+  test "#deliver! should handle multipart emails" do
     mail = Mail.new do
       from "sender@example.com"
       to "recipient@example.com"

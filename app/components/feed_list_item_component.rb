@@ -95,7 +95,7 @@ class FeedListItemComponent < ListItemComponent
   def menu_items
     items = []
 
-    # An incomplete draft leads with "Continue setup" and drops "Details" —
+    # An incomplete draft leads with "Continue setup" and drops "Details";
     # there's nothing worth showing on the feed page until it has run.
     if continue_setup?
       items << { label: "Continue setup", href: edit_url, data: { key: "feed.#{feed.id}.continue_setup" } }

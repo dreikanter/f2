@@ -5,7 +5,7 @@
 
   <div class="max-w-2xl">
     <%# A webhook feed never has a source input, so a failed create must still
-        land back on the expanded form — the collapsed entry would silently
+        land back on the expanded form; the collapsed entry would silently
         drop the draft's fields and errors. %>
     <% if @feed.source_input.present? || @feed.sourceless? %>
       <%= render FeedFormComponent.new(feed: @feed) %>

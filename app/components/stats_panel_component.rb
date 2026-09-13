@@ -1,8 +1,8 @@
 # Base for the panels that render a row of figures two ways: a stacked
 # description list on narrow screens, a horizontal bar on wider ones.
 #
-# Subclasses supply #layout_items — one hash per figure with :key, :label,
-# :label_short, :value, and an optional :muted — and override #key_prefix when
+# Subclasses supply #layout_items (one hash per figure with :key, :label,
+# :label_short, :value, and an optional :muted) and override #key_prefix when
 # their data-key hooks live under a different namespace. The bar shows
 # :label_short and reveals :label on hover. A figure with nothing behind it yet
 # is left blank.

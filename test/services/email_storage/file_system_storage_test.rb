@@ -18,24 +18,24 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     FileUtils.rm_rf(storage_dir)
   end
 
-  test "#initialize validates directory is inside Rails.root/tmp" do
+  test "#initialize should validate directory is inside Rails.root/tmp" do
     assert_raises(RuntimeError) do
       EmailStorage::FileSystemStorage.new(Rails.root)
     end
   end
 
-  test "#initialize validates directory is not blank" do
+  test "#initialize should validate directory is not blank" do
     assert_raises(RuntimeError) do
       EmailStorage::FileSystemStorage.new(Pathname.new(""))
     end
   end
 
-  test "#ordered_list returns empty array when directory does not exist" do
+  test "#ordered_list should return empty array when directory does not exist" do
     FileUtils.rm_rf(storage_dir)
     assert_equal [], storage.ordered_list
   end
 
-  test "#ordered_list returns emails sorted by timestamp" do
+  test "#ordered_list should return emails sorted by timestamp" do
     uuid1 = SecureRandom.uuid
     uuid2 = SecureRandom.uuid
     time1 = Time.parse("2025-01-01T12:00:00+00:00")
@@ -53,7 +53,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_equal time1, emails[1][:timestamp]
   end
 
-  test "#ordered_list handles emails with a missing timestamp" do
+  test "#ordered_list should handle emails with a missing timestamp" do
     uuid = SecureRandom.uuid
     File.write(storage_dir.join("legacy_#{uuid}.json"), JSON.generate("subject" => "Legacy", "multipart" => false))
     File.write(storage_dir.join("legacy_#{uuid}.txt"), "Body")
@@ -65,7 +65,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_kind_of Time, emails.first[:timestamp]
   end
 
-  test "#ordered_list falls back to file mtime for an unparseable timestamp" do
+  test "#ordered_list should fall back to file mtime for an unparseable timestamp" do
     uuid = SecureRandom.uuid
     File.write(
       storage_dir.join("20250101_120000_123_#{uuid}.json"),
@@ -77,7 +77,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_kind_of Time, email[:timestamp]
   end
 
-  test "#ordered_list skips files with invalid filenames" do
+  test "#ordered_list should skip files with invalid filenames" do
     uuid = SecureRandom.uuid
     create_test_email(uuid, "Valid")
     File.write(storage_dir.join("invalid.json"), JSON.generate("subject" => "Nope"))
@@ -87,7 +87,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_equal "Valid", emails.first[:subject]
   end
 
-  test "#ordered_list skips files with corrupted JSON" do
+  test "#ordered_list should skip files with corrupted JSON" do
     valid_uuid = SecureRandom.uuid
     corrupt_uuid = SecureRandom.uuid
     create_test_email("20250101_120000_123_#{valid_uuid}", "Valid")
@@ -98,7 +98,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_equal "Valid", emails.first[:subject]
   end
 
-  test "#ordered_list skips JSON files that are not objects" do
+  test "#ordered_list should skip JSON files that are not objects" do
     valid_uuid = SecureRandom.uuid
     array_uuid = SecureRandom.uuid
     create_test_email("20250101_120000_123_#{valid_uuid}", "Valid")
@@ -109,7 +109,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_equal "Valid", emails.first[:subject]
   end
 
-  test "#ordered_list ignores legacy YAML files" do
+  test "#ordered_list should ignore legacy YAML files" do
     json_uuid = SecureRandom.uuid
     yaml_uuid = SecureRandom.uuid
     create_test_email("20250101_120000_123_#{json_uuid}", "Current")
@@ -121,11 +121,11 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_equal "Current", emails.first[:subject]
   end
 
-  test "#load_email returns nil for non-existent email" do
+  test "#load_email should return nil for non-existent email" do
     assert_nil storage.load_email("nonexistent-uuid")
   end
 
-  test "#load_email loads simple email" do
+  test "#load_email should load simple email" do
     uuid = SecureRandom.uuid
     full_id = "20250101_120000_123_#{uuid}"
     create_test_email(full_id, "Test Subject", "Test Body")
@@ -137,7 +137,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_nil email[:text_part]
   end
 
-  test "#load_email parses the date into a time" do
+  test "#load_email should parse the date into a time" do
     uuid = SecureRandom.uuid
     create_test_email("20250101_120000_123_#{uuid}", "Test")
 
@@ -145,7 +145,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_kind_of Time, email[:date]
   end
 
-  test "#load_email loads multipart email" do
+  test "#load_email should load multipart email" do
     uuid = SecureRandom.uuid
     full_id = "20250101_120000_123_#{uuid}"
     create_multipart_email(full_id, "Multipart", "Text", "<p>HTML</p>")
@@ -158,7 +158,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_equal "", email[:body]
   end
 
-  test "#load_email returns nil for corrupted JSON" do
+  test "#load_email should return nil for corrupted JSON" do
     uuid = SecureRandom.uuid
     full_id = "20250101_120000_123_#{uuid}"
     File.write(storage_dir.join("#{full_id}.json"), "{not json")
@@ -167,7 +167,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_nil storage.load_email(uuid)
   end
 
-  test "#load_email returns nil for JSON that is not an object" do
+  test "#load_email should return nil for JSON that is not an object" do
     uuid = SecureRandom.uuid
     full_id = "20250101_120000_123_#{uuid}"
     File.write(storage_dir.join("#{full_id}.json"), "[1,2,3]")
@@ -176,7 +176,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_nil storage.load_email(uuid)
   end
 
-  test "#load_email handles missing text file gracefully" do
+  test "#load_email should handle missing text file gracefully" do
     uuid = SecureRandom.uuid
     full_id = "20250101_120000_123_#{uuid}"
     metadata = {
@@ -191,7 +191,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_equal "Test", email[:subject]
   end
 
-  test "#save_email creates JSON metadata and text files" do
+  test "#save_email should create JSON metadata and text files" do
     metadata = {
       "message_id" => "<test@example.com>",
       "from" => "sender@example.com",
@@ -217,7 +217,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_equal "Body", File.read(txt_file)
   end
 
-  test "#save_email stores times as ISO8601 strings" do
+  test "#save_email should store times as ISO8601 strings" do
     metadata = {
       "subject" => "Test",
       "date" => Time.parse("2025-01-01T12:00:00+00:00"),
@@ -232,7 +232,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_equal "2025-01-02T12:00:00.000+00:00", raw["timestamp"]
   end
 
-  test "#save_email does not raise on a Date value" do
+  test "#save_email should not raise on a Date value" do
     metadata = {
       "subject" => "Test",
       "date" => Date.new(2025, 1, 1),
@@ -245,7 +245,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     end
   end
 
-  test "#save_email persists metadata that can be read back" do
+  test "#save_email should persist metadata that can be read back" do
     metadata = {
       "subject" => "Round trip",
       "timestamp" => Time.parse("2025-01-01T12:00:00+00:00"),
@@ -257,7 +257,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_equal "Round trip", storage.ordered_list.find { |e| e[:id] == uuid }[:subject]
   end
 
-  test "#save_email creates HTML file for multipart" do
+  test "#save_email should create HTML file for multipart" do
     metadata = {
       "message_id" => "<test@example.com>",
       "from" => "sender@example.com",
@@ -279,7 +279,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_equal "<p>HTML</p>", File.read(html_file)
   end
 
-  test "#email_exists? returns true when email exists" do
+  test "#email_exists? should return true when email exists" do
     uuid = SecureRandom.uuid
     full_id = "20250101_120000_123_#{uuid}"
     create_test_email(full_id, "Test")
@@ -287,11 +287,11 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert storage.email_exists?(uuid)
   end
 
-  test "#email_exists? returns false when email does not exist" do
+  test "#email_exists? should return false when email does not exist" do
     refute storage.email_exists?("nonexistent-uuid")
   end
 
-  test "#purge deletes all emails regardless of format" do
+  test "#purge should delete all emails regardless of format" do
     uuid1 = SecureRandom.uuid
     uuid2 = SecureRandom.uuid
     create_test_email("20250101_120000_123_#{uuid1}", "First")

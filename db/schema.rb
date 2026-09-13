@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_09_143000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_11_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -18,7 +18,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_09_143000) do
     t.uuid "access_token_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "data", default: {}, null: false
     t.jsonb "freefeed_user_info", default: {}, null: false
     t.jsonb "managed_groups", default: [], null: false
     t.index ["access_token_id"], name: "index_access_token_details_on_access_token_id", unique: true

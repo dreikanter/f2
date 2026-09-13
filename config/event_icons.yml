@@ -1,7 +1,7 @@
 # Icons for event log entries, keyed by event type.
 #
 # Values are lucide.dev icon names. Each must also exist in
-# ApplicationHelper::ICONS (the app inlines its icon set) — add the icon's
+# ApplicationHelper::ICONS (the app inlines its icon set); add the icon's
 # path data there when introducing a new name. Event types without an entry,
 # and entries naming an unbundled icon, fall back to the icon for the event's
 # level (info / triangle-alert / circle-x).

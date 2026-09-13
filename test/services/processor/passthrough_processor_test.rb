@@ -75,6 +75,15 @@ class Processor::PassthroughProcessorTest < ActiveSupport::TestCase
     assert_equal 2026, entries[0].published_at.year
   end
 
+  test "#process should keep an already parsed published_at" do
+    published = Time.zone.parse("2026-04-15T12:30:00Z")
+    items = [{ "source_url" => "https://example.com/a", "published_at" => published }]
+
+    entries = process(items).entries
+
+    assert_equal published, entries[0].published_at
+  end
+
   test "#process should default to the current time when published_at is invalid" do
     items = [{ "source_url" => "https://example.com/a", "published_at" => "not a date" }]
 

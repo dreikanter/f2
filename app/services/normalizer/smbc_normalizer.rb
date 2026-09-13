@@ -6,7 +6,7 @@ module Normalizer
     private
 
     def normalize_content
-      title = raw_data.dig("title") || ""
+      title = raw_data["title"] || ""
       title.sub(TITLE_PREFIX, "").strip
     end
 
@@ -39,13 +39,13 @@ module Normalizer
     end
 
     def summary_html
-      @summary_html ||= Nokogiri::HTML::DocumentFragment.parse(raw_data.dig("summary") || "")
+      @summary_html ||= Nokogiri::HTML::DocumentFragment.parse(raw_data["summary"] || "")
     end
 
     def page
       return @page if defined?(@page)
 
-      @page = page_fetcher.fetch(raw_data.dig("link"))
+      @page = page_fetcher.fetch(raw_data["link"])
     end
   end
 end

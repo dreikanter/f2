@@ -47,7 +47,7 @@ class LlmUsageListItemComponent < ListItemComponent
   end
 
   # Cached tokens are only worth the extra clause when a call actually reused
-  # cache — most don't, and a "· 0 cached" tail is pure noise.
+  # cache; most don't, and a "· 0 cached" tail is pure noise.
   def token_summary
     parts = [
       "#{helpers.number_with_delimiter(usage.input_tokens)} in",

@@ -4,15 +4,15 @@ module Loader
   # These are the *privileged* instruction channel: they travel as a system-role
   # message, while the user's feed prompt travels separately as a user-role
   # message and is framed as data. That separation is the prompt-injection
-  # defense — content the model fetches from the web can't rewrite the task,
+  # defense: content the model fetches from the web can't rewrite the task,
   # because the task lives here, not in the data.
   #
   # Two safeguards are aggregator-specific and the model won't apply them
   # unprompted, so they earn a place in every stage's system prompt:
   #   1. fetched/searched content is untrusted data, never instructions;
-  #   2. grounding — only report what was actually found; never fabricate.
+  #   2. grounding: only report what was actually found; never fabricate.
   # Hard guarantees (uid minting, attachment/host validation, body truncation)
-  # live in the deterministic layers, not here — the prompt is defense in depth.
+  # live in the deterministic layers, not here; the prompt is defense in depth.
   module LlmPrompts
     ANSWERS = <<~TEXT.strip
       Follow the requested result: requests to find or list existing source posts

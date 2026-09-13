@@ -293,7 +293,7 @@ class RateLimitConcurrencyTest < ActiveSupport::TestCase
     RateLimit.instance_variable_set(:@registry, @registry_backup)
   end
 
-  test "parallel acquire on the same subject does not over-admit" do
+  test ".acquire should not over-admit parallel calls on the same subject" do
     threads = 20.times.map do
       Thread.new do
         ActiveRecord::Base.connection_pool.with_connection do

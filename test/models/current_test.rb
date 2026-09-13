@@ -1,7 +1,7 @@
 require "test_helper"
 
 class CurrentTest < ActiveSupport::TestCase
-  test "should delegate user to session" do
+  test ".user should return the session user" do
     user = create(:user)
     session = create(:session, user: user)
 
@@ -9,12 +9,12 @@ class CurrentTest < ActiveSupport::TestCase
     assert_equal user, Current.user
   end
 
-  test "should return nil user when no session" do
+  test ".user should return nil when there is no session" do
     Current.session = nil
     assert_nil Current.user
   end
 
-  test "should allow setting session" do
+  test ".session= should store the current session" do
     session = create(:session)
     Current.session = session
     assert_equal session, Current.session

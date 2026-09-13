@@ -1,7 +1,7 @@
 require "test_helper"
 
 class PostPublicationTest < ActiveSupport::TestCase
-  test "a post has at most one publication checkpoint" do
+  test ".create! should reject a second publication checkpoint for the same post" do
     post = create(:post)
     PostPublication.create!(post: post)
 
@@ -10,7 +10,7 @@ class PostPublicationTest < ActiveSupport::TestCase
     end
   end
 
-  test "destroying a post removes its publication checkpoint" do
+  test "#destroy! should remove the post's publication checkpoint" do
     post = create(:post)
     PostPublication.create!(post: post)
 

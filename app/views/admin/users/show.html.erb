@@ -93,14 +93,10 @@
                   <div class="truncate"><%= session.user_agent %></div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center">
-                  <time class="text-muted" datetime="<%= session.created_at.iso8601 %>" title="<%= session.created_at.to_fs(:long) %>">
-                    <%= short_time_ago(session.created_at) %>
-                  </time>
+                  <%= short_time_ago_tag(session.created_at, css_class: "text-muted") %>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center">
-                  <time class="text-muted" datetime="<%= session.last_seen_at.iso8601 %>" title="<%= session.last_seen_at.to_fs(:long) %>">
-                    <%= short_time_ago(session.last_seen_at) %>
-                  </time>
+                  <%= short_time_ago_tag(session.last_seen_at, css_class: "text-muted") %>
                 </td>
               </tr>
             <% end %>

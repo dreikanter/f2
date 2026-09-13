@@ -5,7 +5,7 @@ class CredentialRemovalTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  test "#disable_with_event! is public and short-circuits for disabled feeds" do
+  test "#disable_with_event! should be public and return early for disabled feeds" do
     feed = create(:feed, :disabled, user: user)
 
     assert_respond_to feed, :disable_with_event!
@@ -14,7 +14,7 @@ class CredentialRemovalTest < ActiveSupport::TestCase
     end
   end
 
-  test "destroying an AI credential detaches every feed, disables enabled feeds, and records per-feed events" do
+  test "#destroy! should detach an AI credential from feeds, disable enabled feeds, and record per-feed events" do
     credential = create(:ai_credential, user: user)
     draft_feed = create(:feed, :draft, user: user, ai_credential: credential)
     disabled_feed = create(:feed, :disabled, user: user, ai_credential: credential)
@@ -37,7 +37,7 @@ class CredentialRemovalTest < ActiveSupport::TestCase
     assert_removal_event(enabled_feed, AiCredential::REMOVED_EVENT_TYPE, disabled: true)
   end
 
-  test "destroying a search credential detaches every feed, preserves feed states, and records per-feed events" do
+  test "#destroy! should detach a search credential from feeds, preserve feed states, and record per-feed events" do
     credential = create(:search_credential, user: user)
     draft_feed = create(:feed, :draft, user: user, search_credential: credential)
     disabled_feed = create(:feed, :disabled, user: user, search_credential: credential)
@@ -63,7 +63,7 @@ class CredentialRemovalTest < ActiveSupport::TestCase
   # Events are log records: what happened stays recorded even once the thing it
   # happened to is gone. A removed subject reads as "(removed)" in the log
   # rather than taking its history with it.
-  test "destroying an access token leaves its own events behind" do
+  test "#destroy! should preserve an access token's events" do
     token = create(:access_token, user: user)
     event = create(:event, subject: token, user: user)
 
@@ -71,7 +71,7 @@ class CredentialRemovalTest < ActiveSupport::TestCase
     assert_nil event.reload.subject
   end
 
-  test "destroying an AI credential leaves its own events behind" do
+  test "#destroy! should preserve an AI credential's events" do
     credential = create(:ai_credential, user: user)
     event = create(:event, subject: credential, user: user)
 
@@ -79,7 +79,7 @@ class CredentialRemovalTest < ActiveSupport::TestCase
     assert_nil event.reload.subject
   end
 
-  test "destroying a search credential leaves its own events behind" do
+  test "#destroy! should preserve a search credential's events" do
     credential = create(:search_credential, user: user)
     event = create(:event, subject: credential, user: user)
 

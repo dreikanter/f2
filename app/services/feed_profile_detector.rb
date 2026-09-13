@@ -1,10 +1,6 @@
 # Detects which FeedProfile candidates apply to a user's raw input,
 # returning a deterministic list ranked by match specificity (ties broken
 # by registration order).
-#
-# Detection is pure with respect to AI: no LlmClient call may originate
-# from a matcher's #match?. The Thread.current[:llm_detection_phase]
-# flag is set for the duration of #call so LlmClient can enforce that rule.
 class FeedProfileDetector
   DetectionResult = Data.define(:candidates)
   DetectionCandidate = Data.define(:profile_key, :title)
@@ -18,17 +14,13 @@ class FeedProfileDetector
     @fetched_body = fetched_body
   end
 
-  # Detection is URL-only and deterministic: the input is always a Mode A source
-  # URL (SourceLink canonicalized it upstream). The AI profile registers no
-  # matcher, so it can never appear here.
+  # Detection is URL-only and deterministic: the input is always a source URL
+  # (SourceLink canonicalized it upstream). The AI profile registers no matcher,
+  # so it can never appear here.
   def call
-    Thread.current[:llm_detection_phase] = true
-
     matches = collect_matches
     ranked = rank(matches)
     DetectionResult.new(candidates: build_candidates(ranked))
-  ensure
-    Thread.current[:llm_detection_phase] = nil
   end
 
   private

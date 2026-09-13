@@ -4,7 +4,6 @@ module Authentication
   included do
     before_action :require_authentication
     before_action :update_session_activity
-    helper_method :authenticated?
   end
 
   class_methods do

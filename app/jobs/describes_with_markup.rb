@@ -1,4 +1,4 @@
-# Lets a maintenance job's description carry markup — the dev area renders it as
+# Lets a maintenance job's description carry markup; the dev area renders it as
 # HTML above the job's run history.
 #
 # Composing through these helpers is what keeps a description safe: the parts a

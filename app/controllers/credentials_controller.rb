@@ -6,6 +6,7 @@
 # can't be derived from the model: the provider chosen by default on the new
 # form, and the noun used in user-facing copy.
 class CredentialsController < ApplicationController
+  include CredentialFeedDetour
   include StatePolling
 
   class_attribute :credential_class, instance_writer: false
@@ -52,7 +53,7 @@ class CredentialsController < ApplicationController
     authorize @credential
 
     # A blank key field means "keep the current key", so only a submitted key
-    # is worth re-checking — renaming a credential leaves its state alone.
+    # is worth re-checking; renaming a credential leaves its state alone.
     key_changed = credential_data_from_params["api_key"].present?
 
     if @credential.update(updated_credential_attrs(key_changed: key_changed))
@@ -78,14 +79,6 @@ class CredentialsController < ApplicationController
 
   def credential_noun
     raise NotImplementedError, "#{self.class.name} must implement #credential_noun"
-  end
-
-  # The draft feed that detoured here from the feed form (feed_id round-trip),
-  # or nil when entered directly.
-  def detour_feed
-    return nil if params[:feed_id].blank?
-
-    Current.user.feeds.find_by(id: params[:feed_id])
   end
 
   def updated_credential_attrs(key_changed:)
@@ -128,12 +121,6 @@ class CredentialsController < ApplicationController
   end
 
   def credential_data_from_params
-    raw = credential_params[:credential_data]
-
-    case raw
-    when ActionController::Parameters then raw.to_unsafe_h
-    when Hash then raw
-    else {}
-    end
+    credential_params[:credential_data].to_h
   end
 end

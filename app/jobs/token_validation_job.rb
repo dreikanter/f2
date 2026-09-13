@@ -17,7 +17,7 @@ class TokenValidationJob < ApplicationJob
     result = RateLimit.acquire(:freefeed, subject: access_token.rate_limit_subject, cost: { get: 3 })
     return reschedule_for_rate_limit(result.retry_after) unless result.allowed?
 
-    AccessTokenValidationService.new(run).call
+    AccessTokenValidation.new(run).call
   rescue RateLimit::Throttled => e
     reschedule_for_rate_limit(e.retry_after)
   end
@@ -25,7 +25,7 @@ class TokenValidationJob < ApplicationJob
   private
 
   # Validation flips the token to `validating` before enqueuing. If we exhaust
-  # the throttle retries, reset it to `pending` so it doesn't stay stuck — the
+  # the throttle retries, reset it to `pending` so it doesn't stay stuck; the
   # recurring schedulers can pick it up again later.
   def on_rate_limit_exhausted(_error)
     run = arguments.first

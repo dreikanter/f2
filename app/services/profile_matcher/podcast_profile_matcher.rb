@@ -7,7 +7,7 @@ module ProfileMatcher
     # Mirrors Feedjira's ITunesRSS detection (namespace declaration outside
     # CDATA), so the profile claims exactly the feeds Feedjira will hand to
     # its iTunes parser. The <rss> shell check keeps an Atom feed with a
-    # stray itunes attribute out — Feedjira parses those as Atom.
+    # stray itunes attribute out; Feedjira parses those as Atom.
     ITUNES_NS = %r{xmlns:itunes\s?=\s?["']http://www\.itunes\.com/dtds/podcast-1\.0\.dtd["']}i
     CDATA = /<!\[CDATA\[.*?\]\]>/m
 

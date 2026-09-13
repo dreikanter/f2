@@ -1,12 +1,12 @@
 require "test_helper"
 
 class FeedScheduleTest < ActiveSupport::TestCase
-  test "should be valid with feed association" do
+  test "#valid? should return true with feed association" do
     schedule = build(:feed_schedule)
     assert schedule.valid?
   end
 
-  test "should require feed" do
+  test "#valid? should require feed" do
     schedule = build(:feed_schedule, feed: nil)
     assert_not schedule.valid?
     assert schedule.errors.of_kind?(:feed, :blank)

@@ -7,33 +7,33 @@ class SearchCredentialTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  test "should be valid with a registered provider and an api_key" do
+  test "#valid? should return true with a registered provider and an api_key" do
     credential = build(:search_credential, user: user)
     assert credential.valid?, credential.errors.full_messages.inspect
   end
 
-  test "should reject an unknown provider" do
+  test "#valid? should reject an unknown provider" do
     credential = build(:search_credential, user: user, provider: "made-up")
 
     refute credential.valid?
     assert_includes credential.errors[:provider], "is not included in the list"
   end
 
-  test "should reject a blank api_key" do
+  test "#valid? should reject a blank api_key" do
     credential = build(:search_credential, user: user, credential_data: { "api_key" => "" })
 
     refute credential.valid?
     assert_includes credential.errors[:base], "Enter your API key"
   end
 
-  test "should reject missing credential_data" do
+  test "#valid? should reject missing credential_data" do
     credential = build(:search_credential, user: user, credential_data: {})
 
     refute credential.valid?
     assert_includes credential.errors[:base], "Enter your API key"
   end
 
-  test "should enforce display_name uniqueness per user and provider" do
+  test "#valid? should enforce display_name uniqueness per user and provider" do
     create(:search_credential, user: user, provider: "serper", display_name: "Work")
     duplicate = build(:search_credential, user: user, provider: "serper", display_name: "Work")
 
@@ -41,20 +41,20 @@ class SearchCredentialTest < ActiveSupport::TestCase
     assert_includes duplicate.errors[:display_name], "has already been taken"
   end
 
-  test "should allow the same display_name across users" do
+  test "#valid? should allow the same display_name across users" do
     create(:search_credential, user: user, display_name: "Work")
     other = build(:search_credential, user: create(:user), display_name: "Work")
 
     assert other.valid?
   end
 
-  test "should auto-name a new credential when display_name is blank" do
+  test "#save! should auto-name a new credential when display_name is blank" do
     credential = create(:search_credential, user: user, display_name: nil)
 
     assert_match(/\ASerper /, credential.display_name)
   end
 
-  test "should encrypt credential_data so the raw column does not contain the API key" do
+  test "#save! should encrypt credential_data so the raw column does not contain the API key" do
     credential = create(:search_credential, user: user,
                                             credential_data: { "api_key" => "serper-secret-12345" })
 
@@ -107,7 +107,7 @@ class SearchCredentialTest < ActiveSupport::TestCase
     assert_equal ["brave", "brave-key"], arguments
   end
 
-  test "state enum should support the managed credential lifecycle" do
+  test "#validating!, #active!, and #inactive! should transition the credential state" do
     credential = create(:search_credential, user: user)
 
     assert credential.pending?
@@ -159,7 +159,7 @@ class SearchCredentialTest < ActiveSupport::TestCase
     assert_equal user, event.user
   end
 
-  test "destroying the default credential should clear the user's default reference" do
+  test "#destroy! should clear the user's default credential reference" do
     credential = create(:search_credential, :default, user: user)
 
     credential.destroy!
@@ -167,7 +167,7 @@ class SearchCredentialTest < ActiveSupport::TestCase
     assert_nil user.reload.default_search_credential_id
   end
 
-  test "user should expose owned search credentials" do
+  test "#search_credentials should expose the user's owned search credentials" do
     credential = create(:search_credential, user: user)
 
     assert_includes user.search_credentials, credential

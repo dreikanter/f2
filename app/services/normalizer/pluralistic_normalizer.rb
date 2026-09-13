@@ -7,18 +7,21 @@ module Normalizer
     private
 
     def normalize_content
-      title = raw_data.dig("title") || ""
+      title = raw_data["title"] || ""
       title.strip
     end
 
     def normalize_attachment_urls
       [cover_image_url].compact
-    rescue StandardError
+    rescue URI::InvalidURIError => e
+      # An unparseable image src is the source's problem: keep the post and take
+      # whatever the RSS enclosures offer instead.
+      Rails.error.report(e, context: { profile: "pluralistic", feed_id: feed_entry.feed&.id, entry_uid: feed_entry.uid })
       super
     end
 
     def cover_image_url
-      url = raw_data.dig("link") || ""
+      url = raw_data["link"] || ""
       page = page_fetcher.fetch(url)
       return nil if page.nil?
 

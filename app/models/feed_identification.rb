@@ -1,6 +1,6 @@
 class FeedIdentification < ApplicationRecord
-  POLLING_INTERVAL_MS = 2500
-  TIMEOUT_AFTER = 85.seconds
+  include PolledRun
+
   RETENTION = 7.days
 
   belongs_to :user
@@ -38,8 +38,8 @@ class FeedIdentification < ApplicationRecord
   #
   # Two concurrent submits can both look the row up before either inserts; the
   # loser's insert then hits the user+input unique index. Returns false in that
-  # case — the winner's detection is already in flight, so the stale copy
-  # should be discarded — and true when this call (re)started detection.
+  # case (the winner's detection is already in flight, so the stale copy
+  # should be discarded) and true when this call (re)started detection.
   def restart_detection
     started_at = Time.current
     run_id = SecureRandom.uuid
@@ -68,16 +68,7 @@ class FeedIdentification < ApplicationRecord
   # @param run_id [String] run token captured by the timeout job
   # @return [FeedIdentification] self
   def timeout!(run_id:)
-    updated = self.class.where(id: id, status: :processing, run_id: run_id)
-                        .update_all(status: :timed_out, run_id: SecureRandom.uuid, updated_at: Time.current)
-    reload if updated.positive?
-    self
-  end
-
-  def self.polling_max_polls
-    # The first poll is immediate. Two extra polls leave one interval for Solid
-    # Queue to dispatch a due timeout and let the final poll render its result.
-    TIMEOUT_AFTER.in_milliseconds.div(POLLING_INTERVAL_MS) + 2
+    settle_timeout!(run_id: run_id, status: :timed_out, from: :processing)
   end
 
   # The candidate the chooser preselects and the new-feed form is built from: the
@@ -97,7 +88,7 @@ class FeedIdentification < ApplicationRecord
 
   # Profile keys of the working candidates, in rank order. An edit's confirming
   # save only applies a source when the submitted profile is one of
-  # these — a settled, source-reading candidate.
+  # these: a settled, source-reading candidate.
   def working_candidate_profile_keys
     working_candidates.map(&:profile_key)
   end

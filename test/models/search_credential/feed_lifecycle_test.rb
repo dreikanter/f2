@@ -1,7 +1,7 @@
 require "test_helper"
 
 class SearchCredential::FeedLifecycleTest < ActiveSupport::TestCase
-  test "deactivation preserves dependent feed states" do
+  test "#deactivate! should preserve dependent feed states" do
     credential = create(:search_credential, :active)
     enabled = create(:feed, :enabled, user: credential.user, search_credential: credential)
     disabled = create(:feed, :disabled, user: credential.user, search_credential: credential)
@@ -13,7 +13,7 @@ class SearchCredential::FeedLifecycleTest < ActiveSupport::TestCase
     assert_equal credential.id, enabled.search_credential_id
   end
 
-  test "destroy nullifies the reference and preserves dependent feed states" do
+  test "#destroy! should nullify the reference and preserve dependent feed states" do
     credential = create(:search_credential, :active)
     enabled = create(:feed, :enabled, user: credential.user, search_credential: credential)
     disabled = create(:feed, :disabled, user: credential.user, search_credential: credential)

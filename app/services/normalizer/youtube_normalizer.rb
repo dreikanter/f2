@@ -3,7 +3,7 @@ module Normalizer
     private
 
     def normalize_content
-      raw_data.dig("title") || ""
+      raw_data["title"] || ""
     end
 
     def normalize_attachment_urls
@@ -15,7 +15,7 @@ module Normalizer
     def normalize_comments
       return [] unless include_description?
 
-      description = strip_html_preserving_paragraphs(raw_data.dig("content"))
+      description = strip_html_preserving_paragraphs(raw_data["content"])
       [description].compact_blank
     end
 

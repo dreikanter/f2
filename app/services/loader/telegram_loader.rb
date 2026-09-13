@@ -1,7 +1,7 @@
 module Loader
   # Fetches a public Telegram channel's web preview at t.me/s/<channel>.
   #
-  # Telegram renders recent channel posts — text and photos — as plain HTML
+  # Telegram renders recent channel posts (text and photos) as plain HTML
   # on this preview page, with no API key or login. We reuse it instead of
   # the MTProto API, which keeps the integration simple and free; the trade-off
   # is that channels without a public web preview (restricted content, groups,
@@ -38,7 +38,7 @@ module Loader
     private
 
     # A missing message wall means t.me silently served something other than
-    # the preview — the info page of a preview-less channel, group, or user,
+    # the preview: the info page of a preview-less channel, group, or user,
     # or telegram.org for an unclaimed name. Without this check such feeds
     # would look like valid channels that never post.
     def ensure_preview_page!(body, name)

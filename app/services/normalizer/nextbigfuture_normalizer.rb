@@ -3,12 +3,12 @@ module Normalizer
     private
 
     def normalize_content
-      title = raw_data.dig("title") || ""
+      title = raw_data["title"] || ""
       title.strip
     end
 
     def normalize_comments
-      summary = raw_data.dig("summary") || ""
+      summary = raw_data["summary"] || ""
       return [] if summary.blank?
 
       text = strip_html(summary)
@@ -23,7 +23,7 @@ module Normalizer
     end
 
     def fetch_featured_image
-      link = raw_data.dig("link") || raw_data.dig("url")
+      link = raw_data["link"] || raw_data["url"]
       return nil if link.blank?
 
       html = page_fetcher.fetch(link)

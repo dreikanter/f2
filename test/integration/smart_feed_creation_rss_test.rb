@@ -3,12 +3,13 @@ require "test_helper"
 # Integration test for User Story 1 (RSS happy path).
 # Walks paste → detection → preview cache → save → enabled feed.
 class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
+  include CacheTestHelpers
   include ActiveJob::TestHelper
 
   setup { clear_enqueued_jobs }
 
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   def access_token
@@ -38,14 +39,6 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
     XML
   end
 
-  def with_memory_cache
-    previous = Rails.cache
-    Rails.cache = ActiveSupport::Cache::MemoryStore.new
-    yield
-  ensure
-    Rails.cache = previous
-  end
-
   test "#post should drive RSS happy path: paste, detect, preview, save enabled" do
     sign_in_as(user)
     access_token
@@ -53,12 +46,12 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
       .to_return(status: 200, body: rss_body, headers: { "Content-Type" => "application/xml" })
 
     with_memory_cache do
-      post feed_identifications_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      post feed_identification_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
 
       perform_enqueued_jobs
 
-      get feed_identifications_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      get feed_identification_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
       assert_includes response.body, 'data-identification-state="complete"'
       assert_includes response.body, "RSS Feed"
@@ -100,10 +93,10 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
       .to_return(status: 200, body: rss_body, headers: { "Content-Type" => "application/xml" })
 
     with_memory_cache do
-      post feed_identifications_path, params: { url: xkcd_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      post feed_identification_path, params: { url: xkcd_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       perform_enqueued_jobs
 
-      get feed_identifications_path, params: { url: xkcd_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      get feed_identification_path, params: { url: xkcd_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
       assert_includes response.body, "XKCD"
     end
@@ -114,7 +107,7 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
     create(:feed_identification, user: user, input: feed_url, status: :processing, started_at: Time.current)
 
     assert_difference("FeedIdentification.count", -1) do
-      delete feed_identifications_path,
+      delete feed_identification_path,
              params: { url: feed_url },
              headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end

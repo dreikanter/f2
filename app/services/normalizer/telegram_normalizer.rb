@@ -3,6 +3,8 @@ module Normalizer
   # content (with the t.me permalink appended, like the other profiles), and
   # channel photos / video thumbnails become attachments.
   class TelegramNormalizer < RssNormalizer
+    include ProfilePayload
+
     private
 
     def normalize_content
@@ -12,14 +14,6 @@ module Normalizer
       fragment = Nokogiri::HTML::DocumentFragment.parse(html)
       fragment.css("br").each { |br| br.replace("\n") }
       fragment.text.strip
-    end
-
-    def normalize_attachment_urls
-      Array(raw_data["images"]).uniq
-    end
-
-    def original_url
-      @original_url ||= raw_data["url"].to_s
     end
   end
 end

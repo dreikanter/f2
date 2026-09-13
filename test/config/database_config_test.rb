@@ -3,7 +3,7 @@ require "test_helper"
 # The scaffolded database.yml gave production and staging their own `cache` and
 # `queue` databases pointing at migrations paths that were never created, so
 # db:prepare created them empty. Solid Cache connected to that empty database
-# and every rate-limited request — sign-in among them — died on a missing
+# and every rate-limited request (sign-in among them) died on a missing
 # solid_cache_entries table. The solid_* tables live in the primary schema.
 class DatabaseConfigTest < ActiveSupport::TestCase
   DEPLOYED_ENVIRONMENTS = %w[production staging].freeze

@@ -21,17 +21,17 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     }
   end
 
-  test "validates the live FeedProfile::PROFILES registry" do
+  test ".validate! should validate the live FeedProfile::PROFILES registry" do
     assert_nothing_raised { FeedProfileValidator.validate! }
   end
 
-  test "accepts a valid registry" do
+  test ".validate! should accept a valid registry" do
     assert_nothing_raised do
       FeedProfileValidator.validate!("sample" => valid_entry)
     end
   end
 
-  test "accepts an explicitly unscheduled profile" do
+  test ".validate! should accept an explicitly unscheduled profile" do
     assert_nothing_raised do
       FeedProfileValidator.validate!("sample" => valid_entry.merge(scheduled: false))
     end
@@ -43,7 +43,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     end
   end
 
-  test "rejects entry missing required key" do
+  test ".validate! should reject entry missing required key" do
     entry = valid_entry.except(:display_name)
 
     error = assert_raises(FeedProfileValidator::Error) do
@@ -53,7 +53,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     assert_includes error.message, "display_name"
   end
 
-  test "requires the scheduling capability to be explicit" do
+  test ".validate! should require the scheduling capability to be explicit" do
     entry = valid_entry.except(:scheduled)
 
     error = assert_raises(FeedProfileValidator::Error) do
@@ -63,7 +63,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     assert_includes error.message, "scheduled"
   end
 
-  test "rejects entry with unknown input_shape" do
+  test ".validate! should reject entry with unknown input_shape" do
     entry = valid_entry.merge(input_shape: :twitter)
 
     error = assert_raises(FeedProfileValidator::Error) do
@@ -73,7 +73,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     assert_includes error.message, "input_shape"
   end
 
-  test "rejects stage entry that is a bare string instead of {class:, config:}" do
+  test ".validate! should reject stage entry that is a bare string instead of {class:, config:}" do
     entry = valid_entry.merge(loader: "Loader::HttpLoader")
 
     error = assert_raises(FeedProfileValidator::Error) do
@@ -83,7 +83,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     assert_includes error.message, "loader"
   end
 
-  test "rejects stage entry missing class" do
+  test ".validate! should reject stage entry missing class" do
     entry = valid_entry.merge(loader: { config: {} })
 
     error = assert_raises(FeedProfileValidator::Error) do
@@ -94,7 +94,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     assert_includes error.message, "class"
   end
 
-  test "rejects unknown extra keys at top level" do
+  test ".validate! should reject unknown extra keys at top level" do
     entry = valid_entry.merge(rogue_key: 42)
 
     error = assert_raises(FeedProfileValidator::Error) do
@@ -104,7 +104,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     assert_includes error.message, "rogue_key"
   end
 
-  test "requires a loader output_schema when depends_on_ai is true" do
+  test ".validate! should require a loader output_schema when depends_on_ai is true" do
     entry = valid_entry.merge(depends_on_ai: true)
 
     error = assert_raises(FeedProfileValidator::Error) do
@@ -114,7 +114,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     assert_includes error.message, "loader.config.output_schema is required when depends_on_ai is true"
   end
 
-  test "accepts AI profile with a loader output_schema" do
+  test ".validate! should accept AI profile with a loader output_schema" do
     entry = valid_entry.except(:matcher).merge(
       depends_on_ai: true,
       loader: { class: "Loader::LlmLoader", config: { output_schema: { "type" => "object" } } }
@@ -125,7 +125,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     end
   end
 
-  test "requires a matcher for non-AI profiles" do
+  test ".validate! should require a matcher for non-AI profiles" do
     entry = valid_entry.except(:matcher)
 
     error = assert_raises(FeedProfileValidator::Error) do
@@ -135,7 +135,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     assert_includes error.message, "matcher is required for non-AI profiles"
   end
 
-  test "accepts an AI profile without a matcher (structural detection exclusion)" do
+  test ".validate! should accept an AI profile without a matcher (structural detection exclusion)" do
     entry = valid_entry.except(:matcher)
                        .merge(depends_on_ai: true,
                               loader: { class: "Loader::LlmLoader", config: { output_schema: { "type" => "object" } } })
@@ -145,7 +145,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     end
   end
 
-  test "rejects an AI profile that registers a matcher" do
+  test ".validate! should reject an AI profile that registers a matcher" do
     entry = valid_entry.merge(depends_on_ai: true,
                               loader: { class: "Loader::LlmLoader", config: { output_schema: { "type" => "object" } } })
 

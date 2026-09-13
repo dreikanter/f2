@@ -6,11 +6,7 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
   setup { clear_enqueued_jobs }
 
   def user
-    @user ||= create(:user)
-  end
-
-  def other_user
-    @other_user ||= create(:user)
+    @user ||= regular_user
   end
 
   def credential

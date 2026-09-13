@@ -1,7 +1,7 @@
 require "test_helper"
 
 class FeedPreview::SearchCredentialDigestTest < ActiveSupport::TestCase
-  test "changing the search credential changes the preview digest" do
+  test ".digest_for should change when the search credential changes" do
     profile_key = FeedProfile.ai_profile_keys.first
     params = { FeedProfile.source_key_for(profile_key) => "Ruby news" }
     ai_credential_id = SecureRandom.uuid

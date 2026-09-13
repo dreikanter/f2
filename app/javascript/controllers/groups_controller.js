@@ -1,6 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 import { csrfToken } from "controllers/helpers/csrf_token"
 
+// Stands in for the token id once the select is cleared. The endpoint resolves
+// it to no token and answers with the "pick a token" selector, so the previous
+// token's groups can't linger.
+const NO_TOKEN = "none"
+
 // Loads the target-group selector for the chosen access token: fetches the
 // groups endpoint and lets the returned turbo-stream replace the selector
 // partial (including its server-rendered error states).
@@ -21,7 +26,7 @@ export default class extends Controller {
   // Starts a background refresh of the selected token's groups. The returned
   // turbo-stream swaps the selector into its polling state; the current
   // (possibly unsaved) selection travels along so the swap doesn't reset it.
-  // The button can't be a form submit — the selector lives inside the feed
+  // The button can't be a form submit; the selector lives inside the feed
   // form, and forms don't nest.
   async refreshGroups(event) {
     if (!this.hasRefreshEndpointValue || !this.hasTokenSelectTarget) return
@@ -30,7 +35,7 @@ export default class extends Controller {
     if (!tokenId) return
 
     // Disable the button before anything awaits, so a double click can't start
-    // a second refresh — and do it here rather than leaving it to the
+    // a second refresh, and do it here rather than leaving it to the
     // loading-button controller, which may not have connected yet.
     const button = event.currentTarget
     if (button.disabled) return
@@ -63,9 +68,7 @@ export default class extends Controller {
   }
 
   async loadGroups(tokenId) {
-    if (!tokenId) return
-
-    const url = this.endpointValue.replace(":access_token_id", tokenId)
+    const url = this.endpointValue.replace(":access_token_id", tokenId || NO_TOKEN)
 
     try {
       const response = await fetch(url, { headers: { "Accept": "text/vnd.turbo-stream.html" } })

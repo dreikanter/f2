@@ -204,7 +204,7 @@ class PostPublishJobTest < ActiveJob::TestCase
     subject = access_token.rate_limit_subject
 
     freeze_time do
-      # Leave 5 POST tokens — one short of this post's true cost of 6
+      # Leave 5 POST tokens, one short of this post's true cost of 6
       # (1 post + 2 comments + 3 attachments). A run that counted only the post
       # would publish; counting the extras throttles it before any HTTP call.
       drain_freefeed(subject, :post, remaining: 5)
@@ -350,7 +350,7 @@ class PostPublishJobTest < ActiveJob::TestCase
         "the throttled post and its successor must remain, in order"
 
       travel(2.seconds)                   # refills one token (post rate is 0.5/s)
-      PostPublishJob.perform_now(feed.id) # post-2 resumes — the same post, before post-3
+      PostPublishJob.perform_now(feed.id) # post-2 resumes: the same post, before post-3
       travel(2.seconds)
       PostPublishJob.perform_now(feed.id) # post-3
     end

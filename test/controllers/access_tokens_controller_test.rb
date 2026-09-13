@@ -2,7 +2,7 @@ require "test_helper"
 
 class AccessTokensControllerTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   def access_token
@@ -45,7 +45,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
   test "#index should not display other users' tokens to admins" do
     other_token = create(:access_token, user: create(:user))
-    sign_in_as create(:user, :admin)
+    sign_in_as admin_user
     get access_tokens_path
 
     assert_response :success
@@ -217,7 +217,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
   test "#show should not render other user's token for admins" do
     other_token = create(:access_token, user: create(:user))
-    sign_in_as create(:user, :admin)
+    sign_in_as admin_user
     get access_token_path(other_token)
 
     assert_response :not_found

@@ -39,7 +39,7 @@ export default class extends Controller {
     } catch (error) {
       if (error.name === "AbortError") return
 
-      console.error("Failed to refresh preview", error)
+      this.application.handleError(error, "Failed to refresh preview", { controller: this })
       window.alert("Unable to refresh the preview. Please try again.")
     } finally {
       if (this._inFlight === request) this._inFlight = null

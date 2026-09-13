@@ -1,14 +1,6 @@
 require "test_helper"
 
 class Admin::SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
-  def admin_user
-    @admin_user ||= begin
-      user = create(:user)
-      create(:permission, user: user, name: "admin")
-      user
-    end
-  end
-
   def search_credential
     @search_credential ||= create(:search_credential, :active)
   end

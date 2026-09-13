@@ -2,7 +2,7 @@ require "test_helper"
 
 class Feeds::SearchCredentialGateTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   test "create saves a draft and redirects to search credential setup" do

@@ -32,7 +32,7 @@ module StatsRecorder
     record_stats(total_duration: total_duration)
   end
 
-  def record_error_stats(error, current_step: nil)
+  def record_error_stats(current_step: nil)
     error_stats = { failed_at_step: current_step }
     error_stats[:total_duration] = total_duration if respond_to?(:total_duration)
     record_stats(error_stats)

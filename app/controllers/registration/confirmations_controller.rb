@@ -7,8 +7,7 @@ class Registration::ConfirmationsController < ApplicationController
 
   def create
     if can_send_confirmation_email?
-      ProfileMailer.account_confirmation(user).deliver_later
-      Event.create!(type: "mail.profile_mailer.account_confirmation", user: user, subject: user, level: :info)
+      ProfileMailer.deliver_to(:account_confirmation, user)
     end
     redirect_to registration_confirmation_pending_path, notice: "If an account exists with that email, we will send you a confirmation link."
   end

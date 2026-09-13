@@ -4,7 +4,7 @@ import { observeProfileChange } from "controllers/helpers/observe_profile_change
 
 // Shows the AI Settings section only for AI-backed profiles (disabling its
 // selects while hidden so a non-AI feed submits no provider/model), and
-// rebuilds the model list from the chosen provider's embedded models — no
+// rebuilds the model list from the chosen provider's embedded models without a
 // server round-trip.
 export default class extends Controller {
   static targets = ["credentialSelect", "searchCredentialSelect", "modelSelect"]

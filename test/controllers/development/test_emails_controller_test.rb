@@ -1,14 +1,6 @@
 require "test_helper"
 
 class Development::TestEmailsControllerTest < ActionDispatch::IntegrationTest
-  def dev_user
-    @dev_user ||= create(:user, :dev)
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   test "#create should redirect unauthenticated users" do
     post development_email_preview_test_email_path("passwords_mailer-reset")
 

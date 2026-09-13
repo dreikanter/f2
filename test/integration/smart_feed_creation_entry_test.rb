@@ -4,7 +4,7 @@ require "test_helper"
 # only the selected mode's panel is visible.
 class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   test "#new should render all modes with the link mode selected" do

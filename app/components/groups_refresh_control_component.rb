@@ -10,8 +10,8 @@ class GroupsRefreshControlComponent < ViewComponent::Base
   # its box and nothing around it moves when the state changes. The refreshing
   # button is disabled, so it can't kick off a second refresh.
   #
-  # Wiring the trigger stays with the caller — a form submit on the access token
-  # page, a Stimulus click inside the feed form — and its attributes are passed
+  # Wiring the trigger stays with the caller (a form submit on the access token
+  # page, a Stimulus click inside the feed form), and its attributes are passed
   # through. `key_prefix` namespaces the testing hooks ("access_token", "feed").
   def initialize(key_prefix:, refreshing: false, available: true, compact: false, **trigger_attrs)
     @key_prefix = key_prefix

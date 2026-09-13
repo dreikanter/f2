@@ -8,25 +8,13 @@ class Admin::EmailUpdatesController < ApplicationController
     user = User.find(params[:user_id])
     authorize user, :update_email?
 
-    if new_email.blank?
-      redirect_to edit_admin_user_email_update_path(user), alert: "Email address cannot be blank."
-      return
-    end
-
-    if new_email == user.email_address
-      redirect_to edit_admin_user_email_update_path(user), alert: "New email is the same as the current email."
-      return
-    end
-
-    if User.exists?(email_address: new_email)
-      redirect_to edit_admin_user_email_update_path(user), alert: "Email address is already taken."
-      return
-    end
+    return redirect_to edit_admin_user_email_update_path(user), alert: "Email address cannot be blank." if new_email.blank?
+    return redirect_to edit_admin_user_email_update_path(user), alert: "New email is the same as the current email." if new_email == user.email_address
+    return redirect_to edit_admin_user_email_update_path(user), alert: "Email address is already taken." if User.exists?(email_address: new_email)
 
     if require_confirmation?
       if user.update(unconfirmed_email: new_email)
-        ProfileMailer.email_change_confirmation(user).deliver_later
-        Event.create!(type: "mail.profile_mailer.email_change_confirmation", user: user, subject: user, level: :info)
+        ProfileMailer.deliver_to(:email_change_confirmation, user)
         redirect_to admin_user_path(user), notice: "Confirmation email sent to #{new_email}. User must confirm before change takes effect."
       else
         redirect_to edit_admin_user_email_update_path(user), alert: "Failed to update email address."

@@ -8,29 +8,14 @@ class Development::SentEmailsController < ApplicationController
     authorize :access, :dev?
     id = params[:id]
 
-    unless id.match?(/\A[0-9a-f-]{36}\z/)
-      redirect_to development_sent_emails_path, alert: "Invalid email ID"
-      return
-    end
-
-    unless email_storage.email_exists?(id)
-      redirect_to development_sent_emails_path, alert: "Email not found"
-      return
-    end
+    return redirect_to development_sent_emails_path, alert: "Invalid email ID" unless id.match?(/\A[0-9a-f-]{36}\z/)
+    return redirect_to development_sent_emails_path, alert: "Email not found" unless email_storage.email_exists?(id)
 
     @email = email_storage.load_email(id)
 
     unless @email
       redirect_to development_sent_emails_path, alert: "Failed to load email"
     end
-  end
-
-  def purge
-    authorize :access, :dev?
-    email_storage.purge
-    redirect_to development_sent_emails_path, success: "All emails purged"
-  rescue => e
-    redirect_to development_sent_emails_path, alert: "Failed to purge emails: #{e.message}"
   end
 
   private

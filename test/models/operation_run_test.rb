@@ -58,4 +58,14 @@ class OperationRunTest < ActiveSupport::TestCase
     assert run.in_progress?
     assert_not run.in_progress?(stale_after: 15.minutes)
   end
+
+  test "#unsuccessful? should cover both unsuccessful terminal statuses" do
+    run = create(:operation_run)
+
+    OperationRun.statuses.each_key do |status|
+      run.update!(status: status)
+
+      assert_equal status.in?(%w[failed timed_out]), run.unsuccessful?, status
+    end
+  end
 end

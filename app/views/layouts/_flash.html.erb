@@ -1,19 +1,19 @@
 <%# locals: () %>
 <div class="space-y-3 mb-6 empty:hidden" id="flash-messages">
   <% if success %>
-    <%= render AlertComponent.new(variant: :success) do %>
+    <%= render AlertComponent.new(variant: :success, data: { key: "flash.success" }) do %>
       <span><%= sanitize(success) %></span>
     <% end %>
   <% end %>
 
   <% if notice %>
-    <%= render AlertComponent.new(variant: :info) do %>
+    <%= render AlertComponent.new(variant: :info, data: { key: "flash.notice" }) do %>
       <span><%= sanitize(notice) %></span>
     <% end %>
   <% end %>
 
   <% if alert %>
-    <%= render AlertComponent.new(variant: :error) do %>
+    <%= render AlertComponent.new(variant: :error, data: { key: "flash.alert" }) do %>
       <span><%= sanitize(alert) %></span>
     <% end %>
   <% end %>

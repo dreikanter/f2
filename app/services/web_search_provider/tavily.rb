@@ -1,5 +1,5 @@
 module WebSearchProvider
-  # tavily.com — LLM-oriented search with content snippets.
+  # tavily.com: LLM-oriented search with content snippets.
   class Tavily < Base
     ENDPOINT = "https://api.tavily.com/search"
     # An exhausted key gets Tavily's own statuses: 432 plan limit, 433
@@ -13,14 +13,7 @@ module WebSearchProvider
     end
 
     def request(query, count)
-      http.post(
-        ENDPOINT,
-        body: { query: query, max_results: count }.to_json,
-        headers: {
-          "Authorization" => "Bearer #{api_key}",
-          "Content-Type" => "application/json"
-        }
-      )
+      post_json({ query: query, max_results: count }, "Authorization" => "Bearer #{api_key}")
     end
 
     def map_results(json)

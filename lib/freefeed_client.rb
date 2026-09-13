@@ -3,10 +3,12 @@
 # Minimal client for FreeFeed API focused on specific application needs.
 # Provides high-level methods for token validation and group management.
 class FreefeedClient
+  include SubscriberStatistics
+
   class Error < StandardError; end
   class UnauthorizedError < Error; end
   class InvalidTokenError < UnauthorizedError; end
-  # The token is valid but isn't allowed to perform this action — e.g. it lost
+  # The token is valid but isn't allowed to perform this action; for example, it lost
   # permission to post to a target group. Deliberately not a subclass of
   # UnauthorizedError so callers don't mistake it for a dead token and disable it.
   class ForbiddenError < Error; end
@@ -191,8 +193,8 @@ class FreefeedClient
       elsif response.status == 403
         # FreeFeed overloads 403 for both auth problems and "you can't do this
         # here" (e.g. posting to a group you've lost access to). The token itself
-        # is still valid, so default to ForbiddenError — callers scope the fallout
-        # to the affected resource — rather than UnauthorizedError, which would
+        # is still valid, so default to ForbiddenError (callers scope the fallout
+        # to the affected resource), rather than UnauthorizedError, which would
         # disable the whole token and every feed on it.
         raise ForbiddenError, err || "Forbidden"
       else
@@ -237,11 +239,6 @@ class FreefeedClient
     seconds = response.headers["retry-after"].to_i
     seconds.positive? ? seconds + RETRY_AFTER_BUFFER : DEFAULT_RETRY_AFTER
   end
-
-  # TBD: Consider simplifying response processing. Probably keep the keys
-  #   as is, just coerce some of the values when it makes sense. Also consider
-  #   unifying draft implementation of the response processing methods
-  #   since they are basically identical.
 
   def parse_whoami_response(body)
     data = JSON.parse(body)

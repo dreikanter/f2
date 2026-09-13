@@ -9,7 +9,7 @@ class EventTest < ActiveSupport::TestCase
     @feed ||= create(:feed)
   end
 
-  test "should create event with minimal attributes" do
+  test ".create! should create event with minimal attributes" do
     event = Event.create!(type: "test_event")
 
     assert_equal "test_event", event.type
@@ -21,7 +21,7 @@ class EventTest < ActiveSupport::TestCase
     assert_nil event.expires_at
   end
 
-  test "should create event with all attributes" do
+  test ".create! should create event with all attributes" do
     event = Event.create!(
       type: "feed_refresh_event",
       level: :error,
@@ -41,14 +41,14 @@ class EventTest < ActiveSupport::TestCase
     assert event.expires_at.present?
   end
 
-  test "should validate required fields" do
+  test "#valid? should validate required fields" do
     event = Event.new
 
     assert_not event.valid?
     assert event.errors.of_kind?(:type, :blank)
   end
 
-  test "should validate level enum" do
+  test "#level= should reject an invalid level" do
     event = Event.new(type: "test_event")
 
     assert event.valid?
@@ -58,7 +58,7 @@ class EventTest < ActiveSupport::TestCase
     end
   end
 
-  test "should scope recent events" do
+  test ".recent should order events from newest to oldest" do
     old_event = Event.create!(type: "old_event", created_at: 2.days.ago)
     new_event = Event.create!(type: "new_event", created_at: 1.hour.ago)
 
@@ -67,7 +67,7 @@ class EventTest < ActiveSupport::TestCase
     assert_equal [new_event, old_event], recent_events.to_a
   end
 
-  test "should identify expired events" do
+  test "#expired? should identify expired events" do
     expired_event = Event.create!(type: "expired_event", expires_at: 1.hour.ago)
     active_event = Event.create!(type: "active_event", expires_at: 1.hour.from_now)
     permanent_event = Event.create!(type: "permanent_event")
@@ -77,7 +77,7 @@ class EventTest < ActiveSupport::TestCase
     assert_not permanent_event.expired?
   end
 
-  test "should scope expired events" do
+  test ".expired and .not_expired should separate expired events" do
     expired_event = Event.create!(type: "expired_event", expires_at: 1.hour.ago)
     active_event = Event.create!(type: "active_event", expires_at: 1.hour.from_now)
     permanent_event = Event.create!(type: "permanent_event")
@@ -141,7 +141,7 @@ class EventTest < ActiveSupport::TestCase
     assert_not EventReference.exists?(reference.id)
   end
 
-  test "should work with polymorphic subjects" do
+  test "#subject should work with polymorphic subjects" do
     feed_event = Event.create!(type: "feed_event", subject: feed)
     user_event = Event.create!(type: "user_event", subject: user)
 
@@ -154,7 +154,7 @@ class EventTest < ActiveSupport::TestCase
     assert_equal user, user_event.subject
   end
 
-  test "should store complex metadata in JSONB" do
+  test ".create! should store complex metadata in JSONB" do
     complex_metadata = {
       request: { url: "https://example.com", method: "GET" },
       response: { status: 200, headers: { "content-type" => "application/xml" } },

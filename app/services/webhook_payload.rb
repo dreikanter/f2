@@ -1,6 +1,6 @@
 # One reader for a webhook delivery payload. Both the ingress
 # service, which answers a 422 synchronously, and the normalizer, which builds
-# the Post later from the stored copy, go through it — so there is no second
+# the Post later from the stored copy, go through it, so there is no second
 # reading of a field to keep in sync with the first.
 class WebhookPayload
   def initialize(data)

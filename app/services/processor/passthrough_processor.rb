@@ -25,16 +25,5 @@ module Processor
       end
       Result.new(entries: entries, recognized: true)
     end
-
-    private
-
-    def parse_time(value)
-      return value if value.is_a?(Time) || value.is_a?(ActiveSupport::TimeWithZone)
-      return nil if value.blank?
-
-      Time.parse(value.to_s)
-    rescue ArgumentError
-      nil
-    end
   end
 end

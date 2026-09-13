@@ -2,11 +2,7 @@ require "test_helper"
 
 class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
   def admin
-    @admin ||= create(:user).tap { |u| u.permissions.create!(name: "admin") }
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
+    admin_user
   end
 
   def target_user
@@ -23,8 +19,7 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-stream[action='replace'][target='available-invites-value']"
     assert_select "turbo-stream[action='replace'][target='available-invites-input-wrapper-#{target_user.id}']"
     assert_select "turbo-stream[action='replace'][target='flash-messages']" do
-      assert_select "div[id='flash-messages']"
-      assert_select ".bg-success-subtle", text: /Available invites updated successfully/
+      assert_select "#flash-messages [data-key='flash.success']", text: /Available invites updated successfully/
     end
 
     target_user.reload
@@ -39,8 +34,7 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html", response.media_type
     assert_select "turbo-stream[action='replace'][target='flash-messages']" do
-      assert_select "div[id='flash-messages']"
-      assert_select ".bg-danger-subtle", text: /Failed to update available invites/
+      assert_select "#flash-messages [data-key='flash.alert']", text: /Failed to update available invites/
     end
 
     target_user.reload
@@ -55,8 +49,7 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html", response.media_type
     assert_select "turbo-stream[action='replace'][target='flash-messages']" do
-      assert_select "div[id='flash-messages']"
-      assert_select ".bg-danger-subtle", text: /Failed to update available invites/
+      assert_select "#flash-messages [data-key='flash.alert']", text: /Failed to update available invites/
     end
 
     target_user.reload

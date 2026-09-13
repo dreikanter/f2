@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 // Drives a button's loading state across a Turbo form submission:
 // - on submit start, disables the button and swaps the default icon for a spinner
-// - on submit end, resets it — but never sooner than minDuration after the start,
+// - on submit end, resets it, but never sooner than minDuration after the start,
 //   so the spinner stays visible long enough to read even when the server is fast
 export default class extends Controller {
   static targets = ["button", "default", "loading"]

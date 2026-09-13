@@ -2,15 +2,7 @@ require "test_helper"
 
 class DevelopmentsControllerTest < ActionDispatch::IntegrationTest
   def user
-    @user ||= create(:user)
-  end
-
-  def admin_user
-    @admin_user ||= create(:user, :admin)
-  end
-
-  def dev_user
-    @dev_user ||= create(:user, :dev)
+    @user ||= regular_user
   end
 
   test "should show dev tools when authenticated as dev" do

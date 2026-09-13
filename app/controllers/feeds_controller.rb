@@ -5,8 +5,6 @@ class FeedsController < ApplicationController
   include StatePolling
   include FeedListing
 
-  before_action :refresh_model_catalogs, only: %i[new edit]
-
   # Operational fields, editable on any feed.
   ALWAYS_PERMITTED_PARAMS = %i[
     name
@@ -29,10 +27,10 @@ class FeedsController < ApplicationController
 
   def index
     authorize Feed
-    scope = policy_scope(Feed)
-    @active_feed_count = scope.enabled.count
-    @inactive_feed_count = scope.disabled.count
-    @draft_feed_count = scope.draft.count
+    counts = policy_scope(Feed).group(:state).count
+    @active_feed_count = counts.fetch("enabled", 0)
+    @inactive_feed_count = counts.fetch("disabled", 0)
+    @draft_feed_count = counts.fetch("draft", 0)
     @sortable_presenter = sortable_presenter
     @feeds = paginate_scope
     @has_active_token = current_user.access_tokens.active.exists?
@@ -81,7 +79,7 @@ class FeedsController < ApplicationController
   # A live deterministic feed's source can be re-pointed, but only through
   # detection: a changed source URL re-runs identification and the confirming
   # save applies it only once a working candidate is verified. The
-  # engine stays fixed — deterministic ↔ AI is a new feed.
+  # engine stays fixed; deterministic ↔ AI is a new feed.
   def update
     @feed = load_feed
     authorize @feed
@@ -91,7 +89,7 @@ class FeedsController < ApplicationController
     # confirmed one falls through to the normal save below (with the source
     # applied), so enable/pause/schedule bookkeeping stays in one place. Capture
     # the decision before assign_attributes moves source_input onto the new URL.
-    source_change = mode_a_source_change?
+    source_change = deterministic_source_change?
     return propose_source_redetection if source_change && !source_change_confirmed?
 
     @feed.assign_attributes(update_feed_params)
@@ -142,10 +140,6 @@ class FeedsController < ApplicationController
     %w[ai webhook].include?(params[:mode]) ? params[:mode] : "link"
   end
 
-  def refresh_model_catalogs
-    current_user.ai_credentials.active.find_each(&:refresh_models_async)
-  end
-
   def enable_feed?
     params[:enable_feed] == "1"
   end
@@ -188,8 +182,8 @@ class FeedsController < ApplicationController
   end
 
   # True when a live deterministic feed's submitted source URL differs from the
-  # one it's anchored to — the only case that routes through re-detection.
-  def mode_a_source_change?
+  # one it's anchored to. This is the only case that routes through re-detection.
+  def deterministic_source_change?
     return false unless @feed.persisted? && !@feed.draft?
     return false if FeedProfile.depends_on_ai?(@feed.feed_profile_key)
 
@@ -239,7 +233,7 @@ class FeedsController < ApplicationController
     return render :edit, status: :unprocessable_entity unless @feed.update(operational_update_params)
 
     # A non-link never reaches detection; the engine is fixed in edit,
-    # so there's no AI mode to bridge to — just ask for a link.
+    # so there's no AI mode to bridge to; just ask for a link.
     if canonical_submitted_url.nil?
       return render_identification_state(
         attempted_url: submitted_source_raw,
@@ -333,7 +327,7 @@ class FeedsController < ApplicationController
   end
 
   def confirmed_source_change?
-    mode_a_source_change? && source_change_confirmed?
+    deterministic_source_change? && source_change_confirmed?
   end
 
   # Schema-driven so a profile-specific option isn't filtered out before it

@@ -23,11 +23,7 @@ class Admin::UserEmailStatusComponent < ViewComponent::Base
   end
 
   def time_value(time)
-    helpers.tag.time(
-      "#{time.to_date.to_fs(:long)} (#{helpers.short_time_ago(time)})",
-      datetime: time.iso8601,
-      title: time.to_fs(:long)
-    )
+    helpers.datetime_with_duration_tag(time)
   end
 
   def actions_value

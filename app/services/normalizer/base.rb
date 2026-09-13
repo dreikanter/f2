@@ -19,7 +19,8 @@ module Normalizer
       raise MissingUidError, "#{self.class.name} produced a Post with no uid" if post.uid.blank?
       raise MissingPublishedAtError, "#{self.class.name} produced a Post with no published_at" if post.published_at.blank?
 
-      # TBD: Consider renaming this field
+      # Not ActiveModel messages: these are the reasons a normalized post is
+      # held back, including deliberate skips like a bonus panel.
       post.validation_errors = validate_content
       post.status = post.validation_errors.empty? ? :enqueued : :rejected
       post
@@ -68,8 +69,8 @@ module Normalizer
     end
 
     # Every attachment URL must be an absolute public http(s) URL or be
-    # dropped (the attachment, not the post). Filtering here — the choke point
-    # every normalizer flows through — keeps a relative or local-path value (e.g.
+    # dropped (the attachment, not the post). Filtering here (the choke point
+    # every normalizer flows through) keeps a relative or local-path value (e.g.
     # a feed's `<img src="/etc/passwd">`) from reaching FileBuffer at publish,
     # where File.exist? would read it off the server (LFI).
     def attachment_urls

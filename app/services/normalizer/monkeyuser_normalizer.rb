@@ -9,7 +9,7 @@ module Normalizer
     end
 
     def normalize_content
-      title = raw_data.dig("title") || ""
+      title = raw_data["title"] || ""
       title.strip
     end
 
@@ -53,7 +53,7 @@ module Normalizer
     end
 
     def page_url
-      raw_data.dig("link") || ""
+      raw_data["link"] || ""
     end
 
     def page

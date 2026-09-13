@@ -21,7 +21,7 @@ class FeedProfile
             "supplementary" => { "type" => "array", "items" => { "type" => "string" } },
             "images" => { "type" => "array", "items" => { "type" => "string" } },
             # An explicit null signals the digest/standing-query regime; a real
-            # permalink signals feed-style. The key is always required —
+            # permalink signals feed-style. The key is always required;
             # a missing key is malformed, not a digest.
             "source_url" => { "type" => ["string", "null"] },
             "published_at" => { "type" => "string" }

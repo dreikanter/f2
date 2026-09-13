@@ -42,13 +42,15 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     assert_nothing_raised { FeedPreviewJob.perform_now("00000000-0000-0000-0000-000000000000", RUN_ID) }
   end
 
-  test "#perform should swallow CredentialMissing" do
+  test "#perform should settle unavailable AI extraction without usage or retries" do
     preview = create(:feed_preview, feed_profile_key: "llm",
                      params: { "prompt" => "https://example.com" }, run_id: RUN_ID)
 
-    FeedPreviewWorkflow.stub(:new, ->(*, **) { raise LlmClient::CredentialMissing, "no credential" }) do
-      assert_nothing_raised { FeedPreviewJob.perform_now(preview.id, RUN_ID) }
+    assert_no_difference -> { LlmUsage.count } do
+      assert_no_enqueued_jobs { FeedPreviewJob.perform_now(preview.id, RUN_ID) }
     end
+    assert_predicate preview.reload, :failed?
+    assert_not_requested :any, /./
   end
 
   test "#perform should mark the preview failed and not retry when the loader fails" do

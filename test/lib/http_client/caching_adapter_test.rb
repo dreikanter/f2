@@ -5,14 +5,14 @@ class HttpClient::CachingAdapterTest < ActiveSupport::TestCase
     @client ||= HttpClient::CachingAdapter.new(timeout: 5, max_redirects: 5)
   end
 
-  test "is selectable through HttpClient.build" do
+  test ".build should select the caching adapter" do
     built = HttpClient.build(adapter: HttpClient::CachingAdapter)
 
     assert_instance_of HttpClient::CachingAdapter, built
     assert_kind_of HttpClient::FaradayAdapter, built
   end
 
-  test "caches a successful GET and serves repeats from cache" do
+  test "#get should cache a successful response and serve repeats from cache" do
     stub_request(:get, "https://example.com/feed")
       .to_return(status: 200, body: "feed body")
 
@@ -24,7 +24,7 @@ class HttpClient::CachingAdapterTest < ActiveSupport::TestCase
     assert_requested :get, "https://example.com/feed", times: 1
   end
 
-  test "caches each URL independently" do
+  test "#get should cache each URL independently" do
     stub_request(:get, "https://example.com/a").to_return(status: 200, body: "A")
     stub_request(:get, "https://example.com/b").to_return(status: 200, body: "B")
 
@@ -36,7 +36,7 @@ class HttpClient::CachingAdapterTest < ActiveSupport::TestCase
     assert_requested :get, "https://example.com/b", times: 1
   end
 
-  test "keys the cache by request headers" do
+  test "#get should key the cache by request headers" do
     stub_request(:get, "https://example.com/feed")
       .to_return(status: 200, body: "anon").then
       .to_return(status: 200, body: "with-ua")
@@ -49,7 +49,7 @@ class HttpClient::CachingAdapterTest < ActiveSupport::TestCase
     assert_requested :get, "https://example.com/feed", times: 2
   end
 
-  test "does not cache non-2xx responses" do
+  test "#get should not cache non-2xx responses" do
     stub_request(:get, "https://example.com/flaky")
       .to_return(status: 404, body: "missing").then
       .to_return(status: 200, body: "recovered")
@@ -63,7 +63,7 @@ class HttpClient::CachingAdapterTest < ActiveSupport::TestCase
     assert_requested :get, "https://example.com/flaky", times: 2
   end
 
-  test "does not cache raised errors" do
+  test "#get should not cache raised errors" do
     stub_request(:get, "https://example.com/blip")
       .to_raise(SocketError.new("getaddrinfo failed")).then
       .to_return(status: 200, body: "back online")
@@ -76,7 +76,7 @@ class HttpClient::CachingAdapterTest < ActiveSupport::TestCase
     assert_equal "back online", recovered.body
   end
 
-  test "re-fetches after the cache entry expires" do
+  test "#get should re-fetch after the cache entry expires" do
     expiring = HttpClient::CachingAdapter.new(cache_ttl: 0)
 
     stub_request(:get, "https://example.com/feed")
@@ -88,7 +88,7 @@ class HttpClient::CachingAdapterTest < ActiveSupport::TestCase
     assert_requested :get, "https://example.com/feed", times: 2
   end
 
-  test "does not cache POST requests" do
+  test "#post should not cache responses" do
     stub_request(:post, "https://example.com/submit")
       .to_return(status: 200, body: "one").then
       .to_return(status: 200, body: "two")
@@ -97,7 +97,7 @@ class HttpClient::CachingAdapterTest < ActiveSupport::TestCase
     assert_equal "two", client.post("https://example.com/submit").body
   end
 
-  test "still follows redirects like the Faraday adapter" do
+  test "#get should follow redirects like the Faraday adapter" do
     stub_request(:get, "https://example.com/redirect")
       .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
     stub_request(:get, "https://example.com/final")

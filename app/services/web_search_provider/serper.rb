@@ -1,19 +1,12 @@
 module WebSearchProvider
-  # serper.dev — Google SERP results.
+  # serper.dev: Google SERP results.
   class Serper < Base
     ENDPOINT = "https://google.serper.dev/search"
 
     private
 
     def request(query, count)
-      http.post(
-        ENDPOINT,
-        body: { q: query, num: count }.to_json,
-        headers: {
-          "X-API-KEY" => api_key,
-          "Content-Type" => "application/json"
-        }
-      )
+      post_json({ q: query, num: count }, "X-API-KEY" => api_key)
     end
 
     def map_results(json)

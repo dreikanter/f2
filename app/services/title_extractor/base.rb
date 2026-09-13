@@ -1,8 +1,8 @@
 module TitleExtractor
   # Base class for feed title extractors.
   #
-  # Constructor takes the same shape as ProfileMatcher::Base —
-  # (input, fetched_body) — so the detector can share one call shape
+  # Constructor takes the same shape as ProfileMatcher::Base:
+  # (input, fetched_body), so the detector can share one call shape
   # across matchers and title extractors.
   class Base
     attr_reader :input, :fetched_body
@@ -22,6 +22,19 @@ module TitleExtractor
 
     protected
 
+    # Account inputs arrive as a bare name, an @name, or a profile URL. The
+    # source supplies the host prefixes it uses; what survives is the first
+    # path segment.
+    def account_name(*prefixes)
+      stripped = input.to_s.strip.sub(/\A@/, "").sub(%r{\Ahttps?://}i, "")
+      prefixes.reduce(stripped) { |value, prefix| value.sub(prefix, "") }.split("/").first.to_s
+    end
+
+    def account_handle(*prefixes)
+      name = account_name(*prefixes)
+      name.empty? ? "" : "@#{name}"
+    end
+
     def hostname_from_url
       host = URI.parse(input.to_s).host.to_s.sub(/\Awww\./, "")
       host.presence
@@ -30,7 +43,7 @@ module TitleExtractor
     end
 
     # og:title of the fetched page, for sources whose profile URL resolves to
-    # HTML rather than a feed. Any parse trouble means "no title here" — the
+    # HTML rather than a feed. Any parse trouble means "no title here"; the
     # caller falls back to a handle derived from the input.
     def og_title
       return nil if fetched_body.blank?

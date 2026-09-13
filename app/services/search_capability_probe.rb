@@ -68,7 +68,7 @@ module SearchCapabilityProbe
       end
 
       # A renamed response field blanks that field on every result, while one
-      # sparse result is ordinary — so only a field that never arrives is a
+      # sparse result is ordinary, so only a field that never arrives is a
       # mapping failure.
       missing = %i[title snippet].select { |field| results.all? { |result| result.public_send(field).blank? } }
       return { status: "PASS", note: "#{results.size} results, all fields mapped", evidence: evidence } if missing.empty?

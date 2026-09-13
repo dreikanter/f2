@@ -59,7 +59,7 @@ module EventCursorPagination
 
   # How many newer events sit before the top of the current page, i.e. how far
   # into the log the user has paged. Zero on the latest page, which is also the
-  # only page that polls — so the count never runs on the hot streaming path.
+  # only page that polls, so the count never runs on the hot streaming path.
   def page_offset
     return 0 unless cursor_present?
     return 0 if @events.blank?

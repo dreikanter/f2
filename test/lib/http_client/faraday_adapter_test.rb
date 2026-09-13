@@ -5,7 +5,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     @client ||= HttpClient::FaradayAdapter.new(timeout: 5, follow_redirects: true, max_redirects: 5)
   end
 
-  test "performs successful GET request" do
+  test "#get should perform a successful GET request" do
     stub_request(:get, "https://example.com/test")
       .with(headers: { "Accept" => "application/json" })
       .to_return(status: 200, body: '{"success": true}', headers: { "Content-Type" => "application/json" })
@@ -17,7 +17,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert response.success?
   end
 
-  test "performs successful POST request" do
+  test "#post should perform a successful POST request" do
     stub_request(:post, "https://example.com/test")
       .with(
         body: '{"data": "test"}',
@@ -36,7 +36,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert response.success?
   end
 
-  test "performs successful PUT request" do
+  test "#put should perform a successful PUT request" do
     stub_request(:put, "https://example.com/test/1")
       .with(
         body: '{"data": "updated"}',
@@ -55,7 +55,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert response.success?
   end
 
-  test "performs successful DELETE request" do
+  test "#delete should perform a successful DELETE request" do
     stub_request(:delete, "https://example.com/test/1")
       .with(headers: { "Authorization" => "Bearer token123" })
       .to_return(status: 204, body: "")
@@ -67,7 +67,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert response.success?
   end
 
-  test "handles HTTP error responses" do
+  test "#get should handle HTTP error responses" do
     stub_request(:get, "https://example.com/error")
       .to_return(status: 404, body: "Not Found")
 
@@ -78,7 +78,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_not response.success?
   end
 
-  test "raises ConnectionError on connection failures" do
+  test "#get should raise ConnectionError on connection failures" do
     stub_request(:get, "https://example.com/fail")
       .to_raise(SocketError.new("getaddrinfo: Name or service not known"))
 
@@ -89,7 +89,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_includes error.message, "Connection failed"
   end
 
-  test "raises TimeoutError on request timeouts" do
+  test "#get should raise TimeoutError on request timeouts" do
     stub_request(:get, "https://example.com/timeout")
       .to_raise(Timeout::Error.new("execution expired"))
 
@@ -100,7 +100,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_includes error.message, "Request timed out"
   end
 
-  test "raises ConnectionError on network errors" do
+  test "#get should raise ConnectionError on network errors" do
     stub_request(:get, "https://example.com/network-error")
       .to_raise(Errno::ECONNREFUSED)
 
@@ -111,7 +111,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_includes error.message, "Connection failed"
   end
 
-  test "follows redirects by default" do
+  test "#get should follow redirects by default" do
     stub_request(:get, "https://example.com/redirect")
       .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
 
@@ -125,7 +125,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert response.success?
   end
 
-  test "exposes the requested URL on the response" do
+  test "#get should expose the requested URL on the response" do
     stub_request(:get, "https://example.com/test")
       .to_return(status: 200, body: "ok")
 
@@ -134,7 +134,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_equal "https://example.com/test", response.url
   end
 
-  test "exposes the final URL after redirects" do
+  test "#get should expose the final URL after redirects" do
     stub_request(:get, "https://example.com/redirect")
       .to_return(status: 302, headers: { "Location" => "https://blog.example.com/final" })
 
@@ -146,7 +146,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_equal "https://blog.example.com/final", response.url
   end
 
-  test "does not follow redirects when explicitly disabled" do
+  test "#get should not follow redirects when explicitly disabled" do
     stub_request(:get, "https://example.com/redirect")
       .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
 
@@ -156,7 +156,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_not response.success?
   end
 
-  test "follows redirects on POST requests when enabled" do
+  test "#post should follow redirects when enabled" do
     stub_request(:post, "https://example.com/redirect")
       .with(body: '{"data": "test"}')
       .to_return(status: 307, headers: { "Location" => "https://example.com/final" })
@@ -172,7 +172,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert response.success?
   end
 
-  test "does not follow redirects on POST when explicitly disabled" do
+  test "#post should not follow redirects when explicitly disabled" do
     stub_request(:post, "https://example.com/redirect")
       .with(body: '{"data": "test"}')
       .to_return(status: 307, headers: { "Location" => "https://example.com/final" })
@@ -183,7 +183,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_not response.success?
   end
 
-  test "handles multiple redirects" do
+  test "#get should handle multiple redirects" do
     stub_request(:get, "https://example.com/redirect1")
       .to_return(status: 301, headers: { "Location" => "https://example.com/redirect2" })
 
@@ -200,7 +200,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert response.success?
   end
 
-  test "raises TooManyRedirectsError when limit exceeded" do
+  test "#get should raise TooManyRedirectsError when the limit is exceeded" do
     stub_request(:get, "https://example.com/redirect1")
       .to_return(status: 301, headers: { "Location" => "https://example.com/redirect2" })
 
@@ -221,7 +221,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_includes error.message, "too many redirects"
   end
 
-  test "max_redirects applies to all HTTP methods" do
+  test "#post should enforce max_redirects" do
     # Test POST with redirect limit
     stub_request(:post, "https://example.com/redirect1")
       .with(body: "test data")
@@ -241,7 +241,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     end
   end
 
-  test "max_redirects with follow_redirects disabled is ignored" do
+  test "#get should ignore max_redirects when follow_redirects is disabled" do
     stub_request(:get, "https://example.com/redirect")
       .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
 
@@ -251,22 +251,22 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_not response.success?
   end
 
-  test "constructor sets default timeout" do
+  test "#initialize should set the default timeout" do
     custom_client = HttpClient::FaradayAdapter.new(timeout: 10)
     assert_equal 10, custom_client.options[:timeout]
   end
 
-  test "constructor sets default follow_redirects" do
+  test "#initialize should set the default follow_redirects" do
     custom_client = HttpClient::FaradayAdapter.new(follow_redirects: false)
     assert_not custom_client.options[:follow_redirects]
   end
 
-  test "constructor sets default max_redirects" do
+  test "#initialize should set the default max_redirects" do
     custom_client = HttpClient::FaradayAdapter.new(max_redirects: 10)
     assert_equal 10, custom_client.options[:max_redirects]
   end
 
-  test "uses constructor defaults when no per-request overrides" do
+  test "#get should use constructor defaults when there are no per-request overrides" do
     custom_client = HttpClient::FaradayAdapter.new(follow_redirects: false)
 
     stub_request(:get, "https://example.com/redirect")
@@ -278,7 +278,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_not response.success?
   end
 
-  test "per-request overrides override constructor defaults" do
+  test "#get should let per-request options override constructor defaults" do
     # Constructor sets follow_redirects: false
     custom_client = HttpClient::FaradayAdapter.new(follow_redirects: false)
 
@@ -295,7 +295,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert response.success?
   end
 
-  test "per-request timeout override works" do
+  test "#get should accept a per-request timeout override" do
     # This test verifies the parameter is accepted and passed through correctly
     # The actual timeout behavior is tested by the timeout exception tests
     custom_client = HttpClient::FaradayAdapter.new(timeout: 30)
@@ -316,7 +316,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     { validate_url: PublicUrl.method(:safe?) }
   end
 
-  test "pinned public requests reject private DNS targets before making a request" do
+  test "#get should reject private DNS targets before making a pinned public request" do
     Socket.stub(:getaddrinfo, [[nil, nil, nil, "127.0.0.1"]]) do
       assert_raises(HttpClient::BlockedUrlError) do
         client.get("https://controlled.example/", options: public_only.merge(pin_public_address: true))
@@ -325,7 +325,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_not_requested :get, "https://controlled.example/"
   end
 
-  test "pinned public requests validate each redirect hostname's DNS target" do
+  test "#get should validate each redirect hostname's DNS target for pinned public requests" do
     stub_request(:get, "https://example.com/redirect")
       .to_return(status: 302, headers: { "Location" => "https://controlled.example/secret" })
     resolver = ->(host, *) { [[nil, nil, nil, host == "example.com" ? "93.184.216.34" : "169.254.169.254"]] }
@@ -338,7 +338,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_not_requested :get, "https://controlled.example/secret"
   end
 
-  test "pinned public requests retain the hostname for TLS while pinning the socket and bypassing proxies" do
+  test "#get should retain the TLS hostname while pinning the socket and bypassing proxies" do
     stub_request(:get, "https://example.com/page").to_return(body: "ok")
     connections = []
     constructor = Net::HTTP.method(:new)
@@ -365,7 +365,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_not http.proxy?
   end
 
-  test "public-only mode blocks a non-public initial URL before any request" do
+  test "#get should block a non-public initial URL before any request in public-only mode" do
     error = assert_raises(HttpClient::BlockedUrlError) do
       client.get("http://127.0.0.1/secret", options: public_only)
     end
@@ -374,7 +374,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_not_requested :get, "http://127.0.0.1/secret"
   end
 
-  test "public-only mode blocks a redirect to a private address and never fetches it" do
+  test "#get should block a redirect to a private address without fetching it in public-only mode" do
     stub_request(:get, "https://example.com/redirect")
       .to_return(status: 302, headers: { "Location" => "http://127.0.0.1/metadata" })
 
@@ -385,7 +385,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_not_requested :get, "http://127.0.0.1/metadata"
   end
 
-  test "public-only mode allows a redirect between public hosts" do
+  test "#get should allow a redirect between public hosts in public-only mode" do
     stub_request(:get, "https://example.com/redirect")
       .to_return(status: 302, headers: { "Location" => "https://example.org/final" })
     stub_request(:get, "https://example.org/final")
@@ -397,7 +397,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_equal "ok", response.body
   end
 
-  test "without public-only mode the initial URL is not validated" do
+  test "#get should skip initial URL validation without public-only mode" do
     stub_request(:get, "http://127.0.0.1/allowed").to_return(status: 200, body: "ok")
 
     response = client.get("http://127.0.0.1/allowed")
@@ -405,7 +405,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_equal 200, response.status
   end
 
-  test "public-only mode blocks a private hop at the end of a public chain" do
+  test "#get should block a private hop at the end of a public chain in public-only mode" do
     stub_request(:get, "https://a.example/1")
       .to_return(status: 302, headers: { "Location" => "https://b.example/2" })
     stub_request(:get, "https://b.example/2")
@@ -418,7 +418,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_not_requested :get, "http://127.0.0.1/secret"
   end
 
-  test "public-only mode blocks a redirect to the cloud metadata address" do
+  test "#get should block a redirect to the cloud metadata address in public-only mode" do
     stub_request(:get, "https://example.com/go")
       .to_return(status: 302, headers: { "Location" => "http://169.254.169.254/latest/meta-data/" })
 
@@ -429,7 +429,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_not_requested :get, "http://169.254.169.254/latest/meta-data/"
   end
 
-  test "public-only mode blocks a redirect to a private address in encoded (decimal) form" do
+  test "#get should block a redirect to a decimal-encoded private address in public-only mode" do
     # 2130706433 == 127.0.0.1; the guard canonicalizes it the way the socket would.
     stub_request(:get, "https://example.com/go")
       .to_return(status: 302, headers: { "Location" => "http://2130706433/" })

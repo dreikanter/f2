@@ -1,6 +1,6 @@
 module Loader
   # Fetches a public X/Twitter timeline through the syndication endpoint
-  # (syndication.twitter.com/srv/timeline-profile/screen-name/<handle>) — the
+  # (syndication.twitter.com/srv/timeline-profile/screen-name/<handle>); the
   # same server-rendered feed that powers embeddable timelines. It needs no API
   # key or login and returns recent tweets as JSON inside the page.
   #

@@ -4,12 +4,13 @@ require "test_helper"
 # does not re-run detection or the preview. An explicit Refresh control
 # re-runs the preview on demand.
 class SmartFeedCreationReloadTest < ActionDispatch::IntegrationTest
+  include CacheTestHelpers
   include ActiveJob::TestHelper
 
   setup { clear_enqueued_jobs }
 
   def user
-    @user ||= create(:user)
+    @user ||= regular_user
   end
 
   def feed_url
@@ -34,23 +35,15 @@ class SmartFeedCreationReloadTest < ActionDispatch::IntegrationTest
     XML
   end
 
-  def with_memory_cache
-    previous = Rails.cache
-    Rails.cache = ActiveSupport::Cache::MemoryStore.new
-    yield
-  ensure
-    Rails.cache = previous
-  end
-
   test "#get should not re-enqueue detection when the feed_identification is already success" do
     sign_in_as(user)
     stub_request(:get, feed_url).to_return(status: 200, body: rss_body)
 
-    post feed_identifications_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identification_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
     assert_no_enqueued_jobs do
-      get feed_identifications_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      get feed_identification_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
   end
 

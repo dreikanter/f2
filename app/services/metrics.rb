@@ -12,7 +12,7 @@ require "socket"
 # are unaffected and instrumentation costs nothing there.
 #
 # Each process tags its counter series with an `instance` label (host:pid) so
-# totals from multiple web/worker processes don't clobber each other — sum/max
+# totals from multiple web/worker processes don't clobber each other; sum/max
 # them at query time. Gauges are global snapshots, so they carry no instance.
 #
 # Configuration (ENV):
@@ -23,7 +23,7 @@ require "socket"
 #   METRICS_FLUSH_INTERVAL seconds between pushes (default 15)
 #   METRICS_INSTANCE       override the instance label (default host:pid)
 #
-# Keep label values low-cardinality (job, status, policy) — never per-user,
+# Keep label values low-cardinality (job, status, policy), never per-user,
 # per-subject, or per-id, which would blow up series count.
 module Metrics
   PREFIX = "feeder_".freeze

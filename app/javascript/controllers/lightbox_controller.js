@@ -16,7 +16,7 @@ export default class extends Controller {
       this._trigger = trigger
       this._lightbox ||= this._buildLightbox(GLightbox)
       this._lightbox.openAt(this.itemTargets.indexOf(trigger))
-    } catch (error) {
+    } catch {
       window.location.assign(trigger.href)
     }
   }

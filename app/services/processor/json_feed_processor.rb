@@ -47,7 +47,7 @@ module Processor
 
     # The spec requires a string `id` and says readers must coerce a numeric
     # one to a string. We additionally fall back to `url` when `id` is absent
-    # rather than dropping the item — a permalink is a fine stable identifier,
+    # rather than dropping the item; a permalink is a fine stable identifier,
     # and this matches RssProcessor. Items with neither are dropped downstream
     # once their uid comes back blank.
     def extract_uid(item)
@@ -90,14 +90,6 @@ module Processor
         { "url" => attachment["url"], "type" => attachment["mime_type"] }
       end
       images + attachments
-    end
-
-    def parse_time(value)
-      return nil if value.blank?
-
-      Time.parse(value.to_s)
-    rescue ArgumentError
-      nil
     end
   end
 end

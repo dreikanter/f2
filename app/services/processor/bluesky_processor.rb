@@ -134,12 +134,10 @@ module Processor
       end
     end
 
-    def parse_time(value)
-      return nil if value.blank?
-
+    # Bluesky always stamps ISO 8601, so a value in any other shape is a
+    # malformed record rather than a format to guess at.
+    def parse_timestamp(value)
       Time.iso8601(value)
-    rescue ArgumentError
-      nil
     end
   end
 end

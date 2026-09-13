@@ -1,14 +1,6 @@
 require "test_helper"
 
 class Development::ComponentsControllerTest < ActionDispatch::IntegrationTest
-  def dev_user
-    @dev_user ||= create(:user, :dev)
-  end
-
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
   test "#show should render the UI elements reference" do
     sign_in_as(dev_user)
 
@@ -21,7 +13,6 @@ class Development::ComponentsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="section.date-time"] input[data-controller="datepicker"]'
     assert_select '[data-key="section.date-time"] input[type="time"]'
     assert_select '[data-key="section.form-group"]'
-    assert_select '[data-key="section.collapsible-section"] details'
     assert_select '[data-key="section.page-header"]'
     assert_select '[data-key="section.event-description"]'
     assert_select '[data-key="section.feed-profile-chooser"]'
