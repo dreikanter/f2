@@ -1,88 +1,63 @@
-# AI model discovery
+# AI models and credential validation
 
 The application uses RubyLLM `2.0.0.rc2` and currently registers OpenAI only.
-Credential validation and automatic/manual model catalog refresh are available.
-AI feed extraction remains temporarily unavailable; ordinary feeds continue to
-work. Existing feed settings, credential forms, and stored usage displays remain.
+AI feed extraction remains temporarily unavailable. Existing feed settings,
+credential forms, and stored usage displays remain available.
 
-## Model listing and selection
+## Shared model catalog
 
-[`LlmProvider::Openai`](../app/models/llm_provider/openai.rb) lists models through
-the authenticated `GET /v1/models` endpoint using the credential's key.
-Discovery is free and makes no inference requests. Provider clients hold a copy
-of credential data and build isolated SDK contexts with retries disabled.
+RubyLLM owns fetching, merging, and persistence in `ruby_llm_models`.
+[`LlmModels`](../app/models/llm_models.rb) reads those records directly so web
+and worker processes see the latest persisted catalog. Before the first refresh,
+selectors read a separate local registry instance without changing the process-wide
+SDK registry or making a network request.
 
-[`AiModelCatalog`](../app/services/ai_model_catalog.rb) enriches those IDs with
-advisory metadata from RubyLLM's local registry, matched by provider and exact
-model ID. This requires no separate metadata request or qualification probe.
-IDs missing from the SDK registry remain available.
+All credentials for a provider share the same public models. Feed choices exclude
+known non-text outputs; missing metadata remains selectable. Capabilities are
+advisory and do not establish account access or extraction compatibility.
+Saved model IDs remain visible and are never silently replaced.
 
-New selections exclude models whose metadata explicitly lists only non-text
-outputs. Missing metadata does not exclude a model, and the catalog is not proof
-that a model supports extraction, tools, or strict output. A saved model remains
-visible in the feed form even if a later listing omits it.
+**Refresh models** and the daily schedule enqueue
+[`RefreshLlmModelsJob`](../app/jobs/refresh_llm_models_job.rb), which calls
+`RubyLLM.models.refresh`. Solid Queue prevents concurrent refreshes and reports
+active work. A single `LlmModelRefresh` row stores the last successful refresh
+time and current failure independently of disposable queue history. Pruning jobs
+therefore preserves the update time and cannot revive an older failure. Reload
+an open feed form to see updated choices.
+A failed refresh retains the current registry. Refresh never reads user keys or
+changes credential usability; it makes no inference request.
 
-## Credential validation
+## Free authentication validation
 
-Saving new or changed credential data starts asynchronous validation through
-the same free listing endpoint. A successful response activates the credential
-and updates its validation timestamp. The response body is discarded, including
-empty or non-JSON bodies. Model catalogs are updated only by a separate refresh.
+[`LlmProvider::Openai`](../app/models/llm_provider/openai.rb) checks the key with
+an authenticated `GET /v1/models`. Successful response bodies are discarded,
+including empty or non-JSON bodies. Failed responses are inspected only for
+sanitized error classification. Provider clients also build isolated SDK contexts.
 
-The credential's `active` flag records usability;
-[`OperationRun`](../app/models/operation_run.rb) records progress and outcome.
-Rechecking unchanged credentials keeps them usable. Changing credential data
-makes it inactive until validation succeeds; renaming a credential or leaving
-saved secret fields blank preserves its data and usability.
+Saving a new or changed key starts asynchronous validation. `AiCredential`
+stores the encrypted key and usability; `OperationRun` records validation
+progress and its 15-minute deadline. Validation and catalog refresh are independent.
+Rechecking an unchanged key preserves its usability. Changing key data makes
+it inactive until validation succeeds. Stale responses cannot replace newer results.
 
-Validation takes precedence over catalog refresh: starting validation supersedes
-existing refresh work, and new refreshes wait until validation completes or
-reaches its deadline. Responses from superseded operations or replaced
-credential data cannot overwrite the current result.
+Only HTTP 401 with `invalid_api_key` deactivates a key and disables its dependent
+feeds. Permission restrictions, quota/rate limits, connection failures, and
+timeouts preserve an already usable key. They leave new or changed keys inactive.
 
-Validation and refresh deactivate a key only when OpenAI returns HTTP 401 with
-the explicit `invalid_api_key` code. This records a deactivation event and disables
-its enabled dependent feeds. Permission restrictions, quota/rate limits,
-connection failures, and timeouts preserve prior usability
-and the saved catalog. New or changed credentials stay inactive after these
-failures. Catalog refresh also rejects malformed listings without changing the
-saved catalog or credential usability.
+## Verification and remaining work
 
-## Catalog refresh
-
-The hourly `RefreshAiModelCatalogsJob` checks active credentials and refreshes
-catalogs at least one day old. Automatic attempts are spaced at least one hour
-apart during failures. **Refresh models** bypasses freshness and retry delays,
-while still respecting validation and existing refresh work.
-
-Validation and refresh have recorded 15-minute operation deadlines. Polling reads
-their progress without changing state. A failed refresh retains the saved
-snapshot; a later successful catalog update clears the old failure indication.
-Reload an open feed form to see a refreshed catalog.
-
-## Checking discovery
-
-On development or staging, using an OpenAI credential you own:
-
-1. Create or recheck the credential and wait for validation to finish.
-2. Confirm that successful validation leaves it active and its saved model
-   catalog unchanged. A new credential has no catalog until a separate refresh.
-3. Click **Refresh models**, wait for completion, and check the updated timestamp.
-4. Reopen an existing feed's settings and confirm its saved model remains selected.
-
-These checks update the credential and catalog through free listing requests.
-They do not test extraction or establish compatibility for every listed model.
-
-## Accounting and remaining work
+HTTP fixture tests exercise authentication, SDK registry persistence, shared
+refreshes, failures, exact model selection, and stale process caches. To check the
+UI with an authorized credential, validate the key, refresh models, and reopen a
+feed form. Confirm that the selected model is preserved and a second credential
+for the same provider shows the same choices. These free requests do not establish
+extraction compatibility.
 
 Stored usage remains visible in event details and feed statistics. Feed totals
-cover the last 30 days; missing costs remain unknown rather than being counted
-as zero. Discovery creates no inference usage.
+cover the last 30 days; missing costs remain unknown. Catalog refresh and
+validation produce no inference usage.
 
-[The replacement plan](https://github.com/dreikanter/f2/issues/1722) tracks
-transcript storage, durable request accounting, extraction, bounded retrieval,
-workflow reconnection, and admin history. The SDK fixture checks establish
-behavior at the SDK/HTTP boundary. Before implementing native extraction, the
-plan still requires evidence that the exact selected model accepts native
-search and the strict feed schema together. Follow its bounded, explicitly
-authorized provider check.
+[The replacement plan](https://github.com/dreikanter/f2/issues/1722) tracks the
+remaining extraction and accounting work. Before native extraction, its bounded,
+explicitly authorized provider check must establish that the exact selected model
+accepts native search and the strict feed schema together.

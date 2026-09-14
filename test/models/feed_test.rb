@@ -608,7 +608,7 @@ class FeedTest < ActiveSupport::TestCase
   end
 
   test "#can_be_previewed? should reject AI previews while extraction is unavailable" do
-    credential = create(:ai_credential, :active, available_models: [{ "id" => "saved-model" }])
+    credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm", ai_credential: credential,
                        ai_model: "saved-model", params: { "prompt" => "A daily roundup" })
 

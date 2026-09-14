@@ -10,8 +10,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   end
 
   def ai_credential
-    @ai_credential ||= create(:ai_credential, :active, user: user,
-                              available_models: [{ "id" => "sample-model" }])
+    @ai_credential ||= create(:ai_credential, :active, user: user)
   end
 
   def search_credential
@@ -70,7 +69,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
 
   test "#create should reject another user's AI credential" do
     create(:llm_model, model_id: "sample-model")
-    foreign = create(:ai_credential, :active, available_models: [{ "id" => "sample-model" }])
+    foreign = create(:ai_credential, :active)
 
     result = request(**ai_attributes.merge(ai_credential_id: foreign.id)).create
 

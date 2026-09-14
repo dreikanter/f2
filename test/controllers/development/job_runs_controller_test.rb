@@ -156,20 +156,6 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "#create should reject a direct model discovery request outside staging" do
-    sign_in_as(dev_user)
-
-    Rails.stub(:env, ActiveSupport::EnvironmentInquirer.new("production")) do
-      assert_no_enqueued_jobs do
-        assert_no_difference -> { JobRun.count } do
-          post development_job_job_runs_path("AiModelDiscoveryReportJob")
-        end
-      end
-    end
-
-    assert_response :not_found
-  end
-
   test "#show should require dev permission" do
     run = create(:job_run, job_class: "PurgeExpiredEventsJob")
     sign_in_as(regular_user)
