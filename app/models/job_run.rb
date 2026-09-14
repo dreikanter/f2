@@ -5,7 +5,8 @@ class JobRun < ApplicationRecord
     SerperCapabilityProbeJob,
     BraveCapabilityProbeJob,
     TavilyCapabilityProbeJob,
-    PurgeExpiredEventsJob
+    PurgeExpiredEventsJob,
+    RefreshLlmModelsJob
   ].freeze
 
   enum :status, {

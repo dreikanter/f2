@@ -6,6 +6,12 @@ class RunsAsMaintenanceJobTest < ActiveSupport::TestCase
     assert_equal "Purge Expired Events", PurgeExpiredEventsJob.display_name
   end
 
+  test ".queue_name should keep every maintenance job off the feed queues" do
+    JobRun::RUNNABLE_JOBS.each do |klass|
+      assert_equal "service", klass.new.queue_name, klass.name
+    end
+  end
+
   test "every runnable job should be a maintenance job" do
     JobRun::RUNNABLE_JOBS.each do |klass|
       assert klass.include?(RunsAsMaintenanceJob),

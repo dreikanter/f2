@@ -1,0 +1,47 @@
+<% content_for :title, "LLM Models" %>
+
+<div class="space-y-8">
+  <%= render PageHeaderComponent.new(title: "LLM Models") do |header| %>
+    <% header.with_breadcrumb(label: "Dev Tools", url: development_path) %>
+    <% header.with_context_paragraph("Models offered in feed settings, downloaded from the shared catalog.") %>
+    <% header.with_action_button do %>
+      <%= button_to "Refresh", development_job_job_runs_path(RefreshLlmModelsJob.name),
+            class: class_names(primary_button_classes(compact: true), "cursor-pointer"),
+            data: { key: "development.llm_models.refresh" } %>
+    <% end %>
+  <% end %>
+
+  <section class="space-y-4">
+    <%= h2 "Last refresh" %>
+    <%= render(DescriptionListComponent.new) do |list| %>
+      <% list.with_item(StatListItemComponent.new(
+        label: "Updated",
+        value: @refresh.refreshed_at ? long_time_tag(@refresh.refreshed_at) : StatItemComponent::BLANK_VALUE,
+        key: "llm_models.refreshed_at"
+      )) %>
+      <% list.with_item(StatListItemComponent.new(
+        label: "Last attempt",
+        value: llm_model_refresh_outcome(@refresh),
+        key: "llm_models.outcome",
+        muted: @refresh.failed?
+      )) %>
+    <% end %>
+  </section>
+
+  <section class="space-y-4">
+    <%= h2 "Stored models" %>
+    <% if @providers.any? %>
+      <%= render(DescriptionListComponent.new) do |list| %>
+        <% @providers.each do |row| %>
+          <% list.with_item(StatListItemComponent.new(
+            label: row[:provider],
+            value: llm_model_count_summary(row),
+            key: "llm_models.provider.#{row[:provider]}"
+          )) %>
+        <% end %>
+      <% end %>
+    <% else %>
+      <%= render EmptyStateComponent.new("Nothing stored yet. Refresh to pull the catalog.") %>
+    <% end %>
+  </section>
+</div>

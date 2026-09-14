@@ -7,8 +7,6 @@ class PurgeExpiredEventsJob < ApplicationJob
   include RecordsJobRun
   include RunsAsMaintenanceJob
 
-  queue_as :default
-
   BATCH_SIZE = 500
   BATCH_PAUSE = 0.01.seconds
 

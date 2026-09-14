@@ -39,7 +39,9 @@ module RecordsJobRun
     job_run.update!(status: :succeeded, finished_at: Time.current)
     result
   rescue StandardError
-    job_run.update!(status: :failed, finished_at: Time.current)
+    # The early return above leaves this rescue covering runs with no JobRun:
+    # a scheduled run that raises reaches it with nothing to update.
+    job_run&.update!(status: :failed, finished_at: Time.current)
     raise
   end
 end

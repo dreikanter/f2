@@ -42,7 +42,7 @@ default: &default
 
   refresh_llm_models:
     class: RefreshLlmModelsJob
-    queue: default
+    queue: service
     schedule: every day at 4am
 
   maintain_llm_chats:
@@ -52,7 +52,7 @@ default: &default
 
   purge_expired_events:
     class: PurgeExpiredEventsJob
-    queue: default
+    queue: service
     schedule: every day at 5am
 
 development:

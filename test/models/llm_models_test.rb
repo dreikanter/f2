@@ -31,6 +31,17 @@ class LlmModelsTest < ActiveSupport::TestCase
     assert_empty LlmModels.for_provider("openai")
   end
 
+  test "#counts_by_provider should separate listed models from unlisted leftovers" do
+    create(:llm_model, provider: "openai")
+    create(:llm_model, provider: "openai", unlisted_at: Time.current)
+    create(:llm_model, provider: "anthropic")
+
+    assert_equal [
+      { provider: "anthropic", listed: 1, unlisted: 0 },
+      { provider: "openai", listed: 1, unlisted: 1 }
+    ], LlmModels.counts_by_provider
+  end
+
   test "#for_feed should exclude known non-text models and preserve missing metadata" do
     create(:llm_model, model_id: "text")
     create(:llm_model, model_id: "image", modalities: { output: ["image"] })
