@@ -35,6 +35,16 @@
       </div>
     <% end %>
 
+    <%= render LinkedCardComponent.new(href: development_llm_models_path) do %>
+      <div class="space-y-4">
+        <%= h2 class: "flex items-center gap-2" do %>
+          <%= icon("sparkles", css_class: "size-5") %>
+          <span>LLM Models</span>
+        <% end %>
+        <p class="text-body">Check the stored model catalog and refresh it</p>
+      </div>
+    <% end %>
+
     <%= render LinkedCardComponent.new(href: development_email_previews_path) do %>
       <div class="space-y-4">
         <%= h2 class: "flex items-center gap-2" do %>

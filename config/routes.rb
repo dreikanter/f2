@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   namespace :development do
     resource :components, only: :show
     resource :system_status, only: :show, controller: "system_status"
+    resource :llm_models, only: :show, controller: "llm_models"
     resources :email_previews, only: [:index, :show] do
       resource :test_email, only: :create
     end
