@@ -5,7 +5,7 @@ require "test_helper"
 # setup page without losing the draft.
 class CredentialGateTest < ActionDispatch::IntegrationTest
   setup do
-    create(:llm_model, model_id: "claude-sonnet-4-6")
+    create(:llm_model, model_id: "gpt-4.1")
   end
 
   include ActiveJob::TestHelper
@@ -36,7 +36,7 @@ class CredentialGateTest < ActionDispatch::IntegrationTest
     credential = create(:ai_credential, :active, user: user)
 
     post feed_previews_path, params: { profile_key: "llm", "params" => { "prompt" => "https://example.com" },
-                                           ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6" }
+                                           ai_credential_id: credential.id, ai_model: "gpt-4.1" }
 
     assert_response :success
     assert_select "button[value='save_as_draft_and_add_credentials']", count: 0

@@ -572,7 +572,7 @@ class FeedTest < ActiveSupport::TestCase
 
   test "#can_be_enabled? should return false for an AI feed without a credential" do
     feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "ruby news" },
-                        ai_credential: nil, ai_model: "claude-sonnet-4-6")
+                        ai_credential: nil, ai_model: "gpt-4.1")
 
     assert_not feed.can_be_enabled?
   end
@@ -580,7 +580,7 @@ class FeedTest < ActiveSupport::TestCase
   test "#can_be_enabled? should return false for an AI feed with an inactive credential" do
     credential = create(:ai_credential, :inactive)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "gpt-4.1")
 
     assert_not feed.can_be_enabled?
   end
@@ -596,7 +596,7 @@ class FeedTest < ActiveSupport::TestCase
   test "#can_be_enabled? should reject AI feeds even with a working credential and model" do
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "gpt-4.1")
 
     assert_not feed.can_be_enabled?
   end
@@ -620,7 +620,7 @@ class FeedTest < ActiveSupport::TestCase
 
   test "#can_be_previewed? should be false for an AI profile without a credential" do
     feed = build(:feed, feed_profile_key: "llm",
-                        params: { "prompt" => "ruby news" }, ai_credential: nil, ai_model: "claude-sonnet-4-6")
+                        params: { "prompt" => "ruby news" }, ai_credential: nil, ai_model: "gpt-4.1")
 
     assert_not feed.can_be_previewed?
   end
@@ -853,7 +853,7 @@ class FeedTest < ActiveSupport::TestCase
 
   test "#valid? should accept an active credential with an available model when enabling an AI feed" do
     user = create(:user)
-    create(:llm_model, model_id: "claude-sonnet-4-6")
+    create(:llm_model, model_id: "gpt-4.1")
     credential = create(:ai_credential, :active, user: user)
     feed = build(:feed,
                  user: user,
@@ -861,7 +861,7 @@ class FeedTest < ActiveSupport::TestCase
                  feed_profile_key: "llm",
                  params: { "prompt" => "https://example.com" },
                  ai_credential: credential,
-                 ai_model: "claude-sonnet-4-6")
+                 ai_model: "gpt-4.1")
     feed.state = :enabled
 
     assert feed.valid?, feed.errors.full_messages.inspect
@@ -869,7 +869,7 @@ class FeedTest < ActiveSupport::TestCase
 
   test "#valid? should require a model when enabling an AI feed" do
     user = create(:user)
-    create(:llm_model, model_id: "claude-sonnet-4-6")
+    create(:llm_model, model_id: "gpt-4.1")
     credential = create(:ai_credential, :active, user: user)
     feed = build(:feed,
                  user: user,
@@ -886,7 +886,7 @@ class FeedTest < ActiveSupport::TestCase
 
   test "#valid? should reject a model the provider no longer offers when enabling an AI feed" do
     user = create(:user)
-    create(:llm_model, model_id: "claude-sonnet-4-6")
+    create(:llm_model, model_id: "gpt-4.1")
     credential = create(:ai_credential, :active, user: user)
     feed = build(:feed,
                  user: user,
@@ -903,11 +903,11 @@ class FeedTest < ActiveSupport::TestCase
 
   test "#valid? should allow unrelated edits after a saved model becomes unavailable" do
     user = create(:user)
-    create(:llm_model, model_id: "claude-sonnet-4-6")
+    create(:llm_model, model_id: "gpt-4.1")
     credential = create(:ai_credential, :active, user: user)
     feed = create(:feed, user: user, access_token: access_token_for(user), state: :enabled,
                          target_group: "testgroup", feed_profile_key: "llm",
-                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "gpt-4.1")
 
     RubyLLM::ActiveRecord::Model.update_all(unlisted_at: Time.current)
     feed.name = "Renamed"
@@ -917,11 +917,11 @@ class FeedTest < ActiveSupport::TestCase
 
   test "#valid? should reject changing an enabled feed to an unsupported model" do
     user = create(:user)
-    create(:llm_model, model_id: "claude-sonnet-4-6")
+    create(:llm_model, model_id: "gpt-4.1")
     credential = create(:ai_credential, :active, user: user)
     feed = create(:feed, user: user, access_token: access_token_for(user), state: :enabled,
                          target_group: "testgroup", feed_profile_key: "llm",
-                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "gpt-4.1")
 
     feed.ai_model = "removed-model"
 
@@ -930,16 +930,16 @@ class FeedTest < ActiveSupport::TestCase
   end
 
   test "#effective_ai_model should return the chosen model when it is still supported" do
-    create(:llm_model, model_id: "claude-sonnet-4-6")
+    create(:llm_model, model_id: "gpt-4.1")
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "x" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+                        params: { "prompt" => "x" }, ai_credential: credential, ai_model: "gpt-4.1")
 
-    assert_equal "claude-sonnet-4-6", feed.effective_ai_model
+    assert_equal "gpt-4.1", feed.effective_ai_model
   end
 
   test "#effective_ai_model should preserve the chosen model when it disappears" do
-    create(:llm_model, model_id: "claude-sonnet-4-6")
+    create(:llm_model, model_id: "gpt-4.1")
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "x" }, ai_credential: credential, ai_model: "removed-model")
@@ -958,10 +958,10 @@ class FeedTest < ActiveSupport::TestCase
   end
 
   test "#ai_model_supported? should follow the shared provider registry" do
-    create(:llm_model, model_id: "claude-sonnet-4-6")
+    create(:llm_model, model_id: "gpt-4.1")
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "x" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+                        params: { "prompt" => "x" }, ai_credential: credential, ai_model: "gpt-4.1")
 
     assert feed.ai_model_supported?
     feed.ai_model = "removed-model"
@@ -1462,7 +1462,7 @@ class FeedTest < ActiveSupport::TestCase
   test "#missing_enablement_parts should report an inactive AI credential" do
     credential = create(:ai_credential, :inactive)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "gpt-4.1")
     result = feed.missing_enablement_parts
 
     assert_equal ["active AI credential"], result
@@ -1472,7 +1472,7 @@ class FeedTest < ActiveSupport::TestCase
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: credential,
-                        ai_model: "claude-sonnet-4-6", search_credential: nil)
+                        ai_model: "gpt-4.1", search_credential: nil)
     result = feed.missing_enablement_parts
 
     assert_equal [], result
@@ -1483,7 +1483,7 @@ class FeedTest < ActiveSupport::TestCase
     search_credential = create(:search_credential, :inactive, user: credential.user)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: credential,
-                        ai_model: "claude-sonnet-4-6", search_credential: search_credential)
+                        ai_model: "gpt-4.1", search_credential: search_credential)
     result = feed.missing_enablement_parts
 
     assert_equal [], result
@@ -1492,7 +1492,7 @@ class FeedTest < ActiveSupport::TestCase
   test "#missing_enablement_parts should be empty for a configured AI feed" do
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "gpt-4.1")
     result = feed.missing_enablement_parts
 
     assert_equal [], result

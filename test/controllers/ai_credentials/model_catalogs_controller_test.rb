@@ -101,4 +101,39 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
     assert_predicate validation.reload, :running?
     assert_equal [], refresh_jobs.last.arguments.fetch("arguments")
   end
+
+  test "#show should retain the latest outcome and update time after queue history is pruned" do
+    sign_in_as(credential.user)
+    stub_request(:get, "https://rubyllm.com/models.json").to_return(
+      { body: "invalid catalog" },
+      { body: [{ id: "shared-model", name: "Shared model", provider: "openai" }].to_json, headers: { "Content-Type" => "application/json" } },
+      { body: "invalid catalog" }
+    )
+    post ai_credential_model_catalog_path(credential)
+    assert_raises(RubyLLM::ModelRegistryError) { perform_refresh }
+
+    post ai_credential_model_catalog_path(credential)
+    perform_refresh
+    updated_at = LlmModelRefresh.current.refreshed_at
+
+    travel 2.days do
+      SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0)
+      assert_empty refresh_jobs.finished
+      assert_equal 1, refresh_jobs.failed.count
+
+      get ai_credential_model_catalog_path(credential)
+      assert_select '[data-key="ai_credential.models-refresh-status"]', text: /Updated .* ago/
+      assert_select '[data-key="ai_credential.models-refresh-status"]', text: /Couldn't refresh models/, count: 0
+      assert_equal updated_at, LlmModelRefresh.current.refreshed_at
+
+      post ai_credential_model_catalog_path(credential)
+      assert_raises(RubyLLM::ModelRegistryError) { perform_refresh }
+      refresh_jobs.destroy_all
+
+      get ai_credential_model_catalog_path(credential)
+      assert_select '[data-key="ai_credential.models-refresh-status"]', text: /Couldn't refresh models/
+      assert_select '[data-key="ai_credential.models-refresh-status"]', text: /Updated .* ago/
+      assert_equal updated_at, LlmModelRefresh.current.refreshed_at
+    end
+  end
 end

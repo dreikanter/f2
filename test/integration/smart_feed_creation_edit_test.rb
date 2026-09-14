@@ -5,7 +5,7 @@ require "test_helper"
 # scheme never changes, so it stays editable throughout, whether draft or live.
 class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
   setup do
-    create(:llm_model, model_id: "claude-sonnet-4-6")
+    create(:llm_model, model_id: "gpt-4.1")
   end
 
   include ActiveJob::TestHelper
@@ -188,7 +188,7 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
       create(:feed, user: user, access_token: access_token, state: :enabled,
                     target_group: "testgroup", feed_profile_key: "llm",
                     params: { "prompt" => "follow the A24 blog" },
-                    ai_credential: credential, ai_model: "claude-sonnet-4-6")
+                    ai_credential: credential, ai_model: "gpt-4.1")
     end
   end
 

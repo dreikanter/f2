@@ -2,7 +2,7 @@ require "test_helper"
 
 class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   setup do
-    create(:llm_model, model_id: "claude-sonnet-4-6")
+    create(:llm_model, model_id: "gpt-4.1")
     create(:llm_model, model_id: "saved-model")
   end
 
@@ -397,7 +397,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     digest_user = create(:user)
     credential = create(:ai_credential, :active, user: digest_user)
     digest_feed = create(:feed, :enabled, feed_profile_key: "llm", user: digest_user,
-                                          ai_credential: credential, ai_model: "claude-sonnet-4-6",
+                                          ai_credential: credential, ai_model: "gpt-4.1",
                                           params: { "prompt" => "daily roundup" })
 
     raw_data = [{ "source_url" => nil, "body" => "Сегодня: A, B, C" }]
@@ -420,7 +420,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     digest_user = create(:user)
     credential = create(:ai_credential, :active, user: digest_user)
     digest_feed = create(:feed, :enabled, feed_profile_key: "llm", user: digest_user,
-                                          ai_credential: credential, ai_model: "claude-sonnet-4-6",
+                                          ai_credential: credential, ai_model: "gpt-4.1",
                                           params: { "prompt" => "daily roundup" })
 
     loader = Object.new
@@ -1074,7 +1074,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     user = create(:user)
     credential = create(:ai_credential, :active, user: user)
     feed = create(:feed, :enabled, feed_profile_key: "llm", user: user,
-                                   ai_credential: credential, ai_model: "claude-sonnet-4-6",
+                                   ai_credential: credential, ai_model: "gpt-4.1",
                                    params: { "prompt" => "daily roundup" })
     create(:feed_schedule, feed: feed, last_digest_period: last_digest_period)
     feed

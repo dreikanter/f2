@@ -2,7 +2,7 @@ require "test_helper"
 
 class FeedsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    create(:llm_model, model_id: "claude-sonnet-4-6")
+    create(:llm_model, model_id: "gpt-4.1")
   end
 
   def user
@@ -722,7 +722,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user)
     ai_feed = create(:feed, :enabled, user: user, feed_profile_key: "llm",
-                                     ai_credential: credential, ai_model: "claude-sonnet-4-6",
+                                     ai_credential: credential, ai_model: "gpt-4.1",
                                      params: { "prompt" => "ruby news" }, search_credential: nil)
 
     get feed_url(ai_feed)

@@ -4,7 +4,7 @@ module LlmModels
     if RubyLLM::ActiveRecord::Model.exists?
       RubyLLM::ActiveRecord::Model.listed.where(provider: provider).map(&:to_llm)
     else
-      RubyLLM.models.load_from_json.by_provider(provider).to_a
+      RubyLLM::Models.new([]).load_from_json.by_provider(provider).to_a
     end
   end
 

@@ -1,13 +1,13 @@
 module LlmModelsHelper
   def llm_models_refresh
-    @llm_models_refresh ||= SolidQueue::Job.where(class_name: RefreshLlmModelsJob.name).order(id: :desc).first
+    @llm_models_refresh ||= LlmModelRefresh.current
   end
 
   def llm_models_refreshing?
-    llm_models_refresh.present? && !llm_models_refresh.finished? && !llm_models_refresh.failed?
+    SolidQueue::Job.where(class_name: RefreshLlmModelsJob.name, finished_at: nil).where.missing(:failed_execution).exists?
   end
 
   def llm_models_refreshed_at
-    SolidQueue::Job.where(class_name: RefreshLlmModelsJob.name).finished.maximum(:finished_at)
+    llm_models_refresh.refreshed_at
   end
 end

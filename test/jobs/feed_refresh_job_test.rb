@@ -2,7 +2,7 @@ require "test_helper"
 
 class FeedRefreshJobTest < ActiveJob::TestCase
   setup do
-    create(:llm_model, model_id: "claude-sonnet-4-6")
+    create(:llm_model, model_id: "gpt-4.1")
   end
 
   def feed
@@ -36,7 +36,7 @@ class FeedRefreshJobTest < ActiveJob::TestCase
   test "#perform should preserve enabled AI feeds when a queued refresh runs during the outage" do
     credential = create(:ai_credential, :active)
     feed = create(:feed, :enabled, user: credential.user, feed_profile_key: "llm",
-                                  ai_credential: credential, ai_model: "claude-sonnet-4-6",
+                                  ai_credential: credential, ai_model: "gpt-4.1",
                                   params: { "prompt" => "ruby news" }, search_credential: nil,
                                   consecutive_failures: Feed::MAX_CONSECUTIVE_FAILURES - 1)
 

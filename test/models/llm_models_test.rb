@@ -5,8 +5,12 @@ class LlmModelsTest < ActiveSupport::TestCase
 
   test "#for_provider should use bundled models before the first refresh without network requests" do
     assert_empty RubyLLM::ActiveRecord::Model.all
+    RubyLLM.models.load_from_store
+    cached_models = RubyLLM.models.all
 
     assert_includes LlmModels.for_provider("openai").map(&:id), "gpt-5.6-luna"
+    assert_equal cached_models, RubyLLM.models.all
+    assert_empty RubyLLM.models.all
     assert_not_requested :any, /./
   end
 

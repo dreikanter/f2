@@ -10,8 +10,8 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   end
 
   setup do
-    create(:llm_model, model_id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6")
-    create(:llm_model, model_id: "claude-opus-4-7", name: "Claude Opus 4.7")
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
+    create(:llm_model, model_id: "gpt-4o", name: "GPT-4o")
   end
 
   def credential
@@ -28,7 +28,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
                         feed_profile_key: "llm",
                         ai_credential: credential,
                         search_credential: search_credential,
-                        ai_model: "claude-sonnet-4-6",
+                        ai_model: "gpt-4.1",
                         params: { "prompt" => "https://no-rss.example.com" })
   end
 
@@ -81,7 +81,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
 
     assert_select "select[data-key='form.ai-credential'] option[selected][value='#{credential.id}']"
     assert_select "select[data-key='form.search-credential'] option[selected][value='#{search_credential.id}']"
-    assert_select "select[data-key='form.ai-model'] option[selected][value='claude-sonnet-4-6']", text: "Claude Sonnet 4.6"
+    assert_select "select[data-key='form.ai-model'] option[selected][value='gpt-4.1']", text: "GPT-4.1"
   end
 
   test "#edit should preserve no external search even when the user has a default" do
@@ -93,7 +93,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
                   feed_profile_key: "llm",
                   ai_credential: credential,
                   search_credential: nil,
-                  ai_model: "claude-sonnet-4-6",
+                  ai_model: "gpt-4.1",
                   params: { "prompt" => "https://no-rss.example.com" })
 
     get edit_feed_path(feed)
@@ -131,8 +131,8 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
 
     get edit_feed_path(ai_feed)
 
-    assert_select "select[data-key='form.ai-model'] option", text: "Claude Sonnet 4.6"
-    assert_select "select[data-key='form.ai-model'] option", text: "Claude Opus 4.7", count: 1
+    assert_select "select[data-key='form.ai-model'] option", text: "GPT-4.1"
+    assert_select "select[data-key='form.ai-model'] option", text: "GPT-4o", count: 1
   end
 
   test "#edit should embed each credential's models for the dependent dropdown" do
@@ -142,7 +142,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
 
     section = css_select("[data-key='form.ai-settings']").first
     embedded = JSON.parse(section["data-ai-settings-models-value"])
-    assert_equal ["claude-opus-4-7", "claude-sonnet-4-6"], embedded[credential.id.to_s].pluck("id")
+    assert_equal ["gpt-4.1", "gpt-4o"], embedded[credential.id.to_s].pluck("id")
 
     ai_profiles = JSON.parse(section["data-ai-settings-ai-profiles-value"])
     assert_includes ai_profiles, "llm"
