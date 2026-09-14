@@ -133,6 +133,8 @@ en:
       description_html: "Password reset email sent"
     job_purge_expired_events_completed:
       name: "Old events cleaned up"
+    job_refresh_llm_models_completed:
+      name: "Model catalog refreshed"
     job_llm_capability_probe_skipped:
       name: "Capability probe skipped"
     job_llm_capability_probe_check:

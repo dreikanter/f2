@@ -17,7 +17,7 @@ class LlmModelRefreshTest < ActionDispatch::IntegrationTest
 
   def perform_refresh
     worker = create(:solid_queue_process)
-    SolidQueue::ReadyExecution.claim(["default"], 1, worker.id).sole.perform
+    SolidQueue::ReadyExecution.claim([RefreshLlmModelsJob.queue_name], 1, worker.id).sole.perform
   end
 
   test "#perform should share one refresh and its result across credentials" do
