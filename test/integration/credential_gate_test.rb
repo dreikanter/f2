@@ -4,10 +4,6 @@ require "test_helper"
 # names each missing credential type so the feed can detour to the relevant
 # setup page without losing the draft.
 class CredentialGateTest < ActionDispatch::IntegrationTest
-  setup do
-    create(:llm_model, model_id: "gpt-4.1")
-  end
-
   include ActiveJob::TestHelper
 
   setup { clear_enqueued_jobs }
@@ -32,6 +28,7 @@ class CredentialGateTest < ActionDispatch::IntegrationTest
   end
 
   test "credential gate does not require optional search credentials" do
+    create(:llm_model, model_id: "gpt-4.1")
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user)
 

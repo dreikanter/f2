@@ -1,11 +1,6 @@
 require "test_helper"
 
 class FeedRefreshWorkflowTest < ActiveSupport::TestCase
-  setup do
-    create(:llm_model, model_id: "gpt-4.1")
-    create(:llm_model, model_id: "saved-model")
-  end
-
   include ActiveJob::TestHelper
 
   def feed
@@ -394,6 +389,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#execute should persist a digest item as a publishable null-source post" do
+    create(:llm_model, model_id: "gpt-4.1")
     digest_user = create(:user)
     credential = create(:ai_credential, :active, user: digest_user)
     digest_feed = create(:feed, :enabled, feed_profile_key: "llm", user: digest_user,
@@ -417,6 +413,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#execute should collapse two digest items in one run into a single period post" do
+    create(:llm_model, model_id: "gpt-4.1")
     digest_user = create(:user)
     credential = create(:ai_credential, :active, user: digest_user)
     digest_feed = create(:feed, :enabled, feed_profile_key: "llm", user: digest_user,
@@ -451,6 +448,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#execute should handle unavailable AI extraction without spending or deactivating credentials" do
+    create(:llm_model, model_id: "saved-model")
     credential = create(:ai_credential, :active)
     search = create(:search_credential, :active, user: credential.user)
     feed = create(:feed, :enabled, user: credential.user, feed_profile_key: "llm",
@@ -1091,6 +1089,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#execute should record the period after a digest-only run" do
+    create(:llm_model, model_id: "gpt-4.1")
     freeze_time do
       feed = digest_feed_with_schedule
       loader = counting_loader([{ "source_url" => nil, "body" => "roundup" }])
@@ -1106,6 +1105,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#execute should skip a scheduled run while the digest period is still current" do
+    create(:llm_model, model_id: "gpt-4.1")
     freeze_time do
       feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date)
       loader = counting_loader([{ "source_url" => nil, "body" => "roundup" }])
@@ -1119,6 +1119,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#execute should sweep abandoned events even when the digest skip halts the run" do
+    create(:llm_model, model_id: "gpt-4.1")
     freeze_time do
       feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date)
       abandoned = Event.create!(
@@ -1138,6 +1139,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#execute should force a manual run through the cadence skip" do
+    create(:llm_model, model_id: "gpt-4.1")
     freeze_time do
       feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date)
       loader = counting_loader([{ "source_url" => nil, "body" => "roundup" }])
@@ -1151,6 +1153,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#execute should not skip when the recorded digest period is stale" do
+    create(:llm_model, model_id: "gpt-4.1")
     freeze_time do
       feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date - 1)
       loader = counting_loader([{ "source_url" => nil, "body" => "today's roundup" }])
@@ -1163,6 +1166,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#execute should clear the recorded period when a run produces feed-style items" do
+    create(:llm_model, model_id: "gpt-4.1")
     freeze_time do
       feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date - 1)
       loader = counting_loader([{ "source_url" => "https://example.com/post-1", "body" => "a real post" }])
@@ -1174,6 +1178,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#execute should clear the period for a mixed digest/feed-style run" do
+    create(:llm_model, model_id: "gpt-4.1")
     freeze_time do
       # Seed a stale period so this proves the mixed run *clears* it, not just a
       # trivial nil == nil no-write.

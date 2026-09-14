@@ -9,11 +9,6 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     @user ||= regular_user
   end
 
-  setup do
-    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
-    create(:llm_model, model_id: "gpt-4o", name: "GPT-4o")
-  end
-
   def credential
     @credential ||= create(:ai_credential, :active, user: user, display_name: "Main key")
   end
@@ -37,6 +32,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   end
 
   test "#edit should show AI, search, and model selects for an AI feed" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
 
     get edit_feed_path(ai_feed)
@@ -51,6 +47,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   end
 
   test "#edit should show the model directly after the AI provider" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
 
     get edit_feed_path(ai_feed)
@@ -60,6 +57,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   end
 
   test "#edit should warn when the feed's saved model is no longer available" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
     stale_feed = create(:feed,
                         user: user,
@@ -75,6 +73,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   end
 
   test "#edit should preselect the feed's saved credentials and model" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
 
     get edit_feed_path(ai_feed)
@@ -85,6 +84,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   end
 
   test "#edit should preserve no external search even when the user has a default" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
     create(:search_credential, :active, :default, user: user, display_name: "Default search")
     create(:search_credential, :active, user: user, display_name: "Other search")
@@ -102,6 +102,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   end
 
   test "#edit should render the model placeholder as disabled so a pick can't be cleared" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
 
     get edit_feed_path(ai_feed)
@@ -111,6 +112,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   end
 
   test "#edit should preserve selection when the saved model is no longer offered" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
     stale_feed = create(:feed,
                         user: user,
@@ -127,6 +129,8 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   end
 
   test "#edit should list all provider models in the model select" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
+    create(:llm_model, model_id: "gpt-4o", name: "GPT-4o")
     sign_in_as(user)
 
     get edit_feed_path(ai_feed)
@@ -136,6 +140,8 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   end
 
   test "#edit should embed each credential's models for the dependent dropdown" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
+    create(:llm_model, model_id: "gpt-4o", name: "GPT-4o")
     sign_in_as(user)
 
     get edit_feed_path(ai_feed)
@@ -150,6 +156,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   end
 
   test "#edit should hide and disable the section for a non-AI feed" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
     credential
     search_credential
@@ -181,6 +188,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   end
 
   test "#edit should show model controls without a search credential" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
     feed_without_search = create(:feed,
                                  user: user,
@@ -215,6 +223,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   end
 
   test "#edit should keep AI unavailable when search credentials are missing" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
     feed_without_search = create(:feed,
                                  user: user,
@@ -230,6 +239,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   end
 
   test "#edit should keep AI unavailable when setup is complete" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
 
     get edit_feed_path(ai_feed)

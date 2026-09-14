@@ -1,10 +1,6 @@
 require "test_helper"
 
 class Feed::SearchCredentialTest < ActiveSupport::TestCase
-  setup do
-    create(:llm_model, model_id: "test-model")
-  end
-
   test "#valid? should require the search credential to belong to the feed user" do
     user = create(:user)
     foreign = create(:search_credential, :active)
@@ -15,6 +11,7 @@ class Feed::SearchCredentialTest < ActiveSupport::TestCase
   end
 
   test "#valid? should allow saved settings with a missing or inactive search credential" do
+    create(:llm_model, model_id: "test-model")
     feed = build_ai_feed(search_credential: nil)
 
     assert feed.valid?, feed.errors.full_messages.to_sentence

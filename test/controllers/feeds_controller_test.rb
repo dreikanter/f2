@@ -1,10 +1,6 @@
 require "test_helper"
 
 class FeedsControllerTest < ActionDispatch::IntegrationTest
-  setup do
-    create(:llm_model, model_id: "gpt-4.1")
-  end
-
   def user
     @user ||= regular_user
   end
@@ -719,6 +715,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should not offer Refresh for an enabled AI feed during the outage" do
+    create(:llm_model, model_id: "gpt-4.1")
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user)
     ai_feed = create(:feed, :enabled, user: user, feed_profile_key: "llm",

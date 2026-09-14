@@ -1,7 +1,6 @@
 require "test_helper"
 
 class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
-  setup { create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1") }
   include ActiveJob::TestHelper
 
   TURBO_STREAM = { "Accept" => "text/vnd.turbo-stream.html" }.freeze
@@ -117,6 +116,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#create should store the chosen providers and model on the preview" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user, available_models: models)
 
@@ -133,6 +133,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#create should not preview an AI profile with a model the provider does not offer" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user, available_models: models)
 
@@ -150,6 +151,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#create should not preview an AI profile when the credential is not owned by the user" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
     create(:ai_credential, :active, user: user, available_models: models)
     stranger_credential = create(:ai_credential, :active, user: create(:user), available_models: models)
@@ -230,6 +232,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#update should validate the stored identity rather than request overrides" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
     stored_credential = create(:ai_credential, :active, user: user, available_models: models)
     replacement = create(:ai_credential, :active, user: user, available_models: models)

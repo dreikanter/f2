@@ -3,10 +3,7 @@ require "test_helper"
 class FeedPreviewRequestTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
-  setup do
-    clear_enqueued_jobs
-    create(:llm_model, model_id: "sample-model")
-  end
+  setup { clear_enqueued_jobs }
 
   def user
     @user ||= create(:user)
@@ -72,6 +69,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   end
 
   test "#create should reject another user's AI credential" do
+    create(:llm_model, model_id: "sample-model")
     foreign = create(:ai_credential, :active, available_models: [{ "id" => "sample-model" }])
 
     result = request(**ai_attributes.merge(ai_credential_id: foreign.id)).create
@@ -81,6 +79,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   end
 
   test "#create should reject an inactive selection even when another AI credential is active" do
+    create(:llm_model, model_id: "sample-model")
     inactive = create(:ai_credential, :inactive, user: user)
 
     result = request(**ai_attributes.merge(ai_credential_id: inactive.id)).create
@@ -90,6 +89,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   end
 
   test "#create should require an explicit model selection" do
+    create(:llm_model, model_id: "sample-model")
     result = request(**ai_attributes.except(:ai_model)).create
 
     assert_equal :invalid_ai_selection, result.error
@@ -97,6 +97,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   end
 
   test "#create should reject an unlisted model without a previous selection" do
+    create(:llm_model, model_id: "sample-model")
     result = request(**ai_attributes.merge(ai_model: "unlisted-model")).create
 
     assert_equal :invalid_ai_selection, result.error
@@ -104,6 +105,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   end
 
   test "#create should retain a model previously selected on the user's feed" do
+    create(:llm_model, model_id: "sample-model")
     create(:feed, user: user, feed_profile_key: "llm", params: { prompt: "Sample news" },
                   ai_credential: ai_credential, ai_model: "sample-model", search_credential: nil)
     RubyLLM::ActiveRecord::Model.update_all(unlisted_at: Time.current)
@@ -115,6 +117,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   end
 
   test "#create should use the selected search credential" do
+    create(:llm_model, model_id: "sample-model")
     result = request(**ai_attributes, search_credential_id: search_credential.id).create
 
     assert_nil result.error
@@ -124,6 +127,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   end
 
   test "#create should leave external search unset when no credential was selected" do
+    create(:llm_model, model_id: "sample-model")
     search_credential.make_default!
 
     result = request(**ai_attributes).create
@@ -133,6 +137,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   end
 
   test "#create should ignore another user's search credential" do
+    create(:llm_model, model_id: "sample-model")
     foreign = create(:search_credential, :active)
 
     result = request(**ai_attributes, search_credential_id: foreign.id).create
@@ -142,6 +147,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   end
 
   test "#create should ignore an inactive search credential" do
+    create(:llm_model, model_id: "sample-model")
     search_credential.update!(active: false)
 
     result = request(**ai_attributes, search_credential_id: search_credential.id).create
@@ -190,6 +196,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   end
 
   test "#create should keep previews for different model selections separate" do
+    create(:llm_model, model_id: "sample-model")
     original = request(**ai_attributes).create.preview
     create(:llm_model, model_id: "second-model")
 
@@ -296,6 +303,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   end
 
   test "#refresh should preserve the stored source and selections" do
+    create(:llm_model, model_id: "sample-model")
     feed = create(:feed, user: user)
     existing = create(:feed_preview, :completed, user: user, feed: feed, feed_profile_key: "llm",
                                                 params: { "prompt" => "Sample news" }, ai_model: "sample-model",
@@ -322,6 +330,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   end
 
   test "#refresh should reject a revoked AI credential despite an active alternative" do
+    create(:llm_model, model_id: "sample-model")
     existing = request(**ai_attributes).create.preview
     ai_credential.update!(active: false)
     create(:ai_credential, :active, user: user)
@@ -335,6 +344,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   end
 
   test "#refresh should preserve an inactive search selection without substituting the default" do
+    create(:llm_model, model_id: "sample-model")
     existing = request(**ai_attributes, search_credential_id: search_credential.id).create.preview
     search_credential.update!(active: false)
     create(:search_credential, :active, :default, user: user)

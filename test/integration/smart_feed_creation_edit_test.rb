@@ -4,10 +4,6 @@ require "test_helper"
 # re-runs detection before saving. An AI feed's prompt is its source and the uid
 # scheme never changes, so it stays editable throughout, whether draft or live.
 class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
-  setup do
-    create(:llm_model, model_id: "gpt-4.1")
-  end
-
   include ActiveJob::TestHelper
 
   setup { clear_enqueued_jobs }
@@ -193,6 +189,7 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
   end
 
   test "#edit should keep a live AI feed's prompt editable with a backfill note" do
+    create(:llm_model, model_id: "gpt-4.1")
     sign_in_as(user)
 
     get edit_feed_url(enabled_ai_feed)
@@ -204,6 +201,7 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
   end
 
   test "#patch should update a live AI feed's prompt" do
+    create(:llm_model, model_id: "gpt-4.1")
     sign_in_as(user)
 
     patch feed_url(enabled_ai_feed), params: { feed: { params: { prompt: "follow Pitchfork reviews" }, name: enabled_ai_feed.name }, enable_feed: "1" }

@@ -1,10 +1,6 @@
 require "test_helper"
 
 class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
-  setup do
-    create(:llm_model, model_id: "gpt-4.1")
-  end
-
   include CacheTestHelpers
   include ActiveJob::TestHelper
 
@@ -31,6 +27,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
   end
 
   test "#post should reject AI execution while preserving a saved draft and selections" do
+    create(:llm_model, model_id: "gpt-4.1")
     sign_in_as(user)
     access_token
     credential

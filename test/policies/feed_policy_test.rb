@@ -1,10 +1,6 @@
 require "test_helper"
 
 class FeedPolicyTest < ActiveSupport::TestCase
-  setup do
-    create(:llm_model, model_id: "saved-model")
-  end
-
   def user
     users(:user)
   end
@@ -119,6 +115,7 @@ class FeedPolicyTest < ActiveSupport::TestCase
   end
 
   test "#refresh? should deny AI refresh while saved settings remain editable" do
+    create(:llm_model, model_id: "saved-model")
     credential = create(:ai_credential, :active, user: user)
     ai_feed = create(:feed, :enabled, user: user, feed_profile_key: "llm",
                      params: { "prompt" => "A daily roundup" }, ai_credential: credential, ai_model: "saved-model")

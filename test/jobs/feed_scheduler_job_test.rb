@@ -1,10 +1,6 @@
 require "test_helper"
 
 class FeedSchedulerJobTest < ActiveJob::TestCase
-  setup do
-    create(:llm_model, model_id: "gpt-4.1")
-  end
-
   setup { freeze_time }
 
   teardown { unfreeze_time }
@@ -32,6 +28,7 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should preserve due AI schedules while AI is unavailable" do
+    create(:llm_model, model_id: "gpt-4.1")
     credential = create(:ai_credential, :active)
     feed = create(:feed, :enabled, user: credential.user, feed_profile_key: "llm",
                                   ai_credential: credential, ai_model: "gpt-4.1",

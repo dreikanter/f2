@@ -1,11 +1,8 @@
 require "test_helper"
 
 class FeedRefreshWorkflowSearchAuthTest < ActiveSupport::TestCase
-  setup do
-    create(:llm_model, model_id: "gpt-4.1")
-  end
-
   test "#execute should record an uncaught search failure without changing credential state" do
+    create(:llm_model, model_id: "gpt-4.1")
     user = create(:user)
     ai_credential = create(
       :ai_credential,
