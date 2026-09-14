@@ -19,8 +19,6 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
 
       assert_predicate run.reload, :succeeded?
       assert_predicate openai_credential.reload, :active?
-      assert_empty openai_credential.available_models
-      assert_nil openai_credential.models_refreshed_at
       assert_equal Time.current, openai_credential.last_validated_at
       assert_requested request, times: 1
       assert_not_requested :post, /./

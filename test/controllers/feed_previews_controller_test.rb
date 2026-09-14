@@ -15,10 +15,6 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     @search_credential ||= create(:search_credential, :active, user: user)
   end
 
-  def models
-    [{ "id" => "gpt-4.1", "name" => "GPT-4.1" }]
-  end
-
   test "#create should reject another user's feed without starting a preview" do
     sign_in_as(user)
     other_feed = create(:feed)
@@ -118,7 +114,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   test "#create should store the chosen providers and model on the preview" do
     create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
-    credential = create(:ai_credential, :active, user: user, available_models: models)
+    credential = create(:ai_credential, :active, user: user)
 
     post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" },
                          ai_credential_id: credential.id, search_credential_id: search_credential.id,
@@ -135,7 +131,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   test "#create should not preview an AI profile with a model the provider does not offer" do
     create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
-    credential = create(:ai_credential, :active, user: user, available_models: models)
+    credential = create(:ai_credential, :active, user: user)
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
@@ -153,8 +149,8 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   test "#create should not preview an AI profile when the credential is not owned by the user" do
     create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
-    create(:ai_credential, :active, user: user, available_models: models)
-    stranger_credential = create(:ai_credential, :active, user: create(:user), available_models: models)
+    create(:ai_credential, :active, user: user)
+    stranger_credential = create(:ai_credential, :active, user: create(:user))
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
@@ -234,8 +230,8 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   test "#update should validate the stored identity rather than request overrides" do
     create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
-    stored_credential = create(:ai_credential, :active, user: user, available_models: models)
-    replacement = create(:ai_credential, :active, user: user, available_models: models)
+    stored_credential = create(:ai_credential, :active, user: user)
+    replacement = create(:ai_credential, :active, user: user)
     preview = create(:feed_preview, :completed, user: user, feed_profile_key: "llm",
                                                 params: { "prompt" => "ruby news" },
                                                 ai_credential: stored_credential,

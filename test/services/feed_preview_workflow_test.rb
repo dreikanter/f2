@@ -156,7 +156,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#execute should run the AI loader with the preview's selected model for the preview purpose" do
-    credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    credential = create(:ai_credential, :active, user: user)
     preview = create(:feed_preview, user: user, feed_profile_key: "llm",
                      params: { "prompt" => "rust async" }, ai_credential: credential,
                      ai_model: "claude-sonnet-4-6", status: :pending, run_id: AI_RUN_ID)

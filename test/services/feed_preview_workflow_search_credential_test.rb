@@ -8,8 +8,7 @@ class FeedPreviewWorkflowSearchCredentialTest < ActiveSupport::TestCase
     ai_credential = create(
       :ai_credential,
       :active,
-      user: user,
-      available_models: [{ "id" => "claude-sonnet-4-6" }]
+      user: user
     )
     search_credential = create(:search_credential, :active, user: user)
     preview = create(
