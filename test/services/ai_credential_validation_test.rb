@@ -8,6 +8,7 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
     @openai_credential ||= create(
       :ai_credential,
       :active,
+      last_validated_at: 1.day.ago,
       available_models: [{ "id" => "saved-model" }],
       models_refreshed_at: 1.day.ago
     )
@@ -39,18 +40,40 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
     assert_equal original, credential.reload.attributes
   end
 
-  test "#call should accept an authenticated empty catalog" do
-    stub_openai_models(key: openai_credential.credential_data["api_key"], fixture: "empty")
+  test "#call should accept an empty successful response without updating either catalog" do
+    original_catalog = openai_credential.attributes.slice("available_models", "models_refreshed_at")
+    request = stub_request(:get, "https://api.openai.com/v1/models")
+      .with(headers: { "Authorization" => "Bearer #{openai_credential.credential_data.fetch("api_key")}" })
+      .to_return(status: 200, body: "")
     run = openai_credential.validate_async(AiCredentialValidationJob)
+
+    assert_no_changes -> { RubyLLM::ActiveRecord::Model.order(:id).map(&:attributes) } do
+      AiCredentialValidation.new(run).call
+    end
+
+    assert_predicate run.reload, :succeeded?
+    assert_predicate openai_credential.reload, :active?
+    assert_equal original_catalog, openai_credential.attributes.slice("available_models", "models_refreshed_at")
+    assert_requested request, times: 1
+  end
+
+  test "#call should accept a non-JSON successful response" do
+    credential = create(:ai_credential)
+    request = stub_request(:get, "https://api.openai.com/v1/models")
+      .with(headers: { "Authorization" => "Bearer #{credential.credential_data.fetch("api_key")}" })
+      .to_return(status: 200, body: "not a model catalog")
+    run = credential.validate_async(AiCredentialValidationJob)
 
     AiCredentialValidation.new(run).call
 
     assert_predicate run.reload, :succeeded?
-    assert_predicate openai_credential.reload, :active?
-    assert_empty openai_credential.available_models
+    assert_predicate credential.reload, :active?
+    assert_empty credential.available_models
+    assert_nil credential.models_refreshed_at
+    assert_requested request, times: 1
   end
 
-  test "#call should time out an expired validation before requesting models" do
+  test "#call should time out an expired validation before checking authentication" do
     run = openai_credential.validate_async(AiCredentialValidationJob)
 
     travel_to run.deadline_at + 1.second do
@@ -114,7 +137,7 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
     assert_nil credential.last_validated_at
     assert_not Event.exists?(subject: credential, type: "ai_credential_deactivated")
     expected_context = {
-      "error" => "Couldn't list OpenAI models (HTTP 503). Try again later.",
+      "error" => "OpenAI request failed (HTTP 503). Try again later.",
       "category" => "provider",
       "status" => 503
     }
@@ -122,7 +145,35 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
     assert_equal expected_context.fetch("error"), credential.last_error
   end
 
-  test "#call should discard a catalog when another credential field changes" do
+  test "#call should preserve a working key and its feeds on quota exhaustion" do
+    feed = create(:feed, :enabled, user: openai_credential.user, ai_credential: openai_credential)
+    stub_openai_models(key: openai_credential.credential_data.fetch("api_key"), fixture: "quota", status: 429)
+    run = openai_credential.validate_async(AiCredentialValidationJob)
+
+    AiCredentialValidation.new(run).call
+
+    assert_predicate run.reload, :failed?
+    assert_equal "rate_limit", run.context.fetch("category")
+    assert_predicate openai_credential.reload, :active?
+    assert_predicate feed.reload, :enabled?
+    assert_not Event.exists?(subject: openai_credential, type: "ai_credential_deactivated")
+  end
+
+  test "#call should preserve a working key on a connection timeout" do
+    stub_request(:get, "https://api.openai.com/v1/models").to_timeout
+    original_timestamp = openai_credential.last_validated_at
+    run = openai_credential.validate_async(AiCredentialValidationJob)
+
+    AiCredentialValidation.new(run).call
+
+    assert_predicate run.reload, :failed?
+    assert_equal "connection", run.context.fetch("category")
+    assert_predicate openai_credential.reload, :active?
+    assert_equal original_timestamp, openai_credential.last_validated_at
+    assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
+  end
+
+  test "#call should discard validation when another credential field changes" do
     run = openai_credential.validate_async(AiCredentialValidationJob)
     stub_openai_models(key: openai_credential.credential_data.fetch("api_key")) do
       current = AiCredential.find(openai_credential.id)
@@ -149,7 +200,7 @@ class AiCredentialValidationTest < ActiveSupport::TestCase
 
     assert_predicate run.reload, :superseded?
     assert_predicate openai_credential.reload, :active?
-    assert_empty openai_credential.available_models
+    assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
     assert_not Event.exists?(subject: openai_credential, type: "ai_credential_deactivated")
   end
 

@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-14
+
+- Checking AI credentials no longer refreshes their model list; use Refresh models to update it.
+
 ## 2026-09-13
 
 - Keep feeds enabled when an outdated model refresh fails during a newer credential check.
