@@ -227,7 +227,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_predicate active.reload, :active?
   end
 
-  test "#show should render without polling when no catalog refresh is running" do
+  test "#show should display the model catalog without manual refresh controls" do
     sign_in_as(user)
     active = create(:ai_credential, :active, user: user)
 
@@ -239,9 +239,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#ai-credential-model-catalog" do
       assert_select "h2", text: "Available models", count: 1
       assert_select "[data-key='ai_credential.models-refresh-status']", text: ""
-      assert_select "form[action=?][data-controller='loading-button']", ai_credential_model_catalog_path(active) do
-        assert_select "button[data-key='ai_credential.refresh-models'][title='Refresh models'][type='submit']:not([disabled])"
-      end
+      assert_select "button[data-key='ai_credential.refresh-models']", count: 0
     end
   end
 
