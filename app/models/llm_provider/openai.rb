@@ -29,6 +29,7 @@ module LlmProvider
       raise_response_error(response) unless response.success?
       response
     rescue HttpClient::Error
+      # Omit the original cause so error reports cannot expose credentials.
       raise LlmProvider::Error.new("Couldn't reach OpenAI. Try again later.", category: :connection), cause: nil
     end
 
