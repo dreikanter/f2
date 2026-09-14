@@ -4,6 +4,10 @@ require "test_helper"
 # re-runs detection before saving. An AI feed's prompt is its source and the uid
 # scheme never changes, so it stays editable throughout, whether draft or live.
 class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
+  setup do
+    create(:llm_model, model_id: "claude-sonnet-4-6")
+  end
+
   include ActiveJob::TestHelper
 
   setup { clear_enqueued_jobs }
@@ -180,8 +184,7 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
 
   def enabled_ai_feed
     @enabled_ai_feed ||= begin
-      credential = create(:ai_credential, :active, user: user,
-                                                   available_models: [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }])
+      credential = create(:ai_credential, :active, user: user)
       create(:feed, user: user, access_token: access_token, state: :enabled,
                     target_group: "testgroup", feed_profile_key: "llm",
                     params: { "prompt" => "follow the A24 blog" },

@@ -1,13 +1,16 @@
 require "test_helper"
 
 class FeedRefreshWorkflowSearchAuthTest < ActiveSupport::TestCase
+  setup do
+    create(:llm_model, model_id: "claude-sonnet-4-6")
+  end
+
   test "#execute should record an uncaught search failure without changing credential state" do
     user = create(:user)
     ai_credential = create(
       :ai_credential,
       :active,
-      user: user,
-      available_models: [{ "id" => "claude-sonnet-4-6" }]
+      user: user
     )
     search_credential = create(:search_credential, :active, user: user)
     feed = create(

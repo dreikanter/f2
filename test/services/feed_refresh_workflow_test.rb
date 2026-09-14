@@ -1,6 +1,11 @@
 require "test_helper"
 
 class FeedRefreshWorkflowTest < ActiveSupport::TestCase
+  setup do
+    create(:llm_model, model_id: "claude-sonnet-4-6")
+    create(:llm_model, model_id: "saved-model")
+  end
+
   include ActiveJob::TestHelper
 
   def feed
@@ -390,8 +395,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
   test "#execute should persist a digest item as a publishable null-source post" do
     digest_user = create(:user)
-    credential = create(:ai_credential, :active, user: digest_user,
-                                                 available_models: [{ "id" => "claude-sonnet-4-6" }])
+    credential = create(:ai_credential, :active, user: digest_user)
     digest_feed = create(:feed, :enabled, feed_profile_key: "llm", user: digest_user,
                                           ai_credential: credential, ai_model: "claude-sonnet-4-6",
                                           params: { "prompt" => "daily roundup" })
@@ -414,8 +418,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
   test "#execute should collapse two digest items in one run into a single period post" do
     digest_user = create(:user)
-    credential = create(:ai_credential, :active, user: digest_user,
-                                                 available_models: [{ "id" => "claude-sonnet-4-6" }])
+    credential = create(:ai_credential, :active, user: digest_user)
     digest_feed = create(:feed, :enabled, feed_profile_key: "llm", user: digest_user,
                                           ai_credential: credential, ai_model: "claude-sonnet-4-6",
                                           params: { "prompt" => "daily roundup" })
@@ -448,7 +451,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#execute should handle unavailable AI extraction without spending or deactivating credentials" do
-    credential = create(:ai_credential, :active, available_models: [{ "id" => "saved-model" }])
+    credential = create(:ai_credential, :active)
     search = create(:search_credential, :active, user: credential.user)
     feed = create(:feed, :enabled, user: credential.user, feed_profile_key: "llm",
                    params: { "prompt" => "A daily roundup" }, ai_credential: credential,
@@ -1069,8 +1072,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
   def digest_feed_with_schedule(last_digest_period: nil)
     user = create(:user)
-    credential = create(:ai_credential, :active, user: user,
-                                                 available_models: [{ "id" => "claude-sonnet-4-6" }])
+    credential = create(:ai_credential, :active, user: user)
     feed = create(:feed, :enabled, feed_profile_key: "llm", user: user,
                                    ai_credential: credential, ai_model: "claude-sonnet-4-6",
                                    params: { "prompt" => "daily roundup" })

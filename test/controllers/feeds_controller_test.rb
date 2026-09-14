@@ -1,6 +1,10 @@
 require "test_helper"
 
 class FeedsControllerTest < ActionDispatch::IntegrationTest
+  setup do
+    create(:llm_model, model_id: "claude-sonnet-4-6")
+  end
+
   def user
     @user ||= regular_user
   end
@@ -716,7 +720,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
   test "#show should not offer Refresh for an enabled AI feed during the outage" do
     sign_in_as(user)
-    credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    credential = create(:ai_credential, :active, user: user)
     ai_feed = create(:feed, :enabled, user: user, feed_profile_key: "llm",
                                      ai_credential: credential, ai_model: "claude-sonnet-4-6",
                                      params: { "prompt" => "ruby news" }, search_credential: nil)

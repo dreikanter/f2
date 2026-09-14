@@ -1,6 +1,10 @@
 require "test_helper"
 
 class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
+  setup do
+    create(:llm_model, model_id: "claude-sonnet-4-6")
+  end
+
   include CacheTestHelpers
   include ActiveJob::TestHelper
 
@@ -15,8 +19,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
   end
 
   def credential
-    @credential ||= create(:ai_credential, :active, user: user,
-                           available_models: [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }])
+    @credential ||= create(:ai_credential, :active, user: user)
   end
 
   def search_credential

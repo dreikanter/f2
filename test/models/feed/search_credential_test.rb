@@ -1,6 +1,10 @@
 require "test_helper"
 
 class Feed::SearchCredentialTest < ActiveSupport::TestCase
+  setup do
+    create(:llm_model, model_id: "test-model")
+  end
+
   test "#valid? should require the search credential to belong to the feed user" do
     user = create(:user)
     foreign = create(:search_credential, :active)
@@ -30,7 +34,7 @@ class Feed::SearchCredentialTest < ActiveSupport::TestCase
 
   def build_ai_feed(user: create(:user), search_credential:)
     profile_key = FeedProfile.ai_profile_keys.first
-    ai_credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "test-model" }])
+    ai_credential = create(:ai_credential, :active, user: user)
 
     build(
       :feed,
