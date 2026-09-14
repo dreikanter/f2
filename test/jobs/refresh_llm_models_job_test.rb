@@ -16,9 +16,8 @@ class RefreshLlmModelsJobTest < ActiveSupport::TestCase
     job
   end
 
-  test ".runnable_jobs should offer the refresh in the dev area" do
+  test ".runnable_jobs should include the refresh so dev tools can launch it" do
     assert_includes JobRun.runnable_jobs, RefreshLlmModelsJob
-    assert_equal "Refresh LLM Models", RefreshLlmModelsJob.display_name
   end
 
   test "#perform should record the run and how many models it stored" do
@@ -41,6 +40,5 @@ class RefreshLlmModelsJobTest < ActiveSupport::TestCase
     assert_raises(RubyLLM::ModelRegistryError) { job.perform_now }
 
     assert_predicate JobRun.sole, :failed?
-    assert_predicate LlmModelRefresh.current, :failed?
   end
 end

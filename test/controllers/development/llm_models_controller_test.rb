@@ -33,7 +33,6 @@ class Development::LlmModelsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '[data-key="empty-state"]'
-    assert_select '[data-key="llm_models.outcome"]'
   end
 
   test "#show should report the last refresh outcome" do

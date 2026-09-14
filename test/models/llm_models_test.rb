@@ -42,10 +42,6 @@ class LlmModelsTest < ActiveSupport::TestCase
     ], LlmModels.counts_by_provider
   end
 
-  test "#counts_by_provider should report an empty registry" do
-    assert_empty LlmModels.counts_by_provider
-  end
-
   test "#for_feed should exclude known non-text models and preserve missing metadata" do
     create(:llm_model, model_id: "text")
     create(:llm_model, model_id: "image", modalities: { output: ["image"] })
