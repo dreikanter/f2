@@ -4,7 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-14
 
-- Checking AI credentials no longer refreshes their model list; use Refresh models to update it.
+- AI credentials now share a model list that updates automatically each day.
+- Checking AI credentials no longer refreshes their model list.
 
 ## 2026-09-13
 

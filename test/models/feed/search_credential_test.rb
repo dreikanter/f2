@@ -11,6 +11,7 @@ class Feed::SearchCredentialTest < ActiveSupport::TestCase
   end
 
   test "#valid? should allow saved settings with a missing or inactive search credential" do
+    create(:llm_model, model_id: "test-model")
     feed = build_ai_feed(search_credential: nil)
 
     assert feed.valid?, feed.errors.full_messages.to_sentence
@@ -30,7 +31,7 @@ class Feed::SearchCredentialTest < ActiveSupport::TestCase
 
   def build_ai_feed(user: create(:user), search_credential:)
     profile_key = FeedProfile.ai_profile_keys.first
-    ai_credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "test-model" }])
+    ai_credential = create(:ai_credential, :active, user: user)
 
     build(
       :feed,

@@ -1,6 +1,6 @@
 module LlmProvider
   # Abstract client bound to a credential snapshot. Each provider interprets its
-  # own fields for validation, SDK configuration, and model discovery.
+  # own fields for validation and SDK configuration.
   class Base
     # @param credential_data [Hash] provider-specific authentication fields
     # @return [Base] provider client bound to a copy of the supplied credentials
@@ -27,12 +27,6 @@ module LlmProvider
         configure(config)
         config.max_retries = 0
       end
-    end
-
-    # @abstract Implement provider model discovery.
-    # @return [Array<String>] model IDs available to this client's credentials
-    def models
-      raise NotImplementedError, "Subclasses must implement #models"
     end
 
     private

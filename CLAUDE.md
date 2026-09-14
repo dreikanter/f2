@@ -33,6 +33,7 @@ When a change affects users, add an entry in the same commit:
   improvements, UI changes.
 - Write for users, not developers — match the UI Text Writing tone below.
 - Add bullets under today's date heading, creating the heading if it's missing.
+- Keep consecutive changelog bullets together, without blank lines between them.
 
 Do **not** add entries for internal/technical changes: refactors, test changes,
 dependency bumps, build/CI tweaks, or anything users won't notice.

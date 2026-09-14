@@ -28,11 +28,12 @@ class CredentialGateTest < ActionDispatch::IntegrationTest
   end
 
   test "credential gate does not require optional search credentials" do
+    create(:llm_model, model_id: "gpt-4.1")
     sign_in_as(user)
-    credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    credential = create(:ai_credential, :active, user: user)
 
     post feed_previews_path, params: { profile_key: "llm", "params" => { "prompt" => "https://example.com" },
-                                           ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6" }
+                                           ai_credential_id: credential.id, ai_model: "gpt-4.1" }
 
     assert_response :success
     assert_select "button[value='save_as_draft_and_add_credentials']", count: 0

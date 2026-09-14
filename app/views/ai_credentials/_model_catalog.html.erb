@@ -1,19 +1,15 @@
-<%# locals: (ai_credential:, feed_id: nil) %>
-<% if ai_credential.models_refreshing? %>
-  <div data-controller="polling"
-       data-polling-endpoint-value="<%= ai_credential_model_catalog_path(ai_credential, feed_id: feed_id) %>"
-       data-polling-interval-value="<%= polling_interval_ms %>"
-       data-polling-max-polls-value="<%= polling_max_polls %>"
-       data-polling-indicate-busy-value="false">
-    <div id="ai-credential-model-catalog">
-      <%= render "ai_credentials/model_catalog_content", ai_credential: ai_credential, feed_id: feed_id %>
-    </div>
-    <p data-polling-target="timeoutMessage" hidden class="text-sm text-muted">
-      The refresh is taking longer than expected. Reload this page to check again.
+<%# locals: (ai_credential:) %>
+<div id="ai-credential-model-catalog" class="space-y-3">
+  <div>
+    <%= h2 "Available models" %>
+    <p class="min-h-5 text-sm text-muted" data-key="ai_credential.models-refresh-status">
+      <% if llm_models_refresh.failed? %>
+        Couldn't refresh models. The current list is still available.
+      <% end %>
+      <% if llm_models_refreshed_at %>
+        Updated <%= time_ago_in_words(llm_models_refreshed_at) %> ago.
+      <% end %>
     </p>
   </div>
-<% else %>
-  <div id="ai-credential-model-catalog">
-    <%= render "ai_credentials/model_catalog_content", ai_credential: ai_credential, feed_id: feed_id %>
-  </div>
-<% end %>
+  <%= render AiCredentialModelsComponent.new(ai_credential: ai_credential) %>
+</div>

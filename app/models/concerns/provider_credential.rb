@@ -49,7 +49,6 @@ module ProviderCredential
       timeout: VALIDATION_TIMEOUT
     ) do |credential|
       credential.update!(last_error: nil)
-      credential.active_operation_run(:models_refresh)&.supersede!
     end
 
     validation_job.perform_later(run)
@@ -92,7 +91,7 @@ module ProviderCredential
   end
 
   def supersede_obsolete_operations
-    operation_runs.active.where(kind: [:validation, :models_refresh]).update_all(
+    operation_runs.active.where(kind: :validation).update_all(
       status: :superseded, finished_at: Time.current, updated_at: Time.current
     )
   end

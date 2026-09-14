@@ -40,10 +40,10 @@ default: &default
     queue: default
     schedule: every day at 4am
 
-  refresh_ai_model_catalogs:
-    class: RefreshAiModelCatalogsJob
+  refresh_llm_models:
+    class: RefreshLlmModelsJob
     queue: default
-    schedule: every hour
+    schedule: every day at 4am
 
   maintain_llm_chats:
     class: MaintainLlmChatsJob

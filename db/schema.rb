@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_13_230000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_14_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -254,6 +254,12 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_13_230000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["llm_chat_id"], name: "index_llm_messages_on_llm_chat_id"
+  end
+
+  create_table "llm_model_refreshes", force: :cascade do |t|
+    t.datetime "refreshed_at"
+    t.datetime "failed_at"
+    t.check_constraint "id = 1", name: "llm_model_refreshes_singleton"
   end
 
   create_table "llm_usages", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|

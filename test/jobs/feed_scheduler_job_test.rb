@@ -28,9 +28,10 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should preserve due AI schedules while AI is unavailable" do
-    credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    create(:llm_model, model_id: "gpt-4.1")
+    credential = create(:ai_credential, :active)
     feed = create(:feed, :enabled, user: credential.user, feed_profile_key: "llm",
-                                  ai_credential: credential, ai_model: "claude-sonnet-4-6",
+                                  ai_credential: credential, ai_model: "gpt-4.1",
                                   params: { "prompt" => "ruby news" }, search_credential: nil)
     schedule = create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
 

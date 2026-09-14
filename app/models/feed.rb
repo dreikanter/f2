@@ -254,12 +254,7 @@ class Feed < ApplicationRecord
   end
 
   def ai_model_supported?
-    ai_credential.present? && ai_credential.supports_model?(ai_model)
-  end
-
-  # A catalog omission must never silently switch an existing feed's model.
-  def effective_ai_model(credential = ai_credential)
-    ai_model.presence || credential&.default_supported_model
+    ai_credential.present? && LlmModels.for_feed(ai_credential.provider).any? { |model| model.id == ai_model }
   end
 
   # @param options [Hash] e.g. a shared :http_client

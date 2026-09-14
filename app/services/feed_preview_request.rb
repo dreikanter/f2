@@ -47,7 +47,7 @@ class FeedPreviewRequest
 
   def available_ai_model?
     return false if ai_model.blank?
-    return true if ai_credential.supports_model?(ai_model)
+    return true if LlmModels.for_feed(ai_credential.provider).any? { |model| model.id == ai_model }
     return true if previous_preview && previous_preview.ai_model == ai_model
 
     user.feeds.exists?(ai_credential: ai_credential, ai_model: ai_model)

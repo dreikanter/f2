@@ -715,10 +715,11 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should not offer Refresh for an enabled AI feed during the outage" do
+    create(:llm_model, model_id: "gpt-4.1")
     sign_in_as(user)
-    credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    credential = create(:ai_credential, :active, user: user)
     ai_feed = create(:feed, :enabled, user: user, feed_profile_key: "llm",
-                                     ai_credential: credential, ai_model: "claude-sonnet-4-6",
+                                     ai_credential: credential, ai_model: "gpt-4.1",
                                      params: { "prompt" => "ruby news" }, search_credential: nil)
 
     get feed_url(ai_feed)

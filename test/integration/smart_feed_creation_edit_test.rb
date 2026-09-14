@@ -180,16 +180,16 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
 
   def enabled_ai_feed
     @enabled_ai_feed ||= begin
-      credential = create(:ai_credential, :active, user: user,
-                                                   available_models: [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }])
+      credential = create(:ai_credential, :active, user: user)
       create(:feed, user: user, access_token: access_token, state: :enabled,
                     target_group: "testgroup", feed_profile_key: "llm",
                     params: { "prompt" => "follow the A24 blog" },
-                    ai_credential: credential, ai_model: "claude-sonnet-4-6")
+                    ai_credential: credential, ai_model: "gpt-4.1")
     end
   end
 
   test "#edit should keep a live AI feed's prompt editable with a backfill note" do
+    create(:llm_model, model_id: "gpt-4.1")
     sign_in_as(user)
 
     get edit_feed_url(enabled_ai_feed)
@@ -201,6 +201,7 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
   end
 
   test "#patch should update a live AI feed's prompt" do
+    create(:llm_model, model_id: "gpt-4.1")
     sign_in_as(user)
 
     patch feed_url(enabled_ai_feed), params: { feed: { params: { prompt: "follow Pitchfork reviews" }, name: enabled_ai_feed.name }, enable_feed: "1" }

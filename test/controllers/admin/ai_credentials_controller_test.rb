@@ -22,7 +22,7 @@ class Admin::AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
   test "#show should display another user's credential with an owner link" do
     sign_in_as(admin_user)
-    ai_credential.update!(available_models: [{ "id" => "cached-model" }])
+    create(:llm_model, model_id: "cached-model")
 
     get admin_ai_credential_path(ai_credential)
 

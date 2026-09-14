@@ -2,12 +2,12 @@ require "test_helper"
 
 class FeedRefreshWorkflowSearchAuthTest < ActiveSupport::TestCase
   test "#execute should record an uncaught search failure without changing credential state" do
+    create(:llm_model, model_id: "gpt-4.1")
     user = create(:user)
     ai_credential = create(
       :ai_credential,
       :active,
-      user: user,
-      available_models: [{ "id" => "claude-sonnet-4-6" }]
+      user: user
     )
     search_credential = create(:search_credential, :active, user: user)
     feed = create(
@@ -17,7 +17,7 @@ class FeedRefreshWorkflowSearchAuthTest < ActiveSupport::TestCase
       feed_profile_key: "llm",
       params: { "prompt" => "daily roundup" },
       ai_credential: ai_credential,
-      ai_model: "claude-sonnet-4-6",
+      ai_model: "gpt-4.1",
       search_credential: search_credential
     )
     dependent_feed = create(
@@ -27,7 +27,7 @@ class FeedRefreshWorkflowSearchAuthTest < ActiveSupport::TestCase
       feed_profile_key: "llm",
       params: { "prompt" => "weekly roundup" },
       ai_credential: ai_credential,
-      ai_model: "claude-sonnet-4-6",
+      ai_model: "gpt-4.1",
       search_credential: search_credential
     )
     error = WebSearchProvider::AuthError.new("Serper: HTTP 401")

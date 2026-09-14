@@ -16,7 +16,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   end
 
   def models
-    [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }]
+    [{ "id" => "gpt-4.1", "name" => "GPT-4.1" }]
   end
 
   test "#create should reject another user's feed without starting a preview" do
@@ -116,22 +116,24 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#create should store the chosen providers and model on the preview" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user, available_models: models)
 
     post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" },
                          ai_credential_id: credential.id, search_credential_id: search_credential.id,
-                         ai_model: "claude-sonnet-4-6" }, headers: TURBO_STREAM
+                         ai_model: "gpt-4.1" }, headers: TURBO_STREAM
 
     assert_response :success
     assert_match(/AI is browsing the web/, response.body)
     preview = user.feed_previews.sole
     assert_equal credential.id, preview.ai_credential_id
     assert_equal search_credential.id, preview.search_credential_id
-    assert_equal "claude-sonnet-4-6", preview.ai_model
+    assert_equal "gpt-4.1", preview.ai_model
   end
 
   test "#create should not preview an AI profile with a model the provider does not offer" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user, available_models: models)
 
@@ -149,6 +151,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#create should not preview an AI profile when the credential is not owned by the user" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
     create(:ai_credential, :active, user: user, available_models: models)
     stranger_credential = create(:ai_credential, :active, user: create(:user), available_models: models)
@@ -156,7 +159,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
         post feed_previews_url, params: { profile_key: "llm", "params" => { prompt: "anything here" },
-                             ai_credential_id: stranger_credential.id, ai_model: "claude-sonnet-4-6" },
+                             ai_credential_id: stranger_credential.id, ai_model: "gpt-4.1" },
             headers: TURBO_STREAM
       end
     end
@@ -229,6 +232,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#update should validate the stored identity rather than request overrides" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
     stored_credential = create(:ai_credential, :active, user: user, available_models: models)
     replacement = create(:ai_credential, :active, user: user, available_models: models)
@@ -236,7 +240,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
                                                 params: { "prompt" => "ruby news" },
                                                 ai_credential: stored_credential,
                                                 search_credential: search_credential,
-                                                ai_model: "claude-sonnet-4-6")
+                                                ai_model: "gpt-4.1")
     stored_credential.update!(active: false)
 
     assert_no_enqueued_jobs do
@@ -245,7 +249,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
               profile_key: "rss",
               "params" => { "url" => "https://example.com/other.xml" },
               ai_credential_id: replacement.id,
-              ai_model: "claude-sonnet-4-6"
+              ai_model: "gpt-4.1"
             },
             headers: TURBO_STREAM
     end

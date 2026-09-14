@@ -115,8 +115,8 @@ class FeedPolicyTest < ActiveSupport::TestCase
   end
 
   test "#refresh? should deny AI refresh while saved settings remain editable" do
-    credential = create(:ai_credential, :active, user: user,
-                            available_models: [{ "id" => "saved-model" }])
+    create(:llm_model, model_id: "saved-model")
+    credential = create(:ai_credential, :active, user: user)
     ai_feed = create(:feed, :enabled, user: user, feed_profile_key: "llm",
                      params: { "prompt" => "A daily roundup" }, ai_credential: credential, ai_model: "saved-model")
     policy = policy_for_user(user, ai_feed)
