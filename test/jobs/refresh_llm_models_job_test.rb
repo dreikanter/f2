@@ -30,7 +30,7 @@ class RefreshLlmModelsJobTest < ActiveSupport::TestCase
     assert_predicate run, :succeeded?
     event = run.events.sole
     assert_equal "job.refresh_llm_models.completed", event.type
-    assert_equal 1, event.metadata["model_count"]
+    assert_equal RubyLLM::ActiveRecord::Model.count, event.metadata["model_count"]
   end
 
   test "#perform should record a failed run" do
