@@ -5,7 +5,6 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-09-14
 
 - AI credentials now share RubyLLM’s public model list; Refresh models updates it for everyone.
-
 - Checking AI credentials no longer refreshes their model list; use Refresh models to update it.
 
 ## 2026-09-13
