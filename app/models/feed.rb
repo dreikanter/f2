@@ -257,16 +257,6 @@ class Feed < ApplicationRecord
     ai_credential.present? && LlmModels.for_feed(ai_credential.provider).any? { |model| model.id == ai_model }
   end
 
-  # A catalog omission must never silently switch an existing feed's model.
-  def effective_ai_model(credential = ai_credential)
-    return ai_model if ai_model.present?
-    return unless credential
-
-    models = LlmModels.for_feed(credential.provider)
-    default = LlmProvider.find(credential.provider).fetch(:default_model)
-    models.find { |model| model.id == default }&.id || models.first&.id
-  end
-
   # @param options [Hash] e.g. a shared :http_client
   # @return [Loader::Base] the feed's loader
   def loader_instance(options = {})

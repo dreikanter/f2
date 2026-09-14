@@ -929,34 +929,6 @@ class FeedTest < ActiveSupport::TestCase
     assert_includes feed.errors[:ai_model], "This model isn't available anymore. Pick another one."
   end
 
-  test "#effective_ai_model should return the chosen model when it is still supported" do
-    create(:llm_model, model_id: "gpt-4.1")
-    credential = create(:ai_credential, :active)
-    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "x" }, ai_credential: credential, ai_model: "gpt-4.1")
-
-    assert_equal "gpt-4.1", feed.effective_ai_model
-  end
-
-  test "#effective_ai_model should preserve the chosen model when it disappears" do
-    create(:llm_model, model_id: "gpt-4.1")
-    credential = create(:ai_credential, :active)
-    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "x" }, ai_credential: credential, ai_model: "removed-model")
-
-    assert_equal "removed-model", feed.effective_ai_model
-  end
-
-  test "#effective_ai_model should preserve the selected model version" do
-    credential = create(:ai_credential, :active, provider: "openai",
-                                                 available_models: [{ "id" => "gpt-5.6-luna" }, { "id" => "gpt-5-mini" }])
-    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "x" }, ai_credential: credential, ai_model: "gpt-5-mini")
-
-    assert feed.ai_model_supported?
-    assert_equal "gpt-5-mini", feed.effective_ai_model
-  end
-
   test "#ai_model_supported? should follow the shared provider registry" do
     create(:llm_model, model_id: "gpt-4.1")
     credential = create(:ai_credential, :active)
