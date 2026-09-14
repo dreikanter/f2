@@ -12,6 +12,12 @@ default: &default
       threads: 1
       processes: 1
       polling_interval: 0.1
+    # Service work is unrelated to feed traffic, so it keeps running when the
+    # other pools are paused.
+    - queues: "service"
+      threads: 1
+      processes: 1
+      polling_interval: 0.1
 
 development:
   <<: *default

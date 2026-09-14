@@ -52,7 +52,7 @@ default: &default
 
   purge_expired_events:
     class: PurgeExpiredEventsJob
-    queue: default
+    queue: service
     schedule: every day at 5am
 
 development:

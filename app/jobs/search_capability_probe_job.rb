@@ -10,8 +10,6 @@ class SearchCapabilityProbeJob < ApplicationJob
   include DescribesWithMarkup
   include RunsAsMaintenanceJob
 
-  queue_as :default
-
   # The credential wears the job's own class name, so what the dev area lists
   # is what to type into the credential form, so there's no second naming to look up.
   def self.credential_name = name.delete_suffix("Job")
