@@ -1,6 +1,6 @@
 class AiCredentialModelsComponent < ViewComponent::Base
   def initialize(ai_credential:)
-    @ai_credential = ai_credential
+    @provider = ai_credential.provider
   end
 
   def render?
@@ -8,25 +8,22 @@ class AiCredentialModelsComponent < ViewComponent::Base
   end
 
   def models
-    @ai_credential.available_models.sort_by { |model| model_name(model).downcase }
+    @models ||= LlmModels.for_provider(@provider).sort_by { |model| model_name(model).downcase }
   end
 
   def model_name(model)
-    model["name"].presence || model["id"]
+    model.name.presence || model.id
   end
 
   def model_details(model)
-    metadata = model.fetch("metadata", {})
     parts = []
-    context = metadata["context_window"]
-    parts << "#{helpers.number_with_delimiter(context)} token context" if context
-    { "tool_call" => "Tools", "structured_output" => "Structured output" }.each do |key, label|
-      value = metadata[key]
-      parts << "#{label}: #{value.nil? ? 'unknown' : (value ? 'yes' : 'no')}"
+    parts << "#{helpers.number_with_delimiter(model.context_window)} token context" if model.context_window
+    { "Tools" => :function_calling, "Structured output" => :structured_output }.each do |label, capability|
+      value = model.capabilities.empty? ? "unknown" : (model.supports?(capability) ? "yes" : "no")
+      parts << "#{label}: #{value}"
     end
-    outputs = metadata["output_modalities"]
-    parts << "Output: #{outputs.join(', ')}" if outputs.is_a?(Array) && outputs.any?
-    parts << "Source: #{metadata['source']}" if metadata["source"].present?
+    parts << "Output: #{model.modalities.output.join(', ')}" if model.modalities.output.any?
+    parts << "Source: RubyLLM"
     parts.join(" · ")
   end
 end

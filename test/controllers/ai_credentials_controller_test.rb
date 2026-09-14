@@ -227,10 +227,9 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_predicate active.reload, :active?
   end
 
-  test "#show should render without polling when the active credential catalog is fresh" do
+  test "#show should render without polling when no catalog refresh is running" do
     sign_in_as(user)
-    active = create(:ai_credential, :active, user: user, models_refreshed_at: 5.minutes.ago,
-                    available_models: [{ "id" => "cached-model" }])
+    active = create(:ai_credential, :active, user: user)
 
     get ai_credential_url(active)
 
@@ -239,7 +238,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='ai_credential.state_badge'][data-credential-state='active']", text: "Valid"
     assert_select "#ai-credential-model-catalog" do
       assert_select "h2", text: "Available models", count: 1
-      assert_select "[data-key='ai_credential.models-refresh-status']", text: /Updated .* ago\./
+      assert_select "[data-key='ai_credential.models-refresh-status']", text: ""
       assert_select "form[action=?][data-controller='loading-button']", ai_credential_model_catalog_path(active) do
         assert_select "button[data-key='ai_credential.refresh-models'][title='Refresh models'][type='submit']:not([disabled])"
       end
@@ -350,24 +349,6 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_predicate validation.reload, :superseded?
     assert_predicate completed.reload, :succeeded?
     assert_predicate feed.reload, :enabled?
-  end
-
-  test "#update should supersede a catalog refresh when replacing the key" do
-    sign_in_as(user)
-    active = create(:ai_credential, :active, user: user)
-    refresh = active.refresh_models_async(force: true)
-
-    patch ai_credential_url(active), params: {
-      ai_credential: {
-        display_name: active.display_name,
-        credential_data: { api_key: "replacement-key" }
-      }
-    }
-
-    assert_redirected_to ai_credential_path(active)
-    assert_predicate refresh.reload, :superseded?
-    assert_not_predicate active.reload, :active?
-    assert_predicate active, :validation_in_progress?
   end
 
   test "#update should keep existing credential_data when api_key is blank" do

@@ -1,5 +1,5 @@
 <%# locals: (ai_credential:, feed_id: nil) %>
-<% refreshing = ai_credential.models_refreshing? %>
+<% refreshing = llm_models_refreshing? %>
 <div class="space-y-3">
   <div>
     <div class="flex items-start gap-2">
@@ -10,18 +10,18 @@
                       controller: "loading-button",
                       action: "turbo:submit-start->loading-button#start turbo:submit-end->loading-button#end"
                     } do %>
-        <%= render RefreshButtonComponent.new(title: "Refresh models", loading: refreshing, disabled: !ai_credential.active?, compact: true, type: "submit",
+        <%= render RefreshButtonComponent.new(title: "Refresh models", loading: refreshing, compact: true, type: "submit",
                                               data: { key: "ai_credential.refresh-models" }) %>
       <% end %>
     </div>
     <p class="min-h-5 text-sm text-muted" data-key="ai_credential.models-refresh-status">
       <% if refreshing %>
-        Refreshing models. Your credential and saved list remain usable.
-      <% elsif ai_credential.models_refresh_failed? %>
-        Couldn't refresh models. Your saved list is still available.
+        Refreshing models. The current list remains available.
+      <% elsif llm_models_refresh&.failed? %>
+        Couldn't refresh models. The current list is still available.
       <% end %>
-      <% if ai_credential.models_refreshed_at %>
-        Updated <%= time_ago_in_words(ai_credential.models_refreshed_at) %> ago.
+      <% if llm_models_refreshed_at %>
+        Updated <%= time_ago_in_words(llm_models_refreshed_at) %> ago.
       <% end %>
     </p>
   </div>

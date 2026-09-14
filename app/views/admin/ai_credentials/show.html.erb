@@ -34,12 +34,10 @@
   <% elsif @ai_credential.active? %>
     <%= render AiCredentialDetailsComponent.new(ai_credential: @ai_credential) %>
 
-    <% if @ai_credential.available_models.any? %>
-      <section>
-        <%= h2 "Available models" %>
-        <%= render AiCredentialModelsComponent.new(ai_credential: @ai_credential) %>
-      </section>
-    <% end %>
+    <section>
+      <%= h2 "Available models" %>
+      <%= render AiCredentialModelsComponent.new(ai_credential: @ai_credential) %>
+    </section>
   <% else %>
     <p class="max-w-2xl text-body" data-key="ai_credential.inactive">
       <% if (error = @ai_credential.validation_error.presence || @ai_credential.last_error.presence) %>

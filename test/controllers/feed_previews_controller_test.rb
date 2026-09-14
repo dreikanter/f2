@@ -1,6 +1,7 @@
 require "test_helper"
 
 class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
+  setup { create(:llm_model, model_id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6") }
   include ActiveJob::TestHelper
 
   TURBO_STREAM = { "Accept" => "text/vnd.turbo-stream.html" }.freeze

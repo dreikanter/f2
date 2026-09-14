@@ -66,23 +66,14 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     AiCredentialValidationJob.perform_now(ai_credential.latest_operation_run(:validation))
 
     assert_predicate ai_credential.reload, :active?
-    assert_empty ai_credential.available_models
     follow_redirect!
     assert_response :success
-    assert_select 'button[data-key="ai_credential.refresh-models"]:not([disabled])'
-
-    post ai_credential_model_catalog_path(ai_credential, feed_id: draft.id)
-    assert_redirected_to ai_credential_path(ai_credential, feed_id: draft.id)
-    AiModelCatalogRefreshJob.perform_now(ai_credential.latest_operation_run(:models_refresh))
-
-    follow_redirect!
-    assert_response :success
-    assert_includes response.body, "future-openai-model"
+    assert_select '[data-key="ai_credential.model.name"]'
     assert_not_includes response.body, "AI model discovery is temporarily unavailable."
 
     patch feed_path(draft), params: {
       feed: { name: "Renamed AI draft", params: { prompt: "follow a different blog" },
-              ai_model: "future-openai-model", access_token_id: access_token.id, target_group: "testgroup" },
+              ai_model: "gpt-5.6-luna", access_token_id: access_token.id, target_group: "testgroup" },
       enable_feed: "1"
     }
 
@@ -91,7 +82,7 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     assert_equal "Renamed AI draft", draft.name
     assert_equal "follow a different blog", draft.source_input
     assert_equal ai_credential.id, draft.ai_credential_id
-    assert_equal "future-openai-model", draft.ai_model
+    assert_equal "gpt-5.6-luna", draft.ai_model
     assert_includes response.body, Loader::LlmLoader::UNAVAILABLE_MESSAGE
   end
 end

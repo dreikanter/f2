@@ -1,19 +1,17 @@
 <%# locals: (ai_credential:, feed_id: nil) %>
-<% if ai_credential.models_refreshing? %>
-  <div data-controller="polling"
-       data-polling-endpoint-value="<%= ai_credential_model_catalog_path(ai_credential, feed_id: feed_id) %>"
-       data-polling-interval-value="<%= polling_interval_ms %>"
-       data-polling-max-polls-value="<%= polling_max_polls %>"
-       data-polling-indicate-busy-value="false">
-    <div id="ai-credential-model-catalog">
+<div id="ai-credential-model-catalog">
+  <% if llm_models_refreshing? %>
+    <div data-controller="polling"
+         data-polling-endpoint-value="<%= ai_credential_model_catalog_path(ai_credential, feed_id: feed_id) %>"
+         data-polling-interval-value="<%= polling_interval_ms %>"
+         data-polling-max-polls-value="<%= polling_max_polls %>"
+         data-polling-indicate-busy-value="false">
       <%= render "ai_credentials/model_catalog_content", ai_credential: ai_credential, feed_id: feed_id %>
+      <p data-polling-target="timeoutMessage" hidden class="text-sm text-muted">
+        The refresh is taking longer than expected. Reload this page to check again.
+      </p>
     </div>
-    <p data-polling-target="timeoutMessage" hidden class="text-sm text-muted">
-      The refresh is taking longer than expected. Reload this page to check again.
-    </p>
-  </div>
-<% else %>
-  <div id="ai-credential-model-catalog">
+  <% else %>
     <%= render "ai_credentials/model_catalog_content", ai_credential: ai_credential, feed_id: feed_id %>
-  </div>
-<% end %>
+  <% end %>
+</div>

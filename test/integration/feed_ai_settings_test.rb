@@ -9,15 +9,13 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     @user ||= regular_user
   end
 
-  def models
-    [
-      { "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" },
-      { "id" => "claude-opus-4-7", "name" => "Claude Opus 4.7" }
-    ]
+  setup do
+    create(:llm_model, model_id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6")
+    create(:llm_model, model_id: "claude-opus-4-7", name: "Claude Opus 4.7")
   end
 
   def credential
-    @credential ||= create(:ai_credential, :active, user: user, display_name: "Main key", available_models: models)
+    @credential ||= create(:ai_credential, :active, user: user, display_name: "Main key")
   end
 
   def search_credential

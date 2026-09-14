@@ -3,7 +3,10 @@ require "test_helper"
 class FeedPreviewRequestTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
-  setup { clear_enqueued_jobs }
+  setup do
+    clear_enqueued_jobs
+    create(:llm_model, model_id: "sample-model")
+  end
 
   def user
     @user ||= create(:user)
@@ -103,7 +106,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   test "#create should retain a model previously selected on the user's feed" do
     create(:feed, user: user, feed_profile_key: "llm", params: { prompt: "Sample news" },
                   ai_credential: ai_credential, ai_model: "sample-model", search_credential: nil)
-    ai_credential.update!(available_models: [])
+    RubyLLM::ActiveRecord::Model.update_all(unlisted_at: Time.current)
 
     result = request(**ai_attributes).create
 
@@ -188,7 +191,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
 
   test "#create should keep previews for different model selections separate" do
     original = request(**ai_attributes).create.preview
-    ai_credential.update!(available_models: [{ "id" => "sample-model" }, { "id" => "second-model" }])
+    create(:llm_model, model_id: "second-model")
 
     changed = request(**ai_attributes.merge(ai_model: "second-model")).create.preview
 
@@ -298,7 +301,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
                                                 params: { "prompt" => "Sample news" }, ai_model: "sample-model",
                                                 ai_credential: ai_credential, search_credential: search_credential)
     original_digest = existing.params_digest
-    ai_credential.update!(available_models: [])
+    RubyLLM::ActiveRecord::Model.update_all(unlisted_at: Time.current)
 
     result = request(params: { url: "https://example.com/override.xml" }).refresh(existing)
 

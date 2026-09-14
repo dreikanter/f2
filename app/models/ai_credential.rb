@@ -1,4 +1,4 @@
-# A user's encrypted credentials and model catalog for one AI provider. Provider
+# A user's encrypted credentials for one AI provider. Provider
 # clients interpret credential fields; ProviderCredential supplies the shared
 # lifecycle, naming, and feed teardown.
 class AiCredential < ApplicationRecord
@@ -8,8 +8,6 @@ class AiCredential < ApplicationRecord
 
   REMOVED_EVENT_TYPE = "feed_ai_credential_removed"
   DEACTIVATED_EVENT_TYPE = "ai_credential_deactivated"
-  MODEL_CATALOG_FRESHNESS = 1.day
-  MODEL_REFRESH_TIMEOUT = 15.minutes
 
   validates :provider, presence: true, inclusion: { in: ->(_) { LlmProvider.names } }
   validate :provider_credentials_valid
@@ -20,55 +18,6 @@ class AiCredential < ApplicationRecord
 
   def provider_name
     LlmProvider.find(provider).fetch(:display_name)
-  end
-
-  def supported_models
-    available_models.reject do |model|
-      outputs = model.dig("metadata", "output_modalities")
-      outputs.is_a?(Array) && outputs.any? && !outputs.include?("text")
-    end
-  end
-
-  def refresh_models_async(force: false)
-    with_lock do
-      return unless active?
-      return if validation_in_progress?
-
-      recent = latest_operation_run(:models_refresh)
-      return recent if recent&.in_progress?
-      return if !force && models_refreshed_at && models_refreshed_at > MODEL_CATALOG_FRESHNESS.ago
-      # Space out automatic retries during provider outages.
-      return if !force && recent && recent.created_at > 1.hour.ago
-
-      run = OperationRun.start!(subject: self, kind: :models_refresh, timeout: MODEL_REFRESH_TIMEOUT)
-      AiModelCatalogRefreshJob.perform_later(run)
-      AiModelCatalogTimeoutJob.set(wait_until: run.deadline_at).perform_later(run)
-      run
-    end
-  end
-
-  def models_refreshing?
-    latest_operation_run(:models_refresh)&.in_progress? || false
-  end
-
-  def models_refresh_failed?
-    run = latest_operation_run(:models_refresh)
-    return false unless run&.unsuccessful?
-
-    models_refreshed_at.nil? || run.finished_at > models_refreshed_at
-  end
-
-  def supports_model?(model_id)
-    return false if model_id.blank?
-
-    supported_models.any? { |model| model["id"] == model_id }
-  end
-
-  def default_supported_model
-    provider_default = LlmProvider.find(provider).fetch(:default_model)
-    return provider_default if supports_model?(provider_default)
-
-    supported_models.first&.fetch("id")
   end
 
   private

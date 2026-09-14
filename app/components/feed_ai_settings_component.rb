@@ -31,8 +31,8 @@ class FeedAiSettingsComponent < ViewComponent::Base
 
   def models_by_credential
     @models_by_credential ||= active_credentials.to_h do |credential|
-      models = credential.supported_models
-                         .map { |model| { "id" => model["id"], "name" => model["name"].presence || model["id"] } }
+      models = LlmModels.for_feed(credential.provider)
+                        .map { |model| { "id" => model.id, "name" => model.name.presence || model.id } }
       if credential.id == @feed.ai_credential_id && @feed.ai_model.present? && models.none? { |model| model["id"] == @feed.ai_model }
         models << { "id" => @feed.ai_model, "name" => "#{@feed.ai_model} (saved model)" }
       end

@@ -182,49 +182,6 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_equal "disabled", enabled_feed.reload.state
   end
 
-  test "#supported_models should offer listed models without qualification" do
-    credential = build(:ai_credential, provider: "openai",
-                                       available_models: [{ "id" => "gpt-5.6-luna" }, { "id" => "unverified-model" }])
-
-    assert_equal ["gpt-5.6-luna", "unverified-model"], credential.supported_models.map { |model| model["id"] }
-  end
-
-  test "#supports_model? should be true only for a model in the snapshot" do
-    credential = build(:ai_credential, provider: "openai",
-                                       available_models: [{ "id" => "gpt-5.6-luna" }])
-
-    assert credential.supports_model?("gpt-5.6-luna")
-    assert_not credential.supports_model?("some-other-model")
-  end
-
-  test "#supports_model? should be true for a newly listed model" do
-    credential = build(:ai_credential, provider: "openai",
-                                       available_models: [{ "id" => "unverified-model" }])
-
-    assert credential.supports_model?("unverified-model")
-  end
-
-  test "#supports_model? should be false for a blank model id" do
-    credential = build(:ai_credential, available_models: [{ "id" => "gpt-5.6-luna" }])
-
-    assert_not credential.supports_model?(nil)
-    assert_not credential.supports_model?("")
-  end
-
-  test "#default_supported_model should prefer the provider default when supported" do
-    credential = build(:ai_credential, provider: "openai",
-                                       available_models: [{ "id" => "gpt-5.6-luna" }])
-
-    assert_equal "gpt-5.6-luna", credential.default_supported_model
-  end
-
-  test "#default_supported_model should choose the first listed model when the default is absent" do
-    credential = build(:ai_credential, provider: "openai",
-                                       available_models: [{ "id" => "unverified-model" }])
-
-    assert_equal "unverified-model", credential.default_supported_model
-  end
-
   test "#deactivate! should persist the error and create a warning event" do
     credential = create(:ai_credential, :active, user: user)
 
@@ -252,75 +209,5 @@ class AiCredentialTest < ActiveSupport::TestCase
 
     assert enabled.reload.disabled?
     assert draft.reload.draft?
-  end
-  test "#supported_models should exclude known non-text models while leaving unknown metadata selectable" do
-    credential = build(:ai_credential, available_models: [
-      { "id" => "image", "metadata" => { "output_modalities" => ["image"] } },
-      { "id" => "text", "metadata" => { "output_modalities" => ["text", "audio"] } },
-      { "id" => "unknown" }
-    ])
-    assert_equal ["text", "unknown"], credential.supported_models.pluck("id")
-  end
-
-  test "#refresh_models_async should ignore inactive credentials" do
-    credential = create(:ai_credential, :inactive, available_models: [{ "id" => "saved-model" }])
-    original = credential.attributes
-
-    assert_no_enqueued_jobs do
-      assert_no_difference "OperationRun.count" do
-        credential.refresh_models_async(force: true)
-      end
-    end
-
-    assert_equal original, credential.reload.attributes
-  end
-
-  test "#refresh_models_async should ignore a forced refresh during validation" do
-    credential = create(:ai_credential, :active)
-    validation_run = credential.validate_async(AiCredentialValidationJob)
-
-    assert_no_enqueued_jobs do
-      assert_no_difference "OperationRun.count" do
-        assert_nil credential.refresh_models_async(force: true)
-      end
-    end
-
-    assert_predicate validation_run.reload, :running?
-    assert_predicate credential.reload, :active?
-  end
-
-  test "#refresh_models_async should allow refresh after the validation deadline" do
-    credential = create(:ai_credential, :active)
-    validation_run = credential.validate_async(AiCredentialValidationJob)
-
-    travel_to validation_run.deadline_at + 1.second do
-      assert_enqueued_with(job: AiModelCatalogRefreshJob) { credential.refresh_models_async }
-    end
-  end
-
-  test "#refresh_models_async should reuse an active run even for a forced refresh" do
-    credential = create(:ai_credential, :active)
-    run = credential.refresh_models_async
-
-    assert_no_enqueued_jobs { assert_equal run, credential.refresh_models_async(force: true) }
-  end
-
-  test "#refresh_models_async should wait an hour before retrying automatically" do
-    freeze_time do
-      credential = create(:ai_credential, :active)
-      credential.refresh_models_async.fail!
-
-      assert_no_enqueued_jobs { assert_nil credential.refresh_models_async }
-
-      travel 1.hour
-      assert_enqueued_with(job: AiModelCatalogRefreshJob) { credential.refresh_models_async }
-    end
-  end
-
-  test "#refresh_models_async should allow a forced refresh during the retry delay" do
-    credential = create(:ai_credential, :active)
-    credential.refresh_models_async.fail!
-
-    assert_enqueued_with(job: AiModelCatalogRefreshJob) { credential.refresh_models_async(force: true) }
   end
 end

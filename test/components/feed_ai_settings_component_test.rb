@@ -8,20 +8,21 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
     @user ||= create(:user)
   end
 
+  setup do
+    create(:llm_model, model_id: "gpt-a", name: "Model A")
+    create(:llm_model, model_id: "gpt-b", name: "Model B")
+  end
+
   def models
-    [
-      { "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" },
-      { "id" => "claude-opus-4-7", "name" => "Claude Opus 4.7" }
-    ]
+    [{ "id" => "gpt-a", "name" => "Model A" }, { "id" => "gpt-b", "name" => "Model B" }]
   end
 
   def credential
-    @credential ||= create(:ai_credential, :active, user: user, available_models: models)
+    @credential ||= create(:ai_credential, :active, user: user)
   end
 
-  def unverified_credential
-    @unverified_credential ||= create(:ai_credential, :active, user: user, provider: "openai",
-                                                               available_models: [{ "id" => "future-openai-model" }])
+  def other_credential
+    @other_credential ||= create(:ai_credential, :active, user: user)
   end
 
   def ai_feed(**attrs)
@@ -44,33 +45,23 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
   end
 
   test "#credentials? should include a newly listed provider model" do
-    unverified_credential
+    other_credential
     assert component(ai_feed).credentials?
   end
 
   test "#models_by_credential should offer all listed models, mapped with names" do
     assert_equal(
-      { credential.id.to_s => models.reverse },
+      { credential.id.to_s => models },
       component(ai_feed).models_by_credential
     )
   end
 
-  test "#models_by_credential should fall back to the id when a model has no name" do
-    credential.update!(available_models: [{ "id" => "claude-sonnet-4-6" }])
-    assert_equal "claude-sonnet-4-6", component(ai_feed).models_by_credential[credential.id.to_s].first["name"]
-  end
+  test "#models_by_credential should share the provider catalog between credentials" do
+    first = credential
+    second = other_credential
+    lists = component(ai_feed).models_by_credential
 
-  test "#models_by_credential should retain a credential with newly listed models" do
-    credential.update!(available_models: [{ "id" => "claude-3-haiku-unverified", "name" => "Unverified" }])
-    assert_equal ["claude-3-haiku-unverified"], component(ai_feed).models_by_credential.fetch(credential.id.to_s).pluck("id")
-  end
-
-  test "#selectable_credentials should include credentials with newly listed models" do
-    credential
-    unverified_credential
-    ids = component(ai_feed).selectable_credentials.map(&:id)
-    assert_includes ids, credential.id
-    assert_includes ids, unverified_credential.id
+    assert_equal lists.fetch(first.id.to_s), lists.fetch(second.id.to_s)
   end
 
   test "#ai_profile_keys should list only AI-backed profiles" do
@@ -86,22 +77,22 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
 
   test "#selected_credential_id should keep a saved credential with newly listed models" do
     credential
-    assert_equal unverified_credential.id.to_s, component(ai_feed(ai_credential: unverified_credential)).selected_credential_id
+    assert_equal other_credential.id.to_s, component(ai_feed(ai_credential: other_credential)).selected_credential_id
   end
 
   test "#model_select_options should lead with a disabled hidden placeholder" do
     options = component(ai_feed(ai_credential: credential)).model_select_options
     assert_equal ["Select a model…", "", { disabled: true, hidden: true }], options.first
-    assert_equal [["Claude Opus 4.7", "claude-opus-4-7"], ["Claude Sonnet 4.6", "claude-sonnet-4-6"]], options.drop(1)
+    assert_equal [["Model A", "gpt-a"], ["Model B", "gpt-b"]], options.drop(1)
   end
 
   test "#selected_model_id should return the saved model when it's still offered" do
-    feed = ai_feed(ai_credential: credential, ai_model: "claude-sonnet-4-6")
-    assert_equal "claude-sonnet-4-6", component(feed).selected_model_id
+    feed = ai_feed(ai_credential: credential, ai_model: "gpt-a")
+    assert_equal "gpt-a", component(feed).selected_model_id
   end
 
   test "#selected_model_id should preserve a saved model absent from the listing" do
-    feed = ai_feed(ai_credential: credential, ai_model: "claude-opus-4-7")
+    feed = ai_feed(ai_credential: credential, ai_model: "gpt-b")
     feed.ai_model = "removed-model"
     assert_equal "removed-model", component(feed).selected_model_id
   end
@@ -112,12 +103,12 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
   end
 
   test "#model_unavailable? should be false for a newly listed model" do
-    feed = ai_feed(ai_credential: credential, ai_model: "claude-opus-4-7")
+    feed = ai_feed(ai_credential: credential, ai_model: "gpt-b")
     assert_not component(feed).model_unavailable?
   end
 
   test "#model_unavailable? should be false when the saved model is offered" do
-    feed = ai_feed(ai_credential: credential, ai_model: "claude-sonnet-4-6")
+    feed = ai_feed(ai_credential: credential, ai_model: "gpt-a")
     assert_not component(feed).model_unavailable?
   end
 
@@ -127,10 +118,9 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
   end
 
   test "#models_by_credential should omit non-text models from new choices while retaining a saved selection" do
-    credential.update!(available_models: [
-      { "id" => "image-model", "metadata" => { "output_modalities" => ["image"] } },
-      { "id" => "future-model" }
-    ])
+    RubyLLM::ActiveRecord::Model.delete_all
+    create(:llm_model, model_id: "image-model", modalities: { output: ["image"] })
+    create(:llm_model, model_id: "future-model", modalities: {}, capabilities: [])
     fresh = component(ai_feed(ai_credential: credential))
     saved = component(ai_feed(ai_credential: credential, ai_model: "image-model"))
 

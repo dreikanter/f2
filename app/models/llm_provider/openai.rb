@@ -1,37 +1,23 @@
 module LlmProvider
-  # Checks OpenAI authentication, lists models, and configures SDK contexts.
+  # Checks OpenAI authentication and configures SDK contexts.
   class Openai < Base
     def credential_errors
       api_key.is_a?(String) && api_key.present? ? [] : ["Enter your API key"]
     end
 
     def validate_credentials!
-      models_response
-      true
-    end
-
-    def models
-      data = parse_json(models_response.body)
-      unless data.is_a?(Hash) && data["data"].is_a?(Array) && data["data"].all? { |model| valid_model?(model) }
-        raise LlmProvider::Error.new("OpenAI returned an invalid model list.", category: :malformed)
-      end
-
-      data["data"].pluck("id").uniq
-    end
-
-    private
-
-    def models_response
       response = HttpClient.build(timeout: 30, follow_redirects: false).get(
         "https://api.openai.com/v1/models",
         headers: { "Authorization" => "Bearer #{api_key}", "Accept" => "application/json" }
       )
       raise_response_error(response) unless response.success?
-      response
+      true
     rescue HttpClient::Error
       # Omit the original cause so error reports cannot expose credentials.
       raise LlmProvider::Error.new("Couldn't reach OpenAI. Try again later.", category: :connection), cause: nil
     end
+
+    private
 
     def api_key
       credential_data&.fetch("api_key", nil)
@@ -43,16 +29,6 @@ module LlmProvider
 
     def rejected_api_key?(status:, code:)
       status == 401 && code == "invalid_api_key"
-    end
-
-    def parse_json(body)
-      JSON.parse(body)
-    rescue JSON::ParserError, TypeError
-      raise LlmProvider::Error.new("OpenAI returned an invalid model list.", category: :malformed), cause: nil
-    end
-
-    def valid_model?(model)
-      model.is_a?(Hash) && model["id"].is_a?(String) && model["id"].present? && model["id"] == model["id"].strip
     end
 
     def raise_response_error(response)

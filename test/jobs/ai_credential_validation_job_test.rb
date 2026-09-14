@@ -26,21 +26,4 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
       assert_not_requested :post, /./
     end
   end
-
-  test "#perform should leave a newly validated key ready for a separate catalog refresh" do
-    request = stub_openai_models(key: openai_credential.credential_data.fetch("api_key"))
-    validation_run = openai_credential.validate_async(AiCredentialValidationJob)
-    perform_enqueued_jobs(only: AiCredentialValidationJob)
-
-    assert_predicate validation_run.reload, :succeeded?
-    assert_empty openai_credential.reload.available_models
-    assert_no_enqueued_jobs(only: AiModelCatalogRefreshJob)
-
-    refresh_run = openai_credential.refresh_models_async(force: true)
-    perform_enqueued_jobs(only: AiModelCatalogRefreshJob)
-
-    assert_predicate refresh_run.reload, :succeeded?
-    assert_equal %w[gpt-5.6-luna future-openai-model text-embedding-3-small], openai_credential.reload.available_models.pluck("id")
-    assert_requested request, times: 2
-  end
 end
