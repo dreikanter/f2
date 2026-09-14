@@ -63,7 +63,7 @@ class AiModelCatalogRefreshTest < ActiveSupport::TestCase
 
     assert_predicate run.reload, :failed?
     expected_context = {
-      "error" => "Couldn't list OpenAI models (HTTP 503). Try again later.",
+      "error" => "OpenAI request failed (HTTP 503). Try again later.",
       "category" => "provider",
       "status" => 503
     }
@@ -143,7 +143,7 @@ class AiModelCatalogRefreshTest < ActiveSupport::TestCase
     assert_equal original, openai_credential.reload.attributes
   end
 
-  test "#call should preserve a newer validation catalog after a late success" do
+  test "#call should discard a late success after newer validation" do
     run = openai_credential.refresh_models_async(force: true)
     key = openai_credential.credential_data.fetch("api_key")
     stub_openai_models(key: key) do
@@ -155,7 +155,7 @@ class AiModelCatalogRefreshTest < ActiveSupport::TestCase
     AiModelCatalogRefresh.new(run).call
 
     assert_predicate run.reload, :superseded?
-    assert_empty openai_credential.reload.available_models
+    assert_equal ["saved-model"], openai_credential.reload.available_models.pluck("id")
   end
 
   test "#call should not deactivate a credential after newer validation succeeds" do
@@ -202,7 +202,7 @@ class AiModelCatalogRefreshTest < ActiveSupport::TestCase
 
     assert_predicate validation_run.reload, :succeeded?
     assert_predicate openai_credential.reload, :active?
-    assert_empty openai_credential.available_models
+    assert_equal ["saved-model"], openai_credential.available_models.pluck("id")
     assert_predicate feed.reload, :enabled?
   end
 end

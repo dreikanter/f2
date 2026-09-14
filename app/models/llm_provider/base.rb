@@ -14,6 +14,13 @@ module LlmProvider
       raise NotImplementedError, "Subclasses must implement #credential_errors"
     end
 
+    # @abstract Check authentication without an inference request.
+    # @return [Boolean] true when the provider accepts the credentials
+    # @raise [LlmProvider::Error] when authentication cannot be confirmed
+    def validate_credentials!
+      raise NotImplementedError, "Subclasses must implement #validate_credentials!"
+    end
+
     # @return [RubyLLM::Context] isolated SDK context using this client's credentials, with retries disabled
     def context
       RubyLLM.context do |config|

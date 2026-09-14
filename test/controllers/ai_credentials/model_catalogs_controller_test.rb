@@ -79,7 +79,7 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
     assert_select '[data-key="ai_credential.models-refresh-status"]', text: /saved list is still available/
   end
 
-  test "#show should hide a refresh failure after successful credential validation" do
+  test "#show should clear a refresh failure only after another catalog refresh" do
     sign_in_as(credential.user)
     stub_openai_models(key: credential.credential_data.fetch("api_key"), fixture: "unavailable", status: 503)
     post ai_credential_model_catalog_path(credential)
@@ -96,6 +96,14 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
       AiCredentialValidationJob.perform_now(validation_run)
 
       assert_no_enqueued_jobs { get ai_credential_model_catalog_path(credential) }
+
+      assert_response :success
+      assert_select "#ai-credential-model-catalog", text: /cached-model/
+      assert_select '[data-key="ai_credential.models-refresh-status"]', text: /Couldn't refresh models/
+
+      post ai_credential_model_catalog_path(credential)
+      AiModelCatalogRefreshJob.perform_now(credential.latest_operation_run(:models_refresh))
+      get ai_credential_model_catalog_path(credential)
 
       assert_response :success
       assert_select "#ai-credential-model-catalog", text: /future-openai-model/
@@ -145,7 +153,7 @@ class AiCredentials::ModelCatalogsControllerTest < ActionDispatch::IntegrationTe
 
     assert_response :success
     assert_select '[data-credential-state="active"]'
-    assert_select "#ai-credential-model-catalog", text: /future-openai-model/
+    assert_select "#ai-credential-model-catalog", text: /cached-model/
     assert_select '[data-controller="polling"]', count: 0
   end
 

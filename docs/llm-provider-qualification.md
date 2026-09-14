@@ -26,7 +26,8 @@ visible in the feed form even if a later listing omits it.
 
 Saving new or changed credential data starts asynchronous validation through
 the same free listing endpoint. A successful response activates the credential
-and saves its catalog, including when the returned list is empty.
+and updates its validation timestamp. The response body is discarded, including
+empty or non-JSON bodies. Model catalogs are updated only by a separate refresh.
 
 The credential's `active` flag records usability;
 [`OperationRun`](../app/models/operation_run.rb) records progress and outcome.
@@ -42,9 +43,10 @@ credential data cannot overwrite the current result.
 Validation and refresh deactivate a key only when OpenAI returns HTTP 401 with
 the explicit `invalid_api_key` code. This records a deactivation event and disables
 its enabled dependent feeds. Permission restrictions, quota/rate limits,
-connection failures, malformed responses, and timeouts preserve prior usability
+connection failures, and timeouts preserve prior usability
 and the saved catalog. New or changed credentials stay inactive after these
-failures.
+failures. Catalog refresh also rejects malformed listings without changing the
+saved catalog or credential usability.
 
 ## Catalog refresh
 
@@ -63,8 +65,8 @@ Reload an open feed form to see a refreshed catalog.
 On development or staging, using an OpenAI credential you own:
 
 1. Create or recheck the credential and wait for validation to finish.
-2. Confirm that successful validation leaves it active and displays the returned
-   model catalog. An empty catalog can still be a successful credential check.
+2. Confirm that successful validation leaves it active and its saved model
+   catalog unchanged. A new credential has no catalog until a separate refresh.
 3. Click **Refresh models**, wait for completion, and check the updated timestamp.
 4. Reopen an existing feed's settings and confirm its saved model remains selected.
 

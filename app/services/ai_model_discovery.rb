@@ -1,7 +1,6 @@
-# Shared execution for validation and catalog refresh. Each operation supplies
-# its own success and failure policy.
+# Fetches a credential's catalog and guards refresh settlement.
 module AiModelDiscovery
-  # @param run [OperationRun] validation or catalog refresh being performed
+  # @param run [OperationRun] catalog refresh being performed
   def initialize(run)
     @run = run
   end

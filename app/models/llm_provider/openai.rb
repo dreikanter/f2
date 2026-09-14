@@ -1,28 +1,36 @@
 module LlmProvider
-  # Interprets OpenAI credentials for free model discovery and SDK contexts.
-  # Normalizes provider failures for credential validation and catalog refresh.
+  # Checks OpenAI authentication, lists models, and configures SDK contexts.
   class Openai < Base
     def credential_errors
       api_key.is_a?(String) && api_key.present? ? [] : ["Enter your API key"]
     end
 
+    def validate_credentials!
+      models_response
+      true
+    end
+
     def models
-      response = HttpClient.build(timeout: 30, follow_redirects: false).get(
-        "https://api.openai.com/v1/models",
-        headers: { "Authorization" => "Bearer #{api_key}", "Accept" => "application/json" }
-      )
-      raise_response_error(response) unless response.success?
-      data = parse_json(response.body)
+      data = parse_json(models_response.body)
       unless data.is_a?(Hash) && data["data"].is_a?(Array) && data["data"].all? { |model| valid_model?(model) }
         raise LlmProvider::Error.new("OpenAI returned an invalid model list.", category: :malformed)
       end
 
       data["data"].pluck("id").uniq
-    rescue HttpClient::Error
-      raise LlmProvider::Error.new("Couldn't reach OpenAI. Try again later.", category: :connection), cause: nil
     end
 
     private
+
+    def models_response
+      response = HttpClient.build(timeout: 30, follow_redirects: false).get(
+        "https://api.openai.com/v1/models",
+        headers: { "Authorization" => "Bearer #{api_key}", "Accept" => "application/json" }
+      )
+      raise_response_error(response) unless response.success?
+      response
+    rescue HttpClient::Error
+      raise LlmProvider::Error.new("Couldn't reach OpenAI. Try again later.", category: :connection), cause: nil
+    end
 
     def api_key
       credential_data&.fetch("api_key", nil)
@@ -59,7 +67,7 @@ module LlmProvider
       when 429 then :rate_limit
       else :provider
       end
-      raise LlmProvider::Error.new("Couldn't list OpenAI models (HTTP #{response.status}). Try again later.", category: category, status: response.status)
+      raise LlmProvider::Error.new("OpenAI request failed (HTTP #{response.status}). Try again later.", category: category, status: response.status)
     end
 
     def error_payload(body)
