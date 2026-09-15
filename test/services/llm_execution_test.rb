@@ -54,6 +54,28 @@ class LlmExecutionTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
+  { "model ceiling" => [8_192, 4_096], "prepared limit" => [1_024, 1_024] }.each do |limit_name, (prepared_limit, expected_limit)|
+    test "#call should respect the lower #{limit_name}" do
+      chat = provider.context.chat(model: "gpt-4-turbo", provider: :openai, protocol: provider.protocol)
+      chat.with_max_output_tokens(prepared_limit)
+      chat.with_provider_options(max_output_tokens: 100_000)
+      chat.ask_later("Find one item.")
+      payload = nil
+      request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+        payload = JSON.parse(http.body)
+        response = completed_response.merge("model" => "gpt-4-turbo")
+        { body: response.to_json, headers: { "Content-Type" => "application/json" } }
+      end
+
+      LlmExecution.new(chat: chat, provider: provider, deadline_at: 180.seconds.from_now).call
+
+      assert_equal expected_limit, payload.fetch("max_output_tokens")
+      assert_equal expected_limit, chat.max_output_tokens
+      assert_equal "gpt-4-turbo", payload.fetch("model")
+      assert_requested request, times: 1
+    end
+  end
+
   test "#call should run a prepared SDK chat without resolving or replacing its selected model" do
     chat = provider.context.chat(model: "custom-model", provider: :openai, protocol: provider.protocol, assume_model_exists: true)
     chat.ask_later("Find one item.")
@@ -70,6 +92,7 @@ class LlmExecutionTest < ActiveSupport::TestCase
     LlmExecution.new(chat: chat, provider: provider, deadline_at: 180.seconds.from_now).call
 
     assert_equal "custom-model", payload.fetch("model")
+    assert_equal 16_384, payload.fetch("max_output_tokens")
     assert_equal "custom-model", chat.model.id
     assert_same context, chat.context
     assert_requested request, times: 1

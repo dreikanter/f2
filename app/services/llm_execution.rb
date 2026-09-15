@@ -24,8 +24,9 @@ class LlmExecution
     @tool_calls = 0
     @chat = chat
     @provider = provider
+    @output_token_limit = [MAX_OUTPUT_TOKENS, @chat.model.max_output_tokens, @chat.max_output_tokens].compact.min
     @chat.with_fallbacks(nil).with_compaction(false)
-    @chat.with_max_output_tokens(MAX_OUTPUT_TOKENS)
+    @chat.with_max_output_tokens(@output_token_limit)
   end
 
   # @return [RubyLLM::Message] final SDK response
@@ -39,7 +40,7 @@ class LlmExecution
         remaining_time
         options = @provider.request_options(
           tool_call_limit: MAX_TOOL_CALLS - @tool_calls,
-          output_token_limit: MAX_OUTPUT_TOKENS
+          output_token_limit: @output_token_limit
         )
         @chat.with_provider_options(@chat.provider_options.symbolize_keys.merge(options))
         @requests += 1
