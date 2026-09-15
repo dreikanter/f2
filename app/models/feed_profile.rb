@@ -3,7 +3,7 @@
 #
 class FeedProfile
   # Shared output shape for AI extraction: the `{ items: [...] }` envelope the
-  # LLM loader returns and PassthroughProcessor unpacks.
+  # LLM loader returns and LlmProcessor validates.
   UNIVERSAL_OUTPUT_SCHEMA = {
     "type" => "object",
     "properties" => {
@@ -399,7 +399,7 @@ class FeedProfile
           output_schema: UNIVERSAL_OUTPUT_SCHEMA
         }
       },
-      processor: { class: "Processor::PassthroughProcessor", config: {} },
+      processor: { class: "Processor::LlmProcessor", config: {} },
       normalizer: { class: "Normalizer::LlmNormalizer", config: {} },
       title_extractor: nil
     },
