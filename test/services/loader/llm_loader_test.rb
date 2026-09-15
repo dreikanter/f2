@@ -106,23 +106,25 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
-  test "#load should return strict output that the processor can turn into entries" do
+  test "#load should send a strict ten-item limit that the processor also enforces" do
     item = {
       "body" => "A source post", "source_url" => "https://example.com/post",
       "title" => "", "supplementary" => [], "images" => [], "published_at" => ""
     }
-    output = { "items" => [item] }
+    items = Array.new(10) { |index| item.merge("source_url" => "https://example.com/post/#{index}") }
+    output = { "items" => items }
     response = completed_response
     response["output"].last["content"].first["text"] = output.to_json
     stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
       schema = JSON.parse(http.body).dig("text", "format", "schema")
       assert JSONSchemer.schema(schema).valid?(output)
+      assert_not JSONSchemer.schema(schema).valid?({ "items" => items + [item] })
       { body: response.to_json, headers: { "Content-Type" => "application/json" } }
     end
 
     content = Loader::LlmLoader.new(feed).load
 
-    assert_equal item, feed.processor_instance(content).process.entries.sole.raw_data
+    assert_equal items, feed.processor_instance(content).process.entries.map(&:raw_data)
   end
 
   ["max_output_tokens", "content_filter"].each do |reason|
