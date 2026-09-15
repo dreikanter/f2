@@ -1,5 +1,5 @@
 class LlmChat < ApplicationRecord
-  RETENTION = 7.days
+  RETENTION = 2.months
   TERMINAL_STATUSES = %w[succeeded failed interrupted].freeze
 
   acts_as_chat message_class: "LlmMessage", messages_foreign_key: :llm_chat_id
