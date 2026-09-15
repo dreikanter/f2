@@ -18,8 +18,8 @@ module Loader
       end
 
       response.content
-    rescue RubyLLM::Error, Faraday::Error => error
-      raise Loader::Error, "AI request failed: #{error.class.name}."
+    rescue RubyLLM::Error, Faraday::Error
+      raise Loader::Error, "AI request failed. Please try again later."
     rescue LlmExecution::DeadlineExceeded
       raise Loader::Error, "AI request exceeded its deadline."
     rescue LlmExecution::RequestLimitExceeded, LlmExecution::ToolLimitExceeded

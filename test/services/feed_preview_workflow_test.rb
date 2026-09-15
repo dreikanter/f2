@@ -155,27 +155,26 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_nil preview.data
   end
 
-  test "#execute should run the AI loader with the preview's selected model for the preview purpose" do
+  test "#execute should preserve AI settings while extraction remains unavailable" do
     credential = create(:ai_credential, :active, user: user)
     preview = create(:feed_preview, user: user, feed_profile_key: "llm",
                      params: { "prompt" => "rust async" }, ai_credential: credential,
                      ai_model: "claude-sonnet-4-6", status: :pending, run_id: AI_RUN_ID)
 
     captured_feed = nil
-    captured_options = nil
-    response = '{"items":[]}'
-    loader = Struct.new(:load).new(response)
-    Loader::LlmLoader.stub(:new, lambda { |feed, options|
-      captured_feed = feed
-      captured_options = options
-      loader
+    build_feed = Feed.method(:new)
+    Feed.stub(:new, lambda { |attributes|
+      captured_feed = build_feed.call(attributes)
     }) do
-      FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
+      assert_no_difference "LlmChat.count" do
+        error = assert_raises(Loader::Error) { FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute }
+        assert_equal Loader::LlmLoader::UNAVAILABLE_MESSAGE, error.message
+      end
     end
 
     assert_equal credential.id, captured_feed.ai_credential_id
     assert_equal "claude-sonnet-4-6", captured_feed.ai_model
-    assert_equal :preview, captured_options[:purpose]
-    assert_equal response.bytesize, preview.reload.data.dig("stats", "content_size")
+    assert preview.reload.failed?
+    assert_not_requested :any, /./
   end
 end

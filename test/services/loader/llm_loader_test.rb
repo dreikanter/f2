@@ -164,6 +164,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
 
     error = assert_raises(Loader::Error) { loader.load }
 
+    assert_equal "AI request failed. Please try again later.", error.message
     assert_kind_of RubyLLM::Error, error.cause
     assert_equal "failed", loader.chat.ruby_llm_usages.sole.status
     assert_requested request, times: 1
