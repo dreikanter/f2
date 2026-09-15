@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_14_190000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_14_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -269,20 +269,23 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_14_190000) do
     t.string "provider", null: false
     t.string "model", null: false
     t.integer "purpose", default: 0, null: false
-    t.integer "input_tokens", default: 0, null: false
-    t.integer "output_tokens", default: 0, null: false
-    t.integer "cache_read_tokens", default: 0, null: false
-    t.integer "cache_write_tokens", default: 0, null: false
+    t.integer "input_tokens"
+    t.integer "output_tokens"
+    t.integer "cache_read_tokens"
+    t.integer "cache_write_tokens"
     t.decimal "cost_estimate_cents", precision: 20, scale: 10
     t.integer "outcome", null: false
     t.datetime "started_at", null: false
-    t.datetime "finished_at", null: false
+    t.datetime "finished_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "duration_ms"
     t.text "error_message"
     t.jsonb "retrieval", default: {}, null: false
+    t.datetime "deadline_at"
+    t.integer "thinking_tokens"
     t.index ["ai_credential_id"], name: "index_llm_usages_on_ai_credential_id"
+    t.index ["deadline_at"], name: "index_llm_usages_on_deadline_at", where: "(outcome = 5)"
     t.index ["feed_id", "started_at"], name: "index_llm_usages_on_feed_id_and_started_at"
     t.index ["profile_key", "started_at"], name: "index_llm_usages_on_profile_key_and_started_at"
     t.index ["purpose", "started_at"], name: "index_llm_usages_on_purpose_and_started_at"

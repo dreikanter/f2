@@ -37,6 +37,23 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
     assert_equal "$0.40", value.text.strip
   end
 
+  test "#render should count unresolved attempts and retain an incomplete total after interruption" do
+    create(:llm_usage, feed: feed, user: feed.user, cost_estimate_cents: 25)
+    pending = create(:llm_usage, :pending, feed: feed, user: feed.user)
+
+    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+
+    assert_equal "2", result.css('[data-key="llm_stats.ai_calls.value"]').first.text.strip
+    assert_equal "Unknown", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
+    assert_includes result.css('[data-key="llm_stats.cost_note"]').text, "Available estimates total $0.25."
+
+    pending.interrupt!
+    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+
+    assert_equal "2", result.css('[data-key="llm_stats.ai_calls.value"]').first.text.strip
+    assert_equal "Unknown", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
+  end
+
   test "#render should sum fractional preview and scheduled costs before formatting and preserve unknown totals" do
     create(:llm_usage, feed: feed, user: feed.user, purpose: :preview, cost_estimate_cents: "0.4")
     create(:llm_usage, feed: feed, user: feed.user, purpose: :scheduled_run, cost_estimate_cents: "0.4")

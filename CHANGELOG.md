@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-15
+
+- AI usage details now distinguish unknown token and cache counts from zero.
+
 ## 2026-09-14
 
 - AI credentials now share a model list that updates automatically each day.

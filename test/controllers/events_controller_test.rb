@@ -363,6 +363,22 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='events.ai_usage']", false
   end
 
+  test "#show should render overdue pending accounting without settling it" do
+    sign_in_as user
+    event = create(:event, type: "feed_refresh", user: user)
+    usage = create(:llm_usage, :pending, user: user, deadline_at: 1.second.ago)
+    create(:event_reference, event: event, reference: usage)
+
+    get event_path(event)
+
+    assert_response :success
+    assert_select '[data-key="events.llm_usage.outcome"]', text: "Pending"
+    assert_select '[data-key="events.llm_usage.cost"]', text: "Unknown"
+    assert_select '[data-key="events.llm_usage.tokens"]', text: "Unknown in · Unknown out · cache usage unknown"
+    assert usage.reload.pending?
+    assert_nil usage.finished_at
+  end
+
   test "#show should render an owned event even with list filter params" do
     sign_in_as user
     event = create(:event, type: "feed_refresh", user: user)

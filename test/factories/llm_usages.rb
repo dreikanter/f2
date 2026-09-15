@@ -17,5 +17,17 @@ FactoryBot.define do
     started_at { 2.seconds.ago }
     finished_at { 1.second.ago }
     duration_ms { 1_000 }
+
+    trait :pending do
+      outcome { :pending }
+      deadline_at { 5.minutes.from_now }
+      finished_at { nil }
+      duration_ms { nil }
+      input_tokens { nil }
+      output_tokens { nil }
+      cache_read_tokens { nil }
+      cache_write_tokens { nil }
+      cost_estimate_cents { nil }
+    end
   end
 end

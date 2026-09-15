@@ -50,6 +50,11 @@ default: &default
     queue: default
     schedule: every hour
 
+  interrupt_llm_usages:
+    class: InterruptLlmUsagesJob
+    queue: default
+    schedule: every hour
+
   purge_expired_events:
     class: PurgeExpiredEventsJob
     queue: service

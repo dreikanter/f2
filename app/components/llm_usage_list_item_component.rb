@@ -1,14 +1,15 @@
 # One row of an event's per-call AI usage breakdown: the model and stage, the
 # token counts, and the call's cost and outcome.
 class LlmUsageListItemComponent < ListItemComponent
-  # Non-success outcomes still cost money, so each is shown with a badge that
-  # matches how the alert palette signals its severity elsewhere.
+  # Unsuccessful requests may still incur charges.
   OUTCOME_COLORS = {
     "success" => :success,
     "schema_error" => :danger,
     "provider_error" => :danger,
     "rate_limited" => :warning,
-    "timeout" => :warning
+    "timeout" => :warning,
+    "pending" => :neutral,
+    "interrupted" => :warning
   }.freeze
 
   def initialize(usage:)
@@ -46,15 +47,17 @@ class LlmUsageListItemComponent < ListItemComponent
                      class: "shrink-0 text-sm text-muted", data: { key: "events.llm_usage.stage" })
   end
 
-  # Cached tokens are only worth the extra clause when a call actually reused
-  # cache; most don't, and a "· 0 cached" tail is pure noise.
   def token_summary
     parts = [
-      "#{helpers.number_with_delimiter(usage.input_tokens)} in",
-      "#{helpers.number_with_delimiter(usage.output_tokens)} out"
+      "#{formatted_tokens(usage.input_tokens)} in",
+      "#{formatted_tokens(usage.output_tokens)} out"
     ]
-    cached = usage.cache_read_tokens + usage.cache_write_tokens
-    parts << "#{helpers.number_with_delimiter(cached)} cached" if cached.positive?
+    if usage.cache_read_tokens.nil? || usage.cache_write_tokens.nil?
+      parts << "cache usage unknown"
+    else
+      cached = usage.cache_read_tokens + usage.cache_write_tokens
+      parts << "#{formatted_tokens(cached)} cached" if cached.positive?
+    end
     if %w[native provider].include?(usage.retrieval["mode"])
       calls = usage.retrieval["search_calls"]
       kind = usage.retrieval["mode"]
@@ -64,6 +67,10 @@ class LlmUsageListItemComponent < ListItemComponent
     end
 
     helpers.tag.span(parts.join(" · "), class: "text-sm text-muted tabular-nums", data: { key: "events.llm_usage.tokens" })
+  end
+
+  def formatted_tokens(count)
+    count.nil? ? "Unknown" : helpers.number_with_delimiter(count)
   end
 
   def trailing_line

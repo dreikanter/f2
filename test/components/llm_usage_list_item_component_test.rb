@@ -53,6 +53,34 @@ class LlmUsageListItemComponentTest < ViewComponent::TestCase
 
     assert_equal "Provider error", result.css("[data-key='events.llm_usage.outcome']").text
   end
+
+  test "#render should show pending usage without treating missing counts as zero" do
+    result = render_usage(create(:llm_usage, :pending))
+
+    assert_equal "Pending", result.css('[data-key="events.llm_usage.outcome"]').text
+    assert_equal "Unknown in · Unknown out · cache usage unknown", result.css('[data-key="events.llm_usage.tokens"]').text
+    assert_equal "Unknown", result.css('[data-key="events.llm_usage.cost"]').text
+  end
+
+  test "#render should show interrupted accounting with unknown cost" do
+    interrupted = create(:llm_usage, :pending)
+    interrupted.interrupt!
+
+    result = render_usage(interrupted)
+
+    assert_equal "Interrupted", result.css('[data-key="events.llm_usage.outcome"]').text
+    assert_equal "Unknown", result.css('[data-key="events.llm_usage.cost"]').text
+  end
+
+  test "#render should preserve known counts while keeping a partial cache total unknown" do
+    partial = create(:llm_usage, input_tokens: 0, output_tokens: nil,
+                                 cache_read_tokens: 100, cache_write_tokens: nil)
+
+    result = render_usage(partial)
+
+    assert_equal "0 in · Unknown out · cache usage unknown", result.css('[data-key="events.llm_usage.tokens"]').text
+  end
+
   test "#render should label unknown cost explicitly" do
     usage = create(:llm_usage, cost_estimate_cents: nil)
     result = render_inline(LlmUsageListItemComponent.new(usage: usage))
