@@ -260,6 +260,9 @@ class Feed < ApplicationRecord
   # @param options [Hash] e.g. a shared :http_client
   # @return [Loader::Base] the feed's loader
   def loader_instance(options = {})
+    # AI workflows remain disabled until native extraction is verified and integrated.
+    raise Loader::Error, Loader::LlmLoader::UNAVAILABLE_MESSAGE if FeedProfile.depends_on_ai?(feed_profile_key)
+
     loader_class.new(self, options)
   end
 

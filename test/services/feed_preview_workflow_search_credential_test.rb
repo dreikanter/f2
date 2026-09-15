@@ -24,12 +24,11 @@ class FeedPreviewWorkflowSearchCredentialTest < ActiveSupport::TestCase
     )
 
     captured_feed = nil
-    loader = Struct.new(:load).new('{"items":[]}')
-    Loader::LlmLoader.stub(:new, lambda { |feed, _options|
-      captured_feed = feed
-      loader
+    build_feed = Feed.method(:new)
+    Feed.stub(:new, lambda { |attributes|
+      captured_feed = build_feed.call(attributes)
     }) do
-      FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
+      assert_raises(Loader::Error) { FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute }
     end
 
     assert_equal search_credential, captured_feed.search_credential

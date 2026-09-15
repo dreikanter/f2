@@ -165,10 +165,14 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     captured_options = nil
     response = '{"items":[]}'
     loader = Struct.new(:load).new(response)
-    Loader::LlmLoader.stub(:new, lambda { |feed, options|
-      captured_feed = feed
-      captured_options = options
-      loader
+    build_feed = Feed.method(:new)
+    Feed.stub(:new, lambda { |attributes|
+      captured_feed = build_feed.call(attributes)
+      captured_feed.define_singleton_method(:loader_instance) do |options|
+        captured_options = options
+        loader
+      end
+      captured_feed
     }) do
       FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
     end

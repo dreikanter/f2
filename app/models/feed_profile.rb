@@ -9,6 +9,7 @@ class FeedProfile
     "properties" => {
       "items" => {
         "type" => "array",
+        "maxItems" => 10,
         "items" => {
           "type" => "object",
           "properties" => {

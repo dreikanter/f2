@@ -46,6 +46,19 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert_empty result.entries
   end
 
+  test "#process should accept ten items and reject an oversized response" do
+    items = Array.new(10) do |index|
+      { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
+    end
+
+    assert_equal items, process({ items: items }.to_json).entries.map(&:raw_data)
+
+    error = assert_raises(Processor::LlmProcessor::InvalidOutput) do
+      process({ items: items + [{ "source_url" => "https://example.com/post/10", "body" => "Extra post" }] }.to_json)
+    end
+    assert_equal "AI response does not match the output schema.", error.message
+  end
+
   test "#process should derive a digest uid only from an explicit null source_url" do
     freeze_time do
       result = process('{"items":[{"source_url":null,"body":"Daily roundup"}]}')
