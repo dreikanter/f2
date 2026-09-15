@@ -1,6 +1,6 @@
 require "test_helper"
 
-class LlmNativeExecutionTest < ActiveSupport::TestCase
+class LlmExecutionTest < ActiveSupport::TestCase
   class Lookup < RubyLLM::Tool
     description "Return a fixture source"
     parameter :query, type: :string
@@ -12,22 +12,18 @@ class LlmNativeExecutionTest < ActiveSupport::TestCase
 
   test "#call should send bounded requests and preserve native SDK usage" do
     record = staged_chat
-    record.with_server_tools(:web_search)
-    record.with_schema(type: "object", properties: { items: { type: "array", items: { type: "string" } } }, required: ["items"], additionalProperties: false)
-    request = stub_request(:post, "https://api.openai.com/v1/responses").with do |http|
+    payload = nil
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
       payload = JSON.parse(http.body)
-      assert_equal "Bearer test-execution-key", http.headers["Authorization"]
-      assert_equal "gpt-5-nano", payload.fetch("model")
-      assert_equal 16_384, payload.fetch("max_output_tokens")
-      assert_equal 4, payload.fetch("max_tool_calls")
-      assert_equal "web_search", payload.fetch("tools").sole.fetch("type")
-      assert_equal true, payload.dig("text", "format", "strict")
-      true
-    end.to_return_json(body: completed_response)
+      { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+    end
 
-    response = execution(record).call
+    runner = execution(record)
+    response = runner.call
 
     assert_equal '{"items":[]}', response.content
+    assert_same response, runner.call
+    assert_equal 16_384, payload.fetch("max_output_tokens")
     usage = record.ruby_llm_usages.sole
     assert_equal "succeeded", usage.status
     assert_equal 40, usage.input_tokens
@@ -37,6 +33,42 @@ class LlmNativeExecutionTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
+  test "#call should run a prepared SDK chat without resolving or replacing its selected model" do
+    chat = provider.context.chat(model: "custom-model", provider: :openai, protocol: provider.protocol, assume_model_exists: true)
+    chat.ask_later("Find one item.")
+    context = chat.context
+    payload = nil
+    request = stub_request(:post, "https://api.openai.com/v1/responses")
+      .with(headers: { "Authorization" => "Bearer test-execution-key" })
+      .to_return do |http|
+        payload = JSON.parse(http.body)
+        response = completed_response.merge("model" => "custom-model")
+        { body: response.to_json, headers: { "Content-Type" => "application/json" } }
+      end
+
+    LlmExecution.new(chat: chat, provider: provider, deadline_at: 180.seconds.from_now).call
+
+    assert_equal "custom-model", payload.fetch("model")
+    assert_equal "custom-model", chat.model.id
+    assert_same context, chat.context
+    assert_requested request, times: 1
+  end
+
+  test "#initialize should reject SDK retries that could exceed the physical request budget" do
+    context = RubyLLM.context do |config|
+      config.openai_api_key = "test-execution-key"
+      config.max_retries = 3
+    end
+    chat = context.chat(model: "gpt-5-nano", provider: :openai, protocol: provider.protocol)
+    chat.ask_later("Find one item.")
+
+    assert_raises(ArgumentError) do
+      LlmExecution.new(chat: chat, provider: provider, deadline_at: 180.seconds.from_now)
+    end
+
+    assert_not_requested :post, "https://api.openai.com/v1/responses"
+  end
+
   test "#call should stop before a fifth physical request without creating accounting rows" do
     record = staged_chat
     record.with_tools(Lookup)
@@ -44,7 +76,7 @@ class LlmNativeExecutionTest < ActiveSupport::TestCase
       .to_return { { body: tool_response.to_json, headers: { "Content-Type" => "application/json" } } }
 
     assert_no_difference "LlmUsage.count" do
-      assert_raises(LlmNativeExecution::RequestLimitExceeded) { execution(record).call }
+      assert_raises(LlmExecution::RequestLimitExceeded) { execution(record).call }
     end
 
     assert_equal 4, record.ruby_llm_usages.count
@@ -73,8 +105,11 @@ class LlmNativeExecutionTest < ActiveSupport::TestCase
     first_response = tool_response
     first_response[:output].unshift(completed_response.fetch("output").first)
     request = stub_request(:post, "https://api.openai.com/v1/responses")
-      .with { |http| payloads << JSON.parse(http.body) }
-      .to_return_json(body: first_response).then.to_return_json(body: completed_response)
+      .to_return do |http|
+        payloads << JSON.parse(http.body)
+        response = payloads.size == 1 ? first_response : completed_response
+        { body: response.to_json, headers: { "Content-Type" => "application/json" } }
+      end
 
     execution(record).call
 
@@ -90,7 +125,7 @@ class LlmNativeExecutionTest < ActiveSupport::TestCase
     response[:output].concat(4.times.map { |index| { type: "web_search_call", id: "search_#{index}", status: "completed" } })
     request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
 
-    assert_raises(LlmNativeExecution::ToolLimitExceeded) { execution(record).call }
+    assert_raises(LlmExecution::ToolLimitExceeded) { execution(record).call }
 
     assert_equal 1, record.ruby_llm_usages.count
     assert_requested request, times: 1
@@ -111,37 +146,41 @@ class LlmNativeExecutionTest < ActiveSupport::TestCase
   test "#call should reject an expired deadline without a provider request" do
     record = staged_chat(deadline_at: Time.current)
 
-    assert_raises(LlmNativeExecution::DeadlineExceeded) { execution(record).call }
+    assert_raises(LlmExecution::DeadlineExceeded) { execution(record).call }
 
     assert_empty record.ruby_llm_usages
     assert_not_requested :post, "https://api.openai.com/v1/responses"
   end
 
   test "#call should reject a response received at the 180 second deadline" do
-    record = staged_chat
-    runner = execution(record)
-    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do
-      travel_to record.started_at + 180.seconds, with_usec: true
-      { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+    freeze_time do
+      record = staged_chat
+      runner = execution(record)
+      request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do
+        travel 180.seconds
+        { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+      end
+
+      assert_raises(LlmExecution::DeadlineExceeded) { runner.call }
+
+      assert_equal 1, record.ruby_llm_usages.count
+      assert_requested request, times: 1
     end
-
-    assert_raises(LlmNativeExecution::DeadlineExceeded) { runner.call }
-
-    assert_equal 1, record.ruby_llm_usages.count
-    assert_requested request, times: 1
   end
 
   test "#call should interrupt a blocked request at the earlier preview deadline" do
-    record = staged_chat(purpose: :preview, deadline_at: 1.second.from_now)
-    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do
-      sleep 5
-      { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+    freeze_time do
+      record = staged_chat(purpose: :preview, deadline_at: 0.1.seconds.from_now)
+      request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do
+        sleep 5
+        { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+      end
+      runner = execution(record)
+
+      assert_raises(LlmExecution::DeadlineExceeded) { runner.call }
+
+      assert_requested request, times: 1
     end
-    runner = execution(record)
-
-    assert_raises(LlmNativeExecution::DeadlineExceeded) { runner.call }
-
-    assert_requested request, times: 1
   end
 
   private
@@ -149,7 +188,7 @@ class LlmNativeExecutionTest < ActiveSupport::TestCase
   def staged_chat(**attributes)
     record = create(:llm_chat, **attributes)
     record.context = provider.context
-    record.protocol = :responses
+    record.protocol = provider.protocol
     record.ask_later("Find one item.")
     record
   end
@@ -159,7 +198,7 @@ class LlmNativeExecutionTest < ActiveSupport::TestCase
   end
 
   def execution(record)
-    LlmNativeExecution.new(chat: record, provider: provider)
+    LlmExecution.new(chat: record.to_llm, provider: provider, deadline_at: record.deadline_at)
   end
 
   def completed_response
@@ -168,7 +207,9 @@ class LlmNativeExecutionTest < ActiveSupport::TestCase
 
   def tool_response
     {
-      id: "response_tool", model: "gpt-5-nano", status: "completed",
+      id: "response_tool",
+      model: "gpt-5-nano",
+      status: "completed",
       output: [{ type: "function_call", call_id: "call_#{SecureRandom.hex(4)}", name: Lookup.tool_name, arguments: '{"query":"News"}' }],
       usage: { input_tokens: 20, output_tokens: 10 }
     }

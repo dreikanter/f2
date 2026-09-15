@@ -17,6 +17,14 @@ module LlmProvider
       raise LlmProvider::Error.new("Couldn't reach OpenAI. Try again later.", category: :connection), cause: nil
     end
 
+    def protocol
+      :responses
+    end
+
+    def limit_tool_calls(chat, remaining:)
+      chat.with_provider_options(chat.provider_options.merge(max_tool_calls: remaining))
+    end
+
     private
 
     def api_key

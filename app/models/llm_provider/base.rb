@@ -29,6 +29,19 @@ module LlmProvider
       end
     end
 
+    # @abstract Select the SDK protocol for this provider.
+    # @return [Symbol, nil] protocol override, or nil for the SDK default
+    def protocol
+      raise NotImplementedError, "Subclasses must implement #protocol"
+    end
+
+    # @abstract Apply the remaining hosted-tool budget to the next request.
+    # @param chat [RubyLLM::Chat] prepared SDK chat
+    # @param remaining [Integer] maximum additional hosted-tool calls
+    def limit_tool_calls(chat, remaining:)
+      raise NotImplementedError, "Subclasses must implement #limit_tool_calls"
+    end
+
     private
 
     attr_reader :credential_data

@@ -1,7 +1,7 @@
 require "timeout"
 
-# Runs a staged OpenAI chat within one extraction's execution budget.
-class LlmNativeExecution
+# Runs a staged SDK chat within one extraction's execution budget.
+class LlmExecution
   TIMEOUT = 180.seconds
   MAX_REQUESTS = 4
   MAX_OUTPUT_TOKENS = 16_384
@@ -11,16 +11,19 @@ class LlmNativeExecution
   class RequestLimitExceeded < StandardError; end
   class ToolLimitExceeded < StandardError; end
 
-  # @param chat [LlmChat] persisted chat with its initial prompt already staged
-  # @param provider [LlmProvider::Openai] credential-bound provider
-  def initialize(chat:, provider:)
-    @deadline_at = [chat.deadline_at, chat.started_at + TIMEOUT].min
+  # @param chat [RubyLLM::Chat] prepared SDK chat with its initial prompt staged
+  # @param provider [LlmProvider::Base] provider responsible for request configuration
+  # @param deadline_at [Time] extraction deadline, including any earlier preview limit
+  def initialize(chat:, provider:, deadline_at:)
+    unless chat.context&.config&.max_retries == 0
+      raise ArgumentError, "Chat must use a provider context with retries disabled"
+    end
+
+    @deadline_at = [deadline_at, TIMEOUT.from_now].min
     @requests = 0
     @tool_calls = 0
-    chat.protocol = :responses
-    chat.with_context(provider.context)
-    @chat = chat.to_llm
-    @chat.with_model(chat.requested_model, provider: :openai, protocol: :responses)
+    @chat = chat
+    @provider = provider
     @chat.with_fallbacks(nil).with_compaction(false)
     @chat.with_max_output_tokens(MAX_OUTPUT_TOKENS)
   end
@@ -34,7 +37,7 @@ class LlmNativeExecution
         raise ToolLimitExceeded if @tool_calls >= MAX_TOOL_CALLS
 
         remaining_time
-        @chat.with_provider_options(max_tool_calls: MAX_TOOL_CALLS - @tool_calls)
+        @provider.limit_tool_calls(@chat, remaining: MAX_TOOL_CALLS - @tool_calls)
         @requests += 1
         response = @chat.generate
         @tool_calls += response.server_tool_calls.size
