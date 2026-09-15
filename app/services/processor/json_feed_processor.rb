@@ -30,7 +30,7 @@ module Processor
           feed: feed,
           uid: extract_uid(item),
           # date_published is optional in JSON Feed; fall back to now so
-          # date-less items still import (see PassthroughProcessor).
+          # date-less items still import.
           published_at: parse_time(item["date_published"]) || Time.current,
           status: :pending,
           raw_data: sanitize_item(item, feed_authors)

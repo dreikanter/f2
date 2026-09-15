@@ -163,7 +163,8 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
 
     captured_feed = nil
     captured_options = nil
-    loader = Struct.new(:load).new([])
+    response = '{"items":[]}'
+    loader = Struct.new(:load).new(response)
     Loader::LlmLoader.stub(:new, lambda { |feed, options|
       captured_feed = feed
       captured_options = options
@@ -175,6 +176,6 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal credential.id, captured_feed.ai_credential_id
     assert_equal "claude-sonnet-4-6", captured_feed.ai_model
     assert_equal :preview, captured_options[:purpose]
-    assert_equal 2, preview.reload.data.dig("stats", "content_size")
+    assert_equal response.bytesize, preview.reload.data.dig("stats", "content_size")
   end
 end
