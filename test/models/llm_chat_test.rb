@@ -96,9 +96,9 @@ class LlmChatTest < ActiveSupport::TestCase
   end
 
   test ".unexpired should exclude expired chats from lists and direct lookup" do
-    freeze_time do
-      expired = create(:llm_chat, created_at: 7.days.ago)
-      recent = create(:llm_chat, created_at: 7.days.ago + 1.second)
+    travel_to Time.zone.local(2026, 9, 15) do
+      expired = create(:llm_chat, created_at: Time.zone.local(2026, 7, 15))
+      recent = create(:llm_chat, created_at: Time.zone.local(2026, 7, 15, 0, 0, 1))
 
       assert_equal [recent], LlmChat.unexpired.where(id: [expired.id, recent.id]).to_a
       assert_raises(ActiveRecord::RecordNotFound) { LlmChat.unexpired.find(expired.id) }

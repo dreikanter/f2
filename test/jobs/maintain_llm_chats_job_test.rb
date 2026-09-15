@@ -19,8 +19,9 @@ class MaintainLlmChatsJobTest < ActiveJob::TestCase
   end
 
   test "#perform should purge transcript records while preserving accounting and other event references" do
-    expired = create(:llm_chat, created_at: 7.days.ago)
-    current = create(:llm_chat)
+    expired = create(:llm_chat, created_at: 2.months.ago)
+    current = create(:llm_chat, created_at: 1.month.ago)
+    retained_usage = current.ruby_llm_usages.create!(operation: "chat", provider: "openai", model: "gpt-5-nano", status: "succeeded")
     message = expired.messages.create!(role: "assistant")
     result = expired.messages.create!(role: "tool", content: "Source")
     tool_call = message.ruby_llm_tool_calls.create!(tool_call_id: "purged_call", name: "lookup", result: result)
@@ -40,6 +41,7 @@ class MaintainLlmChatsJobTest < ActiveJob::TestCase
     assert_not RubyLLM::ActiveRecord::Usage.exists?(sdk_usage.id)
     assert RubyLLM::ActiveRecord::Model.exists?(expired.ruby_llm_model_id)
     assert LlmChat.exists?(current.id)
+    assert RubyLLM::ActiveRecord::Usage.exists?(retained_usage.id)
     assert LlmUsage.exists?(usage.id)
     assert_equal [accounting_reference], event.reload.event_references.to_a
   end
