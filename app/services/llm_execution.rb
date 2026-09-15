@@ -37,8 +37,11 @@ class LlmExecution
         raise ToolLimitExceeded if @tool_calls >= MAX_TOOL_CALLS
 
         remaining_time
-        options = @provider.request_options(tool_call_limit: MAX_TOOL_CALLS - @tool_calls)
-        @chat.with_provider_options(@chat.provider_options.merge(options))
+        options = @provider.request_options(
+          tool_call_limit: MAX_TOOL_CALLS - @tool_calls,
+          output_token_limit: MAX_OUTPUT_TOKENS
+        )
+        @chat.with_provider_options(@chat.provider_options.symbolize_keys.merge(options))
         @requests += 1
         response = @chat.generate
         @tool_calls += response.server_tool_calls.size

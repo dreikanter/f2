@@ -5,11 +5,11 @@ class LlmProvider::OpenaiTest < ActiveSupport::TestCase
     @client ||= LlmProvider::Openai.new(credential_data: { "api_key" => "first-key" })
   end
 
-  test "#request_options should translate the hosted tool limit for Responses" do
+  test "#request_options should translate execution limits for Responses" do
     chat = client.context.chat(model: "gpt-5-nano", provider: :openai, protocol: client.protocol)
     chat.with_server_tools(:web_search)
     chat.with_schema(type: "object", properties: { items: { type: "array", items: { type: "string" } } }, required: ["items"], additionalProperties: false)
-    chat.with_provider_options(client.request_options(tool_call_limit: 2))
+    chat.with_provider_options(client.request_options(tool_call_limit: 2, output_token_limit: 1_024))
     payload = nil
     request = stub_request(:post, "https://api.openai.com/v1/responses")
       .with(headers: { "Authorization" => "Bearer first-key" })
@@ -22,6 +22,7 @@ class LlmProvider::OpenaiTest < ActiveSupport::TestCase
 
     assert_equal "gpt-5-nano", payload.fetch("model")
     assert_equal 2, payload.fetch("max_tool_calls")
+    assert_equal 1_024, payload.fetch("max_output_tokens")
     assert_equal "web_search", payload.fetch("tools").sole.fetch("type")
     assert_equal true, payload.dig("text", "format", "strict")
     assert_requested request, times: 1
