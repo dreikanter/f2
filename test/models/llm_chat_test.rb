@@ -1,6 +1,7 @@
 require "test_helper"
 
 class LlmChatTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
   class Lookup < RubyLLM::Tool
     description "Return a fixture source"
     parameter :query, type: :string
@@ -47,6 +48,116 @@ class LlmChatTest < ActiveSupport::TestCase
     assert_equal "stop", messages.last[:finish_reason]
     assert_equal 2, history.ruby_llm_usages.count
     assert_requested request, times: 2
+  end
+
+  test "#create! should schedule interruption at the capped deadline" do
+    freeze_time do
+      chat = nil
+      assert_enqueued_with(job: LlmChatTimeoutJob, at: 180.seconds.from_now, queue: "timeouts") do
+        chat = create(:llm_chat, deadline_at: 5.minutes.from_now)
+      end
+
+      assert_equal 180.seconds.from_now, chat.deadline_at
+    end
+  end
+
+  test "#create! should preserve and schedule an earlier preview deadline" do
+    freeze_time do
+      chat = nil
+      assert_enqueued_with(job: LlmChatTimeoutJob, at: 30.seconds.from_now) do
+        chat = create(:llm_chat, purpose: :preview, deadline_at: 30.seconds.from_now)
+      end
+
+      assert_equal 30.seconds.from_now, chat.deadline_at
+    end
+  end
+
+  test "#execute should retain usage and leave success pending output validation" do
+    provider = LlmProvider::Openai.new(credential_data: { "api_key" => "test-key" })
+    chat = create(:llm_chat)
+    chat.context = provider.context
+    chat.protocol = provider.protocol
+    chat.ask_later("Find one item.")
+    request = stub_request(:post, "https://api.openai.com/v1/responses")
+      .to_return(body: file_fixture("llm_transcripts/completed.json").read, headers: { "Content-Type" => "application/json" })
+
+    assert_equal '{"items":[]}', chat.execute(provider: provider).content
+
+    assert chat.reload.running?
+    assert_equal 1, chat.ruby_llm_usages.count
+    assert_requested request, times: 1
+  end
+
+  [false, true].each do |timeout_job_runs|
+    test "#execute should reject late output with timeout job running: #{timeout_job_runs}" do
+      freeze_time do
+        provider = LlmProvider::Openai.new(credential_data: { "api_key" => "test-key" })
+        chat = create(:llm_chat, deadline_at: 10.seconds.from_now)
+        chat.context = provider.context
+        chat.protocol = provider.protocol
+        chat.ask_later("Find one item.")
+        request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do
+          travel 10.seconds
+          LlmChatTimeoutJob.perform_now(chat.id) if timeout_job_runs
+          { body: file_fixture("llm_transcripts/completed.json").read, headers: { "Content-Type" => "application/json" } }
+        end
+
+        assert_raises(LlmExecution::DeadlineExceeded) { chat.execute(provider: provider) }
+
+        assert chat.reload.interrupted?
+        assert_equal "deadline_exceeded", chat.error_category
+        assert_equal 1, chat.ruby_llm_usages.count
+        assert_equal "succeeded", chat.ruby_llm_usages.sole.status
+        assert_not chat.finish!(status: :succeeded)
+        assert_requested request, times: 1
+      end
+    end
+  end
+
+  test "#execute should interrupt an overdue chat without calling the provider" do
+    provider = LlmProvider::Openai.new(credential_data: { "api_key" => "test-key" })
+    chat = create(:llm_chat, deadline_at: 1.second.ago)
+    chat.context = provider.context
+    chat.protocol = provider.protocol
+    chat.ask_later("Find one item.")
+
+    assert_raises(LlmExecution::DeadlineExceeded) { chat.execute(provider: provider) }
+
+    assert chat.reload.interrupted?
+    assert_empty chat.ruby_llm_usages
+    assert_not_requested :post, "https://api.openai.com/v1/responses"
+  end
+
+  test "#execute should reject a stale worker after another worker settles the chat" do
+    provider = LlmProvider::Openai.new(credential_data: { "api_key" => "test-key" })
+    chat = create(:llm_chat)
+    LlmChat.find(chat.id).finish!(status: :failed, error_category: "provider_error")
+
+    assert_raises(ArgumentError) { chat.execute(provider: provider) }
+
+    assert chat.reload.failed?
+    assert_not_requested :post, "https://api.openai.com/v1/responses"
+  end
+
+  test "#execute should settle an expired chat even when the HTTP request fails" do
+    freeze_time do
+      provider = LlmProvider::Openai.new(credential_data: { "api_key" => "test-key" })
+      chat = create(:llm_chat, deadline_at: 10.seconds.from_now)
+      chat.context = provider.context
+      chat.protocol = provider.protocol
+      chat.ask_later("Find one item.")
+      request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do
+        travel 10.seconds
+        raise Net::ReadTimeout
+      end
+
+      assert_raises(Faraday::TimeoutError) { chat.execute(provider: provider) }
+
+      assert chat.reload.interrupted?
+      assert_equal "deadline_exceeded", chat.error_category
+      assert_equal "failed", chat.ruby_llm_usages.sole.status
+      assert_requested request, times: 1
+    end
   end
 
   test "#finish! should let only the first worker settle a chat" do

@@ -2,9 +2,10 @@ require "test_helper"
 
 class AiCredentialTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
+  include OpenaiModelsTestHelpers
 
-  class ClientCredentialsProvider < LlmProvider::Base
-    def credential_errors
+  class ClientCredentialsValidator < AiCredentialValidator::Base
+    def errors
       credential_data.values_at("client_id", "client_secret").all?(&:present?) ? [] : ["Enter the client ID and secret"]
     end
   end
@@ -50,14 +51,13 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_includes credential.errors[:base], "Enter your API key"
   end
 
-  test "#valid? should let the provider interpret credentials without an API key" do
-    config = { display_name: "Client credentials", default_model: "example-model", client_class: ClientCredentialsProvider }
+  test "#valid? should use the registered validator for the provider credential fields" do
+    config = { display_name: "Client credentials", validator_class: ClientCredentialsValidator }
     stub_const(LlmProvider, :PROVIDERS, LlmProvider::PROVIDERS.merge("client_credentials" => config)) do
       credential = build(:ai_credential, provider: "client_credentials",
                                         credential_data: { "client_id" => "example-client", "client_secret" => "example-secret" })
 
       assert credential.valid?, credential.errors.full_messages.inspect
-      assert_instance_of ClientCredentialsProvider, credential.build_llm_client
 
       credential.credential_data.delete("client_secret")
 
@@ -73,6 +73,31 @@ class AiCredentialTest < ActiveSupport::TestCase
 
     refute duplicate.valid?
     assert_includes duplicate.errors[:display_name], "has already been taken"
+  end
+
+  test "#validate_credentials! should check the current fields on every call" do
+    credential = build(:ai_credential, credential_data: { "api_key" => "first-key" })
+    first_request = stub_openai_models(key: "first-key")
+    replacement_request = stub_openai_models(key: "replacement-key")
+
+    assert credential.validate_credentials!
+    credential.credential_data["api_key"].replace("replacement-key")
+    assert credential.validate_credentials!
+
+    assert_requested first_request, times: 1
+    assert_requested replacement_request, times: 1
+    assert_not_requested :post, /./
+  end
+
+  test "#validate_credentials! should expose classified authentication failures" do
+    credential = build(:ai_credential, credential_data: { "api_key" => "invalid-key" })
+    request = stub_openai_models(key: "invalid-key", fixture: "invalid_key", status: 401)
+
+    error = assert_raises(AiCredentialValidator::Error) { credential.validate_credentials! }
+
+    assert error.invalid_key?
+    assert_equal 401, error.status
+    assert_requested request, times: 1
   end
 
   test "#valid? should allow the same display_name across users" do

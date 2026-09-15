@@ -1,6 +1,5 @@
-module LlmProvider
-  # Sanitized provider failure consumed by AI operations. Carries a category and
-  # optional HTTP status for failure handling and reporting.
+module AiCredentialValidator
+  # Sanitized authentication failure with a category and optional HTTP status.
   class Error < StandardError
     attr_reader :category, :status
 

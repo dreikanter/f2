@@ -10,14 +10,14 @@ class AiCredentialValidation
     return run.timeout! if run.deadline_reached?
 
     original_data = credential.credential_data.deep_dup
-    credential.build_llm_client.validate_credentials!
+    credential.validate_credentials!
 
     with_current_credential(original_data) do
       run.succeed! do |credential|
         credential.update!(active: true, last_validated_at: Time.current, last_error: nil)
       end
     end
-  rescue LlmProvider::Error => error
+  rescue AiCredentialValidator::Error => error
     Rails.error.report(error, context: { credential_id: credential.id })
     with_current_credential(original_data) { fail_validation(error) }
   end
