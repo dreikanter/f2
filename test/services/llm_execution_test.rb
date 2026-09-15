@@ -10,6 +10,19 @@ class LlmExecutionTest < ActiveSupport::TestCase
     end
   end
 
+  class AdvanceClock < RubyLLM::Tool
+    description "Advance the test clock during a tool call"
+
+    def initialize(clock)
+      @clock = clock
+    end
+
+    def execute
+      @clock.travel 180.seconds
+      "Finished after the deadline"
+    end
+  end
+
   test "#call should send bounded requests and preserve native SDK usage" do
     record = staged_chat
     record.with_server_tools(:web_search)
@@ -212,17 +225,43 @@ class LlmExecutionTest < ActiveSupport::TestCase
     end
   end
 
-  test "#call should interrupt a blocked request at the earlier preview deadline" do
+  test "#initialize should reject concurrent local tools before making requests" do
+    record = staged_chat
+    record.with_tools(Lookup)
+    record.with_tool_options(concurrency: :threads)
+
+    assert_raises(ArgumentError) { execution(record) }
+
+    assert_not_requested :post, "https://api.openai.com/v1/responses"
+  end
+
+  test "#call should stop between local tools when the first finishes after the deadline" do
     freeze_time do
-      record = staged_chat(purpose: :preview, deadline_at: 0.1.seconds.from_now)
+      record = staged_chat
+      record.with_tools(AdvanceClock.new(self), Lookup)
+      response = tool_response
+      response[:output].unshift(type: "function_call", call_id: "slow_call", name: AdvanceClock.tool_name, arguments: "{}")
+      request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+      assert_raises(LlmExecution::DeadlineExceeded) { execution(record).call }
+
+      assert_equal ["Finished after the deadline"], record.messages.where(role: "tool").pluck(:content)
+      assert_requested request, times: 1
+    end
+  end
+
+  test "#call should reject a late response at the earlier preview deadline" do
+    freeze_time do
+      record = staged_chat(purpose: :preview, deadline_at: 10.seconds.from_now)
       request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do
-        sleep 5
+        travel 10.seconds
         { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
       end
       runner = execution(record)
 
       assert_raises(LlmExecution::DeadlineExceeded) { runner.call }
 
+      assert_equal 1, record.ruby_llm_usages.count
       assert_requested request, times: 1
     end
   end

@@ -8,12 +8,13 @@ module LlmProvider
       @credential_data = credential_data.deep_dup
     end
 
-    # Build an isolated SDK context with retries disabled for execution budgeting.
+    # Bound HTTP waits and disable retries in an isolated SDK context.
     # @return [RubyLLM::Context] SDK context using this client's credentials
     def context
       RubyLLM.context do |config|
         configure(config)
         config.max_retries = 0
+        config.request_timeout = 180
       end
     end
 

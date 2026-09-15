@@ -1,8 +1,5 @@
-require "timeout"
-
 # Runs a staged SDK chat within one extraction's execution budget.
 class LlmExecution
-  TIMEOUT = 180.seconds
   MAX_REQUESTS = 4
   MAX_OUTPUT_TOKENS = 16_384
   MAX_TOOL_CALLS = 4
@@ -19,7 +16,9 @@ class LlmExecution
       raise ArgumentError, "Chat must use a provider context with retries disabled"
     end
 
-    @deadline_at = [deadline_at, TIMEOUT.from_now].min
+    raise ArgumentError, "Concurrent local tools are not supported" if chat.concurrency
+
+    @deadline_at = deadline_at
     @requests = 0
     @tool_calls = 0
     @chat = chat
@@ -27,42 +26,39 @@ class LlmExecution
     @output_token_limit = [MAX_OUTPUT_TOKENS, @chat.model.max_output_tokens, @chat.max_output_tokens].compact.min
     @chat.with_fallbacks(nil).with_compaction(false)
     @chat.with_max_output_tokens(@output_token_limit)
+    @chat.before_tool_call { check_deadline! }
   end
 
   # @return [RubyLLM::Message] final SDK response
   def call
-    remaining = remaining_time
-    Timeout.timeout(remaining, DeadlineExceeded) do
-      until @chat.complete?
-        raise RequestLimitExceeded if @requests >= MAX_REQUESTS
-        raise ToolLimitExceeded if @tool_calls >= MAX_TOOL_CALLS
+    check_deadline!
+    until @chat.complete?
+      raise RequestLimitExceeded if @requests >= MAX_REQUESTS
+      raise ToolLimitExceeded if @tool_calls >= MAX_TOOL_CALLS
 
-        remaining_time
-        options = @provider.request_options(
-          tool_call_limit: MAX_TOOL_CALLS - @tool_calls,
-          output_token_limit: @output_token_limit
-        )
-        @chat.with_provider_options(@chat.provider_options.symbolize_keys.merge(options))
-        @requests += 1
-        response = @chat.generate
-        @tool_calls += response.server_tool_calls.size
-        remaining_time
-        raise ToolLimitExceeded if @tool_calls > MAX_TOOL_CALLS
+      check_deadline!
+      options = @provider.request_options(
+        tool_call_limit: MAX_TOOL_CALLS - @tool_calls,
+        output_token_limit: @output_token_limit
+      )
+      @chat.with_provider_options(@chat.provider_options.symbolize_keys.merge(options))
+      @requests += 1
+      response = @chat.generate
+      @tool_calls += response.server_tool_calls.size
+      check_deadline!
+      raise ToolLimitExceeded if @tool_calls > MAX_TOOL_CALLS
 
-        return response if @chat.complete?
+      return response if @chat.complete?
 
-        @chat.run_tools
-      end
-      @chat.messages.last
+      @chat.run_tools
+      check_deadline!
     end
+    @chat.messages.last
   end
 
   private
 
-  def remaining_time
-    remaining = @deadline_at - Time.current
-    raise DeadlineExceeded unless remaining.positive?
-
-    remaining
+  def check_deadline!
+    raise DeadlineExceeded if Time.current >= @deadline_at
   end
 end
