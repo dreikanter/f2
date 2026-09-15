@@ -7,7 +7,8 @@ module LlmProvider
     "openai" => {
       display_name: "OpenAI",
       default_model: "gpt-5.6-luna",
-      client_class: Openai
+      client_class: Openai,
+      validator_class: AiCredentialValidator::Openai
     }.freeze
   }.freeze
 

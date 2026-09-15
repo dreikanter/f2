@@ -12,6 +12,8 @@ class LlmExecutionTest < ActiveSupport::TestCase
 
   test "#call should send bounded requests and preserve native SDK usage" do
     record = staged_chat
+    record.with_server_tools(:web_search)
+    record.with_provider_options(service_tier: "default", max_tool_calls: 99)
     payload = nil
     request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
       payload = JSON.parse(http.body)
@@ -24,6 +26,8 @@ class LlmExecutionTest < ActiveSupport::TestCase
     assert_equal '{"items":[]}', response.content
     assert_same response, runner.call
     assert_equal 16_384, payload.fetch("max_output_tokens")
+    assert_equal 4, payload.fetch("max_tool_calls")
+    assert_equal "default", payload.fetch("service_tier")
     usage = record.ruby_llm_usages.sole
     assert_equal "succeeded", usage.status
     assert_equal 40, usage.input_tokens
