@@ -396,14 +396,14 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
                                           ai_credential: credential, ai_model: "gpt-4.1",
                                           params: { "prompt" => "daily roundup" })
 
-    raw_data = [{ "source_url" => nil, "body" => "Сегодня: A, B, C" }]
+    raw_data = { items: [{ "source_url" => nil, "body" => "Сегодня: A, B, C" }] }.to_json
     loader = Object.new
     loader.define_singleton_method(:load) { raw_data }
     workflow = FeedRefreshWorkflow.new(digest_feed)
 
     digest_feed.stub(:loader_instance, loader) { workflow.execute }
 
-    assert_equal raw_data.to_json.bytesize, workflow.stats[:content_size]
+    assert_equal raw_data.bytesize, workflow.stats[:content_size]
 
     post = digest_feed.posts.last
     assert_not_nil post, "a digest item should persist a post"
@@ -422,7 +422,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     loader = Object.new
     loader.define_singleton_method(:load) do
-      [{ "source_url" => nil, "body" => "part one" }, { "source_url" => nil, "body" => "part two" }]
+      { items: [{ "source_url" => nil, "body" => "part one" }, { "source_url" => nil, "body" => "part two" }] }.to_json
     end
 
     digest_feed.stub(:loader_instance, loader) do
@@ -1083,7 +1083,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   def counting_loader(items)
     loader = Object.new
     loads = []
-    loader.define_singleton_method(:load) { loads << true; items }
+    loader.define_singleton_method(:load) { loads << true; { items: items }.to_json }
     loader.define_singleton_method(:load_count) { loads.size }
     loader
   end
