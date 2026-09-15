@@ -1,13 +1,15 @@
 module LlmProvider
   # Provider-specific SDK configuration bound to a credential snapshot.
   class Base
+    # Capture credentials so later edits cannot change this provider instance.
     # @param credential_data [Hash] provider-specific authentication fields
     # @return [Base] provider client bound to a copy of the supplied credentials
     def initialize(credential_data:)
       @credential_data = credential_data.deep_dup
     end
 
-    # @return [RubyLLM::Context] isolated SDK context using this client's credentials, with retries disabled
+    # Build an isolated SDK context with retries disabled for execution budgeting.
+    # @return [RubyLLM::Context] SDK context using this client's credentials
     def context
       RubyLLM.context do |config|
         configure(config)
@@ -15,13 +17,15 @@ module LlmProvider
       end
     end
 
-    # @abstract Select the SDK protocol for this provider.
+    # Select the API format RubyLLM uses to send requests and read responses.
+    # @abstract Subclasses select the protocol.
     # @return [Symbol, nil] protocol override, or nil for the SDK default
     def protocol
       raise NotImplementedError, "Subclasses must implement #protocol"
     end
 
-    # @abstract Translate shared execution limits into provider request options.
+    # Translate the remaining hosted-tool budget into provider-specific request options.
+    # @abstract Subclasses supply the provider's options.
     # @param tool_call_limit [Integer] maximum additional hosted-tool calls
     # @return [Hash] options to merge into the SDK request configuration
     def request_options(tool_call_limit:)
