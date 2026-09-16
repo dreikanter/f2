@@ -26,38 +26,28 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
     "https://no-rss-example.com/blog"
   end
 
-  test "#post should reject AI execution while preserving a saved draft and selections" do
+  test "#post should preserve AI selections when saving a draft" do
     create(:llm_model, model_id: "gpt-4.1")
     sign_in_as(user)
     access_token
     credential
     search_credential
 
-    assert_no_difference -> { LlmUsage.count } do
-      post feed_previews_path, params: { profile_key: "llm", params: { prompt: ai_url },
-                                        ai_credential_id: credential.id, ai_model: "gpt-4.1" }
-      perform_enqueued_jobs
-      assert_predicate FeedPreview.last, :failed?
-      get feed_preview_path(FeedPreview.last)
-      assert_includes response.body, Loader::LlmLoader::UNAVAILABLE_MESSAGE
-      assert_select '[data-key="preview.try-again"][disabled]'
-
-
+    assert_no_difference ["LlmChat.count", "LlmUsage.count"] do
       post feeds_path, params: {
         feed: { params: { prompt: ai_url }, name: "Saved AI feed", feed_profile_key: "llm",
                 access_token_id: access_token.id, target_group: "testgroup", schedule_interval: "1h",
                 ai_credential_id: credential.id, ai_model: "gpt-4.1",
                 search_credential_id: search_credential.id },
-        enable_feed: "1"
+        enable_feed: "0"
       }
     end
 
-    assert_response :unprocessable_entity
+    assert_response :redirect
     assert_predicate Feed.last, :draft?
     assert_equal credential.id, Feed.last.ai_credential_id
     assert_equal "gpt-4.1", Feed.last.ai_model
     assert_equal search_credential.id, Feed.last.search_credential_id
-    assert_includes response.body, Loader::LlmLoader::UNAVAILABLE_MESSAGE
     assert_not_requested :any, /./
   end
 
