@@ -79,11 +79,6 @@ class FeedRefreshWorkflow
 
   # Existing references retain partial spend from a process that died.
   def interrupt_abandoned_event(event)
-    chat_ids = event.event_references.where(reference_type: "LlmChat").select(:reference_id)
-    LlmChat.running.where(id: chat_ids).find_each do |chat|
-      chat.finish!(status: :interrupted, error_category: "refresh_abandoned")
-    end
-
     usage_rows = llm_usage_rows(event)
     search_event_ids = event.event_references.where(reference_type: "Event").pluck(:reference_id)
     stats_updates = {}
