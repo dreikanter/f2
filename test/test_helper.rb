@@ -17,6 +17,10 @@ end
 require_relative "../config/environment"
 require "rails/test_help"
 
+# RubyLLM caches its first registry read. Load the bundled catalog before tests
+# populate the database with partial model catalogs.
+RubyLLM.models.load_from_json(RubyLLM::Models.bundled_registry_file)
+
 # Rails gives uuid fixtures name-based (v5) ids that sort arbitrarily against the
 # uuidv7 ids created rows get, breaking `Model.last`/`order(:id)` in tests. Force
 # fixture ids into a fixed, always-earlier range so fixtures precede created rows.
