@@ -4,6 +4,17 @@ class LlmUsageReport
   STATS_PERIOD = 30.days
   PERIODS = { day: 1.day, week: 1.week, month: STATS_PERIOD }.freeze
 
+  AGGREGATES = {
+    call_count:         "COUNT(*)",
+    known_cost:         "COALESCE(SUM(total_cost), 0)",
+    unknown_cost_count: "COUNT(*) - COUNT(total_cost)",
+    input_tokens:       "SUM(input_tokens)",
+    output_tokens:      "SUM(output_tokens)",
+    cache_read_tokens:  "SUM(cache_read_tokens)",
+    cache_write_tokens: "SUM(cache_write_tokens)",
+    thinking_tokens:    "SUM(thinking_tokens)"
+  }.freeze
+
   Totals = Data.define(:call_count, :known_cost, :unknown_cost_count,
                        :input_tokens, :output_tokens, :cache_read_tokens,
                        :cache_write_tokens, :thinking_tokens) do
@@ -58,11 +69,10 @@ class LlmUsageReport
   private
 
   def summarize(scope)
-    values = scope.pick(Arel.sql(<<~SQL.squish))
-      COUNT(*), COALESCE(SUM(total_cost), 0), COUNT(*) - COUNT(total_cost),
-      SUM(input_tokens), SUM(output_tokens), SUM(cache_read_tokens),
-      SUM(cache_write_tokens), SUM(thinking_tokens)
-    SQL
-    Totals.new(*values)
+    expressions = AGGREGATES.values.map { |sql| Arel.sql(sql) }
+    values = scope.pick(*expressions)
+    attributes = AGGREGATES.keys.zip(values).to_h
+
+    Totals.new(**attributes)
   end
 end
