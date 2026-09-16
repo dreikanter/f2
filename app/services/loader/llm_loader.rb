@@ -5,6 +5,7 @@ module Loader
 
     attr_reader :chat
 
+    # Yields the prepared chat so a manual verification can observe and bound its request.
     def load
       raise Loader::Error, UNAVAILABLE_MESSAGE if feed.search_credential
       raise Loader::Error, "An active AI credential is required." unless feed.ai_credential&.active?
@@ -12,6 +13,7 @@ module Loader
 
       provider = feed.ai_credential.build_llm_client
       @chat = prepare_chat(provider)
+      yield chat if block_given?
       response = chat.execute(provider: provider)
       unless response.stopped? && response.content.is_a?(String)
         raise Loader::Error, "AI response did not complete."

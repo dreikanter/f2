@@ -91,6 +91,16 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
     assert_predicate JobRun.last, :succeeded?
   end
 
+  test "#create should enqueue native OpenAI verification for the launching user" do
+    sign_in_as(dev_user)
+
+    assert_enqueued_with(job: OpenaiNativeVerificationJob, args: [dev_user]) do
+      post development_job_job_runs_path("OpenaiNativeVerificationJob")
+    end
+
+    assert_redirected_to development_job_job_runs_path("OpenaiNativeVerificationJob")
+  end
+
   test "#show should render the run's recorded events" do
     run = create(:job_run, job_class: "PurgeExpiredEventsJob", status: :succeeded)
     event = create(:event, subject: run, message: "Purged 3 expired events")

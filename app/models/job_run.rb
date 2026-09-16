@@ -5,6 +5,7 @@ class JobRun < ApplicationRecord
     SerperCapabilityProbeJob,
     BraveCapabilityProbeJob,
     TavilyCapabilityProbeJob,
+    OpenaiNativeVerificationJob,
     PurgeExpiredEventsJob,
     RefreshLlmModelsJob
   ].freeze
