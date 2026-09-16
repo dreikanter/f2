@@ -118,17 +118,12 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   test "#execute should persist AI preview failure details in the activity event" do
     credential = create(:ai_credential, :active, user: user)
     preview = create(:feed_preview, user: user, feed_profile_key: "llm",
-                     params: { "prompt" => "A daily roundup" }, ai_credential: credential,
+                     params: { "prompt" => "A daily roundup" }, ai_credential: credential, ai_model: "gpt-5-nano",
                      status: :pending, run_id: AI_RUN_ID)
-    loader = Object.new
-    def loader.load
-      raise Loader::Error, "Provider request timed out"
-    end
+    stub_request(:post, "https://api.openai.com/v1/responses").to_timeout
 
     workflow = FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID)
-    error = Loader::LlmLoader.stub(:new, loader) do
-      assert_raises(Loader::Error) { workflow.execute }
-    end
+    error = assert_raises(Loader::Error) { workflow.execute }
 
     assert preview.reload.failed?
     event = Event.find_by!(type: "feed_preview", subject: credential)
@@ -155,31 +150,30 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_nil preview.data
   end
 
-  test "#execute should run the AI loader with the preview's selected model for the preview purpose" do
+  test "#execute should process a real AI loader result with the selected model and preview attribution" do
     credential = create(:ai_credential, :active, user: user)
     preview = create(:feed_preview, user: user, feed_profile_key: "llm",
                      params: { "prompt" => "rust async" }, ai_credential: credential,
-                     ai_model: "claude-sonnet-4-6", status: :pending, run_id: AI_RUN_ID)
+                     ai_model: "gpt-5-nano", status: :pending, run_id: AI_RUN_ID)
+    response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
+    request = stub_request(:post, "https://api.openai.com/v1/responses")
+      .with { |http| JSON.parse(http.body).fetch("model") == "gpt-5-nano" }
+      .to_return_json(body: response)
 
-    captured_feed = nil
-    captured_options = nil
-    response = '{"items":[]}'
-    loader = Struct.new(:load).new(response)
-    build_feed = Feed.method(:new)
-    Feed.stub(:new, lambda { |attributes|
-      captured_feed = build_feed.call(attributes)
-      captured_feed.define_singleton_method(:loader_instance) do |options|
-        captured_options = options
-        loader
-      end
-      captured_feed
-    }) do
+    assert_no_difference "Feed.count" do
       FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
     end
 
-    assert_equal credential.id, captured_feed.ai_credential_id
-    assert_equal "claude-sonnet-4-6", captured_feed.ai_model
-    assert_equal :preview, captured_options[:purpose]
-    assert_equal response.bytesize, preview.reload.data.dig("stats", "content_size")
+    chat = LlmChat.sole
+    assert chat.succeeded?
+    assert_nil chat.feed_id
+    assert_equal credential, chat.ai_credential
+    assert_equal "gpt-5-nano", chat.requested_model
+    assert_equal "preview", chat.purpose
+    assert preview.reload.ready?
+    assert_equal '{"items":[]}'.bytesize, preview.data.dig("stats", "content_size")
+    event = Event.find_by!(type: "feed_preview", subject: credential)
+    assert_equal [chat], event.references
+    assert_requested request, times: 1
   end
 end

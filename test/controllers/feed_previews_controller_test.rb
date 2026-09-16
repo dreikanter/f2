@@ -195,6 +195,18 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "#show should offer retry after an AI preview fails" do
+    sign_in_as(user)
+    preview = create(:feed_preview, :failed, user: user, feed_profile_key: "llm",
+                     params: { "prompt" => "ruby news" })
+
+    get feed_preview_path(preview)
+
+    assert_response :success
+    assert_select '[data-key="preview.failed"]'
+    assert_select '[data-key="preview.try-again"]:not([disabled])'
+  end
+
   test "#create should render the failed state without restarting a run" do
     sign_in_as(user)
     create(:feed_preview, :failed, user: user, feed_profile_key: "rss",

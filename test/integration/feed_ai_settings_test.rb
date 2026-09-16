@@ -204,7 +204,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     assert_select "select[data-key='form.ai-model']"
   end
 
-  test "#edit should lock the Enable checkbox off when AI credentials are missing" do
+  test "#edit should allow saving AI settings and require credentials for preview" do
     sign_in_as(user)
     search_credential
     feed_without_credential = create(:feed,
@@ -216,13 +216,11 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
 
     get edit_feed_path(feed_without_credential)
 
-    assert_select "input[type=checkbox][name='enable_feed'][disabled]", count: 1
-    assert_select "input[type=checkbox][name='enable_feed'][checked]", false,
-                  "Enable checkbox should be unchecked while enabling is unavailable"
-    assert_select "[data-key='form.enable-blocked-note']", text: Loader::LlmLoader::UNAVAILABLE_MESSAGE
+    assert_select "input[type=checkbox][name='enable_feed']:not([disabled])"
+    assert_select "[data-key='preview.open'][disabled]"
   end
 
-  test "#edit should keep AI unavailable when search credentials are missing" do
+  test "#edit should allow enabling without an external search credential" do
     create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
     feed_without_search = create(:feed,
@@ -234,18 +232,17 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
 
     get edit_feed_path(feed_without_search)
 
-    assert_select "input[type=checkbox][name='enable_feed'][disabled]", count: 1
-    assert_select "[data-key='form.enable-blocked-note']", text: Loader::LlmLoader::UNAVAILABLE_MESSAGE
+    assert_select "input[type=checkbox][name='enable_feed']:not([disabled])"
   end
 
-  test "#edit should keep AI unavailable when setup is complete" do
+  test "#edit should allow enabling and previewing when AI setup is complete" do
     create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
 
     get edit_feed_path(ai_feed)
 
-    assert_select "input[type=checkbox][name='enable_feed'][disabled]"
-    assert_select "[data-key='form.enable-blocked-note']", text: Loader::LlmLoader::UNAVAILABLE_MESSAGE
-    assert_select "[data-controller~='enable-gate']", count: 0
+    assert_select "input[type=checkbox][name='enable_feed']:not([disabled])"
+    assert_select "[data-key='preview.open']:not([disabled])"
+    assert_select "[data-controller~='enable-gate']"
   end
 end

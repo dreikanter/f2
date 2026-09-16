@@ -593,12 +593,12 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_enabled?
   end
 
-  test "#can_be_enabled? should reject AI feeds even with a working credential and model" do
+  test "#can_be_enabled? should accept an AI feed with complete setup" do
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "gpt-4.1")
 
-    assert_not feed.can_be_enabled?
+    assert feed.can_be_enabled?
   end
 
   test "#can_be_previewed? should be true for a non-AI profile with a source" do
@@ -607,20 +607,33 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.can_be_previewed?
   end
 
-  test "#can_be_previewed? should reject AI previews while extraction is unavailable" do
+  test "#can_be_previewed? should accept an AI preview with a saved model and active credential" do
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm", ai_credential: credential,
                        ai_model: "saved-model", params: { "prompt" => "A daily roundup" })
 
-    assert_not feed.can_be_previewed?
-    assert_not feed.enable
-    assert_includes feed.errors[:base], Loader::LlmLoader::UNAVAILABLE_MESSAGE
-    assert_equal "saved-model", feed.ai_model
+    assert feed.can_be_previewed?
   end
 
   test "#can_be_previewed? should be false for an AI profile without a credential" do
     feed = build(:feed, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: nil, ai_model: "gpt-4.1")
+
+    assert_not feed.can_be_previewed?
+  end
+
+  test "#can_be_previewed? should reject an inactive AI credential" do
+    credential = create(:ai_credential, :inactive)
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "gpt-4.1")
+
+    assert_not feed.can_be_previewed?
+  end
+
+  test "#can_be_previewed? should require an AI model" do
+    credential = create(:ai_credential, :active)
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: nil)
 
     assert_not feed.can_be_previewed?
   end

@@ -397,11 +397,10 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
                                           params: { "prompt" => "daily roundup" })
 
     raw_data = { items: [{ "source_url" => nil, "body" => "Сегодня: A, B, C" }] }.to_json
-    loader = Object.new
-    loader.define_singleton_method(:load) { raw_data }
+    stub_ai_response(JSON.parse(raw_data).fetch("items"))
     workflow = FeedRefreshWorkflow.new(digest_feed)
 
-    digest_feed.stub(:loader_instance, loader) { workflow.execute }
+    workflow.execute
 
     assert_equal raw_data.bytesize, workflow.stats[:content_size]
 
@@ -420,14 +419,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
                                           ai_credential: credential, ai_model: "gpt-4.1",
                                           params: { "prompt" => "daily roundup" })
 
-    loader = Object.new
-    loader.define_singleton_method(:load) do
-      { items: [{ "source_url" => nil, "body" => "part one" }, { "source_url" => nil, "body" => "part two" }] }.to_json
-    end
+    stub_ai_response([{ "source_url" => nil, "body" => "part one" }, { "source_url" => nil, "body" => "part two" }])
 
-    digest_feed.stub(:loader_instance, loader) do
-      FeedRefreshWorkflow.new(digest_feed).execute
-    end
+    FeedRefreshWorkflow.new(digest_feed).execute
 
     assert_equal 1, digest_feed.posts.count, "same-period digests collapse to one post"
   end
@@ -438,32 +432,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     test_feed = create(:feed, feed_profile_key: "rss", user: llm_user, ai_credential: credential)
 
     workflow = FeedRefreshWorkflow.new(test_feed)
-    loader = Object.new
-    loader.define_singleton_method(:load) { raise Loader::Error, "server error" }
-    test_feed.stub(:loader_instance, loader) do
-      assert_raises(Loader::Error) { workflow.execute }
-    end
+    stub_request(:get, test_feed.url).to_return(status: 500)
+
+    assert_raises(Loader::Error) { workflow.execute }
 
     assert_predicate credential.reload, :active?
-  end
-
-  test "#execute should handle unavailable AI extraction without spending or deactivating credentials" do
-    create(:llm_model, model_id: "saved-model")
-    credential = create(:ai_credential, :active)
-    search = create(:search_credential, :active, user: credential.user)
-    feed = create(:feed, :enabled, user: credential.user, feed_profile_key: "llm",
-                   params: { "prompt" => "A daily roundup" }, ai_credential: credential,
-                   ai_model: "saved-model", search_credential: search)
-
-    assert_no_difference -> { LlmUsage.count } do
-      error = assert_raises(Loader::Error) { FeedRefreshWorkflow.new(feed).execute }
-      assert_equal Loader::LlmLoader::UNAVAILABLE_MESSAGE, error.message
-    end
-
-    assert_predicate credential.reload, :active?
-    assert_predicate search.reload, :active?
-    assert_equal "failed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
-    assert_not_requested :any, /./
   end
 
   def usage_writing_loader(test_feed, rss, costs: [3], error: nil)
@@ -1078,23 +1051,20 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     feed
   end
 
-  # A loader stub that counts its invocations, so a skipped run can assert the
-  # LLM loader never ran.
-  def counting_loader(items)
-    loader = Object.new
-    loads = []
-    loader.define_singleton_method(:load) { loads << true; { items: items }.to_json }
-    loader.define_singleton_method(:load_count) { loads.size }
-    loader
+  def stub_ai_response(items)
+    response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
+    response["model"] = "gpt-4.1"
+    response["output"].last["content"].first["text"] = { items: items }.to_json
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
   end
 
   test "#execute should record the period after a digest-only run" do
     create(:llm_model, model_id: "gpt-4.1")
     freeze_time do
       feed = digest_feed_with_schedule
-      loader = counting_loader([{ "source_url" => nil, "body" => "roundup" }])
+      stub_ai_response([{ "source_url" => nil, "body" => "roundup" }])
 
-      feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed).execute }
+      FeedRefreshWorkflow.new(feed).execute
 
       recorded = feed.feed_schedule.reload.last_digest_period
       assert_equal Time.current.utc.to_date, recorded
@@ -1108,11 +1078,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     create(:llm_model, model_id: "gpt-4.1")
     freeze_time do
       feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date)
-      loader = counting_loader([{ "source_url" => nil, "body" => "roundup" }])
+      request = stub_ai_response([{ "source_url" => nil, "body" => "roundup" }])
 
-      feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed).execute }
+      FeedRefreshWorkflow.new(feed).execute
 
-      assert_equal 0, loader.load_count, "the LLM loader must not run when skipping"
+      assert_not_requested request
       assert_equal 0, feed.posts.count
       assert_equal 1, Event.where(subject: feed, type: "feed_refresh_skipped", level: "debug").count
     end
@@ -1129,11 +1099,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
         user: feed.user,
         metadata: { status: "started" }
       )
-      loader = counting_loader([{ "source_url" => nil, "body" => "roundup" }])
+      request = stub_ai_response([{ "source_url" => nil, "body" => "roundup" }])
 
-      feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed).execute }
+      FeedRefreshWorkflow.new(feed).execute
 
-      assert_equal 0, loader.load_count, "the run must still skip"
+      assert_not_requested request
       assert_equal "interrupted", abandoned.reload.metadata["status"]
     end
   end
@@ -1142,11 +1112,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     create(:llm_model, model_id: "gpt-4.1")
     freeze_time do
       feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date)
-      loader = counting_loader([{ "source_url" => nil, "body" => "roundup" }])
+      request = stub_ai_response([{ "source_url" => nil, "body" => "roundup" }])
 
-      feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed, manual: true).execute }
+      FeedRefreshWorkflow.new(feed, manual: true).execute
 
-      assert_equal 1, loader.load_count, "a manual refresh runs even in the current period"
+      assert_requested request, times: 1
       assert_equal 1, feed.posts.count
       assert_equal 0, Event.where(subject: feed, type: "feed_refresh_skipped").count
     end
@@ -1156,11 +1126,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     create(:llm_model, model_id: "gpt-4.1")
     freeze_time do
       feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date - 1)
-      loader = counting_loader([{ "source_url" => nil, "body" => "today's roundup" }])
+      request = stub_ai_response([{ "source_url" => nil, "body" => "today's roundup" }])
 
-      feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed).execute }
+      FeedRefreshWorkflow.new(feed).execute
 
-      assert_equal 1, loader.load_count
+      assert_requested request, times: 1
       assert_equal Time.current.utc.to_date, feed.feed_schedule.reload.last_digest_period
     end
   end
@@ -1169,9 +1139,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     create(:llm_model, model_id: "gpt-4.1")
     freeze_time do
       feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date - 1)
-      loader = counting_loader([{ "source_url" => "https://example.com/post-1", "body" => "a real post" }])
+      stub_ai_response([{ "source_url" => "https://example.com/post-1", "body" => "a real post" }])
 
-      feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed).execute }
+      FeedRefreshWorkflow.new(feed).execute
 
       assert_nil feed.feed_schedule.reload.last_digest_period
     end
@@ -1183,12 +1153,12 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       # Seed a stale period so this proves the mixed run *clears* it, not just a
       # trivial nil == nil no-write.
       feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date - 1)
-      loader = counting_loader([
+      stub_ai_response([
         { "source_url" => nil, "body" => "roundup" },
         { "source_url" => "https://example.com/post-1", "body" => "a real post" }
       ])
 
-      feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed).execute }
+      FeedRefreshWorkflow.new(feed).execute
 
       assert_nil feed.feed_schedule.reload.last_digest_period, "mixed runs never mark a period"
     end
