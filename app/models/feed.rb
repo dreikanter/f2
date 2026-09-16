@@ -267,7 +267,7 @@ class Feed < ApplicationRecord
     loader_class.new(self, options)
   end
 
-  # @param raw_data [String] raw payload from the loader
+  # @param raw_data [Object] payload from the profile's loader
   # @return [Processor::Base] the feed's processor
   def processor_instance(raw_data)
     processor_class.new(self, raw_data)

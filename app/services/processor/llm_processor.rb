@@ -4,11 +4,7 @@ module Processor
     class InvalidOutput < StandardError; end
 
     def process
-      data = JSON.parse(raw_data)
-      unless JSONSchemer.schema(FeedProfile::UNIVERSAL_OUTPUT_SCHEMA).valid?(data)
-        raise InvalidOutput, "AI response does not match the output schema."
-      end
-
+      data = parse_output
       now = Time.current
       entries = data.fetch("items").map do |item|
         FeedEntry.new(
@@ -19,7 +15,23 @@ module Processor
           raw_data: item
         )
       end
-      Result.new(entries: entries, recognized: true)
+      result = Result.new(entries: entries, recognized: true)
+      raw_data.complete!
+      result
+    rescue StandardError => error
+      raw_data.fail!(error)
+      raise
+    end
+
+    private
+
+    def parse_output
+      data = JSON.parse(raw_data.content)
+      unless JSONSchemer.schema(FeedProfile::UNIVERSAL_OUTPUT_SCHEMA).valid?(data)
+        raise InvalidOutput, "AI response does not match the output schema."
+      end
+
+      data
     rescue JSON::ParserError
       raise InvalidOutput, "AI response is not valid JSON.", cause: nil
     end

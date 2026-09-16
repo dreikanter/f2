@@ -20,7 +20,7 @@ module StatsRecorder
 
   private
 
-  # RSS/Atom loaders return a String body; AI loaders return an Array of items.
+  # Payloads may expose their own size without serializing associated records.
   def content_bytesize(raw_data)
     raw_data.respond_to?(:bytesize) ? raw_data.bytesize : raw_data.to_json.bytesize
   end

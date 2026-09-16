@@ -27,7 +27,7 @@ class LlmChat < ApplicationRecord
   scope :expired, -> { where(created_at: ..RETENTION.ago) }
   scope :overdue, -> { running.where(deadline_at: ..Time.current) }
 
-  # Run the prepared chat, leaving success to the workflow's output validation.
+  # Run the prepared chat, leaving success to the processor's output validation.
   # @param provider [LlmProvider::Base] provider responsible for request configuration
   # @return [RubyLLM::Message] final SDK response
   def execute(provider:)

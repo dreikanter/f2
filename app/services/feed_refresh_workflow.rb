@@ -28,8 +28,6 @@ class FeedRefreshWorkflow
   end
 
   def on_error(error)
-    llm_chat&.timeout!
-    llm_chat&.finish!(status: :failed, error_category: current_step.to_s)
     Metrics.increment("feed_refresh_total", status: "error", profile: feed.feed_profile_key)
     record_error_stats(current_step: current_step)
     fail_refresh_event(error)
@@ -110,15 +108,13 @@ class FeedRefreshWorkflow
   end
 
   def load_feed_contents(*)
-    @loader = feed.loader_instance(refresh_event: @refresh_event)
-    raw_data = @loader.load
+    raw_data = feed.loader_instance(refresh_event: @refresh_event).load
     record_stats(content_size: content_bytesize(raw_data))
     raw_data
   end
 
   def process_feed_contents(raw_data)
     processed_entries = feed.processor_instance(raw_data).process.entries
-    complete_llm_extraction!
     record_stats(total_entries: processed_entries.size)
 
     identified_entries, unidentified_entries = processed_entries.partition { |entry| entry.uid.present? }
@@ -126,19 +122,6 @@ class FeedRefreshWorkflow
 
     @digest_period = digest_period_for(identified_entries)
     identified_entries
-  end
-
-  def llm_chat
-    @loader.chat if @loader.is_a?(Loader::LlmLoader)
-  end
-
-  # Only validated, current output may enter persistence and publication.
-  # finish! checks the deadline even when the timeout job has not run yet.
-  def complete_llm_extraction!
-    return unless llm_chat
-    return if llm_chat.finish!(status: :succeeded)
-
-    raise Loader::Error, "AI extraction is no longer active."
   end
 
   # The period this run committed to, read from the actual minted uids rather

@@ -3,34 +3,42 @@ module Loader
   class LlmLoader < Base
     UNAVAILABLE_MESSAGE = "AI feeds are temporarily unavailable.".freeze
 
-    attr_reader :chat
-
+    # @return [LlmResult] response content with its guarded extraction lifecycle
     def load
       raise Loader::Error, UNAVAILABLE_MESSAGE if feed.search_credential
       raise Loader::Error, "An active AI credential is required." unless feed.ai_credential&.active?
       raise Loader::Error, "An AI model is required." if feed.ai_model.blank?
 
       provider = feed.ai_credential.build_llm_client
-      prepare_chat(provider)
+      chat = create_chat(provider)
+      prepare_chat(chat)
       response = chat.execute(provider: provider)
       unless response.stopped? && response.content.is_a?(String)
         raise Loader::Error, "AI response did not complete."
       end
 
-      response.content
-    rescue RubyLLM::Error, Faraday::Error
-      raise Loader::Error, "AI request failed. Please try again later."
-    rescue LlmExecution::DeadlineExceeded
-      raise Loader::Error, "AI request exceeded its deadline."
-    rescue LlmExecution::RequestLimitExceeded, LlmExecution::ToolLimitExceeded
-      raise Loader::Error, "AI request exceeded its execution limits."
+      LlmResult.new(content: response.content, chat: chat)
+    rescue StandardError => error
+      chat&.timeout!
+      chat&.finish!(status: :failed, error_category: error.class.name)
+
+      case error
+      when RubyLLM::Error, Faraday::Error
+        raise Loader::Error, "AI request failed. Please try again later."
+      when LlmExecution::DeadlineExceeded
+        raise Loader::Error, "AI request exceeded its deadline."
+      when LlmExecution::RequestLimitExceeded, LlmExecution::ToolLimitExceeded
+        raise Loader::Error, "AI request exceeded its execution limits."
+      else
+        raise
+      end
     end
 
     private
 
-    def prepare_chat(provider)
+    def create_chat(provider)
       now = Time.current
-      @chat = LlmChat.create!(
+      LlmChat.create!(
         user: feed.user,
         feed: options.fetch(:usage_feed, feed.persisted? ? feed : nil),
         ai_credential: feed.ai_credential,
@@ -46,6 +54,9 @@ module Loader
         protocol: provider.protocol,
         assume_model_exists: true
       )
+    end
+
+    def prepare_chat(chat)
       options[:refresh_event]&.event_references&.create!(reference: chat)
       chat.with_instructions(<<~TEXT.strip)
         #{LlmPrompts::COMBINED_SYSTEM}
