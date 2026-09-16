@@ -28,13 +28,5 @@ module LlmProvider
     def build(name, credential_data:)
       find(name).fetch(:client_class).new(credential_data: credential_data)
     end
-
-    # Interpret retained usage independently of the credential's lifecycle.
-    # @param provider [String] provider recorded by the SDK
-    # @param calls [Array<Hash>, nil] stored SDK server-tool blocks
-    # @return [Integer, nil] search count, or nil when interpretation is unavailable
-    def web_search_call_count(provider:, calls:)
-      PROVIDERS[provider.to_s]&.fetch(:client_class)&.web_search_call_count(calls)
-    end
   end
 end

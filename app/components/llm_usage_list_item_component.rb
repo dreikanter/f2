@@ -42,11 +42,8 @@ class LlmUsageListItemComponent < ListItemComponent
     cached = usage.cache_read_tokens.to_i + usage.cache_write_tokens.to_i
     parts << "#{helpers.number_with_delimiter(cached)} cached" if cached.positive?
     parts << "#{helpers.number_with_delimiter(usage.thinking_tokens)} thinking" if usage.thinking_tokens.to_i.positive?
-    search_calls = LlmProvider.web_search_call_count(
-      provider: usage.provider,
-      calls: usage.message&.[](:server_tool_calls)
-    )
-    parts << "#{search_calls} native web calls" if search_calls&.positive?
+    search_count = LlmUsageDetails.new(usage).web_search_count
+    parts << "#{search_count} native web calls" if search_count&.positive?
 
     helpers.tag.span(parts.join(" · "), class: "text-sm text-muted tabular-nums", data: { key: "events.llm_usage.tokens" })
   end

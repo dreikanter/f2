@@ -1,10 +1,6 @@
 module LlmProvider
   # Configures OpenAI SDK contexts and Responses requests.
   class Openai < Base
-    def self.web_search_call_count(calls)
-      Array(calls).count { |call| call["type"] == "web_search_call" }
-    end
-
     def protocol
       :responses
     end

@@ -6,21 +6,6 @@ class LlmProvider::OpenaiTest < ActiveSupport::TestCase
     @client ||= LlmProvider::Openai.new(credential_data: { "api_key" => "first-key" })
   end
 
-  test ".web_search_call_count should count searches separately from other hosted tools" do
-    calls = [
-      { "type" => "web_search_call", "id" => "search_1" },
-      { "type" => "code_interpreter_call", "id" => "code_1" },
-      { "type" => "web_search_call", "id" => "search_2" }
-    ]
-
-    assert_equal 2, LlmProvider::Openai.web_search_call_count(calls)
-  end
-
-  test ".web_search_call_count should return zero without recorded tools" do
-    assert_equal 0, LlmProvider::Openai.web_search_call_count(nil)
-    assert_equal 0, LlmProvider::Openai.web_search_call_count([])
-  end
-
   test "#context should bound stalled HTTP requests through the SDK transport" do
     context = client.context
     assert_equal 180, context.config.request_timeout

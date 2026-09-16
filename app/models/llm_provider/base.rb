@@ -1,12 +1,6 @@
 module LlmProvider
   # Provider-specific SDK configuration bound to a credential snapshot.
   class Base
-    # @param _calls [Array<Hash>, nil] stored SDK server-tool blocks
-    # @return [Integer, nil] search count, or nil when interpretation is unavailable
-    def self.web_search_call_count(_calls)
-      nil
-    end
-
     # Capture credentials so later edits cannot change this provider instance.
     # @param credential_data [Hash] provider-specific authentication fields
     # @return [Base] provider client bound to a copy of the supplied credentials
