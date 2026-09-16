@@ -1,14 +1,10 @@
-# One row of an event's per-call AI usage breakdown: the model and stage, the
-# token counts, and the call's cost and outcome.
+# One retained SDK attempt in an event's AI usage breakdown.
 class LlmUsageListItemComponent < ListItemComponent
-  # Non-success outcomes still cost money, so each is shown with a badge that
-  # matches how the alert palette signals its severity elsewhere.
   OUTCOME_COLORS = {
-    "success" => :success,
-    "schema_error" => :danger,
-    "provider_error" => :danger,
-    "rate_limited" => :warning,
-    "timeout" => :warning
+    "succeeded" => :success,
+    "failed" => :danger,
+    "cancelled" => :warning,
+    "pending" => :neutral
   }.freeze
 
   def initialize(usage:)
@@ -32,38 +28,28 @@ class LlmUsageListItemComponent < ListItemComponent
 
   def primary_line
     helpers.tag.div(class: "flex min-w-0 items-baseline gap-2") do
-      helpers.safe_join([
-        helpers.tag.span(usage.model, class: "truncate font-medium text-heading", data: { key: "events.llm_usage.model" }),
-        stage_label
-      ].compact)
+      helpers.tag.span(usage.model, class: "truncate font-medium text-heading", data: { key: "events.llm_usage.model" })
     end
-  end
-
-  def stage_label
-    return if usage.stage.blank?
-
-    helpers.tag.span(usage.stage.humanize(capitalize: false),
-                     class: "shrink-0 text-sm text-muted", data: { key: "events.llm_usage.stage" })
   end
 
   # Cached tokens are only worth the extra clause when a call actually reused
   # cache; most don't, and a "· 0 cached" tail is pure noise.
   def token_summary
     parts = [
-      "#{helpers.number_with_delimiter(usage.input_tokens)} in",
-      "#{helpers.number_with_delimiter(usage.output_tokens)} out"
+      "#{formatted_tokens(usage.input_tokens)} in",
+      "#{formatted_tokens(usage.output_tokens)} out"
     ]
-    cached = usage.cache_read_tokens + usage.cache_write_tokens
+    cached = usage.cache_read_tokens.to_i + usage.cache_write_tokens.to_i
     parts << "#{helpers.number_with_delimiter(cached)} cached" if cached.positive?
-    if %w[native provider].include?(usage.retrieval["mode"])
-      calls = usage.retrieval["search_calls"]
-      kind = usage.retrieval["mode"]
-      parts << (calls.nil? ? "#{kind} search usage unknown" : "#{calls} #{kind} web calls")
-    elsif usage.retrieval["mode"] == "limited"
-      parts << "web search unavailable"
-    end
+    parts << "#{helpers.number_with_delimiter(usage.thinking_tokens)} thinking" if usage.thinking_tokens.to_i.positive?
+    search_calls = Array(usage.message&.[](:server_tool_calls)).count { |call| call["type"] == "web_search_call" }
+    parts << "#{search_calls} native web calls" if search_calls.positive?
 
     helpers.tag.span(parts.join(" · "), class: "text-sm text-muted tabular-nums", data: { key: "events.llm_usage.tokens" })
+  end
+
+  def formatted_tokens(tokens)
+    tokens.nil? ? "Unknown" : helpers.number_with_delimiter(tokens)
   end
 
   def trailing_line
@@ -76,15 +62,15 @@ class LlmUsageListItemComponent < ListItemComponent
   end
 
   def formatted_cost
-    return "Unknown" if usage.cost_estimate_cents.nil?
+    return "Unknown" if usage.total_cost.nil?
 
-    helpers.number_to_currency(usage.cost_estimate_cents / 100.0)
+    helpers.number_to_currency(usage.total_cost)
   end
 
   def outcome_badge
     render(BadgeComponent.new(
-      text: usage.outcome.humanize,
-      color: OUTCOME_COLORS.fetch(usage.outcome, :neutral),
+      text: usage.status.humanize,
+      color: OUTCOME_COLORS.fetch(usage.status, :neutral),
       key: "events.llm_usage.outcome"
     ))
   end

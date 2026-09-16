@@ -67,7 +67,7 @@ class FeedsController < ApplicationController
     authorize @feed
     @recent_posts = recent_posts(@feed)
     @recent_events = recent_events(@feed)
-    @has_llm_usages = @feed.llm_usages.within_stats_period.exists?
+    @has_llm_usages = LlmUsageReport.for_feed(@feed, period: LlmUsageReport::STATS_PERIOD.ago..Time.current).usages.exists?
   end
 
   def edit

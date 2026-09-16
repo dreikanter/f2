@@ -342,8 +342,9 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
     feed = create(:feed, user: user)
     event = create(:event, type: "feed_refresh", user: user, subject: feed)
-    usage = create(:llm_usage, user: user, feed: feed, model: "claude-sonnet-4-6", cost_estimate_cents: 3)
-    create(:event_reference, event: event, reference: usage)
+    chat = create(:llm_chat, user: user, feed: feed)
+    usage = create(:ruby_llm_usage, chat: chat, model: "claude-sonnet-4-6", total_cost: "0.03")
+    create(:event_reference, event: event, reference: chat)
 
     get event_path(event)
 

@@ -103,7 +103,7 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   test "#show should render AI usage section when feed has usages within the stats period" do
     sign_in_as(admin_user)
     feed = create(:feed, user: create(:user))
-    create(:llm_usage, feed: feed, user: feed.user)
+    create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user))
 
     get admin_feed_path(feed)
 
@@ -114,7 +114,8 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   test "#show should not render AI usage section when all usages are older than the stats period" do
     sign_in_as(admin_user)
     feed = create(:feed, user: create(:user))
-    create(:llm_usage, feed: feed, user: feed.user, created_at: LlmUsage::STATS_PERIOD.ago - 1.day)
+    create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user),
+                            created_at: LlmUsageReport::STATS_PERIOD.ago - 1.day)
 
     get admin_feed_path(feed)
 

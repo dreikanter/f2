@@ -3,19 +3,18 @@ require "view_component/test_case"
 
 class LlmUsageListItemComponentTest < ViewComponent::TestCase
   def usage
-    @usage ||= create(:llm_usage, model: "claude-sonnet-4-6", stage: :loader,
-                                  input_tokens: 1_000, output_tokens: 500, cost_estimate_cents: 3)
+    @usage ||= create(:ruby_llm_usage, model: "claude-sonnet-4-6",
+                                  input_tokens: 1_000, output_tokens: 500, total_cost: "0.03")
   end
 
   def render_usage(record = usage)
     render_inline(LlmUsageListItemComponent.new(usage: record))
   end
 
-  test "#render should show the model and stage" do
+  test "#render should show the recorded model" do
     result = render_usage
 
     assert_equal "claude-sonnet-4-6", result.css("[data-key='events.llm_usage.model']").text
-    assert_equal "loader", result.css("[data-key='events.llm_usage.stage']").text
   end
 
   test "#render should summarize input and output tokens" do
@@ -26,7 +25,7 @@ class LlmUsageListItemComponentTest < ViewComponent::TestCase
   end
 
   test "#render should append cached tokens only when the call reused cache" do
-    cached = create(:llm_usage, input_tokens: 10, output_tokens: 5,
+    cached = create(:ruby_llm_usage, input_tokens: 10, output_tokens: 5,
                                 cache_read_tokens: 200, cache_write_tokens: 40)
 
     result = render_usage(cached)
@@ -43,32 +42,33 @@ class LlmUsageListItemComponentTest < ViewComponent::TestCase
   test "#render should badge a successful outcome" do
     result = render_usage
 
-    assert_equal "Success", result.css("[data-key='events.llm_usage.outcome']").text
+    assert_equal "Succeeded", result.css("[data-key='events.llm_usage.outcome']").text
   end
 
   test "#render should badge a failed outcome" do
-    failed = create(:llm_usage, outcome: :provider_error)
+    failed = create(:ruby_llm_usage, status: "failed")
 
     result = render_usage(failed)
 
-    assert_equal "Provider error", result.css("[data-key='events.llm_usage.outcome']").text
+    assert_equal "Failed", result.css("[data-key='events.llm_usage.outcome']").text
   end
   test "#render should label unknown cost explicitly" do
-    usage = create(:llm_usage, cost_estimate_cents: nil)
+    usage = create(:ruby_llm_usage, total_cost: nil)
     result = render_inline(LlmUsageListItemComponent.new(usage: usage))
     assert_equal "Unknown", result.css('[data-key="events.llm_usage.cost"]').first.text
   end
 
-  test "#render should distinguish counted unknown and unavailable native search" do
-    [
-      [{ "mode" => "native", "search_calls" => 2 }, "2 native web calls"],
-      [{ "mode" => "native" }, "native search usage unknown"],
-      [{ "mode" => "provider", "search_calls" => 2 }, "2 provider web calls"],
-      [{ "mode" => "provider" }, "provider search usage unknown"],
-      [{ "mode" => "limited" }, "web search unavailable"]
-    ].each do |retrieval, label|
-      usage.update!(retrieval: retrieval)
-      assert_includes render_usage.text, label
-    end
+  test "#render should label missing token counts without inventing zeros" do
+    usage = create(:ruby_llm_usage, input_tokens: nil, output_tokens: nil)
+    result = render_usage(usage)
+
+    assert_equal "Unknown in · Unknown out", result.css('[data-key="events.llm_usage.tokens"]').text
+  end
+
+  test "#render should show recorded thinking tokens" do
+    usage = create(:ruby_llm_usage, thinking_tokens: 120)
+    result = render_usage(usage)
+
+    assert_equal "1,000 in · 500 out · 120 thinking", result.css('[data-key="events.llm_usage.tokens"]').text
   end
 end

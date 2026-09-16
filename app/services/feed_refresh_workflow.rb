@@ -77,17 +77,10 @@ class FeedRefreshWorkflow
 
   # Existing references retain partial spend from a process that died.
   def interrupt_abandoned_event(event)
-    usage_rows = llm_usage_rows(event)
     search_event_ids = event.event_references.where(reference_type: "Event").pluck(:reference_id)
-    stats_updates = {}
+    stats_updates = LlmUsageReport.for_event(event).totals.event_stats.stringify_keys
     metadata = event.metadata.merge("status" => "interrupted")
 
-    if usage_rows.any?
-      stats_updates.merge!(
-        "llm_calls" => usage_rows.size,
-        "llm_cost_cents" => llm_cost_cents(usage_rows)
-      )
-    end
     stats_updates["search_calls"] = search_event_ids.size if search_event_ids.any?
     metadata["stats"] = metadata.fetch("stats", {}).merge(stats_updates) if stats_updates.any?
 
@@ -288,9 +281,8 @@ class FeedRefreshWorkflow
 
   # A fresh terminal id makes cursor-based event polling discover the outcome.
   def complete_refresh_event(posts)
-    usage_rows = run_llm_usage_rows
     search_event_ids = run_web_search_event_ids
-    record_llm_usage_stats(usage_rows)
+    record_llm_usage_stats
     record_web_search_stats(search_event_ids)
 
     event = replace_refresh_event(level: :info, metadata: { status: "completed", stats: stats })
@@ -315,32 +307,10 @@ class FeedRefreshWorkflow
     EventReference.insert_all(references_data)
   end
 
-  def run_llm_usage_rows
-    @refresh_event ? llm_usage_rows(@refresh_event) : []
-  end
+  def record_llm_usage_stats
+    return unless @refresh_event
 
-  def llm_usage_rows(event)
-    usage_ids = event.event_references.where(reference_type: "LlmUsage").select(:reference_id)
-    LlmUsage.where(id: usage_ids).pluck(:id, :cost_estimate_cents)
-  end
-
-  # Omit the stat when there are no calls to keep deterministic feeds' events
-  # free of a noisy $0.
-  # Decimal sums become numbers at the JSON snapshot boundary.
-  def record_llm_usage_stats(usage_rows)
-    return if usage_rows.empty?
-
-    record_stats(
-      llm_calls: usage_rows.size,
-      llm_cost_cents: llm_cost_cents(usage_rows)
-    )
-  end
-
-  # nil when any call has an unknown cost: a partial sum would misstate spend.
-  def llm_cost_cents(usage_rows)
-    return nil if usage_rows.any? { |_id, cents| cents.nil? }
-
-    usage_rows.sum { |_id, cents| cents }.to_f
+    record_stats(LlmUsageReport.for_event(@refresh_event).totals.event_stats)
   end
 
   def run_web_search_event_ids
@@ -368,9 +338,8 @@ class FeedRefreshWorkflow
   def fail_refresh_event(error)
     return if @refresh_completed
 
-    usage_rows = run_llm_usage_rows
     search_event_ids = @refresh_event ? run_web_search_event_ids : []
-    record_llm_usage_stats(usage_rows)
+    record_llm_usage_stats
     record_web_search_stats(search_event_ids)
 
     replace_refresh_event(

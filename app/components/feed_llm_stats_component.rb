@@ -45,15 +45,15 @@ class FeedLlmStatsComponent < StatsPanelComponent
   end
 
   def call_count
-    @call_count ||= usages.count
+    @call_count ||= totals.call_count
   end
 
   def total_cost_cents
-    @total_cost_cents ||= usages.sum(:cost_estimate_cents)
+    totals.known_cost * 100
   end
 
-  def usages
-    @feed.llm_usages.within_stats_period
+  def totals
+    @totals ||= LlmUsageReport.for_feed(@feed, period: LlmUsageReport::STATS_PERIOD.ago..Time.current).totals
   end
 
   def web_search_events
@@ -69,7 +69,7 @@ class FeedLlmStatsComponent < StatsPanelComponent
   end
 
   def period_in_days
-    LlmUsage::STATS_PERIOD.in_days.to_i
+    LlmUsageReport::STATS_PERIOD.in_days.to_i
   end
 
   def formatted_cost
@@ -79,9 +79,7 @@ class FeedLlmStatsComponent < StatsPanelComponent
   end
 
   def unknown_cost?
-    return @unknown_cost unless @unknown_cost.nil?
-
-    @unknown_cost = usages.where(cost_estimate_cents: nil).exists?
+    totals.incomplete?
   end
 
   def cost_note
