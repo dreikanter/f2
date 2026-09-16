@@ -71,4 +71,31 @@ class LlmUsageListItemComponentTest < ViewComponent::TestCase
 
     assert_equal "1,000 in · 500 out · 120 thinking", result.css('[data-key="events.llm_usage.tokens"]').text
   end
+
+  test "#render should retain native search details after credential deletion" do
+    credential = create(:ai_credential, :active)
+    chat = create(:llm_chat, user: credential.user, ai_credential: credential)
+    message = chat.messages.create!(role: "assistant", server_tool_calls: [
+      { type: "web_search_call", id: "search_1" },
+      { type: "code_interpreter_call", id: "code_1" },
+      { type: "web_search_call", id: "search_2" }
+    ])
+    usage = create(:ruby_llm_usage, chat: chat, message: message, provider: "openai")
+    credential.destroy!
+
+    result = render_usage(usage.reload)
+
+    assert_nil chat.reload.ai_credential_id
+    assert_equal "1,000 in · 500 out · 2 native web calls", result.css('[data-key="events.llm_usage.tokens"]').text
+  end
+
+  test "#render should not apply OpenAI interpretation to an unsupported provider" do
+    chat = create(:llm_chat)
+    message = chat.messages.create!(role: "assistant", server_tool_calls: [{ type: "web_search_call", id: "search_1" }])
+    usage = create(:ruby_llm_usage, chat: chat, message: message, provider: "openrouter", model: "openai/gpt-5-nano")
+
+    result = render_usage(usage)
+
+    assert_equal "1,000 in · 500 out", result.css('[data-key="events.llm_usage.tokens"]').text
+  end
 end
