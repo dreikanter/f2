@@ -18,10 +18,10 @@
     </section>
   <% end %>
 
-  <% if @has_llm_usages %>
+  <% if @llm_usage_totals.call_count.positive? %>
     <section class="space-y-4">
       <%= h2 "AI Usage" %>
-      <%= render FeedLlmStatsComponent.new(feed: @feed) %>
+      <%= render FeedLlmStatsComponent.new(feed: @feed, totals: @llm_usage_totals) %>
     </section>
   <% end %>
 

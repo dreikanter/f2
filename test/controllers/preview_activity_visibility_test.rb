@@ -5,9 +5,10 @@ class PreviewActivityVisibilityTest < ActionDispatch::IntegrationTest
     user = create(:user)
     event = create(:event, user: user, type: "feed_preview", level: :info,
                            metadata: { status: "completed", stats: { llm_calls: 1, llm_cost_cents: nil } })
-    usage = create(:llm_usage, user: user, purpose: :preview, feed: nil, cost_estimate_cents: nil,
-                               retrieval: { "mode" => "native", "search_calls" => 1 })
-    event.event_references.create!(reference: usage)
+    chat = create(:llm_chat, user: user, purpose: :preview)
+    message = chat.messages.create!(role: "assistant", server_tool_calls: [{ type: "web_search_call" }])
+    create(:ruby_llm_usage, chat: chat, message: message, total_cost: nil)
+    event.event_references.create!(reference: chat)
     sign_in_as user
 
     get events_path

@@ -1,8 +1,9 @@
 # Feed-level summary of recent AI and web-search activity, combining stored
 # request counts and cost estimates for the feed's statistics panel.
 class FeedLlmStatsComponent < StatsPanelComponent
-  def initialize(feed:)
+  def initialize(feed:, totals:)
     @feed = feed
+    @totals = totals
   end
 
   def call
@@ -10,6 +11,8 @@ class FeedLlmStatsComponent < StatsPanelComponent
   end
 
   private
+
+  attr_reader :totals
 
   def key_prefix
     "llm_stats"
@@ -21,7 +24,7 @@ class FeedLlmStatsComponent < StatsPanelComponent
         key: "ai_calls",
         label: "AI calls (last #{period_in_days} days)",
         label_short: "AI calls (#{period_in_days} days)",
-        value: helpers.number_with_delimiter(call_count)
+        value: helpers.number_with_delimiter(totals.call_count)
       },
       {
         key: "estimated_spend",
@@ -44,18 +47,6 @@ class FeedLlmStatsComponent < StatsPanelComponent
     ]
   end
 
-  def call_count
-    @call_count ||= usages.count
-  end
-
-  def total_cost_cents
-    @total_cost_cents ||= usages.sum(:cost_estimate_cents)
-  end
-
-  def usages
-    @feed.llm_usages.within_stats_period
-  end
-
   def web_search_events
     @web_search_events ||= WebSearchUsage.for_feed(@feed).to_a
   end
@@ -69,27 +60,21 @@ class FeedLlmStatsComponent < StatsPanelComponent
   end
 
   def period_in_days
-    LlmUsage::STATS_PERIOD.in_days.to_i
+    LlmUsageReport::STATS_PERIOD.in_days.to_i
   end
 
   def formatted_cost
-    return "Unknown" if unknown_cost?
+    return "Unknown" if totals.incomplete?
 
-    helpers.number_to_currency(total_cost_cents / 100.0)
-  end
-
-  def unknown_cost?
-    return @unknown_cost unless @unknown_cost.nil?
-
-    @unknown_cost = usages.where(cost_estimate_cents: nil).exists?
+    helpers.number_to_currency(totals.total_cost)
   end
 
   def cost_note
-    return unless unknown_cost?
+    return unless totals.incomplete?
 
     text = "Some AI or built-in search costs couldn’t be estimated."
-    if total_cost_cents.positive?
-      text += " Available estimates total #{helpers.number_to_currency(total_cost_cents / 100.0)}."
+    if totals.known_cost.positive?
+      text += " Available estimates total #{helpers.number_to_currency(totals.known_cost)}."
     end
     tag.p(text, class: "mt-2 text-sm text-muted", data: { key: "llm_stats.cost_note" })
   end

@@ -8,21 +8,25 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
 
   def feed_with_usages
     @feed_with_usages ||= create(:feed).tap do |current_feed|
-      create(:llm_usage, feed: current_feed, user: current_feed.user,
-                         cost_estimate_cents: 25, input_tokens: 10_000, output_tokens: 5_000)
-      create(:llm_usage, feed: current_feed, user: current_feed.user,
-                         purpose: :preview, cost_estimate_cents: 15, input_tokens: 8_000, output_tokens: 2_000)
+      refresh = create(:llm_chat, feed: current_feed, user: current_feed.user)
+      preview = create(:llm_chat, feed: current_feed, user: current_feed.user, purpose: :preview)
+      create(:ruby_llm_usage, chat: refresh, total_cost: "0.25", input_tokens: 10_000, output_tokens: 5_000)
+      create(:ruby_llm_usage, chat: preview, total_cost: "0.15", input_tokens: 8_000, output_tokens: 2_000)
       credential = create(:search_credential, :active, user: current_feed.user)
-      %w[feed_refresh feed_preview].each do |type|
-        refresh = Event.create!(type: type, level: :info,
-                                subject: current_feed, user: current_feed.user)
-        WebSearchUsage.record!(credential: credential, refresh_event: refresh)
-      end
+      refresh_event = create(:event, type: "feed_refresh", subject: current_feed, user: current_feed.user)
+      preview_event = create(:event, type: "feed_preview", subject: current_feed, user: current_feed.user)
+      WebSearchUsage.record!(credential: credential, refresh_event: refresh_event)
+      WebSearchUsage.record!(credential: credential, refresh_event: preview_event)
     end
   end
 
+  def render_stats(current_feed)
+    totals = LlmUsageReport.for_feed(current_feed, period: LlmUsageReport::STATS_PERIOD.ago..Time.current).totals
+    render_inline(FeedLlmStatsComponent.new(feed: current_feed, totals: totals))
+  end
+
   test "#render should display AI call count" do
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed_with_usages))
+    result = render_stats(feed_with_usages)
 
     value = result.css('[data-key="llm_stats.ai_calls.value"]').first
     assert_not_nil value
@@ -30,7 +34,7 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
   end
 
   test "#render should display estimated AI spend" do
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed_with_usages))
+    result = render_stats(feed_with_usages)
 
     value = result.css('[data-key="llm_stats.estimated_spend.value"]').first
     assert_not_nil value
@@ -38,31 +42,31 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
   end
 
   test "#render should sum fractional preview and scheduled costs before formatting and preserve unknown totals" do
-    create(:llm_usage, feed: feed, user: feed.user, purpose: :preview, cost_estimate_cents: "0.4")
-    create(:llm_usage, feed: feed, user: feed.user, purpose: :scheduled_run, cost_estimate_cents: "0.4")
+    create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user, purpose: :preview), total_cost: "0.004")
+    create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user), total_cost: "0.004")
 
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    result = render_stats(feed)
 
     assert_equal "2", result.css('[data-key="llm_stats.ai_calls.value"]').first.text.strip
     assert_equal "$0.01", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
 
-    create(:llm_usage, feed: feed, user: feed.user, cost_estimate_cents: nil)
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user), total_cost: nil)
+    result = render_stats(feed)
 
     assert_equal "Unknown", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
     assert_includes result.css('[data-key="llm_stats.cost_note"]').text, "Available estimates total $0.01."
   end
 
   test "#render should display search calls and fractional estimated spend" do
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed_with_usages))
+    result = render_stats(feed_with_usages)
 
     assert_equal "2", result.css('[data-key="llm_stats.search_calls.value"]').first.text.strip
     assert_equal "$0.00200", result.css('[data-key="llm_stats.search_estimated_spend.value"]').first.text.strip
   end
 
   test "#render should exclude AI and search usages older than the stats period" do
-    create(:llm_usage, feed: feed_with_usages, user: feed_with_usages.user,
-                       cost_estimate_cents: 100, created_at: LlmUsage::STATS_PERIOD.ago - 1.day)
+    chat = create(:llm_chat, feed: feed_with_usages, user: feed_with_usages.user)
+    create(:ruby_llm_usage, chat: chat, total_cost: 1, created_at: LlmUsageReport::STATS_PERIOD.ago - 1.day)
     credential = create(:search_credential, :active, user: feed_with_usages.user, display_name: "Old search")
     travel_to(WebSearchUsage::STATS_PERIOD.ago - 1.day) do
       refresh = Event.create!(type: "feed_refresh", level: :info,
@@ -70,7 +74,7 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
       WebSearchUsage.record!(credential: credential, refresh_event: refresh)
     end
 
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed_with_usages))
+    result = render_stats(feed_with_usages)
 
     assert_equal "2", result.css('[data-key="llm_stats.ai_calls.value"]').first.text.strip
     assert_equal "$0.40", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
@@ -79,7 +83,7 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
   end
 
   test "#render should include mobile layout with full labels" do
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    result = render_stats(feed)
 
     assert_not_nil result.css(".md\\:hidden").first
     assert_equal "AI calls (last 30 days)", result.css('.md\\:hidden [data-key="llm_stats.ai_calls.label"]').first.text
@@ -89,7 +93,7 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
   end
 
   test "#render should include desktop layout with short labels" do
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    result = render_stats(feed)
 
     assert_not_nil result.css(".hidden.md\\:flex").first
     assert_equal "AI calls (30 days)", result.css('.hidden.md\\:flex [data-key="llm_stats.ai_calls.label"]').first.text
@@ -99,7 +103,7 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
   end
 
   test "#render should show zero when no usages" do
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    result = render_stats(feed)
 
     assert_equal "0", result.css('[data-key="llm_stats.ai_calls.value"]').first.text.strip
     assert_equal "$0.00", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
@@ -107,18 +111,18 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
     assert_equal "$0.00000", result.css('[data-key="llm_stats.search_estimated_spend.value"]').first.text.strip
   end
   test "#render should explain incomplete estimates without presenting a partial sum as the total" do
-    create(:llm_usage, feed: feed, user: feed.user, cost_estimate_cents: nil)
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user), total_cost: nil)
+    result = render_stats(feed)
     assert_equal "Unknown", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
     assert_includes result.css('[data-key="llm_stats.cost_note"]').text, "couldn’t be estimated"
 
-    create(:llm_usage, feed: feed, user: feed.user, cost_estimate_cents: 0)
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user), total_cost: 0)
+    result = render_stats(feed)
     assert result.css('[data-key="llm_stats.estimated_spend.value"]').all? { |value| value.text.strip == "Unknown" }
     assert_not_includes result.css('[data-key="llm_stats.cost_note"]').text, "$0.00"
 
-    create(:llm_usage, feed: feed, user: feed.user, cost_estimate_cents: 25)
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user), total_cost: "0.25")
+    result = render_stats(feed)
     assert result.css('[data-key="llm_stats.estimated_spend.value"]').all? { |value| value.text.strip == "Unknown" }
     assert_includes result.css('[data-key="llm_stats.cost_note"]').text, "Available estimates total $0.25."
   end

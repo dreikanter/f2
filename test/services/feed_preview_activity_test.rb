@@ -16,11 +16,12 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
   end
 
   test "#finish! should transfer only its own usage to a new completed event" do
-    unrelated = create(:llm_usage, user: credential.user, purpose: :preview)
+    unrelated = create(:llm_chat, user: credential.user, purpose: :preview)
     record = FeedPreviewActivity.new(preview)
     started_id = record.event.id
-    usage = create(:llm_usage, user: credential.user, purpose: :preview, cost_estimate_cents: nil)
-    record.event.event_references.create!(reference: usage)
+    chat = create(:llm_chat, user: credential.user, purpose: :preview)
+    create(:ruby_llm_usage, chat: chat, total_cost: nil)
+    record.event.event_references.create!(reference: chat)
 
     assert_no_difference -> { Post.count } do
       record.finish!(status: "completed", stats: { normalized_posts: 1 })
@@ -33,7 +34,7 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
     assert_empty record.event.message
     assert_not record.event.metadata.key?("error")
     assert_equal credential, record.event.subject
-    assert_equal [usage], record.event.references
+    assert_equal [chat], record.event.references
     assert_not_includes record.event.references, unrelated
     assert_equal 1, record.event.metadata.dig("stats", "llm_calls")
     assert_nil record.event.metadata.dig("stats", "llm_cost_cents")
@@ -44,9 +45,9 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
     preview.update!(feed: saved_feed)
     original = saved_feed.attributes
     record = FeedPreviewActivity.new(preview)
-    usage = create(:llm_usage, user: credential.user, feed: saved_feed, purpose: :preview,
-                              outcome: :provider_error, cost_estimate_cents: nil)
-    record.event.event_references.create!(reference: usage)
+    chat = create(:llm_chat, user: credential.user, feed: saved_feed, purpose: :preview, status: :failed)
+    create(:ruby_llm_usage, chat: chat, status: "failed", total_cost: nil)
+    record.event.event_references.create!(reference: chat)
 
     error = Loader::Error.new("Provider request timed out")
     record.finish!(status: "failed", stats: { failed_at_step: :load_feed_contents }, error: error)
@@ -59,15 +60,16 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
     assert_equal "failed", record.event.metadata["status"]
     assert_equal "warning", record.event.level
     assert_equal saved_feed, record.event.subject
-    assert_equal [usage], record.event.references
+    assert_equal [chat], record.event.references
     assert_nil record.event.metadata.dig("stats", "llm_cost_cents")
     assert_equal original, saved_feed.reload.attributes
   end
 
   test "#finish! should preserve usage for an interrupted preview" do
     record = FeedPreviewActivity.new(preview)
-    usage = create(:llm_usage, user: credential.user, purpose: :preview)
-    record.event.event_references.create!(reference: usage)
+    chat = create(:llm_chat, user: credential.user, purpose: :preview, status: :interrupted)
+    create(:ruby_llm_usage, chat: chat)
+    record.event.event_references.create!(reference: chat)
 
     error = Loader::Error.new("Provider request timed out")
     record.finish!(status: "interrupted", stats: { failed_at_step: :load_feed_contents }, error: error)
@@ -75,7 +77,7 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
     assert_equal "interrupted", record.event.metadata["status"]
     assert_equal error.message, record.event.metadata.dig("error", "message")
     assert_equal "warning", record.event.level
-    assert_equal [usage], record.event.references
+    assert_equal [chat], record.event.references
   end
 
   test "#finish! should not replace a terminal event twice" do
@@ -96,8 +98,9 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
     record = FeedPreviewActivity.new(preview)
     search = create(:search_credential, :active, user: credential.user)
     search_event = WebSearchUsage.record!(credential: search, refresh_event: record.event)
-    usage = create(:llm_usage, user: credential.user, purpose: :preview, cost_estimate_cents: 0)
-    record.event.event_references.create!(reference: usage)
+    chat = create(:llm_chat, user: credential.user, purpose: :preview)
+    create(:ruby_llm_usage, chat: chat, total_cost: 0)
+    record.event.event_references.create!(reference: chat)
 
     record.finish!(status: "completed", stats: { normalized_posts: 1 })
 
@@ -110,10 +113,10 @@ class FeedPreviewActivityTest < ActiveSupport::TestCase
 
   test "#finish! should sum fractional costs before serializing the event total as a JSON number" do
     record = FeedPreviewActivity.new(preview)
-    2.times do
-      usage = create(:llm_usage, user: credential.user, purpose: :preview, cost_estimate_cents: "0.4")
-      record.event.event_references.create!(reference: usage)
-    end
+    chat = create(:llm_chat, user: credential.user, purpose: :preview)
+    create(:ruby_llm_usage, chat: chat, total_cost: "0.004")
+    create(:ruby_llm_usage, chat: chat, total_cost: "0.004")
+    record.event.event_references.create!(reference: chat)
 
     record.finish!(status: "completed", stats: {})
 

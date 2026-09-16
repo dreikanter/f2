@@ -10,14 +10,7 @@ class FeedPreviewActivity
   def finish!(status:, stats:, error: nil)
     return if @finished
 
-    usage_costs = LlmUsage.where(id: event.event_references.where(reference_type: "LlmUsage").select(:reference_id))
-                         .pluck(:cost_estimate_cents)
-    totals = stats.dup
-    if usage_costs.present?
-      # Keep the JSON snapshot numeric; Rails encodes BigDecimal as a string.
-      totals.merge!(llm_calls: usage_costs.size,
-                    llm_cost_cents: usage_costs.any?(&:nil?) ? nil : usage_costs.sum.to_f)
-    end
+    totals = stats.merge(LlmUsageReport.for_event(event).totals.event_stats)
     search_count = event.event_references.where(reference_type: "Event").count
     totals[:search_calls] = search_count if search_count.positive?
 

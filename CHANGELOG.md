@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-16
+
+- Restore AI request details and spending estimates for feed refreshes and previews.
+
 ## 2026-09-15
 
 - AI transcripts and their usage records are retained for two months instead of seven days.

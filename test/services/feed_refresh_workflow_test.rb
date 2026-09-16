@@ -439,101 +439,46 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_predicate credential.reload, :active?
   end
 
-  def usage_writing_loader(test_feed, rss, costs: [3], error: nil)
-    lambda do |refresh_event:|
-      loader = Object.new
-      loader.define_singleton_method(:load) do
-        costs.each do |cost|
-          usage = FactoryBot.create(
-            :llm_usage,
-            user: test_feed.user,
-            feed: test_feed,
-            started_at: Time.current,
-            finished_at: Time.current,
-            cost_estimate_cents: cost,
-            outcome: error ? :provider_error : :success
-          )
-          refresh_event.event_references.create!(reference: usage)
-        end
-        raise error if error
-        rss
-      end
-      loader
-    end
-  end
-
-  test "#execute should reference only the run's LLM usage even when timestamps overlap" do
+  test "#execute should report only the run's SDK usage even when timestamps overlap" do
     freeze_time
-    test_feed = create(:feed, :enabled, feed_profile_key: "rss")
-    prior_usage = create(:llm_usage, user: test_feed.user, feed: test_feed, started_at: Time.current)
+    credential = create(:ai_credential, :active)
+    test_feed = create(:feed, :enabled, user: credential.user, ai_credential: credential,
+                                      feed_profile_key: "llm", ai_model: "gpt-5-nano",
+                                      params: { "prompt" => "Daily roundup" })
+    preview = create(:llm_chat, user: test_feed.user, feed: test_feed, purpose: :preview)
+    create(:ruby_llm_usage, chat: preview, total_cost: 9)
+    request = stub_request(:post, "https://api.openai.com/v1/responses")
+      .to_return_json(body: JSON.parse(file_fixture("llm_transcripts/completed.json").read))
 
-    test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss)) do
-      FeedRefreshWorkflow.new(test_feed).execute
-    end
+    FeedRefreshWorkflow.new(test_feed).execute
 
     event = Event.find_by!(subject: test_feed, type: "feed_refresh")
-    run_usage = test_feed.llm_usages.where.not(id: prior_usage.id).sole
-
+    chat = test_feed.llm_chats.scheduled_run.sole
     assert_equal "completed", event.metadata["status"]
     assert_equal 1, event.metadata.dig("stats", "llm_calls")
-    assert_equal 3, event.metadata.dig("stats", "llm_cost_cents")
-    assert_equal [run_usage], event.references
+    assert_equal 0.001, event.metadata.dig("stats", "llm_cost_cents")
+    assert_equal [chat], event.references
+    assert_requested request, times: 1
   end
 
-  test "#execute should reference the run's LLM usage on the failed event" do
-    test_feed = create(:feed, :enabled, feed_profile_key: "rss")
+  test "#execute should report retained SDK usage after provider failure" do
+    credential = create(:ai_credential, :active)
+    test_feed = create(:feed, :enabled, user: credential.user, ai_credential: credential,
+                                      feed_profile_key: "llm", ai_model: "gpt-5-nano",
+                                      params: { "prompt" => "Daily roundup" })
+    request = stub_request(:post, "https://api.openai.com/v1/responses")
+      .to_return_json(status: 429, body: { error: { message: "Rate limited", type: "rate_limit_error" } })
 
-    loader = usage_writing_loader(test_feed, empty_rss, costs: [5], error: Loader::Error.new("server error"))
-
-    test_feed.stub(:loader_instance, loader) do
-      assert_raises(Loader::Error) { FeedRefreshWorkflow.new(test_feed).execute }
-    end
+    assert_raises(Loader::Error) { FeedRefreshWorkflow.new(test_feed).execute }
 
     event = Event.find_by!(subject: test_feed, type: "feed_refresh")
-
+    chat = test_feed.llm_chats.sole
     assert_equal "failed", event.metadata["status"]
+    assert_equal "failed", chat.ruby_llm_usages.sole.status
     assert_equal 1, event.metadata.dig("stats", "llm_calls")
-    assert_equal 5, event.metadata.dig("stats", "llm_cost_cents")
-    assert_equal test_feed.llm_usages.to_a, event.references
-  end
-
-  test "#execute should not ignore zero-cost LLM calls" do
-    test_feed = create(:feed, :enabled, feed_profile_key: "rss")
-
-    test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss, costs: [0])) do
-      FeedRefreshWorkflow.new(test_feed).execute
-    end
-
-    event = Event.find_by!(subject: test_feed, type: "feed_refresh")
-
-    assert_equal 1, event.metadata.dig("stats", "llm_calls")
-    assert_equal 0, event.metadata.dig("stats", "llm_cost_cents")
-  end
-
-  test "#execute should sum cost across a run's LLM calls" do
-    test_feed = create(:feed, :enabled, feed_profile_key: "rss")
-    test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss, costs: ["0.4", "0.4"])) do
-      FeedRefreshWorkflow.new(test_feed).execute
-    end
-
-    event = Event.find_by!(subject: test_feed, type: "feed_refresh")
-
-    assert_equal 2, event.metadata.dig("stats", "llm_calls")
-    assert_equal 0.8, event.metadata.dig("stats", "llm_cost_cents")
-    assert_equal test_feed.llm_usages.to_a, event.references
-  end
-
-  test "#execute should keep the run cost unknown when any linked usage is unpriced" do
-    test_feed = create(:feed, :enabled, feed_profile_key: "rss")
-
-    test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss, costs: [3, nil])) do
-      FeedRefreshWorkflow.new(test_feed).execute
-    end
-
-    event = Event.find_by!(subject: test_feed, type: "feed_refresh")
-    assert_equal 2, event.metadata.dig("stats", "llm_calls")
-    assert_nil event.metadata.dig("stats", "llm_cost_cents")
-    assert_equal 2, event.references.size
+    assert_equal 0, event.metadata.fetch("stats").fetch("llm_cost_cents")
+    assert_equal [chat], event.references
+    assert_requested request, times: 1
   end
 
   test "#execute should record no LLM usage stats for a run without LLM calls" do
@@ -547,27 +492,6 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "completed", event.metadata["status"]
     assert_not event.metadata["stats"].key?("llm_calls")
     assert_not event.metadata["stats"].key?("llm_cost_cents")
-    assert_empty event.event_references
-  end
-
-  test "#execute should not associate preview usage written during the run" do
-    test_feed = create(:feed, :enabled, feed_profile_key: "rss")
-    rss = empty_rss
-
-    preview_loader = Object.new
-    preview_loader.define_singleton_method(:load) do
-      FactoryBot.create(:llm_usage, user: test_feed.user, feed: test_feed, purpose: :preview,
-                         started_at: Time.current, finished_at: Time.current)
-      rss
-    end
-
-    test_feed.stub(:loader_instance, preview_loader) do
-      FeedRefreshWorkflow.new(test_feed).execute
-    end
-
-    event = Event.find_by!(subject: test_feed, type: "feed_refresh")
-
-    assert_not event.metadata["stats"].key?("llm_calls")
     assert_empty event.event_references
   end
 
@@ -758,9 +682,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       user: test_feed.user,
       metadata: { status: "started", stats: { started_at: 10.minutes.ago.iso8601 } }
     )
-    dead_run_usage = create(:llm_usage, user: test_feed.user, feed: test_feed,
-                            started_at: 9.minutes.ago, cost_estimate_cents: 40)
-    abandoned.event_references.create!(reference: dead_run_usage)
+    dead_chat = create(:llm_chat, user: test_feed.user, feed: test_feed, started_at: 9.minutes.ago)
+    create(:ruby_llm_usage, chat: dead_chat, total_cost: "0.40")
+    abandoned.event_references.create!(reference: dead_chat)
 
     FeedRefreshWorkflow.new(test_feed).execute
 
@@ -768,7 +692,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "interrupted", abandoned.metadata["status"]
     assert_equal 1, abandoned.metadata.dig("stats", "llm_calls")
     assert_equal 40, abandoned.metadata.dig("stats", "llm_cost_cents")
-    assert_equal [dead_run_usage], abandoned.references
+    assert_equal [dead_chat], abandoned.references
 
     completed = Event.where(subject: test_feed, type: "feed_refresh")
                      .where("metadata ->> 'status' = 'completed'").sole
@@ -787,9 +711,10 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       user: test_feed.user,
       metadata: { status: "started", stats: { started_at: 10.minutes.ago.iso8601 } }
     )
-    linked = create(:llm_usage, user: test_feed.user, feed: test_feed, cost_estimate_cents: nil)
+    linked = create(:llm_chat, user: test_feed.user, feed: test_feed)
+    create(:ruby_llm_usage, chat: linked, total_cost: nil)
     reference = abandoned.event_references.create!(reference: linked)
-    create(:llm_usage, user: test_feed.user, feed: test_feed, cost_estimate_cents: 99)
+    create(:ruby_llm_usage, chat: create(:llm_chat, user: test_feed.user, feed: test_feed), total_cost: "0.99")
 
     FeedRefreshWorkflow.new(test_feed).execute
 
@@ -810,7 +735,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       user: test_feed.user,
       metadata: { status: "started", stats: { started_at: 10.minutes.ago.iso8601 } }
     )
-    create(:llm_usage, user: test_feed.user, feed: test_feed)
+    create(:ruby_llm_usage, chat: create(:llm_chat, user: test_feed.user, feed: test_feed))
 
     FeedRefreshWorkflow.new(test_feed).execute
 
@@ -1163,14 +1088,22 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       assert_nil feed.feed_schedule.reload.last_digest_period, "mixed runs never mark a period"
     end
   end
-  test "#execute should preserve unknown AI cost in completed refresh statistics" do
-    test_feed = create(:feed, :enabled, feed_profile_key: "rss")
-    test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss, costs: [nil])) do
-      FeedRefreshWorkflow.new(test_feed).execute
-    end
+  test "#execute should preserve unknown SDK cost in completed refresh statistics" do
+    create(:llm_model, model_id: "custom-model")
+    credential = create(:ai_credential, :active)
+    test_feed = create(:feed, :enabled, user: credential.user, ai_credential: credential,
+                                      feed_profile_key: "llm", ai_model: "custom-model",
+                                      params: { "prompt" => "Daily roundup" })
+    response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
+    response["model"] = "custom-model"
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+    FeedRefreshWorkflow.new(test_feed).execute
+
     event = Event.find_by!(subject: test_feed, type: "feed_refresh")
     assert_equal "completed", event.metadata["status"]
     assert_equal 1, event.metadata.dig("stats", "llm_calls")
-    assert_nil event.metadata.dig("stats", "llm_cost_cents")
+    assert_nil event.metadata.fetch("stats").fetch("llm_cost_cents")
+    assert_requested request, times: 1
   end
 end
