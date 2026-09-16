@@ -3,7 +3,7 @@ require "test_helper"
 class LlmModelsTest < ActiveSupport::TestCase
   teardown { RubyLLM.models.load_from_json }
 
-  test "#for_provider should use bundled models before the first refresh without network requests" do
+  test "#for_provider should use the configured catalog before the first refresh without network requests" do
     assert_empty RubyLLM::ActiveRecord::Model.all
     RubyLLM.models.load_from_store
     cached_models = RubyLLM.models.all

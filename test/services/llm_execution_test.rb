@@ -23,7 +23,7 @@ class LlmExecutionTest < ActiveSupport::TestCase
     end
   end
 
-  test "#call should send bounded requests and preserve native SDK usage" do
+  test "#call should send bounded requests and preserve RubyLLM usage" do
     record = staged_chat
     record.with_server_tools(:web_search)
     record.with_provider_options(service_tier: "default", max_tool_calls: 99, max_output_tokens: 100_000)
