@@ -1,6 +1,5 @@
 require "test_helper"
 
-# Saving an AI draft and adding credentials remain available while extraction is paused.
 class FeedDraftFlowTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
   include OpenaiModelsTestHelpers
@@ -19,7 +18,7 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     "https://no-rss-example.com/blog"
   end
 
-  test "full flow: save AI credentials and keep the feed as a draft while extraction is unavailable" do
+  test "full flow: save an AI draft, validate its credential, then enable it" do
     sign_in_as(user)
     access_token
 
@@ -73,16 +72,16 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
 
     patch feed_path(draft), params: {
       feed: { name: "Renamed AI draft", params: { prompt: "follow a different blog" },
-              ai_model: "gpt-5.6-luna", access_token_id: access_token.id, target_group: "testgroup" },
+              ai_model: "gpt-5.6-luna", access_token_id: access_token.id, target_group: "testgroup", schedule_interval: "1h" },
       enable_feed: "1"
     }
 
-    assert_response :unprocessable_entity
-    assert_predicate draft.reload, :draft?
+    assert_redirected_to draft
+    assert_predicate draft.reload, :enabled?
     assert_equal "Renamed AI draft", draft.name
     assert_equal "follow a different blog", draft.source_input
     assert_equal ai_credential.id, draft.ai_credential_id
     assert_equal "gpt-5.6-luna", draft.ai_model
-    assert_includes response.body, Loader::LlmLoader::UNAVAILABLE_MESSAGE
+    assert draft.feed_schedule.present?
   end
 end

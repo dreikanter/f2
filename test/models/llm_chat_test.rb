@@ -160,37 +160,49 @@ class LlmChatTest < ActiveSupport::TestCase
     end
   end
 
-  test "#finish! should let only the first worker settle a chat" do
+  test "#complete! should preserve success when a stale worker reports failure" do
     chat = create(:llm_chat)
     stale = LlmChat.find(chat.id)
 
     freeze_time do
-      assert chat.finish!(status: :succeeded)
-      assert_not stale.finish!(status: :failed, error_category: "provider_error")
+      assert chat.complete!
+      assert_not stale.fail!(RuntimeError.new("private provider detail"))
       assert stale.reload.succeeded?
       assert_equal Time.current, stale.finished_at
       assert_nil stale.error_category
     end
   end
 
-  test "#finish! should preserve a failed outcome" do
+  test "#fail! should classify the exception and prevent subsequent completion" do
     chat = create(:llm_chat)
 
-    assert chat.finish!(status: :failed, error_category: "provider_error")
-    assert_not chat.finish!(status: :succeeded)
+    assert chat.fail!(ArgumentError.new("private provider detail"))
+    assert_not chat.complete!
     assert chat.reload.failed?
-    assert_equal "provider_error", chat.error_category
+    assert_equal "ArgumentError", chat.error_category
+    assert_not_includes chat.attributes.to_json, "private provider detail"
   end
 
-  test "#finish! should reject completion at the deadline" do
+  test "#complete! should interrupt a chat at its deadline" do
     chat = create(:llm_chat)
 
     travel_to chat.deadline_at, with_usec: true do
-      assert_not chat.finish!(status: :succeeded)
-      assert_not chat.finish!(status: :failed, error_category: "provider_error")
-      assert chat.finish!(status: :interrupted, error_category: "deadline_exceeded")
-      assert_not chat.finish!(status: :succeeded)
+      assert_not chat.complete!
       assert chat.reload.interrupted?
+      assert_equal "deadline_exceeded", chat.error_category
+      assert_not chat.fail!(RuntimeError.new("late failure"))
+    end
+  end
+
+  test "#fail! should give an expired deadline precedence over the reported error" do
+    chat = create(:llm_chat)
+
+    travel_to chat.deadline_at, with_usec: true do
+      assert_not chat.fail!(ArgumentError.new("late failure"))
+
+      assert chat.reload.interrupted?
+      assert_equal "deadline_exceeded", chat.error_category
+      assert_equal Time.current, chat.finished_at
     end
   end
 

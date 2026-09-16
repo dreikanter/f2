@@ -173,6 +173,20 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", feed_with_inactive_token.state
   end
 
+  test "#update should enable a fully configured AI feed" do
+    create(:llm_model, model_id: "gpt-4.1")
+    sign_in_as(user)
+    credential = create(:ai_credential, :active, user: user)
+    ai_feed = create(:feed, user: user, feed_profile_key: "llm", params: { "prompt" => "ruby news" },
+                            ai_credential: credential, ai_model: "gpt-4.1", search_credential: nil)
+
+    patch feed_status_path(ai_feed), params: { status: "enabled" }
+
+    assert_redirected_to ai_feed
+    assert ai_feed.reload.enabled?
+    assert_equal 1, ai_feed.events.where(type: "feed_enabled").count
+  end
+
   test "#update should not enable an AI feed without an AI credential" do
     sign_in_as(user)
     ai_feed = create(:feed, user: user, feed_profile_key: "llm", params: { "prompt" => "ruby news" })
@@ -181,7 +195,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to ai_feed
     follow_redirect!
-    assert_includes response.body, Loader::LlmLoader::UNAVAILABLE_MESSAGE
+    assert_includes response.body, "Cannot enable feed: missing active AI credential and AI model."
 
     ai_feed.reload
     assert_equal "disabled", ai_feed.state

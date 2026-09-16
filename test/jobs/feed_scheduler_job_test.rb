@@ -27,20 +27,20 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
     end
   end
 
-  test ".perform_now should preserve due AI schedules while AI is unavailable" do
+  test ".perform_now should schedule a configured AI feed with an external search credential" do
     create(:llm_model, model_id: "gpt-4.1")
     credential = create(:ai_credential, :active)
     feed = create(:feed, :enabled, user: credential.user, feed_profile_key: "llm",
                                   ai_credential: credential, ai_model: "gpt-4.1",
-                                  params: { "prompt" => "ruby news" }, search_credential: nil)
+                                  params: { "prompt" => "ruby news" })
     schedule = create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
 
-    assert_no_enqueued_jobs(only: FeedRefreshJob) do
+    assert_enqueued_with(job: FeedRefreshJob, args: [feed.id]) do
       FeedSchedulerJob.perform_now
     end
 
-    assert_equal 1.hour.ago, schedule.reload.next_run_at
-    assert_nil schedule.last_run_at
+    assert schedule.reload.next_run_at > Time.current
+    assert_equal Time.current, schedule.last_run_at
   end
 
   test ".perform_now should skip feeds not yet due" do

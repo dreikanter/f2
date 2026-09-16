@@ -714,7 +714,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#feed-header-menu-#{webhook_feed.id} a[data-key='feed.#{webhook_feed.id}.edit']", text: "Edit"
   end
 
-  test "#show should not offer Refresh for an enabled AI feed during the outage" do
+  test "#show should offer Refresh for an enabled AI feed" do
     create(:llm_model, model_id: "gpt-4.1")
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user)
@@ -725,7 +725,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     get feed_url(ai_feed)
 
     assert_response :success
-    assert_select "[data-key='feed.#{ai_feed.id}.refresh']", count: 0
+    assert_select "[data-key='feed.#{ai_feed.id}.refresh']", text: "Refresh"
     assert_select "[data-key='feed.#{ai_feed.id}.edit']", text: "Edit"
   end
 

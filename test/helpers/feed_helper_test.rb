@@ -45,13 +45,11 @@ class FeedHelperTest < ActionView::TestCase
     assert_equal "To enable this feed, add: name, active access token, and target group.", feed_enable_hint(feed)
   end
 
-  test "#feed_enable_hint should explain temporary AI unavailability" do
-    credential = create(:ai_credential, :active)
-    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
-                        params: { "prompt" => "ruby news" }, ai_credential: credential,
-                        ai_model: "claude-sonnet-4-6", search_credential: nil)
+  test "#feed_enable_hint should explain missing AI settings" do
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "ruby news" },
+                        ai_credential: nil, ai_model: nil, search_credential: nil)
 
-    assert_equal Loader::LlmLoader::UNAVAILABLE_MESSAGE, feed_enable_hint(feed)
+    assert_equal "To enable this feed, add: active AI credential and AI model.", feed_enable_hint(feed)
   end
 
   test "#feed_enable_hint should fall back to a generic prompt when nothing is missing" do

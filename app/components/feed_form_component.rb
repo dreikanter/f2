@@ -96,7 +96,7 @@ class FeedFormComponent < ViewComponent::Base
   end
 
   def ai_profile?
-    FeedProfile.depends_on_ai?(feed.feed_profile_key)
+    feed.depends_on_ai?
   end
 
   # AI prompts stay editable; a changed URL requires fresh detection.
@@ -199,12 +199,12 @@ class FeedFormComponent < ViewComponent::Base
 
   # An enabled feed keeps its checkbox interactive so it can still be paused.
   def enable_blocked?
-    !feed.enabled? && (ai_profile? || selected_token_id.blank?)
+    !feed.enabled? && selected_token_id.blank?
   end
 
   # The token select controls enabling only when token selection can unblock it.
   def enable_gate_data
-    return {} if feed.enabled? || active_tokens.empty? || ai_profile?
+    return {} if feed.enabled? || active_tokens.empty?
 
     {
       controller: "enable-gate",
@@ -222,7 +222,6 @@ class FeedFormComponent < ViewComponent::Base
   end
 
   def enable_hint
-    return Loader::LlmLoader::UNAVAILABLE_MESSAGE if ai_profile?
     return ready_enable_hint unless enable_blocked?
     return TOKEN_PICK_HINT if active_tokens.any?
 

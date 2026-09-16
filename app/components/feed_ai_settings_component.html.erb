@@ -9,7 +9,6 @@
       }
     ) do %>
   <%= helpers.h2 "AI Settings" %>
-  <p class="mb-3 text-sm text-muted" data-key="form.ai-unavailable"><%= Loader::LlmLoader::UNAVAILABLE_MESSAGE %></p>
 
   <div class="space-y-6">
     <% if credentials? %>

@@ -10,7 +10,7 @@ module Processor
   # Base class for feed processors
   class Base
     # @param feed [Feed] the feed being processed
-    # @param raw_data [String] raw feed data from loader
+    # @param raw_data [Object] payload from the profile's loader
     def initialize(feed, raw_data)
       @feed = feed
       @raw_data = raw_data

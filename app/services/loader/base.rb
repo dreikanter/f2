@@ -9,7 +9,7 @@ module Loader
     end
 
     # Loads raw data from feed source
-    # @return [String] raw feed data
+    # @return [Object] payload for the profile's processor
     # @abstract Subclasses must implement this method
     def load
       raise NotImplementedError, "Subclasses must implement #load method"

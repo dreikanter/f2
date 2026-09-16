@@ -27,7 +27,7 @@ class LlmChat < ApplicationRecord
   scope :expired, -> { where(created_at: ..RETENTION.ago) }
   scope :overdue, -> { running.where(deadline_at: ..Time.current) }
 
-  # Run the prepared chat, leaving success to the workflow's output validation.
+  # Run the prepared chat, leaving success to the processor's output validation.
   # @param provider [LlmProvider::Base] provider responsible for request configuration
   # @return [RubyLLM::Message] final SDK response
   def execute(provider:)
@@ -44,6 +44,21 @@ class LlmChat < ApplicationRecord
     return false if deadline_at > Time.current
 
     finish!(status: :interrupted, error_category: "deadline_exceeded")
+  end
+
+  # @return [Boolean] whether validated output completed while the chat was active
+  def complete!
+    return true if finish!(status: :succeeded)
+
+    timeout!
+    false
+  end
+
+  # @param error [Exception] extraction failure to classify without storing its message
+  # @return [Boolean] whether this call marked the chat failed
+  def fail!(error)
+    timeout!
+    finish!(status: :failed, error_category: error.class.name)
   end
 
   # @param status [Symbol, String] terminal extraction outcome

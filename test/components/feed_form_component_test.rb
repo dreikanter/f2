@@ -174,10 +174,15 @@ class FeedFormComponentTest < ViewComponent::TestCase
     assert_equal "enable-gate", component(saved_feed(:without_access_token)).enable_gate_data[:controller]
   end
 
-  test "#enable_gate_data should stay out while other pieces are missing" do
+  test "#enable_gate_data should stay out for an already enabled feed" do
     active_token
     assert_empty component(feed(:enabled)).enable_gate_data
-    assert_empty component(ai_feed).enable_gate_data
+  end
+
+  test "#enable_gate_data should let an AI feed select its access token" do
+    active_token
+
+    assert_equal "enable-gate", component(ai_feed).enable_gate_data[:controller]
   end
 
   test "#enable_gate_data should stay out without a token to pick" do

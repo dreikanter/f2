@@ -2,11 +2,16 @@ require "test_helper"
 
 class Processor::LlmProcessorTest < ActiveSupport::TestCase
   def feed
-    @feed ||= build(:feed, feed_profile_key: "llm", search_credential: nil, params: { "prompt" => "A daily roundup" })
+    @feed ||= create(:feed, feed_profile_key: "llm", search_credential: nil, params: { "prompt" => "A daily roundup" })
+  end
+
+  def chat
+    @chat ||= create(:llm_chat, feed: feed, user: feed.user)
   end
 
   def process(json)
-    feed.processor_instance(json).process
+    payload = LlmResult.new(content: json, chat: chat)
+    feed.processor_instance(payload).process
   end
 
   test "#process should build pending entries from validated JSON and preserve their content" do
@@ -26,6 +31,7 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     freeze_time do
       result = process({ items: items }.to_json)
 
+      assert chat.reload.succeeded?
       assert result.recognized?
       assert_equal ["https://example.com/post/1", "https://example.com/post/2"], result.entries.map(&:uid)
       assert_equal items, result.entries.map(&:raw_data)
@@ -44,14 +50,22 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
 
     assert result.recognized?
     assert_empty result.entries
+    assert chat.reload.succeeded?
   end
 
-  test "#process should accept ten items and reject an oversized response" do
+  test "#process should accept ten items" do
     items = Array.new(10) do |index|
       { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
     end
 
     assert_equal items, process({ items: items }.to_json).entries.map(&:raw_data)
+    assert chat.reload.succeeded?
+  end
+
+  test "#process should reject an oversized response" do
+    items = Array.new(10) do |index|
+      { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
+    end
 
     error = assert_raises(Processor::LlmProcessor::InvalidOutput) do
       process({ items: items + [{ "source_url" => "https://example.com/post/10", "body" => "Extra post" }] }.to_json)
@@ -87,29 +101,76 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
 
     assert_equal "AI response is not valid JSON.", error.message
     assert_nil error.cause
+    assert chat.reload.failed?
+    assert_equal "Processor::LlmProcessor::InvalidOutput", chat.error_category
   end
 
-  test "#process should reject invalid envelopes instead of returning an empty success" do
-    ["null", "[]", "{}", '{"items":null}', '{"items":{}}', '{"items":[],"extra":true}'].each do |json|
-      assert_raises(Processor::LlmProcessor::InvalidOutput, json) { process(json) }
+  {
+    "null" => "null",
+    "an array" => "[]",
+    "missing items" => "{}",
+    "null items" => '{"items":null}',
+    "object items" => '{"items":{}}',
+    "extra fields" => '{"items":[],"extra":true}'
+  }.each do |description, json|
+    test "#process should reject #{description} as an invalid envelope" do
+      assert_raises(Processor::LlmProcessor::InvalidOutput) { process(json) }
+
+      assert chat.reload.failed?
     end
   end
 
-  test "#process should reject the whole response when any item violates the schema" do
-    invalid_items = [
-      nil,
-      { "source_url" => "https://example.com/post" },
-      { "body" => "Missing source_url" },
-      { "source_url" => nil, "body" => 123 },
-      { "source_url" => nil, "body" => "Post", "images" => [123] },
-      { "source_url" => nil, "body" => "Post", "extra" => true }
-    ]
-
-    invalid_items.each do |item|
+  {
+    "null item" => nil,
+    "missing body" => { "source_url" => "https://example.com/post" },
+    "missing source_url" => { "body" => "Missing source_url" },
+    "numeric body" => { "source_url" => nil, "body" => 123 },
+    "non-string image" => { "source_url" => nil, "body" => "Post", "images" => [123] },
+    "extra item field" => { "source_url" => nil, "body" => "Post", "extra" => true }
+  }.each do |description, item|
+    test "#process should reject the whole response for #{description}" do
       json = { items: [{ source_url: "https://example.com/valid", body: "Valid post" }, item] }.to_json
 
       error = assert_raises(Processor::LlmProcessor::InvalidOutput) { process(json) }
+
       assert_equal "AI response does not match the output schema.", error.message
+      assert chat.reload.failed?
+      assert_empty feed.feed_entries
+    end
+  end
+
+  test "#process should reject valid output when its chat expires before processing" do
+    freeze_time do
+      payload = LlmResult.new(content: '{"items":[]}', chat: chat)
+      travel_to chat.deadline_at
+
+      error = assert_raises(Loader::Error) { feed.processor_instance(payload).process }
+
+      assert_equal "AI extraction is no longer active.", error.message
+      assert chat.reload.interrupted?
+      assert_equal "deadline_exceeded", chat.error_category
+    end
+  end
+
+  test "#process should preserve a terminal outcome written after loading" do
+    payload = LlmResult.new(content: '{"items":[]}', chat: chat)
+    LlmChat.find(chat.id).finish!(status: :failed, error_category: "original_failure")
+
+    assert_raises(Loader::Error) { feed.processor_instance(payload).process }
+
+    assert chat.reload.failed?
+    assert_equal "original_failure", chat.error_category
+  end
+
+  test "#process should settle expired invalid output as interrupted" do
+    freeze_time do
+      payload = LlmResult.new(content: "invalid JSON", chat: chat)
+      travel_to chat.deadline_at
+
+      assert_raises(Processor::LlmProcessor::InvalidOutput) { feed.processor_instance(payload).process }
+
+      assert chat.reload.interrupted?
+      assert_equal "deadline_exceeded", chat.error_category
     end
   end
 end
