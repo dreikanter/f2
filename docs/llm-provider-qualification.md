@@ -1,12 +1,12 @@
 # AI models and credential validation
 
 The application uses RubyLLM `2.0.0.rc2` and currently registers OpenAI only.
-Scheduled refreshes of existing enabled AI feeds use native OpenAI search and
+Scheduled AI feed refreshes use native OpenAI search and
 the saved model. Each refresh links its persisted chat and SDK usage to its event;
 only validated output completed before the chat deadline enters publication.
-External-search feeds remain paused. Enabling AI feeds, manual refresh, and
-preview remain unavailable pending their integration. Existing feed settings,
-credential forms, and historical usage displays remain available.
+AI feeds will only be enabled after integration is complete. External-search
+support, preview lifecycle integration, and SDK usage reporting remain tracked
+in [#1722](https://github.com/dreikanter/f2/issues/1722).
 
 ## Shared model catalog
 

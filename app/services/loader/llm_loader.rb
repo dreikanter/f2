@@ -1,11 +1,8 @@
 module Loader
   # AI extraction entry point for the shared feed pipeline.
   class LlmLoader < Base
-    UNAVAILABLE_MESSAGE = "AI feeds are temporarily unavailable.".freeze
-
     # @return [LlmResult] response content with its guarded extraction lifecycle
     def load
-      raise Loader::Error, UNAVAILABLE_MESSAGE if feed.search_credential
       raise Loader::Error, "An active AI credential is required." unless feed.ai_credential&.active?
       raise Loader::Error, "An AI model is required." if feed.ai_model.blank?
 

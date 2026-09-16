@@ -11,8 +11,6 @@ class FeedRefreshJob < ApplicationJob
 
     # Webhook feeds have no loader to run; drop stray kicks.
     return if feed.feed_profile_key == "webhook"
-    # External search remains paused until its separate integration.
-    return if feed.depends_on_ai? && feed.search_credential.present?
 
     Feed.with_advisory_lock!("feed_refresh_#{feed.id}", timeout_seconds: 0) do
       FeedRefreshWorkflow.new(feed, manual: manual).execute

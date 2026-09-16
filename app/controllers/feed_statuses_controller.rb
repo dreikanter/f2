@@ -32,8 +32,6 @@ class FeedStatusesController < ApplicationController
   # separate rule set, so their messages are the fallback when the feed looks
   # ready but a validator still refuses.
   def cannot_enable_alert(feed)
-    return Loader::LlmLoader::UNAVAILABLE_MESSAGE if feed.depends_on_ai?
-
     missing_parts = feed.missing_enablement_parts
     return "Cannot enable feed: missing #{missing_parts.join(' and ')}." if missing_parts.any?
 

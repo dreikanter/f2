@@ -216,7 +216,7 @@ class Feed < ApplicationRecord
   end
 
   def can_be_enabled?
-    !depends_on_ai? && missing_enablement_parts.empty?
+    missing_enablement_parts.empty?
   end
 
   # Missing setup fields, phrased as nouns for the UI.
@@ -241,11 +241,6 @@ class Feed < ApplicationRecord
   # feed, and the in-memory state is rolled back to its persisted value so
   # re-renders reflect DB truth.
   def enable
-    if depends_on_ai?
-      errors.add(:base, Loader::LlmLoader::UNAVAILABLE_MESSAGE)
-      return false
-    end
-
     transition_state(:enabled)
   end
 
@@ -254,7 +249,11 @@ class Feed < ApplicationRecord
   end
 
   def can_be_previewed?
-    source_input.present? && feed_profile_present? && !depends_on_ai?
+    return false unless source_input.present? && feed_profile_present?
+    return true unless depends_on_ai?
+    return false unless ai_credential&.active?
+
+    ai_model.present?
   end
 
   def ai_model_supported?
