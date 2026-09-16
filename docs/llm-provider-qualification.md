@@ -1,8 +1,12 @@
 # AI models and credential validation
 
 The application uses RubyLLM `2.0.0.rc2` and currently registers OpenAI only.
-AI feed extraction remains temporarily unavailable. Existing feed settings,
-credential forms, and stored usage displays remain available.
+Scheduled refreshes of existing enabled AI feeds use native OpenAI search and
+the saved model. Each refresh links its persisted chat and SDK usage to its event;
+only validated output completed before the chat deadline enters publication.
+External-search feeds remain paused. Enabling AI feeds, manual refresh, and
+preview remain unavailable pending their integration. Existing feed settings,
+credential forms, and historical usage displays remain available.
 
 ## Shared model catalog
 
@@ -58,6 +62,8 @@ cover the last 30 days; missing costs remain unknown. Catalog refresh and
 validation produce no inference usage.
 
 [The replacement plan](https://github.com/dreikanter/f2/issues/1722) tracks the
-remaining extraction and accounting work. Before native extraction, its bounded,
-explicitly authorized provider check must establish that the exact selected model
-accepts native search and the strict feed schema together.
+remaining extraction and accounting work. The authorized staging verification in
+[#1759](https://github.com/dreikanter/f2/pull/1759) passed for `gpt-5-mini`: native
+search, strict output, processor validation, SDK usage, and deadline completion.
+That temporary verification job was not merged. Reporting still uses historical
+usage records until the separate SDK reporting integration.

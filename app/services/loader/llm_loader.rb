@@ -11,7 +11,7 @@ module Loader
       raise Loader::Error, "An AI model is required." if feed.ai_model.blank?
 
       provider = feed.ai_credential.build_llm_client
-      @chat = prepare_chat(provider)
+      prepare_chat(provider)
       response = chat.execute(provider: provider)
       unless response.stopped? && response.content.is_a?(String)
         raise Loader::Error, "AI response did not complete."
@@ -30,7 +30,7 @@ module Loader
 
     def prepare_chat(provider)
       now = Time.current
-      record = LlmChat.create!(
+      @chat = LlmChat.create!(
         user: feed.user,
         feed: options.fetch(:usage_feed, feed.persisted? ? feed : nil),
         ai_credential: feed.ai_credential,
@@ -46,16 +46,16 @@ module Loader
         protocol: provider.protocol,
         assume_model_exists: true
       )
-      record.with_instructions(<<~TEXT.strip)
+      options[:refresh_event]&.event_references&.create!(reference: chat)
+      chat.with_instructions(<<~TEXT.strip)
         #{LlmPrompts::COMBINED_SYSTEM}
 
         Include every field in the output schema. Use empty strings or arrays
         for absent optional values; source_url may be null.
       TEXT
-      record.with_schema(output_schema)
-      record.with_server_tools(:web_search)
-      record.ask_later(config.fetch(:prompt_template).gsub("{{input}}") { feed.source_input })
-      record
+      chat.with_schema(output_schema)
+      chat.with_server_tools(:web_search)
+      chat.ask_later(config.fetch(:prompt_template).gsub("{{input}}") { feed.source_input })
     end
 
     # Strict output requires every property; the processor accepts this subset.

@@ -1,11 +1,11 @@
 require "test_helper"
 
 class Loader::LlmLoaderTest < ActiveSupport::TestCase
-  test "#loader_instance should keep AI workflows unavailable without inference or usage" do
+  test "#loader_instance should keep AI previews unavailable without inference or usage" do
     feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "A daily roundup" })
 
     assert_no_difference -> { LlmUsage.count } do
-      error = assert_raises(Loader::Error) { feed.loader_instance.load }
+      error = assert_raises(Loader::Error) { feed.loader_instance(purpose: :preview).load }
       assert_equal Loader::LlmLoader::UNAVAILABLE_MESSAGE, error.message
     end
     assert_not_requested :any, /./
@@ -78,18 +78,20 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
   end
 
   test "#load should retain preview attribution without saving its temporary feed" do
-    temporary_feed = Feed.new(user: feed.user, ai_credential: credential, ai_model: "gpt-5-nano",
-                              feed_profile_key: "llm", params: feed.params)
-    loader = Loader::LlmLoader.new(temporary_feed, purpose: :preview, usage_feed: feed, deadline_at: 10.seconds.from_now)
-    stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: completed_response)
+    freeze_time do
+      temporary_feed = Feed.new(user: feed.user, ai_credential: credential, ai_model: "gpt-5-nano",
+                                feed_profile_key: "llm", params: feed.params)
+      loader = Loader::LlmLoader.new(temporary_feed, purpose: :preview, usage_feed: feed, deadline_at: 10.seconds.from_now)
+      stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: completed_response)
 
-    assert_no_difference "Feed.count" do
-      assert_equal '{"items":[]}', loader.load
+      assert_no_difference "Feed.count" do
+        assert_equal '{"items":[]}', loader.load
+      end
+
+      assert_equal feed, loader.chat.feed
+      assert_equal "preview", loader.chat.purpose
+      assert temporary_feed.new_record?
     end
-
-    assert_equal feed, loader.chat.feed
-    assert_equal "preview", loader.chat.purpose
-    assert temporary_feed.new_record?
   end
 
   test "#load should leave invalid JSON for the processor without repairing or settling success" do
