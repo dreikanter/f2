@@ -61,12 +61,20 @@ class FeedPreviewWorkflow
   end
 
   def load_feed_contents(temp_feed)
-    loader = temp_feed.loader_instance(purpose: :preview, refresh_event: @activity&.event,
-                                      usage_feed: feed_preview.feed, deadline_at: deadline_at)
-    raw_data = loader.load
+    loader = temp_feed.loader_instance(
+      purpose: :preview,
+      refresh_event: @activity&.event,
+      usage_feed: feed_preview.feed,
+      deadline_at: deadline_at
+    )
 
+    raw_data = loader.load
     record_stats(content_size: content_bytesize(raw_data))
-    { temp_feed: temp_feed, raw_data: raw_data }
+
+    {
+      temp_feed: temp_feed,
+      raw_data: raw_data
+    }
   end
 
   def process_feed_contents(input)
@@ -79,7 +87,11 @@ class FeedPreviewWorkflow
     limited_entries = entries.first(FeedPreview::PREVIEW_POSTS_LIMIT)
 
     record_stats(total_entries: entries.size, preview_entries: limited_entries.size)
-    { temp_feed: temp_feed, entries: limited_entries }
+
+    {
+      temp_feed: temp_feed,
+      entries: limited_entries
+    }
   end
 
   def normalize_entries(input)
@@ -119,6 +131,7 @@ class FeedPreviewWorkflow
         ready_at: Time.current,
         data: { posts: posts, stats: stats }
       )
+
       @activity&.finish!(status: updated ? "completed" : "interrupted", stats: stats)
     end
     posts
