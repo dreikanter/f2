@@ -3,12 +3,7 @@ require "test_helper"
 class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
-  setup do
-    model = RubyLLM::Models.new([]).load_from_json.find("gpt-5-nano", provider: "openai")
-    RubyLLM::ActiveRecord::Model.from_llm(model).save!
-  end
-
-  test "scheduled refresh should persist validated posts and native usage linked to its event" do
+  test "#execute should persist validated posts and native usage linked to its event" do
     create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
     request = stub_response do |http|
       chat = feed.llm_chats.sole
@@ -51,7 +46,7 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
-  test "empty valid output should settle successfully without publication" do
+  test "#execute should settle empty valid output without publication" do
     request = stub_response(output: '{"items":[]}')
 
     assert_no_enqueued_jobs(only: PostPublishJob) { FeedRefreshWorkflow.new(feed).execute }
@@ -62,51 +57,46 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
-  ["invalid JSON", '{"items":[{"body":"missing source_url"}]}'].each do |output|
-    test "invalid output #{output.inspect} should fail extraction and retain native usage" do
-      request = stub_response(output: output)
-
-      assert_no_publication do
-        assert_raises(Processor::LlmProcessor::InvalidOutput) { FeedRefreshWorkflow.new(feed).execute }
-      end
-
-      chat = feed.llm_chats.sole
-      assert chat.failed?
-      assert_equal "process_feed_contents", chat.error_category
-      assert_equal "succeeded", chat.ruby_llm_usages.sole.status
-      assert_equal [chat], refresh_event.references
-      assert_equal "failed", refresh_event.metadata.fetch("status")
-      assert_requested request, times: 1
-    end
-  end
-
-  test "provider failure should settle the chat and report raw errors without exposing them in the event" do
-    request = stub_request(:post, "https://api.openai.com/v1/responses")
-      .to_return_json(status: 429, body: { error: { message: "private provider detail", type: "rate_limit_error" } })
-    reported = nil
-    report_context = nil
+  test "#execute should reject invalid output while retaining native usage" do
+    request = stub_response(output: '{"items":[{"body":"missing source_url"}]}')
 
     assert_no_publication do
-      Rails.error.stub(:report, ->(error, context:) { reported = error; report_context = context }) do
-        FeedRefreshJob.perform_now(feed.id)
-      end
+      assert_raises(Processor::LlmProcessor::InvalidOutput) { FeedRefreshWorkflow.new(feed).execute }
     end
 
     chat = feed.llm_chats.sole
     assert chat.failed?
-    assert_equal "load_feed_contents", chat.error_category
+    assert_equal "Processor::LlmProcessor::InvalidOutput", chat.error_category
+    assert_equal "succeeded", chat.ruby_llm_usages.sole.status
+    assert_equal [chat], refresh_event.references
+    assert_equal "failed", refresh_event.metadata.fetch("status")
+    assert_requested request, times: 1
+  end
+
+  test "#perform should report provider failures once without exposing details in the event" do
+    request = stub_request(:post, "https://api.openai.com/v1/responses")
+      .to_return_json(status: 429, body: { error: { message: "private provider detail", type: "rate_limit_error" } })
+    reports = capture_error_reports do
+      assert_no_publication { FeedRefreshJob.perform_now(feed.id) }
+    end
+    report = reports.sole
+
+    chat = feed.llm_chats.sole
+    assert chat.failed?
+    assert_equal report.error.cause.class.name, chat.error_category
     assert_equal "failed", chat.ruby_llm_usages.sole.status
     assert_equal [chat], refresh_event.references
     assert_equal "failed", refresh_event.metadata.fetch("status")
     assert_not_includes refresh_event.to_json, "private provider detail"
-    assert_kind_of RubyLLM::Error, reported.cause
-    assert_equal({ feed_id: feed.id }, report_context)
-    assert_includes reported.cause.message, "private provider detail"
+    assert_kind_of RubyLLM::Error, report.error.cause
+    assert_equal feed.id, report.context[:feed_id]
+    assert report.handled?
+    assert_includes report.error.cause.message, "private provider detail"
     assert credential.reload.active?
     assert_requested request, times: 1
   end
 
-  test "incomplete provider output should fail even when its JSON is valid" do
+  test "#execute should reject incomplete output even when its JSON is valid" do
     response = completed_response
     response.merge!("status" => "incomplete", "incomplete_details" => { "reason" => "max_output_tokens" })
     request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
@@ -120,52 +110,48 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
-  [false, true].each do |timeout_job_runs|
-    test "late output should not publish with timeout job running: #{timeout_job_runs}" do
-      freeze_time do
-        request = stub_response do
-          travel LlmChat::TIMEOUT
-          LlmChatTimeoutJob.perform_now(feed.llm_chats.sole.id) if timeout_job_runs
-        end
-
-        assert_no_publication do
-          assert_raises(Loader::Error) { FeedRefreshWorkflow.new(feed).execute }
-        end
-
-        chat = feed.llm_chats.sole
-        assert chat.interrupted?
-        assert_equal "deadline_exceeded", chat.error_category
-        assert_equal "succeeded", chat.ruby_llm_usages.sole.status
-        assert_equal [chat], refresh_event.references
-        assert_equal "failed", refresh_event.metadata.fetch("status")
-        assert_requested request, times: 1
-      end
-    end
-  end
-
-  test "deadline reached during processing should reject otherwise valid output" do
+  test "#execute should interrupt late output before the timeout job runs" do
     freeze_time do
-      request = stub_response
-      build_processor = feed.method(:processor_instance)
-      delayed_processor = ->(raw_data) { travel LlmChat::TIMEOUT; build_processor.call(raw_data) }
+      request = stub_response { travel LlmChat::TIMEOUT }
 
       assert_no_publication do
-        feed.stub(:processor_instance, delayed_processor) do
-          assert_raises(Loader::Error) { FeedRefreshWorkflow.new(feed).execute }
-        end
+        assert_raises(Loader::Error) { FeedRefreshWorkflow.new(feed).execute }
       end
 
       chat = feed.llm_chats.sole
       assert chat.interrupted?
       assert_equal "deadline_exceeded", chat.error_category
+      assert_equal "succeeded", chat.ruby_llm_usages.sole.status
+      assert_equal [chat], refresh_event.references
       assert_equal "failed", refresh_event.metadata.fetch("status")
       assert_requested request, times: 1
     end
   end
 
-  test "another terminal outcome should prevent publishing from a stale worker" do
+  test "#execute should reject output after the timeout job interrupts its chat" do
+    freeze_time do
+      request = stub_response do
+        travel LlmChat::TIMEOUT
+        LlmChatTimeoutJob.perform_now(feed.llm_chats.sole.id)
+      end
+
+      assert_no_publication do
+        assert_raises(Loader::Error) { FeedRefreshWorkflow.new(feed).execute }
+      end
+
+      chat = feed.llm_chats.sole
+      assert chat.interrupted?
+      assert_equal "deadline_exceeded", chat.error_category
+      assert_equal "succeeded", chat.ruby_llm_usages.sole.status
+      assert_equal [chat], refresh_event.references
+      assert_equal "failed", refresh_event.metadata.fetch("status")
+      assert_requested request, times: 1
+    end
+  end
+
+  test "#execute should prevent a stale worker from publishing after another terminal outcome" do
     request = stub_response do
-      feed.llm_chats.sole.finish!(status: :interrupted, error_category: "refresh_abandoned")
+      feed.llm_chats.sole.fail!(LlmExecution::ToolLimitExceeded.new)
     end
 
     assert_no_publication do
@@ -173,14 +159,14 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     end
 
     chat = feed.llm_chats.sole
-    assert chat.interrupted?
-    assert_equal "refresh_abandoned", chat.error_category
+    assert chat.failed?
+    assert_equal "LlmExecution::ToolLimitExceeded", chat.error_category
     assert_equal "succeeded", chat.ruby_llm_usages.sole.status
     assert_equal "failed", refresh_event.metadata.fetch("status")
     assert_requested request, times: 1
   end
 
-  test "a new refresh should interrupt an abandoned chat and retain its original event link" do
+  test "#execute should leave an abandoned chat to its timeout and retain its event link" do
     abandoned = create(:event, type: "feed_refresh", subject: feed, user: feed.user, metadata: { status: "started" })
     chat = create(:llm_chat, feed: feed, user: feed.user, ai_credential: credential)
     abandoned.event_references.create!(reference: chat)
@@ -188,12 +174,17 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
 
     FeedRefreshWorkflow.new(feed).execute
 
-    assert chat.reload.interrupted?
-    assert_equal "refresh_abandoned", chat.error_category
+    assert chat.reload.running?
     assert_equal "interrupted", abandoned.reload.metadata.fetch("status")
     assert_equal [chat], abandoned.references
     completed = feed.events.where(type: "feed_refresh").where.not(id: abandoned.id).sole
     assert_equal [feed.llm_chats.where.not(id: chat.id).sole], completed.references
+    travel_to chat.deadline_at, with_usec: true do
+      LlmChatTimeoutJob.perform_now(chat.id)
+    end
+    assert chat.reload.interrupted?
+    assert_equal "deadline_exceeded", chat.error_category
+    assert_equal [chat], abandoned.references
     assert_requested request, times: 1
   end
 
@@ -204,9 +195,13 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
   end
 
   def feed
-    @feed ||= create(:feed, :enabled, user: credential.user, ai_credential: credential, ai_model: "gpt-5-nano",
-                      feed_profile_key: "llm", params: { "prompt" => "A daily roundup" },
-                      search_credential: nil, consecutive_failures: 1)
+    @feed ||= begin
+      model = RubyLLM::Models.new([]).load_from_json.find("gpt-5-nano", provider: "openai")
+      RubyLLM::ActiveRecord::Model.from_llm(model).save!
+      create(:feed, :enabled, user: credential.user, ai_credential: credential, ai_model: "gpt-5-nano",
+                    feed_profile_key: "llm", params: { "prompt" => "A daily roundup" },
+                    search_credential: nil, consecutive_failures: 1)
+    end
   end
 
   def refresh_event

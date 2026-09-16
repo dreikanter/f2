@@ -46,6 +46,21 @@ class LlmChat < ApplicationRecord
     finish!(status: :interrupted, error_category: "deadline_exceeded")
   end
 
+  # @return [Boolean] whether validated output completed while the chat was active
+  def complete!
+    return true if finish!(status: :succeeded)
+
+    timeout!
+    false
+  end
+
+  # @param error [Exception] extraction failure to classify without storing its message
+  # @return [Boolean] whether this call marked the chat failed
+  def fail!(error)
+    timeout!
+    finish!(status: :failed, error_category: error.class.name)
+  end
+
   # @param status [Symbol, String] terminal extraction outcome
   # @param error_category [String, nil] classification without provider error text
   # @return [Boolean] whether this call won the terminal transition

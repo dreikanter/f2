@@ -16,8 +16,7 @@ module Loader
 
       LlmResult.new(content: response.content, chat: chat)
     rescue StandardError => error
-      chat&.timeout!
-      chat&.finish!(status: :failed, error_category: error.class.name)
+      chat&.fail!(error)
 
       case error
       when RubyLLM::Error, Faraday::Error

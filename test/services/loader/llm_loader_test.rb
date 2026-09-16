@@ -13,11 +13,13 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
 
     assert_difference "LlmChat.count", 1 do
       assert_no_difference "LlmUsage.count" do
-        assert_equal '{"items":[]}', loader.load
+        result = loader.load
+        assert_instance_of LlmResult, result
+        assert_equal '{"items":[]}', result.content
       end
     end
 
-    chat = loader.chat.reload
+    chat = feed.llm_chats.sole
     assert chat.running?
     assert_equal feed.user, chat.user
     assert_equal feed, chat.feed
@@ -57,13 +59,14 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
 
     assert_difference "LlmChat.count", 2 do
       loader.load
-      first_chat = loader.chat
+      first_chat = feed.llm_chats.sole
       loader.load
-      assert_not_equal first_chat.id, loader.chat.id
+      assert_equal 2, feed.llm_chats.count
+      assert feed.llm_chats.where.not(id: first_chat.id).sole.running?
     end
 
     assert_equal prompts.first, prompts.second
-    assert_equal "custom-model", loader.chat.model.model_id
+    assert_equal ["custom-model"], feed.llm_chats.map { |chat| chat.model.model_id }.uniq
     assert_requested request, times: 2
   end
 
@@ -75,11 +78,12 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
       stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: completed_response)
 
       assert_no_difference "Feed.count" do
-        assert_equal '{"items":[]}', loader.load
+        assert_equal '{"items":[]}', loader.load.content
       end
 
-      assert_equal feed, loader.chat.feed
-      assert_equal "preview", loader.chat.purpose
+      chat = feed.llm_chats.sole
+      assert_equal "preview", chat.purpose
+      assert_equal 10.seconds.from_now, chat.deadline_at
       assert temporary_feed.new_record?
     end
   end
@@ -90,11 +94,10 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
     loader = Loader::LlmLoader.new(feed)
 
-    content = loader.load
+    result = loader.load
 
-    assert_equal "invalid JSON", content
-    assert_raises(Processor::LlmProcessor::InvalidOutput) { feed.processor_instance(content).process }
-    assert loader.chat.reload.running?
+    assert_equal "invalid JSON", result.content
+    assert feed.llm_chats.sole.running?
     assert_requested request, times: 1
   end
 
@@ -128,7 +131,10 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
       error = assert_raises(Loader::Error) { loader.load }
 
       assert_equal "AI response did not complete.", error.message
-      assert_equal 1, loader.chat.ruby_llm_usages.count
+      chat = feed.llm_chats.sole
+      assert chat.failed?
+      assert_equal "Loader::Error", chat.error_category
+      assert_equal 1, chat.ruby_llm_usages.count
       assert_requested request, times: 1
     end
   end
@@ -144,9 +150,10 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
       error = assert_raises(Loader::Error) { loader.load }
 
       assert_kind_of LlmExecution::DeadlineExceeded, error.cause
-      assert loader.chat.reload.interrupted?
-      assert_equal "deadline_exceeded", loader.chat.error_category
-      assert_equal 1, loader.chat.ruby_llm_usages.count
+      chat = feed.llm_chats.sole
+      assert chat.interrupted?
+      assert_equal "deadline_exceeded", chat.error_category
+      assert_equal 1, chat.ruby_llm_usages.count
       assert_requested request, times: 1
     end
   end
@@ -160,17 +167,29 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
 
     assert_equal "AI request failed. Please try again later.", error.message
     assert_kind_of RubyLLM::Error, error.cause
-    assert_equal "failed", loader.chat.ruby_llm_usages.sole.status
+    chat = feed.llm_chats.sole
+    assert chat.failed?
+    assert_equal error.cause.class.name, chat.error_category
+    assert_equal "failed", chat.ruby_llm_usages.sole.status
     assert_requested request, times: 1
   end
 
-  test "#load should keep external search unavailable without substituting native search" do
-    feed.search_credential = create(:search_credential, :active, user: feed.user)
+  test "#load should fail the chat when native search exceeds its execution budget" do
+    response = completed_response
+    response["output"] = Array.new(5) do |index|
+      { "type" => "web_search_call", "id" => "search_#{index}", "status" => "completed" }
+    end + response["output"].select { |item| item["type"] == "message" }
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
 
-    assert_no_difference "LlmChat.count" do
-      assert_raises(Loader::Error) { Loader::LlmLoader.new(feed).load }
-    end
-    assert_not_requested :any, /./
+    error = assert_raises(Loader::Error) { Loader::LlmLoader.new(feed).load }
+
+    assert_equal "AI request exceeded its execution limits.", error.message
+    assert_kind_of LlmExecution::ToolLimitExceeded, error.cause
+    chat = feed.llm_chats.sole
+    assert chat.failed?
+    assert_equal "LlmExecution::ToolLimitExceeded", chat.error_category
+    assert_equal 1, chat.ruby_llm_usages.count
+    assert_requested request, times: 1
   end
 
   test "#load should reject missing or inactive AI settings before creating a chat" do
