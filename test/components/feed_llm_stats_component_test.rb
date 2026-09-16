@@ -20,8 +20,13 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
     end
   end
 
+  def render_stats(current_feed)
+    totals = LlmUsageReport.for_feed(current_feed, period: LlmUsageReport::STATS_PERIOD.ago..Time.current).totals
+    render_inline(FeedLlmStatsComponent.new(feed: current_feed, totals: totals))
+  end
+
   test "#render should display AI call count" do
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed_with_usages))
+    result = render_stats(feed_with_usages)
 
     value = result.css('[data-key="llm_stats.ai_calls.value"]').first
     assert_not_nil value
@@ -29,7 +34,7 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
   end
 
   test "#render should display estimated AI spend" do
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed_with_usages))
+    result = render_stats(feed_with_usages)
 
     value = result.css('[data-key="llm_stats.estimated_spend.value"]').first
     assert_not_nil value
@@ -40,20 +45,20 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
     create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user, purpose: :preview), total_cost: "0.004")
     create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user), total_cost: "0.004")
 
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    result = render_stats(feed)
 
     assert_equal "2", result.css('[data-key="llm_stats.ai_calls.value"]').first.text.strip
     assert_equal "$0.01", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
 
     create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user), total_cost: nil)
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    result = render_stats(feed)
 
     assert_equal "Unknown", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
     assert_includes result.css('[data-key="llm_stats.cost_note"]').text, "Available estimates total $0.01."
   end
 
   test "#render should display search calls and fractional estimated spend" do
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed_with_usages))
+    result = render_stats(feed_with_usages)
 
     assert_equal "2", result.css('[data-key="llm_stats.search_calls.value"]').first.text.strip
     assert_equal "$0.00200", result.css('[data-key="llm_stats.search_estimated_spend.value"]').first.text.strip
@@ -69,7 +74,7 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
       WebSearchUsage.record!(credential: credential, refresh_event: refresh)
     end
 
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed_with_usages))
+    result = render_stats(feed_with_usages)
 
     assert_equal "2", result.css('[data-key="llm_stats.ai_calls.value"]').first.text.strip
     assert_equal "$0.40", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
@@ -78,7 +83,7 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
   end
 
   test "#render should include mobile layout with full labels" do
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    result = render_stats(feed)
 
     assert_not_nil result.css(".md\\:hidden").first
     assert_equal "AI calls (last 30 days)", result.css('.md\\:hidden [data-key="llm_stats.ai_calls.label"]').first.text
@@ -88,7 +93,7 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
   end
 
   test "#render should include desktop layout with short labels" do
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    result = render_stats(feed)
 
     assert_not_nil result.css(".hidden.md\\:flex").first
     assert_equal "AI calls (30 days)", result.css('.hidden.md\\:flex [data-key="llm_stats.ai_calls.label"]').first.text
@@ -98,7 +103,7 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
   end
 
   test "#render should show zero when no usages" do
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    result = render_stats(feed)
 
     assert_equal "0", result.css('[data-key="llm_stats.ai_calls.value"]').first.text.strip
     assert_equal "$0.00", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
@@ -107,17 +112,17 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
   end
   test "#render should explain incomplete estimates without presenting a partial sum as the total" do
     create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user), total_cost: nil)
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    result = render_stats(feed)
     assert_equal "Unknown", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
     assert_includes result.css('[data-key="llm_stats.cost_note"]').text, "couldn’t be estimated"
 
     create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user), total_cost: 0)
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    result = render_stats(feed)
     assert result.css('[data-key="llm_stats.estimated_spend.value"]').all? { |value| value.text.strip == "Unknown" }
     assert_not_includes result.css('[data-key="llm_stats.cost_note"]').text, "$0.00"
 
     create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user), total_cost: "0.25")
-    result = render_inline(FeedLlmStatsComponent.new(feed: feed))
+    result = render_stats(feed)
     assert result.css('[data-key="llm_stats.estimated_spend.value"]').all? { |value| value.text.strip == "Unknown" }
     assert_includes result.css('[data-key="llm_stats.cost_note"]').text, "Available estimates total $0.25."
   end

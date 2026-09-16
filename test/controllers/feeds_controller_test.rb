@@ -857,12 +857,16 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
   test "#show should render AI usage section when feed has usages within the stats period" do
     create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: user))
+    create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: user), total_cost: nil)
     sign_in_as(user)
 
     get feed_url(feed)
 
     assert_response :success
     assert_select "h2", text: "AI Usage", count: 1
+    assert_select '[data-key="llm_stats.ai_calls.value"]', text: "2"
+    assert_select '[data-key="llm_stats.estimated_spend.value"]', text: "Unknown"
+    assert_select '[data-key="llm_stats.cost_note"]', text: /Available estimates total \$0\.03\./
   end
 
   test "#show should not render AI usage section when all usages are older than the stats period" do

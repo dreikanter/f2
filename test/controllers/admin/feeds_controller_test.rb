@@ -104,11 +104,15 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(admin_user)
     feed = create(:feed, user: create(:user))
     create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user))
+    create(:ruby_llm_usage, chat: create(:llm_chat, feed: feed, user: feed.user), total_cost: nil)
 
     get admin_feed_path(feed)
 
     assert_response :success
     assert_select "h2", text: "AI Usage", count: 1
+    assert_select '[data-key="llm_stats.ai_calls.value"]', text: "2"
+    assert_select '[data-key="llm_stats.estimated_spend.value"]', text: "Unknown"
+    assert_select '[data-key="llm_stats.cost_note"]', text: /Available estimates total \$0\.03\./
   end
 
   test "#show should not render AI usage section when all usages are older than the stats period" do
