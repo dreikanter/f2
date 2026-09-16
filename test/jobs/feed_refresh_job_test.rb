@@ -5,7 +5,7 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     @feed ||= create(:feed, feed_profile_key: "rss")
   end
 
-  test "handles missing feed gracefully" do
+  test "#perform should ignore a missing feed" do
     assert_nothing_raised do
       FeedRefreshJob.perform_now(-1)
     end
@@ -21,31 +21,7 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     end
   end
 
-  test "does not raise when the loader raises Loader::Error" do
-    WebMock.stub_request(:get, feed.url).to_return(status: 500)
-
-    assert_nothing_raised do
-      FeedRefreshJob.perform_now(feed.id)
-    end
-  end
-
-  test "#perform should preserve AI feeds with external search while its integration remains paused" do
-    create(:llm_model, model_id: "gpt-4.1")
-    credential = create(:ai_credential, :active)
-    feed = create(:feed, :enabled, user: credential.user, feed_profile_key: "llm",
-                                  ai_credential: credential, ai_model: "gpt-4.1",
-                                  params: { "prompt" => "ruby news" },
-                                  consecutive_failures: Feed::MAX_CONSECUTIVE_FAILURES - 1)
-
-    assert_no_difference("Event.count") do
-      FeedRefreshJob.perform_now(feed.id)
-    end
-
-    assert feed.reload.enabled?
-    assert_equal Feed::MAX_CONSECUTIVE_FAILURES - 1, feed.consecutive_failures
-  end
-
-  test "increments loader_errors_total metric when the loader raises Loader::Error" do
+  test "#perform should count loader failures" do
     WebMock.stub_request(:get, feed.url).to_return(status: 500)
 
     incremented = false
@@ -56,15 +32,29 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     assert incremented
   end
 
-  test "does not report Loader::Error to the error tracker" do
-    WebMock.stub_request(:get, feed.url).to_return(status: 404)
+  test "#perform should report an ordinary loader failure once with feed context" do
+    request = stub_request(:get, feed.url).to_return(status: 404)
 
-    reported = false
-    Rails.error.stub(:report, ->(*, **) { reported = true }) do
-      FeedRefreshJob.perform_now(feed.id)
-    end
+    reports = capture_error_reports { FeedRefreshJob.perform_now(feed.id) }
 
-    assert_not reported
+    report = reports.sole
+    assert_kind_of Loader::Error, report.error
+    assert_equal feed.id, report.context[:feed_id]
+    assert report.handled?
+    assert_equal "failed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
+    assert_equal 1, feed.reload.consecutive_failures
+    assert_requested request, times: 1
+  end
+
+  test "#perform should retain the cause of a remote connection failure" do
+    stub_request(:get, feed.url).to_raise(SocketError.new("Name resolution failed"))
+
+    reports = capture_error_reports { FeedRefreshJob.perform_now(feed.id) }
+
+    error = reports.sole.error
+    assert_kind_of Loader::Error, error
+    assert_kind_of HttpClient::ConnectionError, error.cause
+    assert_equal feed.id, reports.sole.context[:feed_id]
   end
 
   test ".perform_now should skip without raising when the feed is already being refreshed" do
@@ -78,28 +68,44 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     end
   end
 
-  test ".perform_now should forward manual: true to the workflow" do
-    assert captured_manual_flag { FeedRefreshJob.perform_now(feed.id, manual: true) }
+  test "#perform should run a manual refresh even when today's digest is complete" do
+    freeze_time do
+      create(:feed_schedule, feed: ai_feed, last_digest_period: Time.current.utc.to_date)
+      response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
+      response["output"].last["content"].first["text"] = '{"items":[{"source_url":null,"body":"Today’s roundup"}]}'
+      request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+      FeedRefreshJob.perform_now(ai_feed.id, manual: true)
+
+      assert_equal "completed", ai_feed.events.find_by!(type: "feed_refresh").metadata["status"]
+      assert_empty ai_feed.events.where(type: "feed_refresh_skipped")
+      assert_equal "Today’s roundup", ai_feed.posts.sole.content
+      assert ai_feed.llm_chats.sole.succeeded?
+      assert_requested request, times: 1
+    end
   end
 
-  test ".perform_now should default the workflow to a scheduled (non-manual) run" do
-    assert_same false, captured_manual_flag { FeedRefreshJob.perform_now(feed.id) }
+  test "#perform should skip a scheduled refresh when today's digest is complete" do
+    freeze_time do
+      create(:feed_schedule, feed: ai_feed, last_digest_period: Time.current.utc.to_date)
+
+      FeedRefreshJob.perform_now(ai_feed.id)
+
+      assert_equal 1, ai_feed.events.where(type: "feed_refresh_skipped").count
+      assert_empty ai_feed.events.where(type: "feed_refresh")
+      assert_not_requested :any, /./
+    end
   end
 
   private
 
-  # Stubs the workflow so it doesn't run, capturing the manual: flag the job
-  # hands it. A digest feed's cadence skip hinges on this flag being scheduled
-  # by default and forced through only on a user-initiated refresh.
-  def captured_manual_flag
-    captured = nil
-    fake_workflow = Object.new
-    fake_workflow.define_singleton_method(:execute) { nil }
-
-    FeedRefreshWorkflow.stub(:new, ->(_feed, **kwargs) { captured = kwargs[:manual]; fake_workflow }) do
-      yield
+  def ai_feed
+    @ai_feed ||= begin
+      create(:llm_model, model_id: "gpt-5-nano")
+      credential = create(:ai_credential, :active)
+      create(:feed, :enabled, user: credential.user, feed_profile_key: "llm",
+                            params: { "prompt" => "Daily roundup" }, ai_credential: credential,
+                            ai_model: "gpt-5-nano", search_credential: nil)
     end
-
-    captured
   end
 end

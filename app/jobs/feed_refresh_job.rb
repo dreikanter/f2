@@ -16,14 +16,7 @@ class FeedRefreshJob < ApplicationJob
       FeedRefreshWorkflow.new(feed, manual: manual).execute
     end
   rescue Loader::Error => e
-    # Ordinary loader errors reflect the remote feed's health and are already
-    # tracked by the workflow. AI errors retain their provider cause for the
-    # error tracker; events only receive the loader's safe message.
-    if feed.depends_on_ai?
-      Rails.error.report(e, context: { feed_id: feed_id })
-    else
-      Rails.logger.error "Feed #{feed_id} load failed: #{e.message}"
-    end
+    Rails.error.report(e, context: { feed_id: feed_id })
     Metrics.increment("loader_errors_total", profile: feed.feed_profile_key, loader: feed.loader_class.name.demodulize)
   rescue WithAdvisoryLock::FailedToAcquireLock
     Rails.logger.info "Feed #{feed_id} is already being processed, skipping"
