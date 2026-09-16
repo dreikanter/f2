@@ -187,7 +187,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
-  test "#execute should attribute a saved feed preview and native usage to its chat" do
+  test "#execute should attribute a saved feed preview and RubyLLM usage to its chat" do
     feed = create(:feed, user: user, feed_profile_key: "llm", params: { "prompt" => "rust async" },
                   ai_credential: ai_preview.ai_credential, ai_model: "gpt-5-nano", search_credential: nil)
     ai_preview.update!(feed: feed)

@@ -3,7 +3,7 @@ require "test_helper"
 class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
-  test "#execute should persist validated posts and native usage linked to its event" do
+  test "#execute should persist validated posts and RubyLLM usage linked to its event" do
     create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
     request = stub_response do |http|
       chat = feed.llm_chats.sole
@@ -57,7 +57,7 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
-  test "#execute should reject invalid output while retaining native usage" do
+  test "#execute should reject invalid output while retaining RubyLLM usage" do
     request = stub_response(output: '{"items":[{"body":"missing source_url"}]}')
 
     assert_no_publication do

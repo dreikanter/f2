@@ -1,7 +1,7 @@
 require "test_helper"
 
 class Loader::LlmLoaderTest < ActiveSupport::TestCase
-  test "#load should stage the selected model and return content with native usage" do
+  test "#load should stage the selected model and return content with RubyLLM usage" do
     payload = nil
     request = stub_request(:post, "https://api.openai.com/v1/responses")
       .with(headers: { "Authorization" => "Bearer loader-test-key" })
@@ -139,7 +139,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     end
   end
 
-  test "#load should reject output at the earlier deadline and retain late native usage" do
+  test "#load should reject output at the earlier deadline and retain late RubyLLM usage" do
     freeze_time do
       loader = Loader::LlmLoader.new(feed, purpose: :preview, deadline_at: 10.seconds.from_now)
       request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do
