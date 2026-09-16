@@ -96,7 +96,7 @@ class FeedFormComponent < ViewComponent::Base
   end
 
   def ai_profile?
-    FeedProfile.depends_on_ai?(feed.feed_profile_key)
+    feed.depends_on_ai?
   end
 
   # AI prompts stay editable; a changed URL requires fresh detection.

@@ -1,16 +1,6 @@
 require "test_helper"
 
 class Loader::LlmLoaderTest < ActiveSupport::TestCase
-  test "#loader_instance should keep AI previews unavailable without inference or usage" do
-    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "A daily roundup" })
-
-    assert_no_difference -> { LlmUsage.count } do
-      error = assert_raises(Loader::Error) { feed.loader_instance(purpose: :preview).load }
-      assert_equal Loader::LlmLoader::UNAVAILABLE_MESSAGE, error.message
-    end
-    assert_not_requested :any, /./
-  end
-
   test "#load should stage the selected model and return content with native usage" do
     payload = nil
     request = stub_request(:post, "https://api.openai.com/v1/responses")
@@ -81,7 +71,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     freeze_time do
       temporary_feed = Feed.new(user: feed.user, ai_credential: credential, ai_model: "gpt-5-nano",
                                 feed_profile_key: "llm", params: feed.params)
-      loader = Loader::LlmLoader.new(temporary_feed, purpose: :preview, usage_feed: feed, deadline_at: 10.seconds.from_now)
+      loader = temporary_feed.loader_instance(purpose: :preview, usage_feed: feed, deadline_at: 10.seconds.from_now)
       stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: completed_response)
 
       assert_no_difference "Feed.count" do

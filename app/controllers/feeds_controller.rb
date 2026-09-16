@@ -185,7 +185,7 @@ class FeedsController < ApplicationController
   # one it's anchored to. This is the only case that routes through re-detection.
   def deterministic_source_change?
     return false unless @feed.persisted? && !@feed.draft?
-    return false if FeedProfile.depends_on_ai?(@feed.feed_profile_key)
+    return false if @feed.depends_on_ai?
 
     submitted_source_raw.present? && submitted_source_raw != @feed.source_input.to_s
   end

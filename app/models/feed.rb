@@ -205,6 +205,10 @@ class Feed < ApplicationRecord
     FeedProfile.scheduled?(feed_profile_key)
   end
 
+  def depends_on_ai?
+    FeedProfile.depends_on_ai?(feed_profile_key)
+  end
+
   # True for push-ingested profiles (webhook): there is no source input, so
   # source-driven surfaces (source field, detection, preview) don't apply.
   def sourceless?
@@ -212,7 +216,7 @@ class Feed < ApplicationRecord
   end
 
   def can_be_enabled?
-    !FeedProfile.depends_on_ai?(feed_profile_key) && missing_enablement_parts.empty?
+    !depends_on_ai? && missing_enablement_parts.empty?
   end
 
   # Missing setup fields, phrased as nouns for the UI.
@@ -225,7 +229,7 @@ class Feed < ApplicationRecord
     parts << "active access token" unless access_token&.active?
     parts << "target group" if target_group.blank?
     parts << "schedule" if scheduled? && cron_expression.blank?
-    return parts unless FeedProfile.depends_on_ai?(feed_profile_key)
+    return parts unless depends_on_ai?
 
     parts << "active AI credential" unless ai_credential&.active?
     parts << "AI model" if ai_model.blank?
@@ -237,7 +241,7 @@ class Feed < ApplicationRecord
   # feed, and the in-memory state is rolled back to its persisted value so
   # re-renders reflect DB truth.
   def enable
-    if FeedProfile.depends_on_ai?(feed_profile_key)
+    if depends_on_ai?
       errors.add(:base, Loader::LlmLoader::UNAVAILABLE_MESSAGE)
       return false
     end
@@ -250,7 +254,7 @@ class Feed < ApplicationRecord
   end
 
   def can_be_previewed?
-    source_input.present? && feed_profile_present? && !FeedProfile.depends_on_ai?(feed_profile_key)
+    source_input.present? && feed_profile_present? && !depends_on_ai?
   end
 
   def ai_model_supported?
@@ -260,11 +264,6 @@ class Feed < ApplicationRecord
   # @param options [Hash] e.g. a shared :http_client
   # @return [Loader::Base] the feed's loader
   def loader_instance(options = {})
-    # Preview integration follows scheduled refreshes.
-    if FeedProfile.depends_on_ai?(feed_profile_key) && options[:purpose] == :preview
-      raise Loader::Error, Loader::LlmLoader::UNAVAILABLE_MESSAGE
-    end
-
     loader_class.new(self, options)
   end
 
@@ -461,7 +460,7 @@ class Feed < ApplicationRecord
   def engine_fixed_on_edit
     return unless persisted? && feed_profile_key_changed?
     return unless FeedProfile.exists?(feed_profile_key) && FeedProfile.exists?(feed_profile_key_was)
-    return if FeedProfile.depends_on_ai?(feed_profile_key) == FeedProfile.depends_on_ai?(feed_profile_key_was)
+    return if depends_on_ai? == FeedProfile.depends_on_ai?(feed_profile_key_was)
 
     errors.add(:feed_profile_key, "can't switch between AI and non-AI feeds — start a new feed instead")
   end
@@ -473,7 +472,7 @@ class Feed < ApplicationRecord
   def source_change_reverified
     return unless persisted?
     return if draft? || source_verified
-    return if FeedProfile.depends_on_ai?(feed_profile_key)
+    return if depends_on_ai?
     return unless source_input_changed_in_place?
 
     errors.add(:base, "The source changed — re-check it before saving.")
@@ -501,7 +500,7 @@ class Feed < ApplicationRecord
 
   def ai_credential_required_when_enabled_ai_profile
     return unless feed_profile_present?
-    return unless FeedProfile.depends_on_ai?(feed_profile_key)
+    return unless depends_on_ai?
 
     if ai_credential.nil?
       errors.add(:ai_credential, "must be selected for AI-backed feeds")

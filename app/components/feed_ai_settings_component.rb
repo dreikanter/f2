@@ -10,7 +10,7 @@ class FeedAiSettingsComponent < ViewComponent::Base
   # Stimulus controller can reveal it when the user switches to an AI candidate
   # mid-form); this drives the initial hidden state and the disabled selects.
   def section_visible?
-    @feed.feed_profile_present? && FeedProfile.depends_on_ai?(@feed.feed_profile_key)
+    @feed.feed_profile_present? && @feed.depends_on_ai?
   end
 
   def active_credentials

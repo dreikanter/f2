@@ -12,7 +12,7 @@ class FeedRefreshJob < ApplicationJob
     # Webhook feeds have no loader to run; drop stray kicks.
     return if feed.feed_profile_key == "webhook"
     # External search remains paused until its separate integration.
-    return if FeedProfile.depends_on_ai?(feed.feed_profile_key) && feed.search_credential.present?
+    return if feed.depends_on_ai? && feed.search_credential.present?
 
     Feed.with_advisory_lock!("feed_refresh_#{feed.id}", timeout_seconds: 0) do
       FeedRefreshWorkflow.new(feed, manual: manual).execute
@@ -21,8 +21,11 @@ class FeedRefreshJob < ApplicationJob
     # Ordinary loader errors reflect the remote feed's health and are already
     # tracked by the workflow. AI errors retain their provider cause for the
     # error tracker; events only receive the loader's safe message.
-    Rails.logger.error "Feed #{feed_id} load failed: #{e.message}"
-    Rails.error.report(e) if FeedProfile.depends_on_ai?(feed.feed_profile_key)
+    if feed.depends_on_ai?
+      Rails.error.report(e, context: { feed_id: feed_id })
+    else
+      Rails.logger.error "Feed #{feed_id} load failed: #{e.message}"
+    end
     Metrics.increment("loader_errors_total", profile: feed.feed_profile_key, loader: feed.loader_class.name.demodulize)
   rescue WithAdvisoryLock::FailedToAcquireLock
     Rails.logger.info "Feed #{feed_id} is already being processed, skipping"

@@ -9,6 +9,7 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
   end
 
   test "scheduled refresh should persist validated posts and native usage linked to its event" do
+    create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
     request = stub_response do |http|
       chat = feed.llm_chats.sole
       assert chat.running?
@@ -19,7 +20,7 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
 
     assert_no_difference "LlmUsage.count" do
       assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
-        FeedRefreshJob.perform_now(feed.id)
+        perform_enqueued_jobs(only: FeedRefreshJob) { FeedSchedulerJob.perform_now }
       end
     end
 
@@ -83,9 +84,12 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     request = stub_request(:post, "https://api.openai.com/v1/responses")
       .to_return_json(status: 429, body: { error: { message: "private provider detail", type: "rate_limit_error" } })
     reported = nil
+    report_context = nil
 
     assert_no_publication do
-      Rails.error.stub(:report, ->(error) { reported = error }) { FeedRefreshJob.perform_now(feed.id) }
+      Rails.error.stub(:report, ->(error, context:) { reported = error; report_context = context }) do
+        FeedRefreshJob.perform_now(feed.id)
+      end
     end
 
     chat = feed.llm_chats.sole
@@ -96,6 +100,7 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     assert_equal "failed", refresh_event.metadata.fetch("status")
     assert_not_includes refresh_event.to_json, "private provider detail"
     assert_kind_of RubyLLM::Error, reported.cause
+    assert_equal({ feed_id: feed.id }, report_context)
     assert_includes reported.cause.message, "private provider detail"
     assert credential.reload.active?
     assert_requested request, times: 1
