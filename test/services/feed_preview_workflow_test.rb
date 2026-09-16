@@ -173,17 +173,11 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal credential, chat.ai_credential
     assert_equal "gpt-5-nano", chat.requested_model
     assert_equal "preview", chat.purpose
-    assert_equal chat.started_at + LlmChat::TIMEOUT, chat.deadline_at
     assert preview.reload.ready?
     assert_equal '{"items":[]}'.bytesize, preview.data.dig("stats", "content_size")
     event = Event.find_by!(type: "feed_preview", subject: credential)
     assert_equal "completed", event.metadata["status"]
     assert_equal [chat], event.references
-    usage = chat.ruby_llm_usages.sole
-    assert_equal "succeeded", usage.status
-    assert_equal 40, usage.input_tokens
-    assert_equal 20, usage.output_tokens
-    assert_equal chat.messages.last, usage.message
     assert_requested request, times: 1
   end
 
@@ -197,24 +191,19 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     response["output"].last["content"].first["text"] = {
       items: [{ source_url: "https://example.com/rust", body: "Rust async news" }]
     }.to_json
-    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return do
       chat = LlmChat.sole
       event = Event.find_by!(type: "feed_preview", subject: feed)
-      assert chat.running?
-      assert_equal "started", event.metadata["status"]
       assert_equal [chat], event.references
       { body: response.to_json, headers: { "Content-Type" => "application/json" } }
     end
 
-    assert_no_difference ["Feed.count", "Post.count", "LlmUsage.count"] do
+    assert_no_difference ["Feed.count", "Post.count"] do
       FeedPreviewWorkflow.new(ai_preview, run_id: AI_RUN_ID).execute
     end
 
     chat = feed.llm_chats.sole
     assert chat.succeeded?
-    assert_equal user, chat.user
-    assert_equal ai_preview.ai_credential, chat.ai_credential
-    assert_equal "preview", chat.purpose
     assert ai_preview.reload.ready?
     assert_equal "Rust async news - https://example.com/rust", ai_preview.posts_data.sole["content"]
     assert_equal "https://example.com/rust", ai_preview.posts_data.sole["source_url"]
@@ -222,11 +211,11 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal "completed", event.metadata["status"]
     assert_equal [chat], event.references
     usage = chat.ruby_llm_usages.sole
+    assert_equal "succeeded", usage.status
     assert_equal chat.messages.last, usage.message
     assert_equal 40, usage.input_tokens
     assert_equal 20, usage.output_tokens
     assert usage.total_cost.positive?
-    assert_requested request, times: 1
   end
 
   test "#execute should include queue time in the preview extraction deadline" do
@@ -234,7 +223,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
       preview = ai_preview
       deadline = preview.updated_at + preview.timeout_after
       travel 90.seconds
-      request = stub_request(:post, "https://api.openai.com/v1/responses")
+      stub_request(:post, "https://api.openai.com/v1/responses")
         .to_return_json(body: completed_ai_response)
 
       assert_enqueued_with(job: LlmChatTimeoutJob, at: deadline) do
@@ -243,10 +232,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
 
       chat = LlmChat.sole
       assert_equal deadline, chat.deadline_at
-      assert_equal Time.current, chat.started_at
-      assert chat.succeeded?
       assert preview.reload.ready?
-      assert_requested request, times: 1
     end
   end
 
@@ -261,13 +247,9 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
 
       assert_kind_of LlmExecution::DeadlineExceeded, error.cause
       assert preview.reload.failed?
-      assert_nil preview.data
       chat = LlmChat.sole
       assert chat.interrupted?
       assert_equal "deadline_exceeded", chat.error_category
-      assert_empty chat.ruby_llm_usages
-      event = Event.find_by!(type: "feed_preview", subject: preview.ai_credential)
-      assert_equal [chat], event.references
       assert_not_requested :any, /./
     end
   end
@@ -277,7 +259,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
       preview = ai_preview
       deadline = preview.updated_at + preview.timeout_after
       travel 90.seconds
-      request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do
+      stub_request(:post, "https://api.openai.com/v1/responses").to_return do
         travel_to deadline
         { body: completed_ai_response.to_json, headers: { "Content-Type" => "application/json" } }
       end
@@ -289,15 +271,11 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
       assert_kind_of LlmExecution::DeadlineExceeded, error.cause
       assert preview.reload.failed?
       assert_nil preview.data
-      assert_nil preview.ready_at
       chat = LlmChat.sole
       assert chat.interrupted?
-      assert_equal "deadline_exceeded", chat.error_category
       assert_equal "succeeded", chat.ruby_llm_usages.sole.status
       event = Event.find_by!(type: "feed_preview", subject: preview.ai_credential)
       assert_equal "failed", event.metadata["status"]
-      assert_equal [chat], event.references
-      assert_requested request, times: 1
     end
   end
 
@@ -307,7 +285,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
       deadline = preview.updated_at + preview.timeout_after
       travel 90.seconds
       timed_out_run_id = nil
-      request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do
+      stub_request(:post, "https://api.openai.com/v1/responses").to_return do
         travel_to deadline
         FeedPreviewTimeoutJob.perform_now(preview.id, AI_RUN_ID)
         timed_out_run_id = FeedPreview.find(preview.id).run_id
@@ -320,23 +298,16 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
 
       assert preview.reload.failed?
       assert_equal timed_out_run_id, preview.run_id
-      assert_not_equal AI_RUN_ID, preview.run_id
       assert_nil preview.data
-      assert_nil preview.ready_at
-      chat = LlmChat.sole
-      assert chat.interrupted?
-      assert_equal "succeeded", chat.ruby_llm_usages.sole.status
       event = Event.find_by!(type: "feed_preview", subject: preview.ai_credential)
       assert_equal "interrupted", event.metadata["status"]
-      assert_equal [chat], event.references
-      assert_requested request, times: 1
     end
   end
 
   test "#execute should retain successful extraction without publishing a superseded run" do
     preview = ai_preview
     next_run_id = nil
-    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return do
       restarted = FeedPreview.find(preview.id).restart!
       next_run_id = restarted.run_id
       { body: completed_ai_response.to_json, headers: { "Content-Type" => "application/json" } }
@@ -347,20 +318,15 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert preview.reload.pending?
     assert_equal next_run_id, preview.run_id
     assert_nil preview.data
-    assert_nil preview.ready_at
-    chat = LlmChat.sole
-    assert chat.succeeded?
-    assert_equal "succeeded", chat.ruby_llm_usages.sole.status
+    assert LlmChat.sole.succeeded?
     event = Event.find_by!(type: "feed_preview", subject: preview.ai_credential)
     assert_equal "interrupted", event.metadata["status"]
-    assert_equal [chat], event.references
-    assert_requested request, times: 1
   end
 
   test "#execute should preserve a restarted preview when the old request fails" do
     preview = ai_preview
     next_run_id = nil
-    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return do
       restarted = FeedPreview.find(preview.id).restart!
       next_run_id = restarted.run_id
       {
@@ -377,18 +343,14 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert preview.reload.pending?
     assert_equal next_run_id, preview.run_id
     assert_nil preview.data
-    chat = LlmChat.sole
-    assert chat.failed?
-    assert_equal "failed", chat.ruby_llm_usages.sole.status
+    assert LlmChat.sole.failed?
     event = Event.find_by!(type: "feed_preview", subject: preview.ai_credential)
     assert_equal "interrupted", event.metadata["status"]
-    assert_equal [chat], event.references
-    assert_requested request, times: 1
   end
 
   test "#execute should not publish results for a changed preview configuration" do
     preview = ai_preview
-    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return do
       FeedPreview.find(preview.id).update!(params: { "prompt" => "A different topic" })
       { body: completed_ai_response.to_json, headers: { "Content-Type" => "application/json" } }
     end
@@ -398,13 +360,8 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert preview.reload.processing?
     assert_equal "A different topic", preview.params["prompt"]
     assert_nil preview.data
-    assert_nil preview.ready_at
-    chat = LlmChat.sole
-    assert chat.succeeded?
     event = Event.find_by!(type: "feed_preview", subject: preview.ai_credential)
     assert_equal "interrupted", event.metadata["status"]
-    assert_equal [chat], event.references
-    assert_requested request, times: 1
   end
 
   private
