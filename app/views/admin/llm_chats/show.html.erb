@@ -31,21 +31,21 @@
   <% end %>
 
   <section class="space-y-4" data-key="ai_history.messages">
-    <%= h2 "Messages" %>
+    <%= h2 "Conversation" %>
     <% @messages.each do |message| %>
       <article class="space-y-2 rounded-lg border border-border p-4" data-key="ai_history.message">
-        <h3 class="font-semibold text-heading"><%= message.role.humanize %></h3>
-        <pre class="whitespace-pre-wrap break-words text-sm text-body"><%= message.content %></pre>
+        <h3 class="font-semibold text-heading"><%= llm_message_title(message.role) %></h3>
+        <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.content"><%= format_llm_message_content(message.content) %></pre>
         <% if message.server_tool_calls.present? %>
           <details>
-            <summary class="text-muted">Server tool calls</summary>
-            <pre class="whitespace-pre-wrap break-words text-sm text-body"><%= JSON.pretty_generate(message.server_tool_calls) %></pre>
+            <summary class="text-muted">Provider tool calls</summary>
+            <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.tool_calls"><%= JSON.pretty_generate(message.server_tool_calls.map(&:to_h)) %></pre>
           </details>
         <% end %>
         <% if message.citations.present? %>
           <details>
-            <summary class="text-muted">Citations</summary>
-            <pre class="whitespace-pre-wrap break-words text-sm text-body"><%= JSON.pretty_generate(message.citations) %></pre>
+            <summary class="text-muted">Sources</summary>
+            <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.citations"><%= JSON.pretty_generate(message.citations.map(&:to_h)) %></pre>
           </details>
         <% end %>
       </article>
@@ -56,7 +56,7 @@
   </section>
 
   <section class="space-y-4" data-key="ai_history.usage">
-    <%= h2 "Recorded Usage" %>
+    <%= h2 "Token Usage and Cost" %>
     <% if @usages.any? %>
       <%= render LlmUsagesListComponent.new(usages: @usages) %>
     <% else %>

@@ -48,8 +48,7 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
-    assert_select '[data-key="ai_history.message"] h3', text: "System"
-    assert_equal ["System", "Assistant"], css_select('[data-key="ai_history.message"] h3').map(&:text)
+    assert_equal ["System instructions", "AI response"], css_select('[data-key="ai_history.message"] h3').map(&:text)
     assert_select '[data-key="ai_history.messages"] script', count: 0
     assert_includes response.body, "&lt;script&gt;"
     assert_not_includes response.body, "Private other transcript"
@@ -61,6 +60,43 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", admin_ai_credential_path(credential)
     assert_equal original_attributes, chat.reload.attributes
     assert_empty WebMock::RequestRegistry.instance.requested_signatures.hash
+  end
+
+  test "should format JSON responses and show recorded tool call and source fields" do
+    sign_in_as(admin_user)
+    chat = create(:llm_chat)
+    content = { "items" => [{ "title" => "Economic report", "body" => "Definitions differ." }] }
+    message = chat.messages.create!(
+      role: "assistant",
+      content: JSON.generate(content),
+      server_tool_calls: [{
+        type: "web_search_call",
+        name: "web_search",
+        id: "search_1",
+        input: { query: "economic report" },
+        result: { url: "https://example.com/report" },
+        raw: { status: "completed", action: { type: "search", query: "economic report" } }
+      }],
+      citations: [{
+        title: "Economic report",
+        url: "https://example.com/report",
+        cited_text: "Definitions differ."
+      }]
+    )
+
+    get admin_llm_chat_path(chat)
+
+    assert_response :success
+    assert_select '[data-key="ai_history.messages"] h2', "Conversation"
+    assert_select '[data-key="ai_history.message"] h3', "AI response"
+    assert_select '[data-key="ai_history.message"] summary', text: "Provider tool calls"
+    assert_select '[data-key="ai_history.message"] summary', text: "Sources"
+    assert_select '[data-key="ai_history.usage"] h2', "Token Usage and Cost"
+    response_text = css_select('[data-key="ai_history.content"]').sole.text
+    assert_equal content, JSON.parse(response_text)
+    assert_includes response_text, "\n  \"items\": [\n    {"
+    assert_equal message[:server_tool_calls], JSON.parse(css_select('[data-key="ai_history.tool_calls"]').sole.text)
+    assert_equal message[:citations], JSON.parse(css_select('[data-key="ai_history.citations"]').sole.text)
   end
 
   test "should exclude expired chats before they are purged" do
