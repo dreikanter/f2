@@ -1,16 +1,23 @@
-<% content_for :title, "AI Transcript" %>
+<% chat_title = "AI Transcript #{short_ref(@chat.id)}" %>
+<% content_for :title, chat_title %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "AI Transcript") do |header| %>
+  <%= render PageHeaderComponent.new(title: chat_title) do |header| %>
     <% header.with_breadcrumb(label: "AI History", url: admin_llm_chats_path) %>
+    <% header.with_context_paragraph do %>
+      <%= render BadgeComponent.new(
+        text: @chat.status.humanize,
+        color: llm_chat_status_badge_color(@chat.status),
+        key: "ai_history.status_badge"
+      ) %>
+    <% end %>
   <% end %>
 
   <%= render DescriptionListComponent.new do |list| %>
     <% list.with_item(StatListItemComponent.new(label: "Provider", value: @chat.requested_provider)) %>
     <% list.with_item(StatListItemComponent.new(label: "Model", value: @chat.requested_model)) %>
     <% list.with_item(StatListItemComponent.new(label: "Purpose", value: @chat.purpose.humanize)) %>
-    <% list.with_item(StatListItemComponent.new(label: "Status", value: @chat.status.humanize)) %>
-    <% list.with_item(StatListItemComponent.new(label: "Started", value: @chat.started_at.to_fs(:long))) %>
+    <% list.with_item(StatListItemComponent.new(label: "Started", value: datetime_with_duration_tag(@chat.started_at), key: "ai_history.started")) %>
     <% list.with_item(StatListItemComponent.new(label: "User", value: link_to(@chat.user.email_address, admin_user_path(@chat.user), class: text_link_classes))) %>
     <% if @chat.feed %>
       <% list.with_item(StatListItemComponent.new(label: "Feed", value: link_to(@chat.feed.name, admin_feed_path(@chat.feed), class: text_link_classes))) %>

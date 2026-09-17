@@ -84,12 +84,18 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should render a chat without messages usage feed or credential" do
+    travel_to Time.zone.local(2026, 9, 17, 22, 47)
     sign_in_as(admin_user)
-    chat = create(:llm_chat)
+    chat = create(:llm_chat, started_at: 13.hours.ago)
 
     get admin_llm_chat_path(chat)
 
     assert_response :success
+    assert_select "h1", "AI Transcript #{chat.id.last(5)}"
+    assert_select "title", text: /AI Transcript #{chat.id.last(5)}/
+    assert_select 'header [data-key="ai_history.status_badge"]', "Running"
+    assert_select "dl dt", text: "Status", count: 0
+    assert_select '[data-key="ai_history.started"] time[datetime=?]', chat.started_at.iso8601, text: "17 Sep 2026, 09:47 (13h)"
     assert_select '[data-key="ai_history.messages"]', text: /No messages recorded/
     assert_select '[data-key="ai_history.usage"]', text: /No usage recorded/
   end
