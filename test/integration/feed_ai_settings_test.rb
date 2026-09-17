@@ -1,8 +1,7 @@
 require "test_helper"
 
-# The feed form's AI Settings section: AI provider, model, and search provider
-# selectors for AI-backed profiles. The dependent model dropdown is wired
-# client-side from an embedded models map, so these tests assert the
+# The feed form's AI Settings section for AI-backed profiles. The dependent
+# model dropdown uses an embedded models map, so these tests assert the
 # server-rendered contract the Stimulus controller relies on.
 class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   def user
@@ -31,7 +30,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     @rss_feed ||= create(:feed, user: user, feed_profile_key: "rss")
   end
 
-  test "#edit should show AI, search, and model selects for an AI feed" do
+  test "#edit should show AI and model selects without external search" do
     create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
 
@@ -41,7 +40,8 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='form.ai-settings']"
     assert_select "[data-key='form.ai-settings'][hidden]", false
     assert_select "select[name='feed[ai_credential_id]'][data-key='form.ai-credential']"
-    assert_select "select[name='feed[search_credential_id]'][data-key='form.search-credential']"
+    assert_select "select[name='feed[search_credential_id]']", false
+    assert_select "[data-key='form.ai-settings']", text: /Search is provided by the AI provider/
     assert_select "select[name='feed[ai_model]'][data-key='form.ai-model']"
     assert_select "[data-key='form.ai-model-unavailable']", false
   end
@@ -53,7 +53,18 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     get edit_feed_path(ai_feed)
 
     labels = css_select("[data-key='form.ai-settings'] label").map { _1.text.strip }
-    assert_equal ["AI provider", "Model", "External search (optional)"], labels
+    assert_equal ["AI provider", "Model"], labels
+  end
+
+  test "#edit should expose the saved search selection when external search is enabled" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
+    sign_in_as(user)
+
+    Rails.configuration.x.stub(:external_search_enabled, true) do
+      get edit_feed_path(ai_feed)
+    end
+
+    assert_select "select[data-key='form.search-credential'] option[selected][value='#{search_credential.id}']"
   end
 
   test "#edit should warn when the feed's saved model is no longer available" do
@@ -79,7 +90,6 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     get edit_feed_path(ai_feed)
 
     assert_select "select[data-key='form.ai-credential'] option[selected][value='#{credential.id}']"
-    assert_select "select[data-key='form.search-credential'] option[selected][value='#{search_credential.id}']"
     assert_select "select[data-key='form.ai-model'] option[selected][value='gpt-4.1']", text: "GPT-4.1"
   end
 
@@ -98,7 +108,8 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
 
     get edit_feed_path(feed)
 
-    assert_select "select[data-key='form.search-credential'] option[selected][value='']"
+    assert_select "select[data-key='form.search-credential']", false
+    assert_nil feed.reload.search_credential_id
   end
 
   test "#edit should render the model placeholder as disabled so a pick can't be cleared" do
@@ -165,7 +176,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
 
     assert_select "[data-key='form.ai-settings'][hidden]"
     assert_select "select[name='feed[ai_credential_id]'][disabled]"
-    assert_select "select[name='feed[search_credential_id]'][disabled]"
+    assert_select "select[name='feed[search_credential_id]']", false
     assert_select "select[name='feed[ai_model]'][disabled]"
   end
 

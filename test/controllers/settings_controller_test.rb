@@ -49,13 +49,24 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", edit_settings_password_update_path
     assert_select "a[href=?]", access_tokens_path
     assert_select "a[href=?]", ai_credentials_path
-    assert_select "a[href=?]", search_credentials_path
+    assert_select "a[href=?]", search_credentials_path, count: 0
     assert_select "a[href=?]", invites_path
   end
 
   test "should redirect to login when not authenticated" do
     get settings_url
     assert_redirected_to new_session_path
+  end
+
+  test "should expose search credentials when external search is enabled" do
+    sign_in_as(user)
+
+    Rails.configuration.x.stub(:external_search_enabled, true) do
+      get settings_url
+    end
+
+    assert_select "a[href=?]", search_credentials_path
+    assert_select "h2", text: "Search Credentials"
   end
 
   test "should show permission display name in the page header" do

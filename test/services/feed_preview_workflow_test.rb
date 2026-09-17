@@ -458,6 +458,34 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal "interrupted", event.metadata["status"]
   end
 
+  test "#execute should reject a saved external search selection omitted from the preview request" do
+    create(:llm_model, model_id: "gpt-5-nano")
+    credential = create(:ai_credential, :active, user: user)
+    search_credential = create(:search_credential, :inactive, user: user)
+    feed = create(:feed, user: user, feed_profile_key: "llm", params: { prompt: "News" },
+                  ai_credential: credential, ai_model: "gpt-5-nano", search_credential: search_credential)
+    request = FeedPreviewRequest.new(user: user, attributes: {
+      profile_key: "llm",
+      params: feed.params,
+      feed_id: feed.id,
+      ai_credential_id: credential.id,
+      ai_model: feed.ai_model
+    }).create
+    preview = request.preview
+
+    assert_no_difference "LlmChat.count" do
+      error = assert_raises(Loader::Error) do
+        FeedPreviewWorkflow.new(preview, run_id: preview.run_id).execute
+      end
+      assert_equal "External search is not supported yet.", error.message
+    end
+
+    assert preview.reload.failed?
+    assert_equal search_credential, preview.search_credential
+    assert_equal search_credential, feed.reload.search_credential
+    assert_not_requested :any, /./
+  end
+
   private
 
   def ai_preview

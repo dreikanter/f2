@@ -132,7 +132,7 @@ class ApplicationHelperTest < ActionView::TestCase
     self.stub(:current_page?, ->(_path, *_args) { false }) do
       groups = user_menu_item_groups
 
-      assert_equal [["Settings"], ["Freefeed Access Tokens", "AI Credentials", "Search Credentials", "Invites", "Changelog"]],
+      assert_equal [["Settings"], ["Freefeed Access Tokens", "AI Credentials", "Invites", "Changelog"]],
                    groups.map { |group| group.pluck(:name) }
       assert_equal groups.flatten, user_menu_items
     end
