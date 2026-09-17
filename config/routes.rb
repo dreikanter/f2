@@ -52,6 +52,8 @@ Rails.application.routes.draw do
   end
 
   namespace :admin do
+    resources :llm_chats, only: [:index, :show]
+
     resources :users, only: [:index, :show] do
       resource :permissions, only: :update
       resource :email_update, only: [:edit, :update]
