@@ -2,7 +2,7 @@ module LlmChatHelper
   LLM_MESSAGE_TITLES = {
     "system" => "System instructions",
     "developer" => "Developer instructions",
-    "user" => "Request",
+    "user" => "User request",
     "assistant" => "AI response",
     "tool" => "Tool result"
   }.freeze

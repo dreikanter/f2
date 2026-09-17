@@ -33,22 +33,27 @@
   <section class="space-y-4" data-key="ai_history.messages">
     <%= h2 "Conversation" %>
     <% @messages.each do |message| %>
-      <article class="space-y-2 rounded-lg border border-border p-4" data-key="ai_history.message">
-        <h3 class="font-semibold text-heading"><%= llm_message_title(message.role) %></h3>
-        <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.content"><%= format_llm_message_content(message.content) %></pre>
-        <% if message.server_tool_calls.present? %>
-          <details>
-            <summary class="text-muted">Provider tool calls</summary>
-            <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.tool_calls"><%= JSON.pretty_generate(message.server_tool_calls.map(&:to_h)) %></pre>
-          </details>
+      <%= render CardComponent.new(data: { key: "ai_history.message" }) do |card| %>
+        <% card.with_section(class: "flex items-start justify-between gap-4 px-5 py-4", data: { key: "ai_history.message_header" }) do %>
+          <h3 class="font-semibold text-heading"><%= llm_message_title(message.role) %></h3>
+          <%= short_time_ago_tag(message.created_at, css_class: "shrink-0 text-sm tabular-nums text-muted") %>
         <% end %>
-        <% if message.citations.present? %>
-          <details>
-            <summary class="text-muted">Sources</summary>
-            <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.citations"><%= JSON.pretty_generate(message.citations.map(&:to_h)) %></pre>
-          </details>
+        <% card.with_section(class: "space-y-3 px-5 py-4") do %>
+          <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.content"><%= format_llm_message_content(message.content) %></pre>
+          <% if message.server_tool_calls.present? %>
+            <details>
+              <summary class="text-muted">Provider tool calls</summary>
+              <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.tool_calls"><%= JSON.pretty_generate(message.server_tool_calls.map(&:to_h)) %></pre>
+            </details>
+          <% end %>
+          <% if message.citations.present? %>
+            <details>
+              <summary class="text-muted">Sources</summary>
+              <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.citations"><%= JSON.pretty_generate(message.citations.map(&:to_h)) %></pre>
+            </details>
+          <% end %>
         <% end %>
-      </article>
+      <% end %>
     <% end %>
     <% if @messages.empty? %>
       <p class="text-muted">No messages recorded.</p>

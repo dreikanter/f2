@@ -5,8 +5,6 @@
     <% header.with_breadcrumb(label: "Dev Tools", url: development_path) %>
   <% end %>
 
-  <p class="text-muted">Transcripts and recorded usage from the past two months.</p>
-
   <% if @chats.any? %>
     <%= render(ListComponent.new) do |list| %>
       <% @chats.each do |chat| %>

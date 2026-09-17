@@ -7,6 +7,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 - AI History uses compact two-line rows with timestamps on the right, and its link is now in Dev Tools.
 - AI transcripts show their short ID in the title, a status badge, and timestamps matching post details.
 - AI transcripts show readable JSON responses, tool call and source details, and clearer section titles.
+- Transcript messages use two-section cards with their origin and timestamp above the content.
 - AI feeds use updated model limits and cost estimates after the model list refreshes.
 - Hide external search settings until supported, and prevent saved external selections from using AI provider search.
 - Feed previews explain why posts would be rejected and skip unidentified items without failing.

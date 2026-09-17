@@ -89,6 +89,7 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select '[data-key="ai_history.messages"] h2', "Conversation"
     assert_select '[data-key="ai_history.message"] h3', "AI response"
+    assert_select '[data-key="ai_history.message_header"] time[datetime=?]', message.created_at.iso8601
     assert_select '[data-key="ai_history.message"] summary', text: "Provider tool calls"
     assert_select '[data-key="ai_history.message"] summary', text: "Sources"
     assert_select '[data-key="ai_history.usage"] h2', "Token Usage and Cost"
