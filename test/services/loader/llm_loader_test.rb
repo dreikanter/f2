@@ -1,7 +1,7 @@
 require "test_helper"
 
 class Loader::LlmLoaderTest < ActiveSupport::TestCase
-  test "#load should stage the selected model and return content with RubyLLM usage" do
+  test "#load should stage the selected model with bundled metadata when the database is empty" do
     assert_empty RubyLLM::ActiveRecord::Model.all
     RubyLLM.models.load_from_store
     payload = nil

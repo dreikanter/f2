@@ -5,8 +5,6 @@ class LlmModelRefreshTest < ActionDispatch::IntegrationTest
     ActiveJob::QueueAdapters::SolidQueueAdapter.new
   end
 
-  teardown { RubyLLM.models.load_from_json }
-
   def credential
     @credential ||= create(:ai_credential, :active)
   end
