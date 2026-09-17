@@ -19,7 +19,7 @@ class DevelopmentsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{development_email_previews_path}']", count: 1
     assert_select "a[href='#{development_sent_emails_path}']", count: 1
     assert_select "a[href='#{development_components_path}']", count: 1
-    assert_select "a[href='#{admin_llm_chats_path}']", count: 0
+    assert_select "a[href='#{admin_llm_chats_path}']", count: 1
   end
 
   test "should disable sent emails link when delivery does not capture locally" do

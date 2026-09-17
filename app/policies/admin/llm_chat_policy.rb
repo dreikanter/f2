@@ -1,15 +1,15 @@
 class Admin::LlmChatPolicy < ApplicationPolicy
   def index?
-    admin?
+    dev?
   end
 
   def show?
-    admin?
+    dev?
   end
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      admin? ? scope.unexpired : scope.none
+      user&.dev? ? scope.unexpired : scope.none
     end
   end
 end

@@ -18,12 +18,12 @@
     <% list.with_item(StatListItemComponent.new(label: "Model", value: @chat.requested_model)) %>
     <% list.with_item(StatListItemComponent.new(label: "Purpose", value: @chat.purpose.humanize)) %>
     <% list.with_item(StatListItemComponent.new(label: "Started", value: datetime_with_duration_tag(@chat.started_at), key: "ai_history.started")) %>
-    <% list.with_item(StatListItemComponent.new(label: "User", value: link_to(@chat.user.email_address, admin_user_path(@chat.user), class: text_link_classes))) %>
+    <% list.with_item(StatListItemComponent.new(label: "User", value: link_to_if(policy([:admin, @chat.user]).show?, @chat.user.email_address, admin_user_path(@chat.user), class: text_link_classes))) %>
     <% if @chat.feed %>
-      <% list.with_item(StatListItemComponent.new(label: "Feed", value: link_to(@chat.feed.name, admin_feed_path(@chat.feed), class: text_link_classes))) %>
+      <% list.with_item(StatListItemComponent.new(label: "Feed", value: link_to_if(policy([:admin, @chat.feed]).show?, @chat.feed.name, admin_feed_path(@chat.feed), class: text_link_classes))) %>
     <% end %>
     <% if @chat.ai_credential %>
-      <% list.with_item(StatListItemComponent.new(label: "AI Credential", value: link_to(@chat.ai_credential.display_name, admin_ai_credential_path(@chat.ai_credential), class: text_link_classes))) %>
+      <% list.with_item(StatListItemComponent.new(label: "AI Credential", value: link_to_if(policy([:admin, @chat.ai_credential]).show?, @chat.ai_credential.display_name, admin_ai_credential_path(@chat.ai_credential), class: text_link_classes))) %>
     <% end %>
     <% if @chat.error_category.present? %>
       <% list.with_item(StatListItemComponent.new(label: "Error", value: @chat.error_category)) %>

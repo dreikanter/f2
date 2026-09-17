@@ -4,17 +4,13 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-17
 
-- The AI API Log uses compact two-line rows with timestamps on the right, and its link is now in Dev Tools.
-- AI transcripts show their short ID in the title, a status badge, and timestamps matching post details.
-- AI transcripts show readable JSON responses, tool call and source details, and clearer section titles.
-- Transcript messages use two-section cards with their origin and timestamp above the content.
 - AI feeds use updated model limits and cost estimates after the model list refreshes.
 - Hide external search settings until supported, and prevent saved external selections from using AI provider search.
 - Feed previews explain why posts would be rejected and skip unidentified items without failing.
 
 ## 2026-09-16
 
-- Admins can browse AI transcripts and recorded usage from the past two months.
+- Users with dev permission can inspect AI provider requests, responses, and usage in the AI API Log under Dev Tools.
 - Restore AI request details and spending estimates for feed refreshes and previews.
 
 ## 2026-09-15
