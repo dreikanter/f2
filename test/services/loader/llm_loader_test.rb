@@ -12,11 +12,9 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     loader = Loader::LlmLoader.new(feed)
 
     assert_difference "LlmChat.count", 1 do
-      assert_no_difference "LlmUsage.count" do
-        result = loader.load
-        assert_instance_of LlmResult, result
-        assert_equal '{"items":[]}', result.content
-      end
+      result = loader.load
+      assert_instance_of LlmResult, result
+      assert_equal '{"items":[]}', result.content
     end
 
     chat = feed.llm_chats.sole

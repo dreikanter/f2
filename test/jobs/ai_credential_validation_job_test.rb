@@ -13,7 +13,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
       run = openai_credential.validate_async(AiCredentialValidationJob)
       assert_enqueued_with(job: ProviderCredentialValidationTimeoutJob, args: [run], at: run.deadline_at)
 
-      assert_no_difference "LlmUsage.count" do
+      assert_no_difference "RubyLLM::ActiveRecord::Usage.count" do
         perform_enqueued_jobs(only: AiCredentialValidationJob)
       end
 

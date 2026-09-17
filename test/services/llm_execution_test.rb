@@ -126,15 +126,13 @@ class LlmExecutionTest < ActiveSupport::TestCase
     assert_not_requested :post, "https://api.openai.com/v1/responses"
   end
 
-  test "#call should stop before a fifth physical request without creating accounting rows" do
+  test "#call should stop before a fifth physical request" do
     record = staged_chat
     record.with_tools(Lookup)
     request = stub_request(:post, "https://api.openai.com/v1/responses")
       .to_return { { body: tool_response.to_json, headers: { "Content-Type" => "application/json" } } }
 
-    assert_no_difference "LlmUsage.count" do
-      assert_raises(LlmExecution::RequestLimitExceeded) { execution(record).call }
-    end
+    assert_raises(LlmExecution::RequestLimitExceeded) { execution(record).call }
 
     assert_equal 4, record.ruby_llm_usages.count
     assert_requested request, times: 4

@@ -28,11 +28,9 @@ ledger. External web-search accounting remains in `WebSearchUsage`.
 
 ## Previous accounting data
 
-Existing `llm_usages` records are discarded, not migrated into RubyLLM usage.
-The data migration deletes those rows and their `LlmUsage` event references.
-RubyLLM chats, messages, usage, and external web-search accounting are preserved,
-as are existing event summary snapshots.
+The old `llm_usages` table and model are removed. Stored records are discarded,
+not migrated into RubyLLM usage, and their `LlmUsage` event references are deleted.
+RubyLLM chats, messages, usage, external web-search accounting, and existing event
+summary snapshots are preserved.
 
-The deletion is permanent: rolling back the migration does not restore the
-records. The empty table and its model remain until the separate accounting
-cleanup removes them.
+Rollback recreates an empty table; discarded records and references are not restored.

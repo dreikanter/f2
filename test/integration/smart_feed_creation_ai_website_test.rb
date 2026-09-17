@@ -33,7 +33,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
     credential
     search_credential
 
-    assert_no_difference ["LlmChat.count", "LlmUsage.count"] do
+    assert_no_difference ["LlmChat.count", "RubyLLM::ActiveRecord::Usage.count"] do
       post feeds_path, params: {
         feed: { params: { prompt: ai_url }, name: "Saved AI feed", feed_profile_key: "llm",
                 access_token_id: access_token.id, target_group: "testgroup", schedule_interval: "1h",

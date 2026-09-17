@@ -14,7 +14,6 @@ class LlmUsageReportTest < ActiveSupport::TestCase
     create(:ruby_llm_usage, chat: chat, message: message, status: "failed", total_cost: "0.004",
                             input_tokens: 20, output_tokens: 4, cache_write_tokens: 5, thinking_tokens: 2)
     create(:ruby_llm_usage, chat: create(:llm_chat, user: feed.user, feed: feed), total_cost: 9)
-    create(:llm_usage, user: feed.user, feed: feed, cost_estimate_cents: 99)
 
     totals = LlmUsageReport.for_event(event).totals
 
