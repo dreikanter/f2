@@ -76,6 +76,9 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
+    # The SDK catalog cache outlives each test's database rollback.
+    teardown { RubyLLM.models.load_from_json }
+
     # Add more helper methods to be used by all tests here...
   end
 end

@@ -2,6 +2,8 @@ require "test_helper"
 
 class Loader::LlmLoaderTest < ActiveSupport::TestCase
   test "#load should stage the selected model and return content with RubyLLM usage" do
+    assert_empty RubyLLM::ActiveRecord::Model.all
+    RubyLLM.models.load_from_store
     payload = nil
     request = stub_request(:post, "https://api.openai.com/v1/responses")
       .with(headers: { "Authorization" => "Bearer loader-test-key" })
@@ -42,6 +44,54 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert usage.total_cost.positive?
     assert_equal chat.messages.last, usage.message
     assert_requested request, times: 1
+  end
+
+  test "#load should use updated model limits and pricing after another worker refreshes the catalog" do
+    model = create(:llm_model, model_id: feed.ai_model, max_output_tokens: 8_192,
+                              pricing: { text_tokens: { standard: { input_per_million: 1, output_per_million: 2 } } })
+    RubyLLM.models.load_from_store
+    model.update!(max_output_tokens: 1_024,
+                  pricing: { text_tokens: { standard: { input_per_million: 3, output_per_million: 4 } } })
+    payload = nil
+    request = stub_request(:post, "https://api.openai.com/v1/responses")
+      .with(headers: { "Authorization" => "Bearer loader-test-key" })
+      .to_return do |http|
+        payload = JSON.parse(http.body)
+        { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+      end
+
+    Loader::LlmLoader.new(feed).load
+
+    assert_equal feed.ai_model, payload.fetch("model")
+    assert_equal 1_024, payload.fetch("max_output_tokens")
+    usage = feed.llm_chats.sole.ruby_llm_usages.sole
+    assert_equal BigDecimal("0.0002"), usage.total_cost
+    assert_requested request, times: 1
+    assert_not_requested :get, /./
+  end
+
+  test "#load should use persisted metadata for a model added after the worker cached its catalog" do
+    RubyLLM.models.load_from_json
+    model = create(:llm_model, model_id: "newly-listed-model", max_output_tokens: 2_048,
+                              pricing: { text_tokens: { standard: { input_per_million: 1, output_per_million: 2 } } })
+    feed.ai_model = model.model_id
+    payload = nil
+    request = stub_request(:post, "https://api.openai.com/v1/responses")
+      .with(headers: { "Authorization" => "Bearer loader-test-key" })
+      .to_return do |http|
+        payload = JSON.parse(http.body)
+        response = completed_response.merge("model" => model.model_id)
+        { body: response.to_json, headers: { "Content-Type" => "application/json" } }
+      end
+
+    Loader::LlmLoader.new(feed).load
+
+    assert_equal model.model_id, payload.fetch("model")
+    assert_equal 2_048, payload.fetch("max_output_tokens")
+    usage = feed.llm_chats.sole.ruby_llm_usages.sole
+    assert_equal BigDecimal("0.00008"), usage.total_cost
+    assert_requested request, times: 1
+    assert_not_requested :get, /./
   end
 
   test "#load should preserve an unlisted model and create a fresh conversation on every call" do

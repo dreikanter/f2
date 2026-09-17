@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-17
+
+- AI feeds use updated model limits and cost estimates after the model list refreshes.
+
 ## 2026-09-16
 
 - Admins can browse AI transcripts and recorded usage from the past two months.
