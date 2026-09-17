@@ -5,6 +5,7 @@ module Loader
     def load
       raise Loader::Error, "An active AI credential is required." unless feed.ai_credential&.active?
       raise Loader::Error, "An AI model is required." if feed.ai_model.blank?
+      raise Loader::Error, "External search is not supported yet." if feed.search_credential_id.present?
 
       provider = feed.ai_credential.build_llm_client
       chat = create_chat(provider)

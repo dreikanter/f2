@@ -8,6 +8,14 @@ class PostPreviewComponent < ViewComponent::Base
     post_data["uid"].presence
   end
 
+  def rejected?
+    post_data["status"] == "rejected"
+  end
+
+  def rejection_reasons
+    Array(post_data["validation_errors"]).map(&:humanize)
+  end
+
   def source_url
     post_data["source_url"].presence
   end

@@ -73,13 +73,15 @@ class FormAutofocusTest < ActionDispatch::IntegrationTest
 
   test "new search credential form autofocuses the provider field" do
     sign_in_as(user)
-    get new_search_credential_path
+    Rails.configuration.x.stub(:external_search_enabled, true) { get new_search_credential_path }
     assert_autofocus_on_first_field "search_credential_provider"
   end
 
   test "edit search credential form autofocuses the name field" do
     sign_in_as(user)
-    get edit_search_credential_path(create(:search_credential, user: user))
+    Rails.configuration.x.stub(:external_search_enabled, true) do
+      get edit_search_credential_path(create(:search_credential, user: user))
+    end
     assert_autofocus_on_first_field "search_credential_display_name"
   end
 

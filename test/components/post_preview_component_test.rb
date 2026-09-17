@@ -41,6 +41,34 @@ class PostPreviewComponentTest < ViewComponent::TestCase
     refute_includes result.text, "UID:"
     refute_includes result.text, "Published:"
     refute_includes result.text, "URL:"
+    assert_empty result.css('[data-key="preview.rejection"]')
+  end
+
+  test "#render should explain why a blank post was rejected" do
+    post_data = {
+      "content" => "",
+      "status" => "rejected",
+      "validation_errors" => ["missing_content"]
+    }
+
+    result = render_inline(PostPreviewComponent.new(post_data: post_data))
+
+    rejection = result.at_css('[data-key="preview.rejection"]')
+    assert_includes rejection.text, "Won't be posted"
+    assert_equal ["Missing content"], rejection.css("li").map(&:text)
+  end
+
+  test "#render should show accepted content without a rejection warning" do
+    post_data = {
+      "content" => "A source post",
+      "status" => "enqueued",
+      "validation_errors" => []
+    }
+
+    result = render_inline(PostPreviewComponent.new(post_data: post_data))
+
+    assert_includes result.text, "A source post"
+    assert_empty result.css('[data-key="preview.rejection"]')
   end
 
   test "omits attachments section when not present" do

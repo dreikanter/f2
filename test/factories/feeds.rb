@@ -8,9 +8,6 @@ FactoryBot.define do
     description { "" }
     import_after { nil }
     target_group { "testgroup" }
-    search_credential do
-      association(:search_credential, :active, user: user) if feed_profile_key && FeedProfile.depends_on_ai?(feed_profile_key)
-    end
 
     after(:build) do |feed|
       if feed.user && feed.access_token.nil?

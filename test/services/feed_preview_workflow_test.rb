@@ -238,6 +238,98 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     end
   end
 
+  test "#execute should agree with refresh on unidentified and rejected AI items" do
+    freeze_time
+    preview = ai_preview
+    feed = create(:feed, user: user, feed_profile_key: "llm", params: preview.params,
+                  ai_credential: preview.ai_credential, ai_model: preview.ai_model, search_credential: nil)
+    preview.update!(feed: feed)
+    response = completed_ai_response
+    response["output"].last["content"].first["text"] = {
+      items: [
+        { source_url: "https://example.com/", body: "A homepage" },
+        { source_url: "https://example.com/empty", body: "" },
+        { source_url: "https://example.com/post", body: "A source post" },
+        { source_url: nil, body: "A daily digest" }
+      ]
+    }.to_json
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+    assert_no_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"] do
+      assert_no_enqueued_jobs(only: PostPublishJob) do
+        FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
+      end
+    end
+
+    assert preview.reload.ready?
+    assert feed.llm_chats.sole.succeeded?
+    assert_equal 3, preview.posts_count
+    rejected, accepted, digest = preview.posts_data
+    assert_equal "rejected", rejected["status"]
+    assert_equal ["missing_content"], rejected["validation_errors"]
+    assert_equal "", rejected["content"]
+    assert_equal "enqueued", accepted["status"]
+    assert_empty accepted["validation_errors"]
+    assert_equal "enqueued", digest["status"]
+    assert_nil digest["source_url"]
+    assert_equal Uid::Resolver.digest_period_uid(Time.current), digest["uid"]
+    assert_equal 4, preview.total_entries_count
+    assert_equal 1, preview.unidentified_entries_count
+    assert_equal 1, preview.rejected_posts_count
+    event = Event.find_by!(type: "feed_preview", subject: feed)
+    assert_equal "completed", event.metadata["status"]
+    assert_equal 1, event.metadata.dig("stats", "unidentified_entries")
+    assert_equal 1, event.metadata.dig("stats", "rejected_posts")
+
+    assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
+      FeedRefreshWorkflow.new(feed).execute
+    end
+
+    fields = %w[uid status validation_errors]
+    expected = preview.posts_data.map { |post| post.slice(*fields) }.sort_by { |post| post["uid"] }
+    assert_equal expected, feed.posts.order(:uid).map { |post| post.attributes.slice(*fields) }
+    assert_equal 2, feed.llm_chats.where(status: :succeeded).count
+  end
+
+  test "#execute should skip unidentified items before applying the preview limit" do
+    response = completed_ai_response
+    response["output"].last["content"].first["text"] = {
+      items: [
+        { source_url: "https://example.com/", body: "A homepage" },
+        { source_url: "https://example.com/post", body: "A source post" }
+      ]
+    }.to_json
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+    stub_const(FeedPreview, :PREVIEW_POSTS_LIMIT, 1) do
+      FeedPreviewWorkflow.new(ai_preview, run_id: AI_RUN_ID).execute
+    end
+
+    assert ai_preview.reload.ready?
+    assert_equal "https://example.com/post", ai_preview.posts_data.sole["uid"]
+    assert_equal "enqueued", ai_preview.posts_data.sole["status"]
+    assert_equal 2, ai_preview.total_entries_count
+    assert_equal 1, ai_preview.unidentified_entries_count
+    assert_equal 1, ai_preview.data.dig("stats", "preview_entries")
+  end
+
+  test "#execute should complete a preview containing only unidentified AI items" do
+    response = completed_ai_response
+    response["output"].last["content"].first["text"] = {
+      items: [{ source_url: "https://example.com/", body: "A homepage" }]
+    }.to_json
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+    FeedPreviewWorkflow.new(ai_preview, run_id: AI_RUN_ID).execute
+
+    assert ai_preview.reload.ready?
+    assert LlmChat.sole.succeeded?
+    assert_empty ai_preview.posts_data
+    assert_equal 1, ai_preview.total_entries_count
+    assert_equal 1, ai_preview.unidentified_entries_count
+    assert_equal 0, ai_preview.rejected_posts_count
+  end
+
   test "#execute should reject an expired preview before contacting the provider" do
     freeze_time do
       preview = ai_preview
@@ -364,6 +456,34 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_nil preview.data
     event = Event.find_by!(type: "feed_preview", subject: preview.ai_credential)
     assert_equal "interrupted", event.metadata["status"]
+  end
+
+  test "#execute should reject a saved external search selection omitted from the preview request" do
+    create(:llm_model, model_id: "gpt-5-nano")
+    credential = create(:ai_credential, :active, user: user)
+    search_credential = create(:search_credential, :inactive, user: user)
+    feed = create(:feed, user: user, feed_profile_key: "llm", params: { prompt: "News" },
+                  ai_credential: credential, ai_model: "gpt-5-nano", search_credential: search_credential)
+    request = FeedPreviewRequest.new(user: user, attributes: {
+      profile_key: "llm",
+      params: feed.params,
+      feed_id: feed.id,
+      ai_credential_id: credential.id,
+      ai_model: feed.ai_model
+    }).create
+    preview = request.preview
+
+    assert_no_difference "LlmChat.count" do
+      error = assert_raises(Loader::Error) do
+        FeedPreviewWorkflow.new(preview, run_id: preview.run_id).execute
+      end
+      assert_equal "External search is not supported yet.", error.message
+    end
+
+    assert preview.reload.failed?
+    assert_equal search_credential, preview.search_credential
+    assert_equal search_credential, feed.reload.search_credential
+    assert_not_requested :any, /./
   end
 
   private

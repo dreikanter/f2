@@ -253,6 +253,27 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_not_requested :any, /./
   end
 
+  test "#load should reject external search before creating a chat or making requests" do
+    feed.search_credential = create(:search_credential, :active, user: feed.user)
+
+    assert_no_difference "LlmChat.count" do
+      error = assert_raises(Loader::Error) { Loader::LlmLoader.new(feed).load }
+
+      assert_equal "External search is not supported yet.", error.message
+    end
+    assert_not_requested :any, /./
+  end
+
+  test "#load should reject external search even when its settings are exposed" do
+    feed.search_credential = create(:search_credential, :active, user: feed.user)
+
+    Rails.configuration.x.stub(:external_search_enabled, true) do
+      assert_raises(Loader::Error) { Loader::LlmLoader.new(feed).load }
+    end
+
+    assert_not_requested :any, /./
+  end
+
   private
 
   def credential

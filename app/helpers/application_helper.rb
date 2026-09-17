@@ -198,11 +198,11 @@ module ApplicationHelper
           path: ai_credentials_path,
           active: current_page?(ai_credentials_path)
         },
-        {
+        ({
           name: "Search Credentials",
           path: search_credentials_path,
           active: current_page?(search_credentials_path)
-        },
+        } if Rails.configuration.x.external_search_enabled),
         {
           name: "Invites",
           path: invites_path,
@@ -213,7 +213,7 @@ module ApplicationHelper
           path: changelog_path,
           active: current_page?(changelog_path)
         }
-      ]
+      ].compact
     ]
   end
 

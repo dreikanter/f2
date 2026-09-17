@@ -1,6 +1,13 @@
 require "test_helper"
 
 class SearchCredentials::FeedDetourTest < ActionDispatch::IntegrationTest
+  setup do
+    @external_search_enabled = Rails.configuration.x.external_search_enabled
+    Rails.configuration.x.external_search_enabled = true
+  end
+
+  teardown { Rails.configuration.x.external_search_enabled = @external_search_enabled }
+
   include ActiveJob::TestHelper
 
   setup { clear_enqueued_jobs }

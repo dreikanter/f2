@@ -2,6 +2,25 @@ require "test_helper"
 require "view_component/test_case"
 
 class EventDescriptionComponentTest < ViewComponent::TestCase
+  test "#call should show search credential names without linking to unavailable settings" do
+    credential = create(:search_credential, user: user, display_name: "<b>Search key</b>")
+    event = create(:event, type: "search_credential_deactivated", user: user, subject: credential)
+
+    result = render_inline(EventDescriptionComponent.for(event))
+
+    assert_includes result.text, credential.display_name
+    assert_empty result.css("a, b")
+  end
+
+  test "#call should retain admin links to search credential history" do
+    credential = create(:search_credential, user: user)
+    event = create(:event, type: "search_credential_deactivated", user: user, subject: credential)
+
+    result = render_inline(Admin::EventDescriptionComponent.for(event))
+
+    assert_equal "/admin/search_credentials/#{credential.id}", result.at_css("a")["href"]
+  end
+
   test "#call should link saved feed preview activity to the feed" do
     feed = create(:feed)
     %w[started completed failed interrupted].each do |status|

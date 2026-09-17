@@ -1,6 +1,13 @@
 require "test_helper"
 
 class SearchCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTest
+  setup do
+    @external_search_enabled = Rails.configuration.x.external_search_enabled
+    Rails.configuration.x.external_search_enabled = true
+  end
+
+  teardown { Rails.configuration.x.external_search_enabled = @external_search_enabled }
+
   def user
     @user ||= regular_user
   end
