@@ -441,6 +441,8 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
   test "#execute should report only the run's SDK usage even when timestamps overlap" do
     freeze_time
+    create(:llm_model, model_id: "gpt-5-nano",
+                       pricing: { text_tokens: { standard: { input_per_million: 0.05, output_per_million: 0.4 } } })
     credential = create(:ai_credential, :active)
     test_feed = create(:feed, :enabled, user: credential.user, ai_credential: credential,
                                       feed_profile_key: "llm", ai_model: "gpt-5-nano",

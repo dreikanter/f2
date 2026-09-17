@@ -1,8 +1,6 @@
 require "test_helper"
 
 class RefreshLlmModelsJobTest < ActiveSupport::TestCase
-  teardown { RubyLLM.models.load_from_json }
-
   def stub_catalog
     stub_request(:get, "https://rubyllm.com/models.json").to_return(
       body: [{ id: "shared-model", name: "Shared model", provider: "openai" }].to_json,

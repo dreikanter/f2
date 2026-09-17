@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-17
 
+- AI feeds use updated model limits and cost estimates after the model list refreshes.
 - Hide external search settings until supported, and prevent saved external selections from using AI provider search.
 - Feed previews explain why posts would be rejected and skip unidentified items without failing.
 

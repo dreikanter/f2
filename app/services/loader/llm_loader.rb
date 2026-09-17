@@ -34,6 +34,13 @@ module Loader
     private
 
     def create_chat(provider)
+      # Another worker may have refreshed the persisted catalog.
+      if RubyLLM::ActiveRecord::Model.exists?
+        RubyLLM.models.load_from_store
+      else
+        RubyLLM.models.load_from_json
+      end
+
       now = Time.current
       LlmChat.create!(
         user: feed.user,
