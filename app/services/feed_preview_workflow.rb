@@ -84,7 +84,10 @@ class FeedPreviewWorkflow
     processor = temp_feed.processor_instance(raw_data)
     entries = processor.process.entries
 
-    limited_entries = entries.first(FeedPreview::PREVIEW_POSTS_LIMIT)
+    identified_entries, unidentified_entries = entries.partition { |entry| entry.uid.present? }
+    record_stats(unidentified_entries: unidentified_entries.size) if unidentified_entries.any?
+
+    limited_entries = identified_entries.first(FeedPreview::PREVIEW_POSTS_LIMIT)
 
     record_stats(total_entries: entries.size, preview_entries: limited_entries.size)
 
@@ -110,6 +113,8 @@ class FeedPreviewWorkflow
       post = normalizer.normalize
 
       {
+        status: post.status,
+        validation_errors: post.validation_errors,
         content: post.content,
         source_url: post.source_url,
         published_at: post.published_at&.iso8601,
@@ -119,7 +124,7 @@ class FeedPreviewWorkflow
       }
     end
 
-    record_stats(normalized_posts: posts.size)
+    record_stats(normalized_posts: posts.size, rejected_posts: posts.count { |post| post[:status] == "rejected" })
     posts
   end
 
