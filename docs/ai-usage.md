@@ -25,3 +25,14 @@ Reports cover retained SDK data. Interrupted requests may have no usage row.
 Pruning a chat removes its usage from reports and event details; existing event
 summary snapshots retain their original values. These reports are not a billing
 ledger. External web-search accounting remains in `WebSearchUsage`.
+
+## Previous accounting data
+
+Existing `llm_usages` records are discarded, not migrated into RubyLLM usage.
+The data migration deletes those rows and their `LlmUsage` event references.
+RubyLLM chats, messages, usage, and external web-search accounting are preserved,
+as are existing event summary snapshots.
+
+The deletion is permanent: rolling back the migration does not restore the
+records. The empty table and its model remain until the separate accounting
+cleanup removes them.
