@@ -100,6 +100,16 @@ class FeedPreview < ApplicationRecord
     posts_data.size
   end
 
+  def rejected_posts_count
+    posts_data.count { |post| post["status"] == "rejected" }
+  end
+
+  def unidentified_entries_count
+    return 0 unless data.present? && ready?
+
+    data.dig("stats", "unidentified_entries").to_i
+  end
+
   # Total items found in the source: the full batch the loader pulled, not just
   # the handful shown in the preview. This is an upper bound on what enabling the
   # feed enqueues; the refresh later drops duplicates and entries before the

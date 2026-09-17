@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-17
+
+- Feed previews explain why posts would be rejected and skip unidentified items without failing.
+
 ## 2026-09-16
 
 - Admins can browse AI transcripts and recorded usage from the past two months.
