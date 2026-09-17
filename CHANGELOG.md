@@ -10,7 +10,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-16
 
-- Admins can browse AI transcripts and recorded usage from the past two months.
+- Users with dev permission can inspect AI provider requests, responses, and usage in the AI API Log under Dev Tools.
 - Restore AI request details and spending estimates for feed refreshes and previews.
 
 ## 2026-09-15

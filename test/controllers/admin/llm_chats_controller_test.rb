@@ -2,16 +2,22 @@ require "test_helper"
 
 class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
   test "should list retained chats across accounts newest first with pagination" do
-    sign_in_as(admin_user)
+    sign_in_as(dev_user)
     older = create(:llm_chat, user: regular_user, created_at: 1.day.ago)
     newer = create(:llm_chat, user: other_user)
 
     get admin_llm_chats_path, params: { per_page: 1 }
 
     assert_response :success
+    assert_select "h1", "AI API Log"
+    assert_select "a[href=?]", development_path, text: "Dev Tools"
     assert_select '[data-key="ai_history.chat"]', count: 1
     assert_select "a[href=?]", admin_llm_chat_path(newer)
     assert_select "a[href=?]", admin_llm_chat_path(older), count: 0
+    assert_select '[data-key="ai_history.chat"]' do
+      assert_select "p", "#{newer.purpose.humanize} · #{newer.status.humanize} · #{other_user.email_address}"
+      assert_select "time[datetime=?]", newer.created_at.iso8601
+    end
 
     get admin_llm_chats_path, params: { per_page: 1, page: 2 }
 
@@ -21,7 +27,7 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should read only the selected chat messages and usage without executing requests" do
-    sign_in_as(admin_user)
+    sign_in_as(create(:user, :admin, :dev))
     feed = create(:feed, user: regular_user)
     credential = create(:ai_credential, user: regular_user)
     chat = create(:llm_chat, user: regular_user, feed: feed, ai_credential: credential)
@@ -43,8 +49,7 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
-    assert_select '[data-key="ai_history.message"] h3', text: "System"
-    assert_equal ["System", "Assistant"], css_select('[data-key="ai_history.message"] h3').map(&:text)
+    assert_equal ["System instructions", "AI response"], css_select('[data-key="ai_history.message"] h3').map(&:text)
     assert_select '[data-key="ai_history.messages"] script', count: 0
     assert_includes response.body, "&lt;script&gt;"
     assert_not_includes response.body, "Private other transcript"
@@ -58,8 +63,45 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     assert_empty WebMock::RequestRegistry.instance.requested_signatures.hash
   end
 
+  test "should format JSON responses and show recorded tool call and source fields" do
+    sign_in_as(dev_user)
+    chat = create(:llm_chat)
+    content = { "items" => [{ "title" => "Economic report", "body" => "Definitions differ." }] }
+    message = chat.messages.create!(
+      role: "assistant",
+      content: JSON.generate(content),
+      server_tool_calls: [{
+        type: "web_search_call",
+        name: "web_search",
+        id: "search_1",
+        input: { query: "economic report" },
+        result: { url: "https://example.com/report" },
+        raw: { status: "completed", action: { type: "search", query: "economic report" } }
+      }],
+      citations: [{
+        title: "Economic report",
+        url: "https://example.com/report",
+        cited_text: "Definitions differ."
+      }]
+    )
+
+    get admin_llm_chat_path(chat)
+
+    assert_response :success
+    assert_select '[data-key="ai_history.messages"] h2', "Conversation"
+    assert_select '[data-key="ai_history.message"] h3', "AI response"
+    assert_select '[data-key="ai_history.message_header"] time[datetime=?]', message.created_at.iso8601
+    assert_select '[data-key="ai_history.message"] summary', text: "Provider tool calls"
+    assert_select '[data-key="ai_history.message"] summary', text: "Sources"
+    assert_select '[data-key="ai_history.usage"] h2', "Token Usage and Cost"
+    response_text = css_select('[data-key="ai_history.content"]').sole.text
+    assert_equal content, JSON.parse(response_text)
+    assert_equal message[:server_tool_calls], JSON.parse(css_select('[data-key="ai_history.tool_calls"]').sole.text)
+    assert_equal message[:citations], JSON.parse(css_select('[data-key="ai_history.citations"]').sole.text)
+  end
+
   test "should exclude expired chats before they are purged" do
-    sign_in_as(admin_user)
+    sign_in_as(dev_user)
     freeze_time do
       expired = create(:llm_chat, created_at: LlmChat::RETENTION.ago)
       retained = create(:llm_chat, created_at: LlmChat::RETENTION.ago + 1.second)
@@ -79,17 +121,40 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should render a chat without messages usage feed or credential" do
-    sign_in_as(admin_user)
-    chat = create(:llm_chat)
+    travel_to Time.zone.local(2026, 9, 17, 22, 47)
+    sign_in_as(dev_user)
+    chat = create(:llm_chat, started_at: 13.hours.ago)
 
     get admin_llm_chat_path(chat)
 
     assert_response :success
+    assert_select "h1", "AI Transcript #{chat.id.last(5)}"
+    assert_select "title", text: /AI Transcript #{chat.id.last(5)}/
+    assert_select 'header [data-key="ai_history.status_badge"]', "Running"
+    assert_select "dl dt", text: "Status", count: 0
+    assert_select '[data-key="ai_history.started"] time[datetime=?]', chat.started_at.iso8601, text: "17 Sep 2026, 09:47 (13h)"
     assert_select '[data-key="ai_history.messages"]', text: /No messages recorded/
     assert_select '[data-key="ai_history.usage"]', text: /No usage recorded/
   end
 
-  test "should deny the chat owner access to admin history" do
+  test "should show related records to developers without links to admin pages" do
+    sign_in_as(dev_user)
+    feed = create(:feed, user: regular_user)
+    credential = create(:ai_credential, user: regular_user)
+    chat = create(:llm_chat, user: regular_user, feed: feed, ai_credential: credential)
+
+    get admin_llm_chat_path(chat)
+
+    assert_response :success
+    assert_select "dd", text: regular_user.email_address
+    assert_select "dd", text: feed.name
+    assert_select "dd", text: credential.display_name
+    assert_select "a[href=?]", admin_user_path(regular_user), count: 0
+    assert_select "a[href=?]", admin_feed_path(feed), count: 0
+    assert_select "a[href=?]", admin_ai_credential_path(credential), count: 0
+  end
+
+  test "should deny the chat owner access without dev permission" do
     sign_in_as(regular_user)
     chat = create(:llm_chat, user: regular_user)
 
@@ -109,8 +174,8 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
-  test "should deny developers without admin permission" do
-    sign_in_as(dev_user)
+  test "should deny admins without dev permission" do
+    sign_in_as(admin_user)
     chat = create(:llm_chat)
 
     get admin_llm_chats_path

@@ -1,22 +1,29 @@
-<% content_for :title, "AI Transcript" %>
+<% chat_title = "AI Transcript #{short_ref(@chat.id)}" %>
+<% content_for :title, chat_title %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "AI Transcript") do |header| %>
-    <% header.with_breadcrumb(label: "AI History", url: admin_llm_chats_path) %>
+  <%= render PageHeaderComponent.new(title: chat_title) do |header| %>
+    <% header.with_breadcrumb(label: "AI API Log", url: admin_llm_chats_path) %>
+    <% header.with_context_paragraph do %>
+      <%= render BadgeComponent.new(
+        text: @chat.status.humanize,
+        color: llm_chat_status_badge_color(@chat.status),
+        key: "ai_history.status_badge"
+      ) %>
+    <% end %>
   <% end %>
 
   <%= render DescriptionListComponent.new do |list| %>
     <% list.with_item(StatListItemComponent.new(label: "Provider", value: @chat.requested_provider)) %>
     <% list.with_item(StatListItemComponent.new(label: "Model", value: @chat.requested_model)) %>
     <% list.with_item(StatListItemComponent.new(label: "Purpose", value: @chat.purpose.humanize)) %>
-    <% list.with_item(StatListItemComponent.new(label: "Status", value: @chat.status.humanize)) %>
-    <% list.with_item(StatListItemComponent.new(label: "Started", value: @chat.started_at.to_fs(:long))) %>
-    <% list.with_item(StatListItemComponent.new(label: "User", value: link_to(@chat.user.email_address, admin_user_path(@chat.user), class: text_link_classes))) %>
+    <% list.with_item(StatListItemComponent.new(label: "Started", value: datetime_with_duration_tag(@chat.started_at), key: "ai_history.started")) %>
+    <% list.with_item(StatListItemComponent.new(label: "User", value: link_to_if(policy([:admin, @chat.user]).show?, @chat.user.email_address, admin_user_path(@chat.user), class: text_link_classes))) %>
     <% if @chat.feed %>
-      <% list.with_item(StatListItemComponent.new(label: "Feed", value: link_to(@chat.feed.name, admin_feed_path(@chat.feed), class: text_link_classes))) %>
+      <% list.with_item(StatListItemComponent.new(label: "Feed", value: link_to_if(policy([:admin, @chat.feed]).show?, @chat.feed.name, admin_feed_path(@chat.feed), class: text_link_classes))) %>
     <% end %>
     <% if @chat.ai_credential %>
-      <% list.with_item(StatListItemComponent.new(label: "AI Credential", value: link_to(@chat.ai_credential.display_name, admin_ai_credential_path(@chat.ai_credential), class: text_link_classes))) %>
+      <% list.with_item(StatListItemComponent.new(label: "AI Credential", value: link_to_if(policy([:admin, @chat.ai_credential]).show?, @chat.ai_credential.display_name, admin_ai_credential_path(@chat.ai_credential), class: text_link_classes))) %>
     <% end %>
     <% if @chat.error_category.present? %>
       <% list.with_item(StatListItemComponent.new(label: "Error", value: @chat.error_category)) %>
@@ -24,24 +31,29 @@
   <% end %>
 
   <section class="space-y-4" data-key="ai_history.messages">
-    <%= h2 "Messages" %>
+    <%= h2 "Conversation" %>
     <% @messages.each do |message| %>
-      <article class="space-y-2 rounded-lg border border-border p-4" data-key="ai_history.message">
-        <h3 class="font-semibold text-heading"><%= message.role.humanize %></h3>
-        <pre class="whitespace-pre-wrap break-words text-sm text-body"><%= message.content %></pre>
-        <% if message.server_tool_calls.present? %>
-          <details>
-            <summary class="text-muted">Server tool calls</summary>
-            <pre class="whitespace-pre-wrap break-words text-sm text-body"><%= JSON.pretty_generate(message.server_tool_calls) %></pre>
-          </details>
+      <%= render CardComponent.new(data: { key: "ai_history.message" }) do |card| %>
+        <% card.with_section(class: "flex items-start justify-between gap-4 px-5 py-4", data: { key: "ai_history.message_header" }) do %>
+          <h3 class="font-semibold text-heading"><%= llm_message_title(message.role) %></h3>
+          <%= short_time_ago_tag(message.created_at, css_class: "shrink-0 text-sm tabular-nums text-muted") %>
         <% end %>
-        <% if message.citations.present? %>
-          <details>
-            <summary class="text-muted">Citations</summary>
-            <pre class="whitespace-pre-wrap break-words text-sm text-body"><%= JSON.pretty_generate(message.citations) %></pre>
-          </details>
+        <% card.with_section(class: "space-y-3 px-5 py-4") do %>
+          <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.content"><%= format_llm_message_content(message.content) %></pre>
+          <% if message.server_tool_calls.present? %>
+            <details>
+              <summary class="text-muted">Provider tool calls</summary>
+              <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.tool_calls"><%= JSON.pretty_generate(message.server_tool_calls.map(&:to_h)) %></pre>
+            </details>
+          <% end %>
+          <% if message.citations.present? %>
+            <details>
+              <summary class="text-muted">Sources</summary>
+              <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.citations"><%= JSON.pretty_generate(message.citations.map(&:to_h)) %></pre>
+            </details>
+          <% end %>
         <% end %>
-      </article>
+      <% end %>
     <% end %>
     <% if @messages.empty? %>
       <p class="text-muted">No messages recorded.</p>
@@ -49,7 +61,7 @@
   </section>
 
   <section class="space-y-4" data-key="ai_history.usage">
-    <%= h2 "Recorded Usage" %>
+    <%= h2 "Token Usage and Cost" %>
     <% if @usages.any? %>
       <%= render LlmUsagesListComponent.new(usages: @usages) %>
     <% else %>
