@@ -9,6 +9,7 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     get admin_llm_chats_path, params: { per_page: 1 }
 
     assert_response :success
+    assert_select "h1", "AI API Log"
     assert_select "a[href=?]", development_path, text: "Dev Tools"
     assert_select '[data-key="ai_history.chat"]', count: 1
     assert_select "a[href=?]", admin_llm_chat_path(newer)

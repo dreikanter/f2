@@ -3,7 +3,7 @@
 
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: chat_title) do |header| %>
-    <% header.with_breadcrumb(label: "AI History", url: admin_llm_chats_path) %>
+    <% header.with_breadcrumb(label: "AI API Log", url: admin_llm_chats_path) %>
     <% header.with_context_paragraph do %>
       <%= render BadgeComponent.new(
         text: @chat.status.humanize,

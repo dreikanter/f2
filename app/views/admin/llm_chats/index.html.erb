@@ -1,7 +1,7 @@
-<% content_for :title, "AI History" %>
+<% content_for :title, "AI API Log" %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "AI History") do |header| %>
+  <%= render PageHeaderComponent.new(title: "AI API Log") do |header| %>
     <% header.with_breadcrumb(label: "Dev Tools", url: development_path) %>
   <% end %>
 
@@ -24,6 +24,6 @@
     <% end %>
     <%= render_pagination { |pagination| admin_llm_chats_path(pagination) } %>
   <% else %>
-    <%= render EmptyStateComponent.new("No AI history yet") %>
+    <%= render EmptyStateComponent.new("No AI requests yet") %>
   <% end %>
 </div>
