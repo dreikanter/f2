@@ -2,21 +2,28 @@
 
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "AI History") do |header| %>
-    <% header.with_breadcrumb(label: "Admin Panel", url: admin_path) %>
+    <% header.with_breadcrumb(label: "Dev Tools", url: development_path) %>
   <% end %>
 
   <p class="text-muted">Transcripts and recorded usage from the past two months.</p>
 
   <% if @chats.any? %>
-    <div class="divide-y divide-border rounded-lg border border-border">
+    <%= render(ListComponent.new) do |list| %>
       <% @chats.each do |chat| %>
-        <div class="space-y-2 p-4" data-key="ai_history.chat">
-          <%= link_to "#{chat.requested_provider} / #{chat.requested_model}", admin_llm_chat_path(chat), class: text_link_classes %>
-          <p class="text-body"><%= chat.purpose.humanize %> · <%= chat.status.humanize %> · <%= chat.user.email_address %></p>
-          <%= short_time_ago_tag(chat.created_at, css_class: "text-muted") %>
-        </div>
+        <% item = ListItemComponent.new(css_class: ListItemComponent::HOVER_ROW_CSS_CLASS, data: { key: "ai_history.chat" }) %>
+        <% item.with_primary do %>
+          <%= link_to "#{chat.requested_provider} / #{chat.requested_model}", admin_llm_chat_path(chat),
+                class: ListItemComponent::TITLE_LINK_CSS_CLASS %>
+        <% end %>
+        <% item.with_secondary do %>
+          <p class="truncate text-sm text-muted"><%= chat.purpose.humanize %> · <%= chat.status.humanize %> · <%= chat.user.email_address %></p>
+        <% end %>
+        <% item.with_trailing do %>
+          <%= short_time_ago_tag(chat.created_at, css_class: "shrink-0 text-sm tabular-nums text-muted") %>
+        <% end %>
+        <% list.with_item(item) %>
       <% end %>
-    </div>
+    <% end %>
     <%= render_pagination { |pagination| admin_llm_chats_path(pagination) } %>
   <% else %>
     <%= render EmptyStateComponent.new("No AI history yet") %>

@@ -45,6 +45,18 @@
       </div>
     <% end %>
 
+    <% if policy([:admin, LlmChat]).index? %>
+      <%= render LinkedCardComponent.new(href: admin_llm_chats_path) do %>
+        <div class="space-y-4">
+          <%= h2 class: "flex items-center gap-2" do %>
+            <%= icon("message-circle", css_class: "size-5") %>
+            <span>AI History</span>
+          <% end %>
+          <p class="text-body">Read AI transcripts and recorded usage</p>
+        </div>
+      <% end %>
+    <% end %>
+
     <%= render LinkedCardComponent.new(href: development_email_previews_path) do %>
       <div class="space-y-4">
         <%= h2 class: "flex items-center gap-2" do %>

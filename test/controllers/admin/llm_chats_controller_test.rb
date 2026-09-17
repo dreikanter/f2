@@ -9,9 +9,14 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     get admin_llm_chats_path, params: { per_page: 1 }
 
     assert_response :success
+    assert_select "a[href=?]", development_path, text: "Dev Tools"
     assert_select '[data-key="ai_history.chat"]', count: 1
     assert_select "a[href=?]", admin_llm_chat_path(newer)
     assert_select "a[href=?]", admin_llm_chat_path(older), count: 0
+    assert_select '[data-key="ai_history.chat"]' do
+      assert_select "p", "#{newer.purpose.humanize} · #{newer.status.humanize} · #{other_user.email_address}"
+      assert_select "time[datetime=?]", newer.created_at.iso8601
+    end
 
     get admin_llm_chats_path, params: { per_page: 1, page: 2 }
 

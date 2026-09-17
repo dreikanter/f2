@@ -9,13 +9,6 @@
   </section>
 
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-    <%= render LinkedCardComponent.new(href: admin_llm_chats_path) do %>
-      <div class="space-y-4">
-        <%= h2 "AI History" %>
-        <p class="text-body">Read AI transcripts and recorded usage</p>
-      </div>
-    <% end %>
-
     <%= render LinkedCardComponent.new(href: admin_users_path) do %>
       <div class="space-y-4">
         <%= h2 class: "flex items-center gap-2" do %>
