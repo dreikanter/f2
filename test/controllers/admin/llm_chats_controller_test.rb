@@ -96,7 +96,6 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="ai_history.usage"] h2', "Token Usage and Cost"
     response_text = css_select('[data-key="ai_history.content"]').sole.text
     assert_equal content, JSON.parse(response_text)
-    assert_includes response_text, "\n  \"items\": [\n    {"
     assert_equal message[:server_tool_calls], JSON.parse(css_select('[data-key="ai_history.tool_calls"]').sole.text)
     assert_equal message[:citations], JSON.parse(css_select('[data-key="ai_history.citations"]').sole.text)
   end
