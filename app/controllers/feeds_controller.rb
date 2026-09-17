@@ -149,7 +149,8 @@ class FeedsController < ApplicationController
   def setup_gate_path(feed)
     case params[:commit]
     when "save_as_draft_and_add_credentials" then new_ai_credential_path(feed_id: feed.id)
-    when "save_as_draft_and_add_search_credentials" then new_search_credential_path(feed_id: feed.id)
+    when "save_as_draft_and_add_search_credentials"
+      new_search_credential_path(feed_id: feed.id) if Rails.configuration.x.external_search_enabled
     when "save_as_draft_and_add_token" then new_access_token_path(feed_id: feed.id)
     end
   end

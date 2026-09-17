@@ -86,14 +86,11 @@ class FeedPreviewRequest
   end
 
   def search_credential
+    return unless FeedProfile.depends_on_ai?(profile_key)
     return @search_credential if defined?(@search_credential)
 
-    @search_credential =
-      if previous_preview
-        user.search_credentials.find_by(id: attributes[:search_credential_id])
-      elsif FeedProfile.depends_on_ai?(profile_key) && attributes[:search_credential_id].present?
-        user.search_credentials.active.find_by(id: attributes[:search_credential_id])
-      end
+    selected_id = attributes.fetch(:search_credential_id) { feed&.search_credential_id }
+    @search_credential = user.search_credentials.find(selected_id) if selected_id.present?
   end
 
   def ai_model

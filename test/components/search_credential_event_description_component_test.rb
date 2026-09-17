@@ -11,7 +11,9 @@ class SearchCredentialEventDescriptionComponentTest < ViewComponent::TestCase
       user: credential.user
     )
 
-    result = render_inline(EventDescriptionComponent.for(event))
+    result = Rails.configuration.x.stub(:external_search_enabled, true) do
+      render_inline(EventDescriptionComponent.for(event))
+    end
 
     assert_includes result.to_html, "Search credential"
     assert_includes result.to_html, "Personal Serper"
@@ -23,7 +25,9 @@ class SearchCredentialEventDescriptionComponentTest < ViewComponent::TestCase
     credential = create(:search_credential, :active, display_name: "Personal Serper")
     event = WebSearchUsage.record!(credential: credential)
 
-    result = render_inline(EventDescriptionComponent.for(event))
+    result = Rails.configuration.x.stub(:external_search_enabled, true) do
+      render_inline(EventDescriptionComponent.for(event))
+    end
 
     assert_includes result.to_html, "Personal Serper"
     assert_includes result.to_html, "/search_credentials/#{credential.id}"

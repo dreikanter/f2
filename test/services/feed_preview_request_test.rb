@@ -135,24 +135,46 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
     assert_nil result.preview.search_credential
   end
 
-  test "#create should ignore another user's search credential" do
+  test "#create should inherit the feed's search selection when the selector is omitted" do
     create(:llm_model, model_id: "sample-model")
-    foreign = create(:search_credential, :active)
+    feed = create(:feed, user: user, feed_profile_key: "llm", params: { prompt: "Sample news" },
+                  ai_credential: ai_credential, ai_model: "sample-model", search_credential: search_credential)
 
-    result = request(**ai_attributes, search_credential_id: foreign.id).create
+    result = request(**ai_attributes, feed_id: feed.id).create
+
+    assert_nil result.error
+    assert_equal search_credential, result.preview.search_credential
+  end
+
+  test "#create should honor an explicitly blank search selection without changing the feed" do
+    create(:llm_model, model_id: "sample-model")
+    feed = create(:feed, user: user, feed_profile_key: "llm", params: { prompt: "Sample news" },
+                  ai_credential: ai_credential, ai_model: "sample-model", search_credential: search_credential)
+
+    result = request(**ai_attributes, feed_id: feed.id, search_credential_id: "").create
 
     assert_nil result.error
     assert_nil result.preview.search_credential
+    assert_equal search_credential, feed.reload.search_credential
   end
 
-  test "#create should ignore an inactive search credential" do
+  test "#create should reject another user's search credential" do
+    create(:llm_model, model_id: "sample-model")
+    foreign = create(:search_credential, :active)
+
+    assert_raises ActiveRecord::RecordNotFound do
+      request(**ai_attributes, search_credential_id: foreign.id).create
+    end
+  end
+
+  test "#create should retain an inactive search credential" do
     create(:llm_model, model_id: "sample-model")
     search_credential.update!(active: false)
 
     result = request(**ai_attributes, search_credential_id: search_credential.id).create
 
     assert_nil result.error
-    assert_nil result.preview.search_credential
+    assert_equal search_credential, result.preview.search_credential
   end
 
   test "#create should ignore search selections for a non-AI profile" do

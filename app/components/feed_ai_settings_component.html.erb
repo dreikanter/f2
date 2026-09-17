@@ -47,17 +47,21 @@
         </div>
       <% end %>
 
-      <%= render PanelComponent.new do %>
-        <div class="space-y-2">
-          <%= form.label :search_credential_id, "External search (optional)", class: helpers.form_label_classes %>
-          <%= form.select :search_credential_id, search_credential_options, { selected: selected_search_credential_id },
-                          class: helpers.input_field_classes, disabled: !section_visible?,
-                          data: { ai_settings_target: "searchCredentialSelect", key: "form.search-credential" } %>
-          <p class="text-sm text-muted">Your AI provider handles search when available. Without search, the model uses supplied pages and available knowledge. Select an external search provider to use it instead.</p>
-          <% if form.object.errors[:search_credential].any? %>
-            <p class="text-sm text-danger"><%= form.object.errors[:search_credential].first %></p>
-          <% end %>
-        </div>
+      <% if Rails.configuration.x.external_search_enabled %>
+        <%= render PanelComponent.new do %>
+          <div class="space-y-2">
+            <%= form.label :search_credential_id, "External search (optional)", class: helpers.form_label_classes %>
+            <%= form.select :search_credential_id, search_credential_options, { selected: selected_search_credential_id },
+                            class: helpers.input_field_classes, disabled: !section_visible?,
+                            data: { ai_settings_target: "searchCredentialSelect", key: "form.search-credential" } %>
+            <p class="text-sm text-muted">Your AI provider handles search when available. Without search, the model uses supplied pages and available knowledge. Select an external search provider to use it instead.</p>
+            <% if form.object.errors[:search_credential].any? %>
+              <p class="text-sm text-danger"><%= form.object.errors[:search_credential].first %></p>
+            <% end %>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-sm text-muted">Search is provided by the AI provider.</p>
       <% end %>
     <% else %>
       <%= render PanelComponent.new(variant: :info) do %>

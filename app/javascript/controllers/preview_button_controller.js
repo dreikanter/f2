@@ -94,7 +94,7 @@ export default class extends Controller {
       const searchCredential = this._searchCredentialValue()
       const model = this._aiModelValue()
       if (credential) body.set("ai_credential_id", credential)
-      if (searchCredential) body.set("search_credential_id", searchCredential)
+      if (searchCredential !== undefined) body.set("search_credential_id", searchCredential)
       if (model) body.set("ai_model", model)
     }
 
@@ -161,7 +161,7 @@ export default class extends Controller {
   }
 
   _searchCredentialValue() {
-    return this.element.querySelector("select[name='feed[search_credential_id]']")?.value || ""
+    return this.element.querySelector("select[name='feed[search_credential_id]']")?.value
   }
 
   _aiModelValue() {

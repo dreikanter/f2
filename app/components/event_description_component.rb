@@ -76,6 +76,8 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def entity_link(label, path)
+    return ERB::Util.html_escape(label) unless path
+
     helpers.link_to(label, path, class: class_names(helpers.text_link_classes, "font-medium"))
   end
 
@@ -103,7 +105,7 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def search_credential_link_path(credential)
-    helpers.search_credential_path(credential)
+    helpers.search_credential_path(credential) if Rails.configuration.x.external_search_enabled
   end
 
   def escaped_message

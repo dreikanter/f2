@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-17
+
+- Hide external search settings until supported, and prevent saved external selections from using AI provider search.
+
 ## 2026-09-16
 
 - Admins can browse AI transcripts and recorded usage from the past two months.
