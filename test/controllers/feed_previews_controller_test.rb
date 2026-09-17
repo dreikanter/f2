@@ -62,8 +62,10 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     summary = css_select('[data-key="preview.summary"]').text
-    assert_match "We found 1 post in this feed", summary
-    assert_no_match(/peek/, summary)
+    assert_match "We found 1 item in this feed", summary
+    assert_no_match(/Showing/, summary)
+    assert_select '[data-key="preview.unidentified"]', count: 0
+    assert_select '[data-key="preview.rejected"]', count: 0
   end
 
   test "#create should note the preview is a subset when total exceeds shown posts" do
@@ -77,8 +79,56 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     summary = css_select('[data-key="preview.summary"]').text
-    assert_match "We found 25 posts in this feed", summary
-    assert_match "peek at the 10 most recent", summary
+    assert_match "We found 25 items in this feed", summary
+    assert_match "Showing 10", summary
+  end
+
+  test "#show should explain a preview containing only rejected posts" do
+    sign_in_as(user)
+    preview = create(:feed_preview, :completed, user: user, data: {
+      posts: [{ content: "", status: "rejected", validation_errors: ["missing_content"] }],
+      stats: { total_entries: 1 }
+    })
+
+    get feed_preview_url(preview), headers: TURBO_STREAM
+
+    assert_response :success
+    assert_select '[data-key="preview.success"][data-preview-done]'
+    assert_select '[data-key="preview.rejected"]', text: /1 shown item won't be posted/
+    assert_select '[data-key="preview.rejection"] li', text: "Missing content"
+    assert_select '[data-key="preview.empty"]', count: 0
+    assert_not_includes response.body, "Here's what we'd post"
+  end
+
+  test "#show should distinguish skipped items from an empty source" do
+    sign_in_as(user)
+    preview = create(:feed_preview, :completed, user: user, data: {
+      posts: [],
+      stats: { total_entries: 2, unidentified_entries: 2 }
+    })
+
+    get feed_preview_url(preview), headers: TURBO_STREAM
+
+    assert_response :success
+    assert_select '[data-key="preview.summary"]', text: /We found 2 items in this feed. Showing 0./
+    assert_select '[data-key="preview.unidentified"]', text: /Skipped 2 items that couldn't be identified/
+    assert_select '[data-key="preview.empty"]', text: "No items to preview."
+    assert_select '[data-key="preview.rejected"]', count: 0
+  end
+
+  test "#show should report an empty source without rejection warnings" do
+    sign_in_as(user)
+    preview = create(:feed_preview, :completed, user: user, data: {
+      posts: [],
+      stats: { total_entries: 0 }
+    })
+
+    get feed_preview_url(preview)
+
+    assert_response :success
+    assert_select '[data-key="preview.empty"]', text: "No posts found in this feed."
+    assert_select '[data-key="preview.unidentified"]', count: 0
+    assert_select '[data-key="preview.rejected"]', count: 0
   end
 
   test "#create should clear the pane and create nothing when source is blank" do
