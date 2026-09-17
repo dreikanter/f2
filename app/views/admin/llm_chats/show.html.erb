@@ -1,0 +1,59 @@
+<% content_for :title, "AI Transcript" %>
+
+<div class="space-y-8">
+  <%= render PageHeaderComponent.new(title: "AI Transcript") do |header| %>
+    <% header.with_breadcrumb(label: "AI History", url: admin_llm_chats_path) %>
+  <% end %>
+
+  <%= render DescriptionListComponent.new do |list| %>
+    <% list.with_item(StatListItemComponent.new(label: "Provider", value: @chat.requested_provider)) %>
+    <% list.with_item(StatListItemComponent.new(label: "Model", value: @chat.requested_model)) %>
+    <% list.with_item(StatListItemComponent.new(label: "Purpose", value: @chat.purpose.humanize)) %>
+    <% list.with_item(StatListItemComponent.new(label: "Status", value: @chat.status.humanize)) %>
+    <% list.with_item(StatListItemComponent.new(label: "Started", value: @chat.started_at.to_fs(:long))) %>
+    <% list.with_item(StatListItemComponent.new(label: "User", value: link_to(@chat.user.email_address, admin_user_path(@chat.user), class: text_link_classes))) %>
+    <% if @chat.feed %>
+      <% list.with_item(StatListItemComponent.new(label: "Feed", value: link_to(@chat.feed.name, admin_feed_path(@chat.feed), class: text_link_classes))) %>
+    <% end %>
+    <% if @chat.ai_credential %>
+      <% list.with_item(StatListItemComponent.new(label: "AI Credential", value: link_to(@chat.ai_credential.display_name, admin_ai_credential_path(@chat.ai_credential), class: text_link_classes))) %>
+    <% end %>
+    <% if @chat.error_category.present? %>
+      <% list.with_item(StatListItemComponent.new(label: "Error", value: @chat.error_category)) %>
+    <% end %>
+  <% end %>
+
+  <section class="space-y-4" data-key="ai_history.messages">
+    <%= h2 "Messages" %>
+    <% @messages.each do |message| %>
+      <article class="space-y-2 rounded-lg border border-border p-4" data-key="ai_history.message">
+        <h3 class="font-semibold text-heading"><%= message.role.humanize %></h3>
+        <pre class="whitespace-pre-wrap break-words text-sm text-body"><%= message.content %></pre>
+        <% if message.server_tool_calls.present? %>
+          <details>
+            <summary class="text-muted">Server tool calls</summary>
+            <pre class="whitespace-pre-wrap break-words text-sm text-body"><%= JSON.pretty_generate(message.server_tool_calls) %></pre>
+          </details>
+        <% end %>
+        <% if message.citations.present? %>
+          <details>
+            <summary class="text-muted">Citations</summary>
+            <pre class="whitespace-pre-wrap break-words text-sm text-body"><%= JSON.pretty_generate(message.citations) %></pre>
+          </details>
+        <% end %>
+      </article>
+    <% end %>
+    <% if @messages.empty? %>
+      <p class="text-muted">No messages recorded.</p>
+    <% end %>
+  </section>
+
+  <section class="space-y-4" data-key="ai_history.usage">
+    <%= h2 "Recorded Usage" %>
+    <% if @usages.any? %>
+      <%= render LlmUsagesListComponent.new(usages: @usages) %>
+    <% else %>
+      <p class="text-muted">No usage recorded. Interrupted requests may have no usage details.</p>
+    <% end %>
+  </section>
+</div>

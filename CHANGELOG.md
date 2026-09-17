@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-16
 
+- Admins can browse AI transcripts and recorded usage from the past two months.
 - Restore AI request details and spending estimates for feed refreshes and previews.
 
 ## 2026-09-15
