@@ -46,7 +46,7 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     preview = create(:feed_preview, feed_profile_key: "llm",
                      params: { "prompt" => "https://example.com" }, run_id: RUN_ID)
 
-    assert_no_difference -> { LlmUsage.count } do
+    assert_no_difference -> { RubyLLM::ActiveRecord::Usage.count } do
       assert_no_enqueued_jobs { FeedPreviewJob.perform_now(preview.id, RUN_ID) }
     end
     assert_predicate preview.reload, :failed?

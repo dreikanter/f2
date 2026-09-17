@@ -39,7 +39,6 @@ class Feed < ApplicationRecord
   has_many :feed_entries, dependent: :destroy
   has_many :feed_previews, dependent: :destroy
   has_many :feed_metrics, dependent: :destroy
-  has_many :llm_usages, dependent: :destroy
   has_many :llm_chats, dependent: :nullify
   has_many :posts, dependent: :destroy
 

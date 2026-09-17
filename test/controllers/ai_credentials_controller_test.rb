@@ -426,17 +426,19 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to ai_credentials_path
   end
 
-  test "#destroy should keep usage rows and clear their credential reference" do
+  test "#destroy should keep chat usage and clear the chat credential reference" do
     sign_in_as(user)
-    usage = create(:llm_usage, user: user, ai_credential: credential)
+    chat = create(:llm_chat, user: user, ai_credential: credential)
+    usage = create(:ruby_llm_usage, chat: chat)
 
     assert_difference("AiCredential.count", -1) do
-      assert_no_difference("LlmUsage.count") do
+      assert_no_difference(["LlmChat.count", "RubyLLM::ActiveRecord::Usage.count"]) do
         delete ai_credential_url(credential)
       end
     end
     assert_redirected_to ai_credentials_path
-    assert_nil usage.reload.ai_credential_id
+    assert_nil chat.reload.ai_credential_id
+    assert_equal chat, usage.reload.chat
   end
 
   test "#destroy should 404 for another user's credential" do

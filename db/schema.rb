@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_14_190000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_17_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -258,35 +258,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_14_190000) do
     t.datetime "refreshed_at"
     t.datetime "failed_at"
     t.check_constraint "id = 1", name: "llm_model_refreshes_singleton"
-  end
-
-  create_table "llm_usages", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
-    t.uuid "user_id", null: false
-    t.uuid "feed_id"
-    t.uuid "ai_credential_id"
-    t.string "profile_key"
-    t.integer "stage"
-    t.string "provider", null: false
-    t.string "model", null: false
-    t.integer "purpose", default: 0, null: false
-    t.integer "input_tokens", default: 0, null: false
-    t.integer "output_tokens", default: 0, null: false
-    t.integer "cache_read_tokens", default: 0, null: false
-    t.integer "cache_write_tokens", default: 0, null: false
-    t.decimal "cost_estimate_cents", precision: 20, scale: 10
-    t.integer "outcome", null: false
-    t.datetime "started_at", null: false
-    t.datetime "finished_at", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.integer "duration_ms"
-    t.text "error_message"
-    t.jsonb "retrieval", default: {}, null: false
-    t.index ["ai_credential_id"], name: "index_llm_usages_on_ai_credential_id"
-    t.index ["feed_id", "started_at"], name: "index_llm_usages_on_feed_id_and_started_at"
-    t.index ["profile_key", "started_at"], name: "index_llm_usages_on_profile_key_and_started_at"
-    t.index ["purpose", "started_at"], name: "index_llm_usages_on_purpose_and_started_at"
-    t.index ["user_id", "started_at"], name: "index_llm_usages_on_user_id_and_started_at"
   end
 
   create_table "operation_runs", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -673,9 +644,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_14_190000) do
   add_foreign_key "llm_chats", "ruby_llm_models"
   add_foreign_key "llm_chats", "users"
   add_foreign_key "llm_messages", "llm_chats"
-  add_foreign_key "llm_usages", "ai_credentials", on_delete: :nullify
-  add_foreign_key "llm_usages", "feeds"
-  add_foreign_key "llm_usages", "users"
   add_foreign_key "permissions", "users"
   add_foreign_key "post_publications", "posts", on_delete: :cascade
   add_foreign_key "posts", "feed_entries"

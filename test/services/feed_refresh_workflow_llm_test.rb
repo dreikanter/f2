@@ -13,10 +13,8 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
       assert_equal feed.ai_model, JSON.parse(http.body).fetch("model")
     end
 
-    assert_no_difference "LlmUsage.count" do
-      assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
-        perform_enqueued_jobs(only: FeedRefreshJob) { FeedSchedulerJob.perform_now }
-      end
+    assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
+      perform_enqueued_jobs(only: FeedRefreshJob) { FeedSchedulerJob.perform_now }
     end
 
     chat = feed.llm_chats.sole
