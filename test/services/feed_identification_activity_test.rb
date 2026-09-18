@@ -42,7 +42,8 @@ class FeedIdentificationActivityTest < ActiveSupport::TestCase
 
   test "#finish! should record HTTP rejection separately from an unrecognized page" do
     identification = create(:feed_identification, :no_feed, input: "https://example.com/feed.xml?token=secret#private")
-    stub_request(:get, identification.input).to_return(status: 403, body: "Challenge body", headers: { "Content-Type" => "text/html" })
+    stub_request(:get, "https://example.com/feed.xml?token=secret")
+      .to_return(status: 403, body: "Challenge body", headers: { "Content-Type" => "text/html" })
 
     identification.restart_detection
     FeedIdentificationJob.perform_now(identification.id, identification.run_id)

@@ -24,7 +24,8 @@ class FeedIdentificationActivity
     uri = URI.parse(value.to_s)
     return "[invalid URL]" unless uri.is_a?(URI::HTTP)
 
-    uri.userinfo = nil
+    uri.user = nil
+    uri.password = nil
     uri.query = nil
     uri.fragment = nil
     uri.to_s
@@ -68,7 +69,7 @@ class FeedIdentificationActivity
     case value
     when Hash then value.transform_values { |item| sanitize(item) }
     when Array then value.map { |item| sanitize(item) }
-    when String then value.gsub(%r{https?://[^\s<>"']+}) { |url| self.class.sanitize_url(url) }
+    when String then value.gsub(%r{https?://[^\s<>"']+}i) { |url| self.class.sanitize_url(url) }
     else value
     end
   end

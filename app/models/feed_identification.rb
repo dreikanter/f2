@@ -65,6 +65,7 @@ class FeedIdentification < ApplicationRecord
   # @param status [Symbol] settled detection status
   # @param candidates [Array<Hash>] detected candidates
   # @param run_id [String] run token captured by the worker
+  # @param diagnostics [Hash] fetch responses and candidate failures
   # @return [Boolean] whether the matching run was settled
   def settle_detection(status:, candidates:, run_id:, diagnostics: {})
     self.class.transaction do
