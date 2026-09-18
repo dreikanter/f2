@@ -48,7 +48,7 @@ module Loader
         Without evidence for requested source posts, return no posts. Requests for
         a direct answer still need one, expressing uncertainty when evidence is missing.
         Original content and general knowledge may be used when requested;
-        use a null source_url and omit publication dates for such content.
+        use a null source_url and an empty published_at string for such content.
       - Refusals, retrieval errors, and explanations of missing capabilities are
         not feed items. Do not publish them as posts or summaries.
     TEXT
@@ -80,7 +80,9 @@ module Loader
       - supplementary: an array of extra notes or comments, when relevant.
       - images: an array of absolute image URLs, when the post has images.
       - published_at: the source's own publication date in ISO 8601, when shown.
-        Omit this field for original content and general-knowledge answers.
+        Use an empty string when no source publication date is available,
+        including for original content and general-knowledge answers. Never
+        invent a publication date.
       Do not include a uid — the system derives it. Return at most 10 items,
       newest first.
     TEXT

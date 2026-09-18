@@ -46,6 +46,39 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
+  test "#load should accept original content with an empty publication date under the strict schema" do
+    feed.params = { "prompt" => "Write a short story" }
+    item = {
+      "body" => "The last star blinked, and the astronomer waved back.",
+      "source_url" => nil,
+      "title" => "",
+      "supplementary" => [],
+      "images" => [],
+      "published_at" => ""
+    }
+    output = { "items" => [item] }
+    response = completed_response
+    response["output"].select! { |part| part["type"] == "message" }
+    response["output"].sole["content"].sole["text"] = output.to_json
+    response["output"].sole["content"].sole["annotations"] = []
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      schema = JSON.parse(http.body).dig("text", "format", "schema")
+      assert JSONSchemer.schema(schema).valid?(output)
+      assert_not JSONSchemer.schema(schema).valid?({ "items" => [item.except("published_at")] })
+      { body: response.to_json, headers: { "Content-Type" => "application/json" } }
+    end
+
+    freeze_time do
+      content = Loader::LlmLoader.new(feed).load
+      entry = feed.processor_instance(content).process.entries.sole
+
+      assert_equal item, entry.raw_data
+      assert_equal Time.current, entry.published_at
+      assert feed.llm_chats.sole.succeeded?
+    end
+    assert_requested request, times: 1
+  end
+
   test "#load should use updated model limits and pricing after another worker refreshes the catalog" do
     model = create(:llm_model, model_id: feed.ai_model, max_output_tokens: 8_192,
                               pricing: { text_tokens: { standard: { input_per_million: 1, output_per_million: 2 } } })
