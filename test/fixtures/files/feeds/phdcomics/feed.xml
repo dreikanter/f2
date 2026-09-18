@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<rss version="2.0"><channel>
+  <title>PHD Comics</title><link>https://www.phdcomics.com</link><description>Sample feed</description>
+  <item>
+    <title>Sample comic</title>
+    <link>https://www.phdcomics.com/comics.php?f=123</link>
+    <guid isPermaLink="false">sample:comic</guid>
+    <pubDate>Mon, 25 Oct 2021 09:09:47 GMT</pubDate>
+    <description><![CDATA[
+      <p>Piled Higher &amp; Deeper by Jorge Cham</p>
+      <p>www.phdcomics.com</p>
+      <a href="https://www.phdcomics.com/comics.php?f=123"><img src="https://images.example.com/comic2025.png"/></a>
+      <p>title: <a href="https://www.phdcomics.com/comics.php?f=123">Sample comic</a> - originally published 8/31/2023</p>
+      <p>For the latest news in PHD Comics, <a href="https://www.phdcomics.com/comics.php">CLICK HERE!</a></p>
+    ]]></description>
+  </item>
+</channel></rss>

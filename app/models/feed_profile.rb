@@ -97,6 +97,19 @@ class FeedProfile
       normalizer: { class: "Normalizer::WordpressNormalizer", config: {} },
       title_extractor: "TitleExtractor::RssTitleExtractor"
     },
+    "phdcomics" => {
+      display_name: "PHD Comics",
+      description: "PHD comic strips without repeated feed boilerplate",
+      input_shape: :url,
+      depends_on_ai: false,
+      scheduled: true,
+      matcher: "ProfileMatcher::PhdcomicsProfileMatcher",
+      parameter_schema: URL_PARAMETER_SCHEMA,
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::PhdcomicsNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor"
+    },
     "atlantic_photos" => {
       display_name: "The Atlantic Photos",
       description: "Photo galleries with captions and photographer credits",
