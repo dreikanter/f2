@@ -147,27 +147,27 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_equal credential.id, user.reload.default_ai_credential_id
   end
 
-  test "#build_llm_client should use the current key without changing an existing client" do
+  test "#build_llm_provider should use the current key without changing an existing adapter" do
     credential = create(:ai_credential, user: user, provider: "openai")
     original_key = credential.credential_data.fetch("api_key").dup
-    client = credential.build_llm_client
+    adapter = credential.build_llm_provider
 
     credential.credential_data["api_key"].replace("replacement-key")
     credential.save!
 
-    assert_instance_of LlmProvider::Openai, client
-    assert_equal original_key, client.context.config.openai_api_key
-    assert_equal "replacement-key", credential.build_llm_client.context.config.openai_api_key
+    assert_instance_of LlmProvider::Openai, adapter
+    assert_equal original_key, adapter.context.config.openai_api_key
+    assert_equal "replacement-key", credential.build_llm_provider.context.config.openai_api_key
     assert_not_requested :any, /./
   end
 
-  test "#build_llm_client should provide isolated SDK contexts without retries" do
+  test "#build_llm_provider should provide isolated SDK contexts without retries" do
     first = build(:ai_credential, provider: "openai", credential_data: { "api_key" => "first-key" })
     second = build(:ai_credential, provider: "openai", credential_data: { "api_key" => "second-key" })
     original_key = RubyLLM.config.openai_api_key
 
-    first_context = first.build_llm_client.context
-    second_context = second.build_llm_client.context
+    first_context = first.build_llm_provider.context
+    second_context = second.build_llm_provider.context
 
     assert_equal "first-key", first_context.config.openai_api_key
     assert_equal "second-key", second_context.config.openai_api_key

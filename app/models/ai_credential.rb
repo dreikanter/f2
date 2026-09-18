@@ -12,7 +12,7 @@ class AiCredential < ApplicationRecord
   validates :provider, presence: true, inclusion: { in: ->(_) { LlmProvider.names } }
   validate :provider_credentials_valid
 
-  def build_llm_client
+  def build_llm_provider
     LlmProvider.build(provider, credential_data: credential_data)
   end
 

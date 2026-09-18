@@ -7,7 +7,7 @@ module Loader
       raise Loader::Error, "An AI model is required." if feed.ai_model.blank?
       raise Loader::Error, "External search is not supported yet." if feed.search_credential_id.present?
 
-      provider = feed.ai_credential.build_llm_client
+      provider = feed.ai_credential.build_llm_provider
       chat = create_chat(provider)
       prepare_chat(chat)
       response = chat.execute(provider: provider)
