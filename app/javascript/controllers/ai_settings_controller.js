@@ -10,6 +10,7 @@ export default class extends Controller {
   static targets = ["credentialSelect", "searchCredentialSelect", "modelSelect"]
   static values = {
     models: Object, // { credentialId: [{ id, name }, ...] }
+    defaultModels: Object, // { credentialId: modelId }
     aiProfiles: Array // profile keys whose feeds use AI
   }
 
@@ -31,16 +32,14 @@ export default class extends Controller {
     if (this.hasModelSelectTarget) this.modelSelectTarget.disabled = !isAi
   }
 
-  // Rebuild the model <select> from the chosen credential's models, keeping
-  // the current pick if it's still on offer. The placeholder is disabled so a
-  // pick can't be cleared by hand, but assigning value = "" below still
-  // selects it when the previous pick isn't offered by the new provider.
   refreshModels() {
     if (!this.hasModelSelectTarget || !this.hasCredentialSelectTarget) return
 
-    const models = this.modelsValue[this.credentialSelectTarget.value] || []
+    const credentialId = this.credentialSelectTarget.value
+    const models = this.modelsValue[credentialId] || []
+    const defaultModel = this.defaultModelsValue[credentialId]
     const previous = this.modelSelectTarget.value
-    const keep = models.some((model) => model.id === previous) ? previous : ""
+    const selected = [defaultModel, previous].find((id) => models.some((model) => model.id === id)) || ""
 
     const placeholder = new Option("Select a model…", "")
     placeholder.disabled = true
@@ -48,6 +47,6 @@ export default class extends Controller {
     const options = models.map((model) => new Option(model.name, model.id))
 
     this.modelSelectTarget.replaceChildren(placeholder, ...options)
-    this.modelSelectTarget.value = keep
+    this.modelSelectTarget.value = selected
   }
 }

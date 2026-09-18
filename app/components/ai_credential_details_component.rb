@@ -19,6 +19,11 @@ class AiCredentialDetailsComponent < ViewComponent::Base
         key: "ai_credential.provider"
       },
       {
+        label: "Default model",
+        value: @ai_credential.default_model.presence || "None",
+        key: "ai_credential.default_model"
+      },
+      {
         label: "Created",
         value: helpers.datetime_with_duration_tag(@ai_credential.created_at),
         key: "ai_credential.created"

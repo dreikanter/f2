@@ -30,6 +30,35 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     @rss_feed ||= create(:feed, user: user, feed_profile_key: "rss")
   end
 
+  test "#edit should preselect and save a default while keeping later credential changes separate" do
+    create(:llm_model, model_id: "gpt-4.1")
+    create(:llm_model, model_id: "gpt-4o")
+    credential.update!(default_model: "gpt-4.1")
+    draft = create(:feed, :draft, user: user, feed_profile_key: "llm", params: { prompt: "News" },
+                                 ai_credential: credential, ai_model: nil)
+    sign_in_as(user)
+
+    get edit_feed_path(draft)
+
+    assert_response :success
+    selected_model = css_select("select[data-key='form.ai-model'] option[selected]").sole["value"]
+    assert_equal "gpt-4.1", selected_model
+    defaults = JSON.parse(css_select("[data-key='form.ai-settings']").sole["data-ai-settings-default-models-value"])
+    assert_equal "gpt-4.1", defaults[credential.id]
+    assert_nil draft.reload.ai_model
+
+    patch feed_path(draft), params: { feed: { ai_credential_id: credential.id, ai_model: selected_model } }
+
+    assert_response :redirect
+    assert_equal "gpt-4.1", draft.reload.ai_model
+    credential.update!(default_model: "gpt-4o")
+
+    get edit_feed_path(draft)
+
+    assert_select "select[data-key='form.ai-model'] option[selected][value='gpt-4.1']"
+    assert_equal "gpt-4.1", draft.reload.ai_model
+  end
+
   test "#edit should show AI and model selects without external search" do
     create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)

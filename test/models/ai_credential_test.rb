@@ -14,6 +14,42 @@ class AiCredentialTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
+  test "#valid? should accept a listed text model as the default" do
+    create(:llm_model, model_id: "chosen-model", capabilities: [])
+    credential = build(:ai_credential, default_model: " chosen-model ")
+
+    assert credential.valid?, credential.errors.full_messages.inspect
+    assert_equal "chosen-model", credential.default_model
+  end
+
+  test "#valid? should reject a default belonging to another provider" do
+    create(:llm_model, model_id: "other-model", provider: "anthropic")
+    credential = build(:ai_credential, default_model: "other-model")
+
+    assert_not credential.valid?
+    assert_includes credential.errors[:default_model], "Choose a model from this provider's list."
+  end
+
+  test "#valid? should reject an image-only default" do
+    create(:llm_model, model_id: "image-model", modalities: { output: ["image"] })
+    credential = build(:ai_credential, default_model: "image-model")
+
+    assert_not credential.valid?
+    assert credential.errors[:default_model].present?
+  end
+
+  test "#update! should allow unrelated changes and clearing an unlisted default" do
+    model = create(:llm_model, model_id: "chosen-model")
+    credential = create(:ai_credential, default_model: model.model_id)
+    model.update!(unlisted_at: Time.current)
+
+    credential.update!(display_name: "Renamed key")
+    assert_equal "chosen-model", credential.reload.default_model
+
+    credential.update!(default_model: " ")
+    assert_nil credential.reload.default_model
+  end
+
   test "#valid? should return true with a registered provider and an api_key" do
     credential = build(:ai_credential, user: user)
     assert credential.valid?, credential.errors.full_messages.inspect
