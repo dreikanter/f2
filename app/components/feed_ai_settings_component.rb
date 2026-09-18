@@ -44,6 +44,10 @@ class FeedAiSettingsComponent < ViewComponent::Base
     FeedProfile.ai_profile_keys
   end
 
+  def default_models_by_credential
+    selectable_credentials.to_h { |credential| [credential.id.to_s, credential.default_model] }
+  end
+
   def selected_credential_id
     preferred = [@feed.ai_credential_id, @feed.user.default_ai_credential_id].compact
     selectable_ids = selectable_credentials.map(&:id)
@@ -79,7 +83,8 @@ class FeedAiSettingsComponent < ViewComponent::Base
   end
 
   def selected_model_id
-    model_options.any? { |_name, id| id == @feed.ai_model } ? @feed.ai_model : ""
+    selected = @feed.ai_model.presence || default_models_by_credential[selected_credential_id]
+    model_options.any? { |_name, id| id == selected } ? selected : ""
   end
 
   def model_unavailable?

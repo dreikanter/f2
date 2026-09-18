@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-09-18
 
 - Fix conflicting AI instructions for original content and posts without publication dates.
+- Choose a default model for each AI credential to preselect it when setting up a feed.
 
 ## 2026-09-17
 

@@ -28,6 +28,38 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
     FeedAiSettingsComponent.new(feed: feed, form: nil)
   end
 
+  test "#selected_model_id should preselect the default of the user's preferred credential" do
+    create(:llm_model, model_id: "gpt-a")
+    credential.update!(default_model: "gpt-a")
+    user.update!(default_ai_credential: credential)
+
+    assert_equal "gpt-a", component(ai_feed(ai_credential: nil)).selected_model_id
+  end
+
+  test "#selected_model_id should keep an explicit model over the credential default" do
+    create(:llm_model, model_id: "gpt-a")
+    create(:llm_model, model_id: "gpt-b")
+    credential.update!(default_model: "gpt-a")
+    feed = ai_feed(ai_credential: credential, ai_model: "gpt-b")
+
+    assert_equal "gpt-b", component(feed).selected_model_id
+  end
+
+  test "#selected_model_id should leave manual selection when the default is no longer listed" do
+    model = create(:llm_model, model_id: "gpt-a")
+    create(:llm_model, model_id: "gpt-b")
+    credential.update!(default_model: model.model_id)
+    model.update!(unlisted_at: Time.current)
+
+    assert_equal "", component(ai_feed(ai_credential: credential)).selected_model_id
+  end
+
+  test "#selected_model_id should leave manual selection when there is no default" do
+    create(:llm_model, model_id: "gpt-a")
+
+    assert_equal "", component(ai_feed(ai_credential: credential)).selected_model_id
+  end
+
   test "#section_visible? should be true only for an AI profile" do
     assert component(ai_feed).section_visible?
     assert_not component(build(:feed, user: user, feed_profile_key: "rss")).section_visible?

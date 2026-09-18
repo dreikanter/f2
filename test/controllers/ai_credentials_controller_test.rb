@@ -13,6 +13,68 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     @credential ||= create(:ai_credential, user: user)
   end
 
+  test "#edit should offer provider text models and preserve an unlisted default" do
+    chosen = create(:llm_model, model_id: "chosen-model", name: "Chosen model")
+    create(:llm_model, model_id: "other-model", provider: "anthropic")
+    create(:llm_model, model_id: "image-model", modalities: { output: ["image"] })
+    active = create(:ai_credential, :active, user: user, default_model: chosen.model_id)
+    chosen.update!(unlisted_at: Time.current)
+    sign_in_as(user)
+
+    get edit_ai_credential_url(active)
+
+    assert_response :success
+    assert_select "select[data-key='ai_credentials.default-model']" do
+      assert_select "option[value='']", text: "No default model"
+      assert_select "option[value='chosen-model'][selected]", text: "chosen-model (no longer listed)"
+      assert_select "option[value='other-model']", count: 0
+      assert_select "option[value='image-model']", count: 0
+    end
+  end
+
+  test "#update should set and clear the default without revalidating the key or changing feeds" do
+    create(:llm_model, model_id: "original-model")
+    create(:llm_model, model_id: "chosen-model")
+    active = create(:ai_credential, :active, user: user)
+    feed = create(:feed, user: user, feed_profile_key: "llm", params: { prompt: "News" },
+                        ai_credential: active, ai_model: "original-model")
+    sign_in_as(user)
+
+    assert_no_enqueued_jobs only: AiCredentialValidationJob do
+      patch ai_credential_url(active), params: {
+        ai_credential: { display_name: active.display_name, default_model: "chosen-model" }
+      }
+    end
+
+    assert_redirected_to ai_credential_path(active)
+    assert_equal "chosen-model", active.reload.default_model
+    assert active.active?
+    assert_equal "original-model", feed.reload.ai_model
+    follow_redirect!
+    assert_select "[data-key='ai_credential.default_model.value']", text: "chosen-model"
+
+    patch ai_credential_url(active), params: {
+      ai_credential: { display_name: active.display_name, default_model: "" }
+    }
+
+    assert_redirected_to ai_credential_path(active)
+    assert_nil active.reload.default_model
+    assert_equal "original-model", feed.reload.ai_model
+  end
+
+  test "#update should reject an unavailable default and preserve the saved selection" do
+    create(:llm_model, model_id: "chosen-model")
+    active = create(:ai_credential, :active, user: user, default_model: "chosen-model")
+    sign_in_as(user)
+
+    patch ai_credential_url(active), params: {
+      ai_credential: { display_name: active.display_name, default_model: "missing-model" }
+    }
+
+    assert_response :unprocessable_entity
+    assert_equal "chosen-model", active.reload.default_model
+  end
+
   test "#index should require authentication" do
     get ai_credentials_url
     assert_redirected_to new_session_path
