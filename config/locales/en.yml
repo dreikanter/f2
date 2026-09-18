@@ -32,6 +32,8 @@ en:
       name: "Search credentials removed"
       description_html: "%{subject_link}'s search credentials were removed"
       disabled_description_html: "%{subject_link} was disabled because its search credentials were removed"
+    feed_identification:
+      name: "Feed identification"
     feed_preview:
       name: "AI feed preview"
       description_html: "AI feed preview status is unknown"

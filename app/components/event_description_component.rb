@@ -10,6 +10,7 @@ class EventDescriptionComponent < ViewComponent::Base
   # Maps event types to the subclass that renders them. Types without an entry
   # fall back to this base component, which renders the plain description.
   SUBCLASSES = {
+    "feed_identification" => "FeedIdentificationDescriptionComponent",
     "feed_preview" => "FeedPreviewDescriptionComponent",
     "feed_refresh" => "FeedRefreshDescriptionComponent",
     "feed_auto_disabled" => "FeedAutoDisabledDescriptionComponent",

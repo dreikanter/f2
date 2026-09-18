@@ -14,6 +14,7 @@ class FeedIdentificationFetcher
     @user = feed_identification.user
     @input = feed_identification.input
     @logger = logger
+    @diagnostics = { fetches: [], candidate_tests: [] }
   end
 
   def call
@@ -23,14 +24,14 @@ class FeedIdentificationFetcher
   rescue UnreachableError => e
     # Transient: the UI offers a retry. Expected, so not reported as a bug.
     @logger.info("Feed identification couldn't reach #{sanitize_input_for_logging(@input)}: #{e.class} (#{e.message})")
-    settle(status: :unreachable, candidates: [])
+    settle(status: :unreachable, candidates: [], error: e)
   rescue FetchError => e
     @logger.info("Feed identification fetch failed for #{sanitize_input_for_logging(@input)}: #{e.class} (#{e.message})")
-    settle(status: :no_feed, candidates: [])
+    settle(status: :no_feed, candidates: [], error: e)
   rescue StandardError => e
     # Unexpected: report it as a bug, then settle on the terminal state.
     Rails.error.report(e, context: { input: sanitize_input_for_logging(@input) })
-    settle(status: :no_feed, candidates: [])
+    settle(status: :no_feed, candidates: [], error: e)
   end
 
   private
@@ -42,6 +43,7 @@ class FeedIdentificationFetcher
     raise FetchError, "blocked non-public URL" unless PublicUrl.safe?(@input)
 
     response = http_client.get(@input)
+    record_response(@input, response)
     raise ResponseStatusError, "HTTP #{response.status}" unless response.success?
 
     response
@@ -101,28 +103,38 @@ class FeedIdentificationFetcher
   # are author-controlled, so redirect hops are validated too (SSRF).
   def fetch_discovered_body(feed_url)
     response = http_client.get(feed_url, options: { validate_url: PublicUrl.method(:safe?) })
+    record_response(feed_url, response)
     return response.body if response.success?
 
     @logger.info("Feed discovery skipped #{sanitize_input_for_logging(feed_url)}: HTTP #{response.status}")
     nil
   rescue HttpClient::Error => e
+    @diagnostics[:fetches] << { url: feed_url, error: error_details(e) }
     @logger.info("Feed discovery skipped #{sanitize_input_for_logging(feed_url)}: #{e.class} (#{e.message})")
     nil
   end
 
   def sanitize_input_for_logging(input)
-    return "[invalid input]" if input.blank?
-
-    uri = URI.parse(input)
-    # Remove query parameters to avoid logging sensitive data
-    uri.query = nil
-    uri.to_s
-  rescue URI::InvalidURIError
-    "[invalid input]"
+    FeedIdentificationActivity.sanitize_url(input)
   end
 
-  def settle(status:, candidates:)
-    @feed_identification.settle_detection(status: status, candidates: candidates, run_id: @run_id)
+  def settle(status:, candidates:, error: nil)
+    @diagnostics[:error] = error_details(error) if error
+    @feed_identification.settle_detection(status: status, candidates: candidates, run_id: @run_id, diagnostics: @diagnostics)
+  end
+
+  def record_response(url, response)
+    @diagnostics[:fetches] << {
+      url: url,
+      resolved_url: response.url,
+      http_status: response.status,
+      content_type: response.headers["content-type"],
+      body_bytes: response.body.to_s.bytesize
+    }
+  end
+
+  def error_details(error)
+    { class: error.class.name, message: error.message.truncate(1_000) }
   end
 
   # Self-test each candidate by running the real pipeline against input
@@ -139,6 +151,8 @@ class FeedIdentificationFetcher
       profile_key: candidate.profile_key,
       http_client: http_client
     ).call
+
+    @diagnostics[:candidate_tests] << result.to_h.merge(profile_key: candidate.profile_key, url: input)
 
     {
       "test_status" => result.status,

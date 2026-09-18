@@ -1,6 +1,27 @@
 require "test_helper"
 
 class EventsControllerTest < ActionDispatch::IntegrationTest
+  test "identification events should be hidden from their owner in lists and direct links" do
+    sign_in_as user
+    identification = create(:feed_identification, :no_feed, user: user)
+    identification.restart_detection
+    event = Event.find_by!(type: "feed_identification", subject: identification)
+
+    get events_path
+    assert_response :success
+    assert_select '[data-event-type="feed_identification"]', count: 0
+
+    get events_path(format: :turbo_stream), params: { force: true }
+    assert_response :success
+    assert_select '[data-event-type="feed_identification"]', count: 0
+
+    get event_path(event)
+    assert_response :not_found
+
+    get admin_event_path(event)
+    assert_redirected_to root_path
+  end
+
   def user
     @user ||= regular_user
   end
