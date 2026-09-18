@@ -21,10 +21,12 @@ Costs are USD decimals. `known_cost` sums available costs; `total_cost` is `nil`
 when any included row lacks a cost, and `incomplete?` marks that condition.
 Known zero costs remain zero. Event snapshots convert totals to cents.
 
-Reports cover retained SDK data. Interrupted requests may have no usage row.
+Chats and their SDK usages are retained for two months. Interrupted requests
+may have no usage row.
 Pruning a chat removes its usage from reports and event details; existing event
 summary snapshots retain their original values. These reports are not a billing
 ledger. External web-search accounting remains in `WebSearchUsage`.
+Catalog refresh and credential validation produce no inference usage.
 
 ## Previous accounting data
 
