@@ -15,7 +15,7 @@
         <span class="text-muted">to</span>
         <% if group_url %>
           <%= link_to group_name, group_url, target: "_blank", rel: "noopener",
-                class: "font-semibold text-brand transition hover:text-brand-hover",
+                class: "text-brand transition hover:text-brand-hover",
                 data: { key: "freefeed_post.group" } %>
         <% else %>
           <span class="font-semibold" data-key="freefeed_post.group"><%= group_name %></span>
