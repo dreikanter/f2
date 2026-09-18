@@ -63,7 +63,7 @@ module Loader
     def prepare_chat(chat)
       options[:refresh_event]&.event_references&.create!(reference: chat)
       chat.with_instructions(<<~TEXT.strip)
-        #{LlmPrompts::COMBINED_SYSTEM}
+        #{LlmPrompts::EXTRACTION_SYSTEM}
 
         Include every field in the output schema. Use empty strings or arrays
         for absent optional values; source_url may be null.
