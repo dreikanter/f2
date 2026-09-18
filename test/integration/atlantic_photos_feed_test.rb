@@ -1,13 +1,19 @@
 require "test_helper"
 
 class AtlanticPhotosFeedTest < ActiveSupport::TestCase
-  URL = "https://www.theatlantic.com/feed/channel/photo/"
+  URL = "https://www.theatlantic.com/feed/channel/photography/"
 
   test "identification should select the photo profile for its specific feed" do
     result = FeedProfileDetector.call(input: URL, fetched_body: source)
 
     assert_equal %w[atlantic_photos rss], result.candidates.map(&:profile_key)
     assert_not ProfileMatcher::AtlanticPhotosProfileMatcher.new("https://www.theatlantic.com/feed/all/", source).match?
+  end
+
+  test "identification should retain support for the older photo feed URL" do
+    result = FeedProfileDetector.call(input: "https://www.theatlantic.com/feed/channel/photo/", fetched_body: source)
+
+    assert_equal %w[atlantic_photos rss], result.candidates.map(&:profile_key)
   end
 
   test "preview should retain the introduction and independently captioned images" do

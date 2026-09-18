@@ -4,7 +4,7 @@ module ProfileMatcher
     match_domains "theatlantic.com"
 
     def match?
-      super && URI.parse(input).path == "/feed/channel/photo/"
+      super && URI.parse(input).path.match?(%r{\A/feed/channel/(?:photo|photography)/\z})
     end
   end
 end
