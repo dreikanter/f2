@@ -17,6 +17,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       "monkeyuser",
       "nextbigfuture",
       "oglaf",
+      "phdcomics",
       "pluralistic",
       "podcast",
       "reddit",
