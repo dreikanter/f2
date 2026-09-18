@@ -1,5 +1,7 @@
 # Carries AI response content and its chat between loader and processor.
 class LlmResult
+  class LifecycleError < StandardError; end
+
   attr_reader :content
 
   delegate :bytesize, to: :content
@@ -13,7 +15,7 @@ class LlmResult
   def complete!
     return true if chat.complete!
 
-    raise Loader::Error, "AI extraction is no longer active."
+    raise LifecycleError, "AI extraction is no longer active."
   end
 
   private

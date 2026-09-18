@@ -153,7 +153,7 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     end
 
     assert_no_publication do
-      assert_raises(Loader::Error) { FeedRefreshWorkflow.new(feed).execute }
+      assert_raises(LlmResult::LifecycleError) { FeedRefreshWorkflow.new(feed).execute }
     end
 
     chat = feed.llm_chats.sole
@@ -161,6 +161,34 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     assert_equal "LlmExecution::ToolLimitExceeded", chat.error_category
     assert_equal "succeeded", chat.ruby_llm_usages.sole.status
     assert_equal "failed", refresh_event.metadata.fetch("status")
+    assert_requested request, times: 1
+  end
+
+  test "#perform should report finalization failures as processing errors" do
+    request = stub_response do
+      feed.llm_chats.sole.fail!(LlmExecution::ToolLimitExceeded.new)
+    end
+    increments = []
+    reports = capture_error_reports do
+      Metrics.stub(:increment, ->(name, **labels) { increments << [name, labels] }) do
+        assert_no_publication { FeedRefreshJob.perform_now(feed.id) }
+      end
+    end
+
+    report = reports.sole
+    assert_instance_of LlmResult::LifecycleError, report.error
+    assert_equal feed.id, report.context[:feed_id]
+    assert report.handled?
+    assert_includes increments, ["processor_errors_total", { profile: "llm", processor: "LlmProcessor" }]
+    assert_not increments.any? { |name, _| name == "loader_errors_total" }
+    assert_equal "failed", refresh_event.metadata.fetch("status")
+    assert_equal "LlmResult::LifecycleError", refresh_event.metadata.dig("error", "class")
+    assert_equal "process_feed_contents", refresh_event.metadata.dig("error", "stage")
+    assert_equal 2, feed.reload.consecutive_failures
+    chat = feed.llm_chats.sole
+    assert chat.failed?
+    assert_equal "LlmExecution::ToolLimitExceeded", chat.error_category
+    assert_equal "succeeded", chat.ruby_llm_usages.sole.status
     assert_requested request, times: 1
   end
 
