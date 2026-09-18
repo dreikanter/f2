@@ -144,7 +144,7 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
       payload = LlmResult.new(content: '{"items":[]}', chat: chat)
       travel_to chat.deadline_at
 
-      error = assert_raises(Loader::Error) { feed.processor_instance(payload).process }
+      error = assert_raises(LlmResult::LifecycleError) { feed.processor_instance(payload).process }
 
       assert_equal "AI extraction is no longer active.", error.message
       assert chat.reload.interrupted?
@@ -156,7 +156,7 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     payload = LlmResult.new(content: '{"items":[]}', chat: chat)
     LlmChat.find(chat.id).finish!(status: :failed, error_category: "original_failure")
 
-    assert_raises(Loader::Error) { feed.processor_instance(payload).process }
+    assert_raises(LlmResult::LifecycleError) { feed.processor_instance(payload).process }
 
     assert chat.reload.failed?
     assert_equal "original_failure", chat.error_category

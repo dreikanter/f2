@@ -942,15 +942,15 @@ class FeedTest < ActiveSupport::TestCase
     assert_includes feed.errors[:ai_model], "This model isn't available anymore. Pick another one."
   end
 
-  test "#ai_model_supported? should follow the shared provider registry" do
+  test "#ai_model_listed? should check the provider model catalog" do
     create(:llm_model, model_id: "gpt-4.1")
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "x" }, ai_credential: credential, ai_model: "gpt-4.1")
 
-    assert feed.ai_model_supported?
+    assert feed.ai_model_listed?
     feed.ai_model = "removed-model"
-    assert_not feed.ai_model_supported?
+    assert_not feed.ai_model_listed?
   end
 
   test "#valid? should not require an ai_credential when enabling a non-AI feed" do

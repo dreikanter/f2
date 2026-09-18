@@ -87,7 +87,7 @@ class FeedAiSettingsComponent < ViewComponent::Base
     return false unless @feed.ai_credential&.active?
     return false if @feed.ai_model.blank?
 
-    !@feed.ai_model_supported?
+    !@feed.ai_model_listed?
   end
 
   private

@@ -255,7 +255,7 @@ class Feed < ApplicationRecord
     ai_model.present?
   end
 
-  def ai_model_supported?
+  def ai_model_listed?
     ai_credential.present? && LlmModels.for_feed(ai_credential.provider).any? { |model| model.id == ai_model }
   end
 
@@ -506,7 +506,7 @@ class Feed < ApplicationRecord
       errors.add(:ai_credential, "must be active")
     elsif ai_model.blank?
       errors.add(:ai_model, "Choose a model for this feed.")
-    elsif (ai_model_changed? || ai_credential_id_changed?) && !ai_model_supported?
+    elsif (ai_model_changed? || ai_credential_id_changed?) && !ai_model_listed?
       # Membership is enforced only on the change that sets it, so a later-dropped
       # model never traps an unrelated edit.
       errors.add(:ai_model, "This model isn't available anymore. Pick another one.")
