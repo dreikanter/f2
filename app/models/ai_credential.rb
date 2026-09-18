@@ -11,6 +11,9 @@ class AiCredential < ApplicationRecord
 
   validates :provider, presence: true, inclusion: { in: ->(_) { LlmProvider.names } }
   validate :provider_credentials_valid
+  validate :default_model_listed, if: -> { default_model.present? && (will_save_change_to_default_model? || will_save_change_to_provider?) }
+
+  normalizes :default_model, with: ->(value) { value.strip.presence }
 
   def build_llm_provider
     LlmProvider.build(provider, credential_data: credential_data)
@@ -27,6 +30,12 @@ class AiCredential < ApplicationRecord
   end
 
   private
+
+  def default_model_listed
+    return if LlmModels.for_feed(provider).any? { |model| model.id == default_model }
+
+    errors.add(:default_model, "Choose a model from this provider's list.")
+  end
 
   def credential_validator
     LlmProvider.find(provider).fetch(:validator_class).new(credential_data: credential_data)

@@ -2,7 +2,7 @@
 
 <div class="space-y-8" data-key="ai_credentials.edit">
   <%= render PageHeaderComponent.new(title: "Edit credential") do |header| %>
-    <% header.with_context_paragraph("Update the name or replace the API key. The key will be re-checked after saving.") %>
+    <% header.with_context_paragraph("Update the name, default model, or API key. A replacement key will be checked after saving.") %>
   <% end %>
 
   <div class="max-w-2xl">
@@ -34,6 +34,15 @@
                            class: input_field_classes,
                            required: true,
                            data: { key: "ai_credentials.display-name" } %>
+        </div>
+
+        <div class="space-y-2">
+          <%= f.label :default_model, "Default model", class: form_label_classes %>
+          <%= f.select :default_model, default_model_options(@credential),
+                       { include_blank: "No default model" },
+                       class: input_field_classes,
+                       data: { key: "ai_credentials.default-model" } %>
+          <p class="text-sm text-muted">Preselected when you choose this credential for a feed. You can choose another model for each feed.</p>
         </div>
 
         <div class="space-y-2">
