@@ -29,7 +29,10 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal "openai", chat.requested_provider
     assert_equal "gpt-5-nano", chat.requested_model
     assert_equal %w[system user assistant], chat.messages.map(&:role)
+    assert_includes chat.messages.first.content, Loader::LlmPrompts::TASK
+    assert_includes chat.messages.first.content, Loader::LlmPrompts::OUTPUT_CONTRACT
     assert_includes chat.messages.first.content, Loader::LlmPrompts::SAFEGUARDS
+    assert_not_includes chat.messages.first.content, feed.source_input
     assert_equal "Feed request — what to follow and how to present it:\n\nA daily roundup\n", chat.messages.second.content
     assert_equal "gpt-5-nano", payload.fetch("model")
     assert_equal "web_search", payload.fetch("tools").sole.fetch("type")
