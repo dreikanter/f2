@@ -88,6 +88,17 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert_nil result.entries.sole.uid
   end
 
+  test "#process should use the current time when the source publication date is empty" do
+    freeze_time do
+      result = process('{"items":[{"source_url":"https://example.com/post","body":"Post","published_at":""}]}')
+      entry = result.entries.sole
+
+      assert_equal Time.current, entry.published_at
+      assert_equal "", entry.raw_data.fetch("published_at")
+      assert chat.reload.succeeded?
+    end
+  end
+
   test "#process should use the current time for an unreadable publication date" do
     freeze_time do
       result = process('{"items":[{"source_url":"https://example.com/post","body":"Post","published_at":"not a date"}]}')

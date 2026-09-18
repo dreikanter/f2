@@ -49,6 +49,37 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
+  test "#load should request a schema that accepts empty publication dates" do
+    payload = nil
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      payload = JSON.parse(http.body)
+      { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+    end
+
+    Loader::LlmLoader.new(feed).load
+
+    schema = JSONSchemer.schema(payload.dig("text", "format", "schema"))
+    assert schema.valid?({ "items" => [original_item] })
+    assert_not schema.valid?({ "items" => [original_item.except("published_at")] })
+  end
+
+  test "#load should pass undated original content to the processor" do
+    feed.params = { "prompt" => "Write a short story" }
+    output = { "items" => [original_item] }
+    request = stub_request(:post, "https://api.openai.com/v1/responses")
+      .to_return_json(body: completed_response(content: output.to_json))
+
+    freeze_time do
+      content = Loader::LlmLoader.new(feed).load
+      entry = feed.processor_instance(content).process.entries.sole
+
+      assert_equal original_item, entry.raw_data
+      assert_equal Time.current, entry.published_at
+      assert feed.llm_chats.sole.succeeded?
+    end
+    assert_requested request, times: 1
+  end
+
   test "#load should use updated model limits and pricing after another worker refreshes the catalog" do
     model = create(:llm_model, model_id: feed.ai_model, max_output_tokens: 8_192,
                               pricing: { text_tokens: { standard: { input_per_million: 1, output_per_million: 2 } } })
@@ -140,8 +171,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
   end
 
   test "#load should leave invalid JSON for the processor without repairing or settling success" do
-    response = completed_response
-    response["output"].last["content"].first["text"] = "invalid JSON"
+    response = completed_response(content: "invalid JSON")
     request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
     loader = Loader::LlmLoader.new(feed)
 
@@ -159,8 +189,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     }
     items = Array.new(10) { |index| item.merge("source_url" => "https://example.com/post/#{index}") }
     output = { "items" => items }
-    response = completed_response
-    response["output"].last["content"].first["text"] = output.to_json
+    response = completed_response(content: output.to_json)
     stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
       schema = JSON.parse(http.body).dig("text", "format", "schema")
       assert JSONSchemer.schema(schema).valid?(output)
@@ -288,7 +317,23 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
                       feed_profile_key: "llm", params: { "prompt" => "A daily roundup" }, search_credential: nil)
   end
 
-  def completed_response
-    JSON.parse(file_fixture("llm_transcripts/completed.json").read)
+  def original_item
+    {
+      "body" => "The last star blinked, and the astronomer waved back.",
+      "source_url" => nil,
+      "title" => "",
+      "supplementary" => [],
+      "images" => [],
+      "published_at" => ""
+    }
+  end
+
+  def completed_response(content: nil)
+    response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
+    return response if content.nil?
+
+    response["output"].select! { |part| part["type"] == "message" }
+    response["output"].sole["content"].sole.merge!("text" => content, "annotations" => [])
+    response
   end
 end
