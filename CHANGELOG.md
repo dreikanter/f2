@@ -6,6 +6,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 - Fix conflicting AI instructions for original content and posts without publication dates.
 - Choose a default model for each AI credential to preselect it when setting up a feed.
+- Recognize The Atlantic's photography feed and select its gallery profile automatically.
 
 ## 2026-09-17
 
