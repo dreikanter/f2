@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-19
+
+- Admins can inspect feed identification fetches, candidate tests, and results in the event log.
+
 ## 2026-09-18
 
 - Import PHD Comics with clean titles and comic images, without repeated site text.

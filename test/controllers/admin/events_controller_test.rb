@@ -1,6 +1,30 @@
 require "test_helper"
 
 class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
+  test "admins should see identification summaries and diagnostics with a user reference" do
+    sign_in_as admin_user
+    identification = create(:feed_identification, :no_feed, user: regular_user)
+    stub_request(:get, identification.input).to_return(status: 403, headers: { "Content-Type" => "text/html" })
+    identification.restart_detection
+    FeedIdentificationJob.perform_now(identification.id, identification.run_id)
+    event = Event.where(type: "feed_identification", subject: identification).order(:id).first!
+
+    get admin_events_path(format: :turbo_stream), params: { after_id: 0 }
+    assert_response :success
+    assert_select '[data-event-type="feed_identification"]', count: 2
+    assert_select '[data-key="events.description"]', text: /Fetch: HTTP 403/
+    assert_select '[data-key="events.description"]', text: /Result: no_feed/
+    assert_select 'a[data-key="events.user"][href=?]', admin_user_path(regular_user)
+
+    get admin_event_path(event)
+    assert_response :success
+    assert_select '[data-key="events.stats.source_url.value"]', text: identification.input
+    assert_select '[data-key="events.stats.run_id.value"]', text: identification.run_id
+    assert_select '[data-key="events.stats.http_status.value"]', text: "403"
+    assert_select '[data-key="events.stats.content_type.value"]', text: "text/html"
+    assert_select 'a[data-key="admin.event.user"][href=?]', admin_user_path(regular_user)
+  end
+
   test "should redirect non-admin users" do
     sign_in_as(regular_user)
 

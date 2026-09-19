@@ -15,7 +15,11 @@ class CandidateTester
   # source's shape without paying to normalize a whole backlog.
   SAMPLE_SIZE = 10
 
-  Result = Data.define(:status, :posts_found)
+  Result = Data.define(:status, :posts_found, :error) do
+    def initialize(status:, posts_found:, error: nil)
+      super
+    end
+  end
 
   def initialize(user:, input:, profile_key:, http_client: nil)
     @user = user
@@ -27,14 +31,15 @@ class CandidateTester
   def call
     result = feed.processor_instance(load).process
     posts_found = result.entries.first(SAMPLE_SIZE).count { |entry| normalized?(entry) }
-    Result.new(status: verdict(result, posts_found), posts_found: posts_found)
+    Result.new(status: verdict(result, posts_found), posts_found: posts_found, error: @error)
   rescue Loader::Error => e
     # Loaders wrap transport errors, so a transient failure shows up as the
     # cause. Any other Loader::Error means we fetched but couldn't read.
-    Result.new(status: e.cause.is_a?(HttpClient::Error) ? Candidate::UNREACHABLE : Candidate::FAILED, posts_found: 0)
+    Result.new(status: e.cause.is_a?(HttpClient::Error) ? Candidate::UNREACHABLE : Candidate::FAILED, posts_found: 0,
+               error: "#{e.class}: #{e.message}")
   rescue StandardError => e
     Rails.error.report(e, context: { profile_key: profile_key, user_id: user&.id })
-    Result.new(status: Candidate::FAILED, posts_found: 0)
+    Result.new(status: Candidate::FAILED, posts_found: 0, error: "#{e.class}: #{e.message}")
   end
 
   private
@@ -59,8 +64,11 @@ class CandidateTester
   # validation fails; only an :enqueued post counts as a real post. Both
   # failures are expected while probing compatibility, so they're swallowed.
   def normalized?(entry)
-    normalize(entry).enqueued?
-  rescue StandardError
+    post = normalize(entry)
+    @error ||= post.validation_errors.join(", ") unless post.enqueued?
+    post.enqueued?
+  rescue StandardError => e
+    @error ||= "#{e.class}: #{e.message}"
     false
   end
 
