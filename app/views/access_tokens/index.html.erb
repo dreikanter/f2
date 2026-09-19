@@ -1,7 +1,7 @@
-<% content_for :title, "Freefeed Access Tokens" %>
+<% content_for :title, "Freefeed Tokens" %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "Freefeed Access Tokens") do |header| %>
+  <%= render PageHeaderComponent.new(title: "Freefeed Tokens") do |header| %>
     <% header.with_breadcrumb(label: "Settings", url: settings_path) %>
     <% header.with_context_paragraph("Manage your FreeFeed API tokens used for reposting content.") %>
     <% if @access_tokens.any? %>

@@ -1,4 +1,4 @@
-<% chat_title = "AI Transcript #{short_ref(@chat.id)}" %>
+<% chat_title = "#{@chat.purpose.humanize} #{short_ref(@chat.id)}" %>
 <% content_for :title, chat_title %>
 
 <div class="space-y-8">

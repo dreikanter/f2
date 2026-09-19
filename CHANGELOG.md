@@ -2,6 +2,11 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-19
+
+- Identify AI API Log entries by purpose in the list and transcript header.
+- Show the default badge on AI credential details and status badges in the AI API Log; shorten Freefeed Tokens labels.
+
 ## 2026-09-18
 
 - Import PHD Comics with clean titles and comic images, without repeated site text.

@@ -10,11 +10,18 @@
       <% @chats.each do |chat| %>
         <% item = ListItemComponent.new(css_class: ListItemComponent::HOVER_ROW_CSS_CLASS, data: { key: "ai_history.chat" }) %>
         <% item.with_primary do %>
-          <%= link_to "#{chat.requested_provider} / #{chat.requested_model}", admin_llm_chat_path(chat),
-                class: ListItemComponent::TITLE_LINK_CSS_CLASS %>
+          <div class="flex items-center gap-2">
+            <%= link_to chat.purpose.humanize, admin_llm_chat_path(chat),
+                  class: ListItemComponent::TITLE_LINK_CSS_CLASS %>
+            <%= render BadgeComponent.new(
+              text: chat.status.humanize,
+              color: llm_chat_status_badge_color(chat.status),
+              key: "ai_history.status_badge"
+            ) %>
+          </div>
         <% end %>
         <% item.with_secondary do %>
-          <p class="truncate text-sm text-muted"><%= chat.purpose.humanize %> · <%= chat.status.humanize %> · <%= chat.user.email_address %></p>
+          <p class="truncate text-sm text-muted"><%= chat.requested_provider %> / <%= chat.requested_model %> · <%= chat.user.email_address %></p>
         <% end %>
         <% item.with_trailing do %>
           <%= short_time_ago_tag(chat.created_at, css_class: "shrink-0 text-sm tabular-nums text-muted") %>

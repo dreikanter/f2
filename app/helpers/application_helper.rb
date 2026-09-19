@@ -189,7 +189,7 @@ module ApplicationHelper
       ],
       [
         {
-          name: "Freefeed Access Tokens",
+          name: "Freefeed Tokens",
           path: access_tokens_path,
           active: current_page?(access_tokens_path)
         },
