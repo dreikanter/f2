@@ -12,10 +12,11 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "AI API Log"
     assert_select "a[href=?]", development_path, text: "Dev Tools"
     assert_select '[data-key="ai_history.chat"]', count: 1
-    assert_select "a[href=?]", admin_llm_chat_path(newer)
+    assert_select "a[href=?]", admin_llm_chat_path(newer), text: newer.purpose.humanize
     assert_select "a[href=?]", admin_llm_chat_path(older), count: 0
     assert_select '[data-key="ai_history.chat"]' do
-      assert_select "p", "#{newer.purpose.humanize} · #{newer.status.humanize} · #{other_user.email_address}"
+      assert_select "p", "#{newer.requested_provider} / #{newer.requested_model} · #{other_user.email_address}"
+      assert_select '[data-key="ai_history.status_badge"]', newer.status.humanize
       assert_select "time[datetime=?]", newer.created_at.iso8601
     end
 
@@ -128,8 +129,8 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     get admin_llm_chat_path(chat)
 
     assert_response :success
-    assert_select "h1", "AI Transcript #{chat.id.last(5)}"
-    assert_select "title", text: /AI Transcript #{chat.id.last(5)}/
+    assert_select "h1", "#{chat.purpose.humanize} #{chat.id.last(5)}"
+    assert_select "title", text: /#{chat.purpose.humanize} #{chat.id.last(5)}/
     assert_select 'header [data-key="ai_history.status_badge"]', "Running"
     assert_select "dl dt", text: "Status", count: 0
     assert_select '[data-key="ai_history.started"] time[datetime=?]', chat.started_at.iso8601, text: "17 Sep 2026, 09:47 (13h)"
