@@ -26,7 +26,7 @@
       <% list.with_item(StatListItemComponent.new(label: "AI Credential", value: link_to_if(policy([:admin, @chat.ai_credential]).show?, @chat.ai_credential.display_name, admin_ai_credential_path(@chat.ai_credential), class: text_link_classes))) %>
     <% end %>
     <% if @chat.error_category.present? %>
-      <% list.with_item(StatListItemComponent.new(label: "Error", value: @chat.error_category)) %>
+      <% list.with_item(StatListItemComponent.new(label: "Error", value: tag.code(@chat.error_category))) %>
     <% end %>
   <% end %>
 
