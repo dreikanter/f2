@@ -6,44 +6,23 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     identification = create(:feed_identification, :no_feed, user: regular_user)
     stub_request(:get, identification.input).to_return(status: 403, headers: { "Content-Type" => "text/html" })
     identification.restart_detection
-    started = Event.find_by!(type: "feed_identification", subject: identification)
     FeedIdentificationJob.perform_now(identification.id, identification.run_id)
-    event = Event.find_by!(type: "feed_identification", subject: identification)
+    event = Event.where(type: "feed_identification", subject: identification).order(:id).first!
 
-    get admin_events_path(format: :turbo_stream), params: { after_id: started.id }
+    get admin_events_path(format: :turbo_stream), params: { after_id: 0 }
     assert_response :success
-    assert_select '[data-event-type="feed_identification"]', count: 1
-    assert_select '[data-key="events.description"]', text: /no readable feed.*HTTP 403/
+    assert_select '[data-event-type="feed_identification"]', count: 2
+    assert_select '[data-key="events.description"]', text: /Fetch: HTTP 403/
+    assert_select '[data-key="events.description"]', text: /Result: no_feed/
     assert_select 'a[data-key="events.user"][href=?]', admin_user_path(regular_user)
 
     get admin_event_path(event)
     assert_response :success
-    assert_select '[data-key="events.identification.source.value"]', text: identification.input
-    assert_select '[data-key="events.identification.result.value"]', text: "No feed"
-    assert_select '[data-key="events.identification.error.value"]', text: /HTTP 403/
-    assert_select '[data-key="events.identification.fetch.value"]', text: /HTTP 403.*text\/html/
+    assert_select '[data-key="events.stats.source_url.value"]', text: identification.input
+    assert_select '[data-key="events.stats.run_id.value"]', text: identification.run_id
+    assert_select '[data-key="events.stats.http_status.value"]', text: "403"
+    assert_select '[data-key="events.stats.content_type.value"]', text: "text/html"
     assert_select 'a[data-key="admin.event.user"][href=?]', admin_user_path(regular_user)
-  end
-
-  test "admins should see candidate results with escaped source text" do
-    sign_in_as admin_user
-    event = create(:event, type: "feed_identification", level: :debug, user: regular_user, metadata: {
-      status: "working",
-      input: "<script>alert('source')</script>",
-      run_id: SecureRandom.uuid,
-      candidates: [{ profile_key: "rss", test_status: "passed", posts_found: 3 }],
-      diagnostics: {
-        candidate_tests: [{ profile_key: "rss", status: "passed", posts_found: 3, url: "https://example.com/feed.xml", errors: [] }]
-      }
-    })
-
-    get admin_event_path(event)
-
-    assert_response :success
-    assert_select '[data-key="events.identification.candidate.value"]', text: /rss: passed.*3 sampled posts/
-    assert_includes response.body, "RSS Feed identified (3 sampled posts)"
-    assert_includes response.body, "&lt;script&gt;"
-    assert_not_includes response.body, "<script>alert('source')</script>"
   end
 
   test "should redirect non-admin users" do

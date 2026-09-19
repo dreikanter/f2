@@ -14,10 +14,10 @@ class FeedIdentificationFetcher
     @user = feed_identification.user
     @input = feed_identification.input
     @logger = logger
-    @diagnostics = { fetches: [], candidate_tests: [] }
   end
 
   def call
+    @started_at = Time.current
     response = fetch_response_for_input
     candidates = identify_candidates(response)
     settle(status: settled_status(candidates), candidates: candidates)
@@ -42,8 +42,7 @@ class FeedIdentificationFetcher
   def fetch_response_for_input
     raise FetchError, "blocked non-public URL" unless PublicUrl.safe?(@input)
 
-    response = http_client.get(@input)
-    record_response(@input, response)
+    response = fetch_response(@input)
     raise ResponseStatusError, "HTTP #{response.status}" unless response.success?
 
     response
@@ -102,39 +101,59 @@ class FeedIdentificationFetcher
   # A broken advertised feed is skipped; another may still work. The hrefs
   # are author-controlled, so redirect hops are validated too (SSRF).
   def fetch_discovered_body(feed_url)
-    response = http_client.get(feed_url, options: { validate_url: PublicUrl.method(:safe?) })
-    record_response(feed_url, response)
+    response = fetch_response(feed_url, options: { validate_url: PublicUrl.method(:safe?) })
     return response.body if response.success?
 
     @logger.info("Feed discovery skipped #{sanitize_input_for_logging(feed_url)}: HTTP #{response.status}")
     nil
   rescue HttpClient::Error => e
-    @diagnostics[:fetches] << { url: feed_url, error: error_details(e) }
     @logger.info("Feed discovery skipped #{sanitize_input_for_logging(feed_url)}: #{e.class} (#{e.message})")
     nil
   end
 
   def sanitize_input_for_logging(input)
-    FeedIdentificationActivity.sanitize_url(input)
+    uri = URI.parse(input.to_s)
+    uri.user = nil
+    uri.password = nil
+    uri.query = nil
+    uri.fragment = nil
+    uri.to_s
+  rescue URI::InvalidURIError
+    "[invalid URL]"
   end
 
   def settle(status:, candidates:, error: nil)
-    @diagnostics[:error] = error_details(error) if error
-    @feed_identification.settle_detection(status: status, candidates: candidates, run_id: @run_id, diagnostics: @diagnostics)
+    applied = @feed_identification.settle_detection(status: status, candidates: candidates, run_id: @run_id)
+    selected = candidates.find { |candidate| working?(candidate) }&.fetch("profile_key")
+    summary = [status, selected].compact.join(": ")
+    record_event(:result, "#{summary}#{' (discarded)' unless applied}", status: status, selected_profile: selected,
+                 applied: applied, error: error && "#{error.class}: #{error.message}",
+                 total_duration: (Time.current - @started_at).round(3))
+    applied
   end
 
-  def record_response(url, response)
-    @diagnostics[:fetches] << {
-      url: url,
-      resolved_url: response.url,
-      http_status: response.status,
-      content_type: response.headers["content-type"],
-      body_bytes: response.body.to_s.bytesize
-    }
+  def fetch_response(url, **options)
+    response = http_client.get(url, **options)
+    record_event(:fetch, "HTTP #{response.status}", source_url: url, resolved_url: response.url,
+                 http_status: response.status, content_type: response.headers["content-type"], body_bytes: response.body.to_s.bytesize)
+    response
+  rescue HttpClient::Error => e
+    record_event(:fetch, "#{e.class}: #{e.message}", source_url: url)
+    raise
   end
 
-  def error_details(error)
-    { class: error.class.name, message: error.message.truncate(1_000) }
+  def record_event(stage, message, **stats)
+    source = stats.fetch(:source_url, @input)
+    stats = { stage: stage, run_id: @run_id, source_url: source }.merge(stats).compact
+    Event.create!(
+      type: "feed_identification", level: :debug, user: @user, subject: @feed_identification,
+      message: sanitize_event_text("#{stage.to_s.humanize}: #{message} · #{source}"),
+      metadata: { stats: stats.transform_values { |value| value.is_a?(String) ? sanitize_event_text(value) : value } }
+    )
+  end
+
+  def sanitize_event_text(text)
+    text.gsub(%r{https?://[^\s<>"']+}i) { |url| sanitize_input_for_logging(url) }.truncate(1_000)
   end
 
   # Self-test each candidate by running the real pipeline against input
@@ -152,7 +171,8 @@ class FeedIdentificationFetcher
       http_client: http_client
     ).call
 
-    @diagnostics[:candidate_tests] << result.to_h.merge(profile_key: candidate.profile_key, url: input)
+    record_event(:candidate, "#{candidate.profile_key}: #{result.status}, #{result.posts_found} sampled posts",
+                 source_url: input, profile_key: candidate.profile_key, **result.to_h)
 
     {
       "test_status" => result.status,

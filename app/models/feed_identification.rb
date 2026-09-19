@@ -18,8 +18,6 @@ class FeedIdentification < ApplicationRecord
 
   validates :input, presence: true
 
-  before_destroy :record_cancelled_detection
-
   scope :obsolete, -> {
     where(configuration_digest: nil)
       .or(where.not(configuration_digest: FeedProfile.configuration_digest))
@@ -46,13 +44,8 @@ class FeedIdentification < ApplicationRecord
     started_at = Time.current
     run_id = SecureRandom.uuid
     begin
-      self.class.transaction do
-        lock! if persisted?
-        activity.finish!(status: :superseded) if processing? && self.run_id.present?
-        update!(status: :processing, started_at: started_at, candidates: [], run_id: run_id,
-                configuration_digest: FeedProfile.configuration_digest)
-        activity.start!
-      end
+      update!(status: :processing, started_at: started_at, candidates: [], run_id: run_id,
+              configuration_digest: FeedProfile.configuration_digest)
     rescue ActiveRecord::RecordNotUnique
       return false
     end
@@ -65,31 +58,17 @@ class FeedIdentification < ApplicationRecord
   # @param status [Symbol] settled detection status
   # @param candidates [Array<Hash>] detected candidates
   # @param run_id [String] run token captured by the worker
-  # @param diagnostics [Hash] fetch responses and candidate failures
   # @return [Boolean] whether the matching run was settled
-  def settle_detection(status:, candidates:, run_id:, diagnostics: {})
-    self.class.transaction do
-      updated = self.class.where(id: id, status: :processing, run_id: run_id, configuration_digest: FeedProfile.configuration_digest)
-                         .update_all(status: status, candidates: candidates, updated_at: Time.current)
-      next false unless updated.positive?
-
-      activity(run_id: run_id).finish!(status: status, candidates: candidates, diagnostics: diagnostics)
-      true
-    end
+  def settle_detection(status:, candidates:, run_id:)
+    self.class.where(id: id, status: :processing, run_id: run_id, configuration_digest: FeedProfile.configuration_digest)
+              .update_all(status: status, candidates: candidates, updated_at: Time.current)
+              .positive?
   end
 
   # @param run_id [String] run token captured by the timeout job
   # @return [FeedIdentification] self
   def timeout!(run_id:)
-    self.class.transaction do
-      updated = self.class.where(id: id, status: :processing, run_id: run_id)
-                         .update_all(status: :timed_out, run_id: SecureRandom.uuid, updated_at: Time.current)
-      if updated.positive?
-        activity(run_id: run_id).finish!(status: :timed_out)
-        reload
-      end
-    end
-    self
+    settle_timeout!(run_id: run_id, status: :timed_out, from: :processing)
   end
 
   # The candidate the chooser preselects and the new-feed form is built from: the
@@ -150,16 +129,4 @@ class FeedIdentification < ApplicationRecord
     end
   end
   private_class_method :resolved_to
-
-  private
-
-  def activity(run_id: self.run_id)
-    FeedIdentificationActivity.new(self, run_id: run_id)
-  end
-
-  def record_cancelled_detection
-    with_lock do
-      activity.finish!(status: :cancelled) if processing? && run_id.present?
-    end
-  end
 end

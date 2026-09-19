@@ -4,8 +4,10 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
   test "identification events should be hidden from their owner in lists and direct links" do
     sign_in_as user
     identification = create(:feed_identification, :no_feed, user: user)
+    stub_request(:get, identification.input).to_return(status: 403)
     identification.restart_detection
-    event = Event.find_by!(type: "feed_identification", subject: identification)
+    FeedIdentificationJob.perform_now(identification.id, identification.run_id)
+    event = Event.where(type: "feed_identification", subject: identification).order(:id).first!
 
     get events_path
     assert_response :success

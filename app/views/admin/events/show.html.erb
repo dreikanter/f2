@@ -30,13 +30,6 @@
 
   <%= render EventDetailsComponent.new(event: @event, admin: true) %>
 
-  <% if @event.type == "feed_identification" %>
-    <section class="space-y-4" data-key="events.identification">
-      <%= h2 "Identification" %>
-      <%= render Admin::FeedIdentificationDetailsComponent.new(event: @event) %>
-    </section>
-  <% end %>
-
   <% if @referenced_posts.any? %>
     <section class="space-y-4" data-key="events.imported_posts">
       <%= h2 "Imported Posts" %>

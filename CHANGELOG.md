@@ -2,9 +2,12 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-19
+
+- Admins can inspect feed identification fetches, candidate tests, and results in the event log.
+
 ## 2026-09-18
 
-- Admins can inspect each feed identification attempt, including its user, result, and fetch errors.
 - Import PHD Comics with clean titles and comic images, without repeated site text.
 - Fix conflicting AI instructions for original content and posts without publication dates.
 - Choose a default model for each AI credential to preselect it when setting up a feed.
