@@ -33,7 +33,7 @@ class FeedListItemComponent < ListItemComponent
   end
 
   def primary_element
-    helpers.tag.div(helpers.safe_join([title_link, group_element, instance_badge].compact),
+    helpers.tag.div(helpers.safe_join([title_link, group_element, instance_badge, ai_badge].compact),
                     class: "flex min-w-0 flex-1 items-baseline gap-2")
   end
 
@@ -59,6 +59,12 @@ class FeedListItemComponent < ListItemComponent
 
   def instance_badge
     render(FreefeedInstanceBadgeComponent.new(access_token: feed.access_token, key: "feed.#{feed.id}.instance"))
+  end
+
+  def ai_badge
+    return unless feed.depends_on_ai?
+
+    render(BadgeComponent.new(text: "AI", color: :info, size: :sm, key: "feed.#{feed.id}.ai"))
   end
 
   def meta_segments

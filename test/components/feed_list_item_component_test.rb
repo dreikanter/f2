@@ -85,6 +85,24 @@ class FeedListItemComponentTest < ViewComponent::TestCase
     assert_empty result.css("[data-key='feed.#{main_feed.id}.instance']")
   end
 
+  test "#render should show a small info AI badge after the instance badge for AI feeds" do
+    ai_feed = create(:feed, :disabled, user: user, feed_profile_key: "llm", params: { "prompt" => "Follow the news" })
+    result = render_inline FeedListItemComponent.new(feed: ai_feed)
+
+    badge = result.at_css("[data-key='feed.#{ai_feed.id}.ai']")
+    assert_not_nil badge
+    assert_equal "AI", badge.text
+    assert_includes badge["class"].split, "bg-brand-subtle"
+    assert_includes badge["class"].split, "px-1.5"
+    assert_equal "feed.#{ai_feed.id}.instance", badge.previous_element["data-key"]
+  end
+
+  test "#render should not show an AI badge for non-AI feeds" do
+    result = render_inline FeedListItemComponent.new(feed: feed)
+
+    assert_empty result.css("[data-key='feed.#{feed.id}.ai']")
+  end
+
   test "#render should not mark a feed without an access token" do
     draft_feed = create(:feed, :without_access_token, :draft, user: user)
     result = render_inline FeedListItemComponent.new(feed: draft_feed)
