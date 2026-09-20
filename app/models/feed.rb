@@ -279,7 +279,7 @@ class Feed < ApplicationRecord
 
   # @return [Time, nil] last refresh time or nil if never refreshed
   def last_refreshed_at
-    feed_entries.maximum(:created_at)
+    last_successful_refresh_at || feed_entries.maximum(:created_at)
   end
 
   # @return [Time, nil] most recent post date or nil if no posts

@@ -288,6 +288,7 @@ class FeedRefreshWorkflow
 
   def replace_refresh_event(**attributes)
     Event.transaction do
+      feed.update_column(:last_successful_refresh_at, Time.current) if attributes.dig(:metadata, :status) == "completed"
       event = Event.create!(type: "feed_refresh", subject: feed, user: feed.user, **attributes)
       if @refresh_event
         @refresh_event.event_references.update_all(event_id: event.id, updated_at: Time.current)
