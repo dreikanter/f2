@@ -1,11 +1,13 @@
 # The response bound shared by AI instructions, provider schemas, and validation.
 class LlmOutput
+  DEFAULT_MAX_ITEMS = 10
+
   def initialize(feed)
     @feed = feed
   end
 
   def max_items
-    @feed.params["max_items"].presence || 10
+    @feed.params["max_items"].presence || DEFAULT_MAX_ITEMS
   end
 
   def schema
