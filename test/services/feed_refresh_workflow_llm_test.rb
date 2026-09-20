@@ -124,7 +124,7 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
       assert_equal [chat], refresh_event.references
       assert_equal "failed", refresh_event.metadata.fetch("status")
       assert_equal "AI request exceeded its deadline.", refresh_event.message
-      assert_equal "Loader::ExecutionLimitExceeded", refresh_event.metadata.dig("error", "class")
+      assert_equal "Loader::LlmLoader::ExecutionLimitExceeded", refresh_event.metadata.dig("error", "class")
       assert_equal "load_feed_contents", refresh_event.metadata.dig("error", "stage")
       assert_equal 2, feed.reload.consecutive_failures
       assert_requested request, times: 1
@@ -155,7 +155,7 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     assert_equal [chat], refresh_event.references
     assert_equal "failed", refresh_event.metadata.fetch("status")
     assert_equal "AI request exceeded its execution limits.", refresh_event.message
-    assert_equal "Loader::ExecutionLimitExceeded", refresh_event.metadata.dig("error", "class")
+    assert_equal "Loader::LlmLoader::ExecutionLimitExceeded", refresh_event.metadata.dig("error", "class")
     assert_equal "load_feed_contents", refresh_event.metadata.dig("error", "stage")
     assert_equal 2, feed.reload.consecutive_failures
     assert_requested request, times: 1
@@ -169,7 +169,7 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
       end
 
       assert_no_publication do
-        assert_raises(Loader::ExecutionLimitExceeded) { FeedRefreshWorkflow.new(feed).execute }
+        assert_raises(Loader::LlmLoader::ExecutionLimitExceeded) { FeedRefreshWorkflow.new(feed).execute }
       end
 
       chat = feed.llm_chats.sole
