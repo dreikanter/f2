@@ -2,8 +2,7 @@ class FeedRefreshJob < ApplicationJob
   queue_as :default
 
   # @param feed_id [Integer] ID of the feed to refresh
-  # Accept the obsolete keyword while already queued jobs drain.
-  def perform(feed_id, manual: nil)
+  def perform(feed_id)
     feed = Feed.find_by(id: feed_id)
     return unless feed
 

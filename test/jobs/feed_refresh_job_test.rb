@@ -68,23 +68,6 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     end
   end
 
-  test "#perform should accept a previously queued manual refresh keyword" do
-    freeze_time do
-      create(:feed_schedule, feed: ai_feed)
-      response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
-      response["output"].last["content"].first["text"] = '{"items":[{"source_url":null,"body":"Today’s roundup"}]}'
-      request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
-
-      FeedRefreshJob.perform_now(ai_feed.id, manual: true)
-
-      assert_equal "completed", ai_feed.events.find_by!(type: "feed_refresh").metadata["status"]
-      assert_empty ai_feed.events.where(type: "feed_refresh_skipped")
-      assert_equal "Today’s roundup", ai_feed.posts.sole.content
-      assert ai_feed.llm_chats.sole.succeeded?
-      assert_requested request, times: 1
-    end
-  end
-
   test "#perform should allow a manual refresh to import another original post" do
     response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
     response["output"].last["content"].first["text"] = '{"items":[{"source_url":null,"body":"A story"}]}'
