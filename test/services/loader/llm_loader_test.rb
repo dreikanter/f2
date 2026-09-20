@@ -374,6 +374,46 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     end
   end
 
+  test "#load should keep connection timeouts as request errors without retrying" do
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_timeout
+
+    error = assert_raises(Loader::Error) { Loader::LlmLoader.new(feed).load }
+
+    assert_instance_of Loader::Error, error
+    assert_equal "AI request failed. Please try again later.", error.message
+    assert_kind_of Faraday::ConnectionFailed, error.cause
+    assert_kind_of Net::OpenTimeout, error.cause.cause
+    chat = feed.llm_chats.sole
+    assert chat.failed?
+    assert_equal "Faraday::ConnectionFailed", chat.error_category
+    assert_requested request, times: 1
+  end
+
+  test "#load should classify read timeouts as execution limits without retrying" do
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_raise(Net::ReadTimeout)
+
+    error = assert_raises(Loader::LlmLoader::ExecutionLimitExceeded) { Loader::LlmLoader.new(feed).load }
+
+    assert_equal "AI request exceeded its deadline.", error.message
+    assert_kind_of Faraday::TimeoutError, error.cause
+    assert_kind_of Net::ReadTimeout, error.cause.cause
+    assert feed.llm_chats.sole.failed?
+    assert_requested request, times: 1
+  end
+
+  test "#load should keep non-timeout connection failures as request errors" do
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_raise(SocketError)
+
+    error = assert_raises(Loader::Error) { Loader::LlmLoader.new(feed).load }
+
+    assert_instance_of Loader::Error, error
+    assert_equal "AI request failed. Please try again later.", error.message
+    assert_kind_of Faraday::ConnectionFailed, error.cause
+    assert_kind_of SocketError, error.cause.cause
+    assert feed.llm_chats.sole.failed?
+    assert_requested request, times: 1
+  end
+
   test "#load should translate provider failures without retrying" do
     request = stub_request(:post, "https://api.openai.com/v1/responses")
       .to_return_json(status: 429, body: { error: { message: "Rate limited", type: "rate_limit_error" } })
@@ -381,6 +421,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
 
     error = assert_raises(Loader::Error) { loader.load }
 
+    assert_instance_of Loader::Error, error
     assert_equal "AI request failed. Please try again later.", error.message
     assert_kind_of RubyLLM::Error, error.cause
     chat = feed.llm_chats.sole
@@ -392,7 +433,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
 
   test "#load should fail the chat when native search exceeds its execution budget" do
     response = completed_response
-    response["output"] = Array.new(5) do |index|
+    response["output"] = Array.new(17) do |index|
       { "type" => "web_search_call", "id" => "search_#{index}", "status" => "completed" }
     end + response["output"].select { |item| item["type"] == "message" }
     request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)

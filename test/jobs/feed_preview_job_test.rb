@@ -70,7 +70,7 @@ class FeedPreviewJobTest < ActiveJob::TestCase
 
       assert_empty reports
       assert preview.reload.failed?
-      assert_nil preview.data
+      assert_equal "ai_execution_limit", preview.data["error_code"]
       event = credential.user.events.where(type: "feed_preview").sole
       assert_equal "failed", event.metadata.fetch("status")
       assert_equal "AI request exceeded its deadline.", event.message
@@ -88,6 +88,22 @@ class FeedPreviewJobTest < ActiveJob::TestCase
 
     assert_kind_of Loader::Error, reports.sole.error
     assert preview.reload.failed?
+  end
+
+  test "#perform should report an AI connection timeout as a provider failure" do
+    credential = create(:ai_credential, :active)
+    preview = create(:feed_preview, user: credential.user, feed_profile_key: "llm",
+                     params: { "prompt" => "Daily roundup" }, ai_credential: credential,
+                     ai_model: "gpt-5-nano", run_id: RUN_ID)
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_timeout
+
+    reports = capture_error_reports { FeedPreviewJob.perform_now(preview.id, RUN_ID) }
+
+    assert_instance_of Loader::Error, reports.sole.error
+    assert_kind_of Net::OpenTimeout, reports.sole.error.cause.cause
+    assert preview.reload.failed?
+    assert_not preview.execution_limit_exceeded?
+    assert_requested request, times: 1
   end
 
   test "#perform should not reopen a settled run on duplicate delivery" do

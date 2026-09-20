@@ -22,10 +22,10 @@ module Loader
       chat&.fail!(error)
 
       case error
+      when Faraday::TimeoutError, LlmExecution::DeadlineExceeded
+        raise ExecutionLimitExceeded, "AI request exceeded its deadline."
       when RubyLLM::Error, Faraday::Error
         raise Loader::Error, "AI request failed. Please try again later."
-      when LlmExecution::DeadlineExceeded
-        raise ExecutionLimitExceeded, "AI request exceeded its deadline."
       when LlmExecution::RequestLimitExceeded, LlmExecution::ToolLimitExceeded
         raise ExecutionLimitExceeded, "AI request exceeded its execution limits."
       else

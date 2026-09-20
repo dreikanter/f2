@@ -80,7 +80,12 @@ class FeedPreview < ApplicationRecord
   # @param run_id [String] the run token captured when the timeout was scheduled
   # @return [FeedPreview] self
   def timeout!(run_id:)
-    settle_timeout!(run_id: run_id, status: :failed, from: [:pending, :processing])
+    failure_data = { error_code: "ai_execution_limit" } if FeedProfile.depends_on_ai?(feed_profile_key)
+    settle_timeout!(run_id: run_id, status: :failed, from: [:pending, :processing], data: failure_data)
+  end
+
+  def execution_limit_exceeded?
+    failed? && data&.dig("error_code") == "ai_execution_limit"
   end
 
   def timeout_after
