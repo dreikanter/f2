@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-20
+
+- Preserve 365tomorrows story paragraphs and line breaks, splitting long stories into up to four comments.
+
 ## 2026-09-19
 
 - Admins can inspect each feed identification attempt and its diagnostic steps in one event.

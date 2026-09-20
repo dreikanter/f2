@@ -12,7 +12,7 @@ class Normalizer::TomorrowsNormalizerTest < ActiveSupport::TestCase
   end
 
   setup do
-    stub_request(:get, "https://365tomorrows.com/2026/06/10/the-black-cube/")
+    stub_request(:get, "https://365tomorrows.com/2026/06/10/fake-sample-story-one/")
       .to_return(status: 200, body: file_fixture("feeds/tomorrows/page.html").read)
   end
 
@@ -30,7 +30,7 @@ class Normalizer::TomorrowsNormalizerTest < ActiveSupport::TestCase
 
     post = Normalizer::TomorrowsNormalizer.new(entry).normalize
 
-    assert_equal "The Black Cube - https://365tomorrows.com/2026/06/10/the-black-cube/", post.content
+    assert_equal "Fake Sample Story One - https://365tomorrows.com/2026/06/10/fake-sample-story-one/", post.content
   end
 
   test "#normalize should include story text as a comment" do
@@ -39,22 +39,127 @@ class Normalizer::TomorrowsNormalizerTest < ActiveSupport::TestCase
     post = Normalizer::TomorrowsNormalizer.new(entry).normalize
 
     assert_equal 1, post.comments.size
-    assert_includes post.comments.first, "There was a moment, in his dream"
+    assert_includes post.comments.first, "This is a fake sample paragraph for normalizer tests."
   end
 
   test "#normalize should fall back to feed summary when page fetch fails" do
-    stub_request(:get, "https://365tomorrows.com/2026/06/10/the-black-cube/")
+    stub_request(:get, "https://365tomorrows.com/2026/06/10/fake-sample-story-one/")
       .to_return(status: 503)
 
     entry = feed_entry(0)
     post = Normalizer::TomorrowsNormalizer.new(entry).normalize
 
     assert_equal 1, post.comments.size
-    assert_includes post.comments.first, "Author: Bill Cox"
+    assert_includes post.comments.first, "Author: Fake Sample Author One"
+  end
+
+  test "#normalize should preserve paragraphs and line breaks" do
+    post = normalize_story(<<~HTML)
+      <p><strong>Author: Fake Sample Author One</strong></p>
+      <p>First fake sample line.<br>Fake text &amp; sample data.</p>
+      <p>Another <em>fake</em> paragraph.</p>
+    HTML
+
+    assert_equal ["Author: Fake Sample Author One\n\nFirst fake sample line.\nFake text & sample data.\n\nAnother fake paragraph."], post.comments
+  end
+
+  test "#normalize should retain a story that fits one full comment" do
+    story = "A" * Post::MAX_COMMENT_LENGTH
+
+    post = normalize_story("<p>#{story}</p>")
+
+    assert_equal [story], post.comments
+  end
+
+  test "#normalize should split at paragraph boundaries without losing text" do
+    first = "First fake sample sentence. " * 70
+    second = "Second fake sample sentence. " * 60
+
+    post = normalize_story("<p>#{first}</p><p>#{second}</p>")
+
+    assert_equal [first.strip, second.strip], post.comments
+  end
+
+  test "#normalize should split an oversized paragraph at a sentence boundary" do
+    first = "First fake sample sentence. " * 70
+    second = "fake sample " * 120 + "ending."
+
+    post = normalize_story("<p>#{first}#{second}</p>")
+
+    assert_equal [first.strip, second], post.comments
+  end
+
+  test "#normalize should keep closing quotes with their sentence" do
+    first = "Sample says, “This is fake.” " * 70
+    second = "fake sample " * 120 + "ending."
+
+    post = normalize_story("<p>#{first}#{second}</p>")
+
+    assert_equal [first.strip, second], post.comments
+  end
+
+  test "#normalize should split at line breaks before splitting sentences" do
+    first = "First fake sample sentence. " * 70
+    second = "Second fake sample sentence. " * 60
+
+    post = normalize_story("<p>#{first}<br>#{second}</p>")
+
+    assert_equal [first.strip, second.strip], post.comments
+  end
+
+  test "#normalize should split a long sentence at a word boundary" do
+    first = ("samples " * 375).strip
+    second = "fake sample ending."
+
+    post = normalize_story("<p>#{first} #{second}</p>")
+
+    assert_equal [first, second], post.comments
+  end
+
+  test "#normalize should split unbroken text within the comment limit" do
+    first = "Ж" * Post::MAX_COMMENT_LENGTH
+
+    post = normalize_story("<p>#{first}end</p>")
+
+    assert_equal [first, "end"], post.comments
+  end
+
+  test "#normalize should retain exactly four full comments without truncation" do
+    paragraph = "Ж" * Post::MAX_COMMENT_LENGTH
+
+    post = normalize_story("<p>#{paragraph}</p>" * 4)
+
+    assert_equal [paragraph, paragraph, paragraph, paragraph], post.comments
+  end
+
+  test "#normalize should truncate stories beyond four comments" do
+    paragraph = "Ж" * Post::MAX_COMMENT_LENGTH
+
+    post = normalize_story("<p>#{paragraph}</p>" * 5)
+
+    assert_equal [paragraph, paragraph, paragraph, "#{paragraph[0...-1]}…"], post.comments
+  end
+
+  test "#normalize should preserve breaks and split long RSS fallback content" do
+    first = "First fake sample sentence. " * 70
+    second = "Second fake sample sentence. " * 60
+    entry = feed_entry(0)
+    entry.raw_data["content"] = "<p>#{first}</p><p>#{second}<br>Another fake paragraph.</p>"
+    stub_request(:get, entry.raw_data["link"]).to_return(status: 503)
+
+    post = Normalizer::TomorrowsNormalizer.new(entry).normalize
+
+    assert_equal [first.strip, "#{second.strip}\nAnother fake paragraph."], post.comments
+  end
+
+  test "#normalize should omit comments for an empty story" do
+    post = normalize_story("<p> </p>")
+
+    assert_empty post.comments
   end
 
   test "#normalize should report via Rails.error when page fetched but .entry-content missing" do
-    stub_request(:get, "https://365tomorrows.com/2026/06/10/the-black-cube/")
+    stub_request(:get, "https://365tomorrows.com/2026/06/10/fake-sample-story-one/")
       .to_return(status: 200, body: "<html><body><p>no entry-content here</p></body></html>")
 
     entry = feed_entry(0)
@@ -68,7 +173,7 @@ class Normalizer::TomorrowsNormalizerTest < ActiveSupport::TestCase
   end
 
   test "#normalize should not report via Rails.error on transient page fetch failure" do
-    stub_request(:get, "https://365tomorrows.com/2026/06/10/the-black-cube/")
+    stub_request(:get, "https://365tomorrows.com/2026/06/10/fake-sample-story-one/")
       .to_return(status: 503)
 
     entry = feed_entry(0)
@@ -78,5 +183,15 @@ class Normalizer::TomorrowsNormalizerTest < ActiveSupport::TestCase
     end
 
     assert_empty reported, "should not report transient HTTP failures to Rails.error"
+  end
+
+  private
+
+  def normalize_story(html)
+    entry = feed_entry(0)
+    stub_request(:get, entry.raw_data["link"])
+      .to_return(status: 200, body: "<div class='entry-content'>#{html}</div>")
+
+    Normalizer::TomorrowsNormalizer.new(entry).normalize
   end
 end

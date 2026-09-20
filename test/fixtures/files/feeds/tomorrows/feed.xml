@@ -7,27 +7,27 @@
     <title>365tomorrows</title>
     <atom:link href="https://365tomorrows.com/feed/" rel="self" type="application/rss+xml"/>
     <link>https://365tomorrows.com/</link>
-    <description>A New Flash of Science Fiction Every Day</description>
+    <description>Fake RSS sample for automated tests</description>
     <item>
-      <title>The Black Cube</title>
-      <link>https://365tomorrows.com/2026/06/10/the-black-cube/</link>
+      <title>Fake Sample Story One</title>
+      <link>https://365tomorrows.com/2026/06/10/fake-sample-story-one/</link>
       <dc:creator><![CDATA[submission]]></dc:creator>
       <pubDate>Wed, 10 Jun 2026 14:54:57 +0000</pubDate>
       <category><![CDATA[Story]]></category>
-      <guid isPermaLink="false">https://365tomorrows.com/?p=219944</guid>
-      <description><![CDATA[<p>Author: Bill Cox There was a moment, in his dream, when he realised that he was no longer alone.</p>
-<p>The post <a href="https://365tomorrows.com/2026/06/10/the-black-cube/">The Black Cube</a> appeared first on <a href="https://365tomorrows.com">365tomorrows</a>.</p>
+      <guid isPermaLink="false">https://365tomorrows.com/?p=fake-sample-story-one</guid>
+      <description><![CDATA[<p>Author: Fake Sample Author One This is a fake sample paragraph for normalizer tests.</p>
+<p>The post <a href="https://365tomorrows.com/2026/06/10/fake-sample-story-one/">Fake Sample Story One</a> appeared first on <a href="https://365tomorrows.com">365tomorrows</a>.</p>
 ]]></description>
     </item>
     <item>
-      <title>Live! From Elvis Centauri</title>
-      <link>https://365tomorrows.com/2026/06/10/live-from-elvis-centauri/</link>
+      <title>Fake Sample Story Two</title>
+      <link>https://365tomorrows.com/2026/06/10/fake-sample-story-two/</link>
       <dc:creator><![CDATA[submission]]></dc:creator>
       <pubDate>Wed, 10 Jun 2026 07:55:17 +0000</pubDate>
       <category><![CDATA[Story]]></category>
-      <guid isPermaLink="false">https://365tomorrows.com/?p=219590</guid>
-      <description><![CDATA[<p>Author: Hillary Lyon The entire planet watched the otherworldly broadcast.</p>
-<p>The post <a href="https://365tomorrows.com/2026/06/10/live-from-elvis-centauri/">Live! From Elvis Centauri</a> appeared first on <a href="https://365tomorrows.com">365tomorrows</a>.</p>
+      <guid isPermaLink="false">https://365tomorrows.com/?p=fake-sample-story-two</guid>
+      <description><![CDATA[<p>Author: Fake Sample Author Two This is another fake sample paragraph for RSS tests.</p>
+<p>The post <a href="https://365tomorrows.com/2026/06/10/fake-sample-story-two/">Fake Sample Story Two</a> appeared first on <a href="https://365tomorrows.com">365tomorrows</a>.</p>
 ]]></description>
     </item>
   </channel>
