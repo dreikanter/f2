@@ -284,7 +284,14 @@ class Feed < ApplicationRecord
 
   # @return [Time, nil] most recent post date or nil if no posts
   def most_recent_post_date
-    posts.maximum(:published_at)
+    most_recent_post_at
+  end
+
+  # Serialize recalculation so concurrent post writes cannot leave a stale value.
+  def refresh_most_recent_post_at!
+    with_lock("FOR NO KEY UPDATE") do
+      update_column(:most_recent_post_at, posts.maximum(:published_at))
+    end
   end
 
   # Time of the most recent repost to FreeFeed, regardless of the source

@@ -194,6 +194,7 @@ class FeedRefreshWorkflow
 
     Post.insert_all(posts_data)
     feed.recount_imported_posts!
+    feed.refresh_most_recent_post_at!
 
     new_uids = posts.map(&:uid)
     persisted_posts = feed.posts.where(uid: new_uids).order(:published_at)
@@ -219,6 +220,7 @@ class FeedRefreshWorkflow
     rejected_posts_count = posts.count(&:rejected?)
 
     record_completed_at
+    feed.refresh_most_recent_post_at! if posts.empty?
     feed.reset_refresh_failures!
     Metrics.increment("feed_refresh_total", status: "ok", profile: feed.feed_profile_key)
     complete_refresh_event(posts)

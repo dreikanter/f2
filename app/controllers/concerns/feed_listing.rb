@@ -1,12 +1,10 @@
 # Shared feed-list configuration for the user-facing and admin feed
-# controllers: sort expressions, listing stats, and recent-post queries.
+# controllers: sort expressions and recent-post queries.
 module FeedListing
   extend ActiveSupport::Concern
 
   MAX_RECENT_POSTS = 5
   MAX_RECENT_EVENTS = 10
-
-  MOST_RECENT_POST_SQL = "(SELECT MAX(published_at) FROM posts WHERE posts.feed_id = feeds.id)".freeze
 
   SORTABLE_FIELDS = {
     name: {
@@ -31,7 +29,7 @@ module FeedListing
     },
     recent_post: {
       title: "Recent Post",
-      order_by: MOST_RECENT_POST_SQL,
+      order_by: "feeds.most_recent_post_at",
       direction: :desc
     }
   }.freeze
@@ -40,13 +38,6 @@ module FeedListing
 
   def sortable_fields
     SORTABLE_FIELDS
-  end
-
-  def with_listing_stats(scope)
-    scope.select(
-      "feeds.*",
-      "#{MOST_RECENT_POST_SQL} AS listing_most_recent_post_date"
-    )
   end
 
   def recent_posts(feed)

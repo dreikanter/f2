@@ -220,16 +220,10 @@ class FeedListItemComponent < ListItemComponent
   end
 
   def most_recent_post_tag
-    published_at = listing_most_recent_post_date
+    published_at = feed.most_recent_post_at
     return "None" unless published_at
 
     helpers.short_time_ago_tag(published_at)
-  end
-
-  def listing_most_recent_post_date
-    return feed[:listing_most_recent_post_date] if feed.has_attribute?(:listing_most_recent_post_date)
-
-    feed.most_recent_post_date
   end
 
   def published_posts_count_tag
