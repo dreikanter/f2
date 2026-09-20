@@ -4,6 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-20
 
+- Mark AI feeds with a small blue AI badge in the feed list.
+- Show “No posts yet” for empty feeds instead of an empty latest-post date and zero post count.
 - Speed up feed-list loading and sorting by latest post.
 - Show the latest successful feed update under “Last updated”, even when no new posts were found.
 - Check numeric feed options against their allowed range before previewing or saving.

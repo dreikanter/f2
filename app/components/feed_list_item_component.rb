@@ -33,7 +33,7 @@ class FeedListItemComponent < ListItemComponent
   end
 
   def primary_element
-    helpers.tag.div(helpers.safe_join([title_link, group_element, instance_badge].compact),
+    helpers.tag.div(helpers.safe_join([title_link, group_element, instance_badge, ai_badge].compact),
                     class: "flex min-w-0 flex-1 items-baseline gap-2")
   end
 
@@ -61,14 +61,24 @@ class FeedListItemComponent < ListItemComponent
     render(FreefeedInstanceBadgeComponent.new(access_token: feed.access_token, key: "feed.#{feed.id}.instance"))
   end
 
+  def ai_badge
+    return unless feed.depends_on_ai?
+
+    render(BadgeComponent.new(text: "AI", color: :info, size: :sm, key: "feed.#{feed.id}.ai"))
+  end
+
   def meta_segments
     segments = [status_segment]
 
     # Drafts have never run, so their activity times and counts are meaningless.
     unless draft?
       segments << helpers.tag.span(helpers.safe_join(["Last updated: ", last_refreshed_tag]), data: { key: "feed.#{feed.id}.last_refreshed" })
-      segments << helpers.tag.span(helpers.safe_join(["Latest post: ", most_recent_post_tag]), data: { key: "feed.#{feed.id}.most_recent_post" })
-      segments << helpers.tag.span(helpers.safe_join(["Posts: ", published_posts_count_tag]), data: { key: "feed.#{feed.id}.published_posts_count" })
+      if feed.published_posts_count.zero?
+        segments << helpers.tag.span("No posts yet", data: { key: "feed.#{feed.id}.no_posts" })
+      else
+        segments << helpers.tag.span(helpers.safe_join(["Latest post: ", most_recent_post_tag]), data: { key: "feed.#{feed.id}.most_recent_post" })
+        segments << helpers.tag.span(helpers.safe_join(["Posts: ", published_posts_count_tag]), data: { key: "feed.#{feed.id}.published_posts_count" })
+      end
     end
 
     segments << owner_segment if owner
