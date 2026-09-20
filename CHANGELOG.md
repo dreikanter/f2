@@ -8,6 +8,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 - Set “Maximum posts per refresh” on AI feeds to limit each response to 1–10 posts; leaving it blank allows up to 3.
 - AI feeds use the default post limit for invalid values when saving, previewing, or refreshing.
 - Use smaller headings in linked cards.
+- Smaller card headings on the Settings, Admin, and Dev Tools pages.
+- The name card in Settings now shows a short description instead of your current name.
 - Preserve 365tomorrows story paragraphs and line breaks, splitting long stories into up to four comments.
 
 ## 2026-09-19
