@@ -17,6 +17,7 @@ Web application for scheduling and publishing content feeds to FreeFeed.
 bin/setup
 bin/rails server
 bin/rails test
+yarn test:javascript
 bin/rubocop -f github
 ```
 
@@ -33,4 +34,8 @@ Ruby version: see `.ruby-version`
 
 ```bash
 bin/rails test
+yarn test:javascript
 ```
+
+JavaScript tests require Node 22.15+, bundled gems, and `yarn install --frozen-lockfile`.
+They use the same Stimulus asset as the browser, provided by `stimulus-rails`.

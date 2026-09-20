@@ -36,7 +36,8 @@ RUN apt-get update -qq && \
 # Install JavaScript dependencies
 ARG NODE_VERSION=24.15.0
 ARG YARN_VERSION=1.22.21
-ENV PATH=/usr/local/node/bin:$PATH
+ENV PATH=/usr/local/node/bin:$PATH \
+    NODE_ENV="production"
 RUN curl -sL https://github.com/nodenv/node-build/archive/master.tar.gz | tar xz -C /tmp/ && \
     /tmp/node-build-master/bin/node-build "${NODE_VERSION}" /usr/local/node && \
     npm install -g yarn@$YARN_VERSION && \
@@ -50,7 +51,7 @@ RUN bundle install && \
 
 # Install node modules
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+RUN yarn install --frozen-lockfile --production
 
 # Copy application code
 COPY . .

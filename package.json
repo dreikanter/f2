@@ -11,9 +11,13 @@
   },
   "scripts": {
     "build:css": "node ./node_modules/@tailwindcss/cli/dist/index.mjs -i ./app/assets/stylesheets/application.css -o ./app/assets/builds/application.css -c ./tailwind.config.mjs",
-    "watch:css": "nodemon --watch ./app/assets/stylesheets/ --watch ./app/javascript/ --watch ./app/views/ --watch ./app/helpers/ --watch ./app/components/ --watch ./tailwind.config.mjs --ext css,scss,js,ts,tsx,jsx,erb,rb --exec \"yarn run build:css\""
+    "watch:css": "nodemon --watch ./app/assets/stylesheets/ --watch ./app/javascript/ --watch ./app/views/ --watch ./app/helpers/ --watch ./app/components/ --watch ./tailwind.config.mjs --ext css,scss,js,ts,tsx,jsx,erb,rb --exec \"yarn run build:css\"",
+    "test:javascript": "node --import ./test/javascript/support/importmap.mjs --test test/javascript/*_test.mjs"
   },
   "browserslist": [
     "defaults"
-  ]
+  ],
+  "devDependencies": {
+    "jsdom": "26.1.0"
+  }
 }
