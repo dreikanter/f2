@@ -117,26 +117,30 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal workflow.total_duration, workflow.stats[:total_duration]
   end
 
-  test "#execute should persist AI preview failure details in the activity event" do
+  test "#execute should classify read timeouts and persist AI preview failure details" do
     credential = create(:ai_credential, :active, user: user)
     preview = create(:feed_preview, user: user, feed_profile_key: "llm",
                      params: { "prompt" => "A daily roundup" }, ai_credential: credential, ai_model: "gpt-5-nano",
                      status: :pending, run_id: AI_RUN_ID)
-    stub_request(:post, "https://api.openai.com/v1/responses").to_timeout
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_raise(Net::ReadTimeout)
 
     workflow = FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID)
-    error = assert_raises(Loader::Error) { workflow.execute }
+    error = assert_raises(Loader::LlmLoader::ExecutionLimitExceeded) { workflow.execute }
 
     assert preview.reload.failed?
+    assert_equal "ai_execution_limit", preview.data["error_code"]
+    assert_kind_of Faraday::TimeoutError, error.cause
+    assert_kind_of Net::ReadTimeout, error.cause.cause
     event = Event.find_by!(type: "feed_preview", subject: credential)
     assert_equal "failed", event.metadata["status"]
     assert_equal error.message, event.message
-    assert_equal "Loader::Error", event.metadata.dig("error", "class")
+    assert_equal "Loader::LlmLoader::ExecutionLimitExceeded", event.metadata.dig("error", "class")
     assert_equal error.message, event.metadata.dig("error", "message")
     assert_equal "load_feed_contents", event.metadata.dig("error", "stage")
     assert_equal error.backtrace, event.metadata.dig("error", "backtrace")
     assert_equal "load_feed_contents", event.metadata.dig("stats", "failed_at_step")
     assert_not event.metadata.fetch("stats").key?("error")
+    assert_requested request, times: 1
   end
 
   test "#execute should halt before loading when the run is superseded" do
@@ -218,6 +222,76 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert usage.total_cost.positive?
     assert_equal 1, event.metadata.dig("stats", "llm_calls")
     assert_equal 0.001, event.metadata.dig("stats", "llm_cost_cents")
+  end
+
+  test "#execute should preview one news post after five native web calls" do
+    credential = create(:ai_credential, :active, user: user)
+    prompt = "Find one hottest AI tech news post published TODAY on x.com. " \
+             "If the post text is shorter than 140 character, quote it, otherwise summarize it. " \
+             "Do not add any comments to the result post."
+    preview = create(:feed_preview, user: user, feed_profile_key: "llm", ai_credential: credential,
+                     ai_model: "gpt-5.6-luna", params: { "prompt" => prompt, "max_items" => 1 },
+                     status: :pending, run_id: AI_RUN_ID)
+    response = completed_ai_response
+    response["model"] = preview.ai_model
+    message = response["output"].last
+    message["content"].first["text"] = {
+      items: [{
+        body: "Today's AI news",
+        source_url: "https://x.com/example/status/123",
+        title: "",
+        supplementary: [],
+        images: [],
+        published_at: Time.current.iso8601
+      }]
+    }.to_json
+    response["output"] = Array.new(5) do |index|
+      {
+        type: "web_search_call",
+        id: "search_#{index}",
+        status: "completed",
+        action: { type: "search", query: "AI news today site:x.com" }
+      }
+    end + [message]
+    request = stub_request(:post, "https://api.openai.com/v1/responses")
+      .with do |http|
+        payload = JSON.parse(http.body)
+        payload.fetch("model") == "gpt-5.6-luna" &&
+          payload.fetch("max_tool_calls") == 16 &&
+          payload.dig("text", "format", "schema", "properties", "items", "maxItems") == 1
+      end
+      .to_return_json(body: response)
+
+    FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
+
+    assert preview.reload.ready?
+    assert_equal "https://x.com/example/status/123", preview.posts_data.sole["source_url"]
+    assert_empty preview.posts_data.sole["comments"]
+    assert LlmChat.sole.succeeded?
+    event = Event.find_by!(type: "feed_preview", subject: credential)
+    assert_equal "completed", event.metadata["status"]
+    assert_equal 5, LlmUsageDetails.new(LlmChat.sole.ruby_llm_usages.sole).web_search_count
+    assert_requested request, times: 1
+  end
+
+  test "#execute should explain an exhausted AI search budget" do
+    preview = ai_preview
+    response = completed_ai_response
+    response["output"] = Array.new(16) do |index|
+      { type: "web_search_call", id: "search_#{index}", status: "completed" }
+    end
+    response["status"] = "incomplete"
+    response["incomplete_details"] = { "reason" => "max_tool_calls" }
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+    assert_raises(Loader::LlmLoader::ExecutionLimitExceeded) do
+      FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
+    end
+
+    assert preview.reload.failed?
+    assert_equal "ai_execution_limit", preview.data["error_code"]
+    assert LlmChat.sole.failed?
+    assert_requested request, times: 1
   end
 
   test "#execute should include queue time in the preview extraction deadline" do
@@ -399,7 +473,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
 
       assert_kind_of LlmExecution::DeadlineExceeded, error.cause
       assert preview.reload.failed?
-      assert_nil preview.data
+      assert_equal "ai_execution_limit", preview.data["error_code"]
       chat = LlmChat.sole
       assert chat.interrupted?
       assert_equal "succeeded", chat.ruby_llm_usages.sole.status
@@ -427,7 +501,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
 
       assert preview.reload.failed?
       assert_equal timed_out_run_id, preview.run_id
-      assert_nil preview.data
+      assert preview.execution_limit_exceeded?
       event = Event.find_by!(type: "feed_preview", subject: preview.ai_credential)
       assert_equal "interrupted", event.metadata["status"]
     end

@@ -2,7 +2,7 @@
 class LlmExecution
   MAX_REQUESTS = 4
   MAX_OUTPUT_TOKENS = 16_384
-  MAX_TOOL_CALLS = 4
+  MAX_TOOL_CALLS = 16
 
   class DeadlineExceeded < StandardError; end
   class RequestLimitExceeded < StandardError; end
@@ -47,6 +47,7 @@ class LlmExecution
       @tool_calls += response.server_tool_calls.size
       check_deadline!
       raise ToolLimitExceeded if @tool_calls > MAX_TOOL_CALLS
+      raise ToolLimitExceeded if response.finish_reason == :max_tool_calls
 
       return response if @chat.complete?
 

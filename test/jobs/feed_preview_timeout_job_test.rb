@@ -31,6 +31,18 @@ class FeedPreviewTimeoutJobTest < ActiveJob::TestCase
     assert preview.reload.failed?
   end
 
+  test "#perform should persist the AI limit reason before a pending run starts" do
+    preview = create(:feed_preview, feed_profile_key: "llm", params: { "prompt" => "Daily roundup" },
+                     status: :pending, run_id: RUN_ID)
+
+    FeedPreviewTimeoutJob.perform_now(preview.id, RUN_ID)
+
+    assert preview.reload.failed?
+    assert preview.execution_limit_exceeded?
+    refute_equal RUN_ID, preview.run_id
+    assert_not_requested :any, /./
+  end
+
   test "#perform should do nothing for terminal previews" do
     previews = [
       create(:feed_preview, :completed, run_id: READY_RUN_ID),
@@ -49,12 +61,13 @@ class FeedPreviewTimeoutJobTest < ActiveJob::TestCase
   end
 
   test "#perform should do nothing when run_id has changed" do
-    preview = create(:feed_preview, :processing, run_id: NEXT_RUN_ID)
-    original_attributes = preview.attributes.slice("status", "run_id", "updated_at")
+    preview = create(:feed_preview, :processing, feed_profile_key: "llm", params: { "prompt" => "Daily roundup" },
+                     run_id: NEXT_RUN_ID)
+    original_attributes = preview.attributes.slice("status", "run_id", "updated_at", "data")
 
     FeedPreviewTimeoutJob.perform_now(preview.id, RUN_ID)
 
-    assert_equal original_attributes, preview.reload.attributes.slice("status", "run_id", "updated_at")
+    assert_equal original_attributes, preview.reload.attributes.slice("status", "run_id", "updated_at", "data")
   end
 
   test "#perform should do nothing when the preview was deleted" do

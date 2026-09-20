@@ -39,7 +39,7 @@ class LlmExecutionTest < ActiveSupport::TestCase
     assert_equal '{"items":[]}', response.content
     assert_same response, runner.call
     assert_equal 16_384, payload.fetch("max_output_tokens")
-    assert_equal 4, payload.fetch("max_tool_calls")
+    assert_equal 16, payload.fetch("max_tool_calls")
     assert_equal "default", payload.fetch("service_tier")
     usage = record.ruby_llm_usages.sole
     assert_equal "succeeded", usage.status
@@ -62,7 +62,7 @@ class LlmExecutionTest < ActiveSupport::TestCase
     execution(record).call
 
     assert_equal 16_384, payload.fetch("max_output_tokens")
-    assert_equal 4, payload.fetch("max_tool_calls")
+    assert_equal 16, payload.fetch("max_tool_calls")
     assert_equal "default", payload.fetch("service_tier")
     assert_requested request, times: 1
   end
@@ -168,7 +168,7 @@ class LlmExecutionTest < ActiveSupport::TestCase
 
     execution(record).call
 
-    assert_equal [4, 3], payloads.map { |payload| payload.fetch("max_tool_calls") }
+    assert_equal [16, 15], payloads.map { |payload| payload.fetch("max_tool_calls") }
     assert_equal 2, record.ruby_llm_usages.count
     assert_requested request, times: 2
   end
@@ -177,12 +177,61 @@ class LlmExecutionTest < ActiveSupport::TestCase
     record = staged_chat
     record.with_tools(Lookup).with_server_tools(:web_search)
     response = tool_response
-    response[:output].concat(4.times.map { |index| { type: "web_search_call", id: "search_#{index}", status: "completed" } })
+    response[:output].concat(16.times.map { |index| { type: "web_search_call", id: "search_#{index}", status: "completed" } })
     request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
 
     assert_raises(LlmExecution::ToolLimitExceeded) { execution(record).call }
 
     assert_equal 1, record.ruby_llm_usages.count
+    assert_requested request, times: 1
+  end
+
+  test "#call should accept a final answer at the hosted tool limit" do
+    record = staged_chat
+    record.with_server_tools(:web_search)
+    response = completed_response
+    response["output"] = Array.new(16) do |index|
+      { type: "web_search_call", id: "search_#{index}", status: "completed" }
+    end + response["output"].select { |item| item["type"] == "message" }
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+    assert_equal '{"items":[]}', execution(record).call.content
+
+    assert_equal 1, record.ruby_llm_usages.count
+    assert_requested request, times: 1
+  end
+
+  test "#call should recognize provider tool exhaustion even below the local limit" do
+    record = staged_chat
+    record.with_server_tools(:web_search)
+    response = completed_response
+    response["status"] = "incomplete"
+    response["incomplete_details"] = { "reason" => "max_tool_calls" }
+    response["output"].reject! { |item| item["type"] == "message" }
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+    assert_raises(LlmExecution::ToolLimitExceeded) { execution(record).call }
+
+    assert_equal 1, record.ruby_llm_usages.count
+    assert_requested request, times: 1
+  end
+
+  test "#call should reject a tool-exhausted response with partial text" do
+    record = staged_chat
+    record.with_server_tools(:web_search)
+    response = completed_response
+    response["status"] = "incomplete"
+    response["incomplete_details"] = { "reason" => "max_tool_calls" }
+    message = response["output"].last
+    message["content"].first["text"] = '{"items":['
+    response["output"] = Array.new(16) do |index|
+      { type: "web_search_call", id: "search_#{index}", status: "completed" }
+    end + [message]
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+    assert_raises(LlmExecution::ToolLimitExceeded) { execution(record).call }
+
+    assert_equal '{"items":[', record.messages.last.content
     assert_requested request, times: 1
   end
 

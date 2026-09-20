@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-20
 
+- Give AI feeds more room to research sources and explain when a preview reaches its time or search limit.
 - Use singular user and feed labels in admin stats when the count is one.
 - Mark AI feeds with a small blue AI badge in the feed list.
 - Show “No posts yet” for empty feeds instead of an empty latest-post date and zero post count.

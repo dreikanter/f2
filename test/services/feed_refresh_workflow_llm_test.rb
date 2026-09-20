@@ -108,6 +108,19 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
+  test "#perform should report connection timeouts without retrying" do
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_timeout
+
+    reports = capture_error_reports do
+      assert_no_publication { FeedRefreshJob.perform_now(feed.id) }
+    end
+
+    assert_instance_of Loader::Error, reports.sole.error
+    assert_kind_of Net::OpenTimeout, reports.sole.error.cause.cause
+    assert_equal "failed", refresh_event.metadata.fetch("status")
+    assert_requested request, times: 1
+  end
+
   test "#perform should record late output without reporting a bug" do
     freeze_time do
       request = stub_response { travel LlmChat::TIMEOUT }
@@ -131,7 +144,7 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
 
   test "#perform should record excess tool calls without reporting a bug" do
     response = completed_response
-    response["output"] = Array.new(5) do |index|
+    response["output"] = Array.new(17) do |index|
       { "type" => "web_search_call", "id" => "search_#{index}", "status" => "completed" }
     end + response["output"].select { |item| item["type"] == "message" }
     request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)

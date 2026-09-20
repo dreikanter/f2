@@ -271,6 +271,20 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '[data-key="preview.failed"]'
+    assert_select '[data-key="preview.failed"] p', text: "Something went wrong fetching this source. Double-check it and give it another go."
+    assert_select '[data-key="preview.try-again"]:not([disabled])'
+  end
+
+  test "#show should explain when an AI preview times out before processing" do
+    sign_in_as(user)
+    preview = create(:feed_preview, user: user, feed_profile_key: "llm", params: { "prompt" => "ruby news" })
+    FeedPreviewTimeoutJob.perform_now(preview.id, preview.run_id)
+
+    get feed_preview_path(preview)
+
+    assert_response :success
+    assert_select '[data-key="preview.failed"] p',
+                  text: "The preview reached its time or search limit before finishing. Please try again."
     assert_select '[data-key="preview.try-again"]:not([disabled])'
   end
 

@@ -24,10 +24,11 @@ module PolledRun
   # @param run_id [String] the run token captured when the timeout was scheduled
   # @param status [Symbol] the status a timed-out run settles into
   # @param from [Symbol, Array<Symbol>] statuses a timeout may still settle
+  # @param attributes [Hash] additional fields to save with the timeout
   # @return [self] the record, reloaded when this call won the transition
-  def settle_timeout!(run_id:, status:, from:)
+  def settle_timeout!(run_id:, status:, from:, **attributes)
     updated = self.class.where(id: id, run_id: run_id, status: from)
-                  .update_all(status: status, run_id: SecureRandom.uuid, updated_at: Time.current)
+                  .update_all(attributes.merge(status: status, run_id: SecureRandom.uuid, updated_at: Time.current))
     reload if updated.positive?
     self
   end
