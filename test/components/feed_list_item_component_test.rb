@@ -266,11 +266,13 @@ class FeedListItemComponentTest < ViewComponent::TestCase
     end
   end
 
-  test "#render should show refresh and post time placeholders when never refreshed" do
+  test "#render should show No posts yet for feeds without posts" do
     result = render_inline FeedListItemComponent.new(feed: feed)
 
     assert_includes result.text, "Never"
-    assert_includes result.text, "None"
+    assert_includes result.text, "No posts yet"
+    assert_empty result.css("[data-key='feed.#{feed.id}.most_recent_post']")
+    assert_empty result.css("[data-key='feed.#{feed.id}.published_posts_count']")
   end
 
   test "#render should show the last successful refresh for a feed without posts" do
@@ -282,14 +284,17 @@ class FeedListItemComponentTest < ViewComponent::TestCase
     timestamp = result.at_css("[data-key='feed.#{empty_feed.id}.last_refreshed'] time")
     assert_not_nil timestamp
     assert_equal refreshed_at.rfc3339, timestamp["datetime"]
-    assert_includes result.at_css("[data-key='feed.#{empty_feed.id}.most_recent_post']").text, "None"
+    assert_equal "No posts yet", result.at_css("[data-key='feed.#{empty_feed.id}.no_posts']").text
   end
 
   test "#render should label the activity times" do
-    result = render_inline FeedListItemComponent.new(feed: feed)
+    feed_with_posts = create(:feed, :disabled, user: user, published_posts_count: 3, most_recent_post_at: 1.hour.ago)
+    result = render_inline FeedListItemComponent.new(feed: feed_with_posts)
 
     assert_includes result.text, "Last updated:"
     assert_includes result.text, "Latest post:"
+    assert_includes result.text, "Posts: 3"
+    assert_empty result.css("[data-key='feed.#{feed_with_posts.id}.no_posts']")
   end
 
   test "#render should show plain text status for disabled feeds" do
