@@ -10,7 +10,10 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
       "url" => { "type" => "string", "format" => "uri" },
       "fancy" => { "type" => "boolean", "title" => "Fancy mode", "description" => "Makes it fancy." },
       "flavour" => { "type" => "string", "title" => "Flavour" },
-      "quality" => { "type" => "string", "enum" => %w[low high] }
+      "quality" => { "type" => "string", "enum" => %w[low high] },
+      "count" => { "type" => "integer", "minimum" => 0, "maximum" => 5, "default" => 2 },
+      "ratio" => { "type" => "number" },
+      "level" => { "type" => "integer", "enum" => [1, 2] }
     },
     "required" => ["url"],
     "additionalProperties" => false
@@ -76,6 +79,65 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
     assert_not_nil result.css('select[name="feed[params][quality]"] option[selected][value="high"]').first
   end
 
+  test "#render should render the AI post limit with its bounds and default" do
+    result = render_inline(FeedProfileOptionsComponent.new(feed: feed(feed_profile_key: "llm")))
+
+    schema = FeedProfile.parameter_schema_for("llm").fetch("properties").fetch("max_items")
+    input = result.at_css('[data-key="form.profile-option-input.llm.max_items"]')
+
+    assert_equal "number", input["type"]
+    assert_equal "1", input["step"]
+    assert_equal schema.fetch("minimum").to_s, input["min"]
+    assert_equal schema.fetch("maximum").to_s, input["max"]
+    assert_equal schema.fetch("default").to_s, input["value"]
+  end
+
+  test "#render should render integer options with inclusive bounds and profile-specific labels" do
+    result = render_typed
+    input = result.at_css('[data-key="form.profile-option-input.rss.count"]')
+
+    assert_equal "number", input["type"]
+    assert_equal "1", input["step"]
+    assert_equal "0", input["min"]
+    assert_equal "5", input["max"]
+    assert_equal "2", input["value"]
+    assert_equal "feed[params][count]", input["name"]
+    assert_equal "feed_params_rss_count", input["id"]
+    assert_equal "Count", result.at_css('label[for="feed_params_rss_count"]').text
+  end
+
+  test "#render should allow fractional numbers without undeclared bounds" do
+    result = render_typed(feed("ratio" => 0.25))
+    input = result.at_css('[data-key="form.profile-option-input.rss.ratio"]')
+
+    assert_equal "number", input["type"]
+    assert_equal "any", input["step"]
+    assert_equal "0.25", input["value"]
+    assert_nil input["min"]
+    assert_nil input["max"]
+    assert_nil input["required"]
+  end
+
+  test "#render should preserve a blank optional numeric value" do
+    result = render_typed(feed("count" => ""))
+
+    assert_equal "", result.at_css('[data-param-name="count"]')["value"]
+  end
+
+  test "#render should preserve numeric enum selects" do
+    result = render_typed(feed("level" => 2))
+
+    assert_not_nil result.at_css('select[data-param-name="level"] option[selected][value="2"]')
+    assert_nil result.at_css('input[data-param-name="level"]')
+  end
+
+  test "#render should disable numeric options in inactive panels" do
+    result = render_typed(feed(feed_profile_key: "rss"), profile_keys: %w[rss youtube])
+
+    assert_not_nil result.at_css('[data-profile-key="youtube"][hidden] input[type="number"][disabled][id="feed_params_youtube_count"]')
+    assert_not_nil result.at_css('[data-profile-key="rss"] input[type="number"]:not([disabled])[id="feed_params_rss_count"]')
+  end
+
   test "#render should title an option from its key when the schema has none" do
     assert_includes labels(render_typed), "Quality"
   end
@@ -109,7 +171,7 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
     result = render_typed
 
     named = result.css("[data-param-name]").map { |field| field["data-param-name"] }
-    assert_equal %w[fancy flavour quality], named.sort
+    assert_equal %w[count fancy flavour level quality ratio], named.sort
   end
 
   test "#render should render a panel per submittable profile" do

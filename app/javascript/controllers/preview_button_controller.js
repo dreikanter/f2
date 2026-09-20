@@ -25,8 +25,10 @@ export default class extends Controller {
     this._modal = document.getElementById(this.modalIdValue)
     this._modal?.addEventListener("modal:hide", this._onHide)
 
-    this._onFormChange = this.refreshAvailability.bind(this)
+    // Option panels finish enabling their controls during the same change event.
+    this._onFormChange = () => queueMicrotask(() => this.refreshAvailability())
     this.element.addEventListener("change", this._onFormChange)
+    this.element.addEventListener("input", this._onFormChange)
     this.refreshAvailability()
   }
 
@@ -34,6 +36,7 @@ export default class extends Controller {
     this._abortInFlight()
     this._modal?.removeEventListener("modal:hide", this._onHide)
     this.element.removeEventListener("change", this._onFormChange)
+    this.element.removeEventListener("input", this._onFormChange)
   }
 
   // A request whose answer nobody wants any more: the modal closed, or a newer
@@ -51,6 +54,13 @@ export default class extends Controller {
 
     const sourceKey = this.sourceKeysValue[profileKey]
     if (!sourceKey) return
+
+    const invalidOption = this._invalidNumericOption()
+    if (invalidOption) {
+      this.refreshAvailability()
+      invalidOption.reportValidity()
+      return
+    }
 
     // Paint the spinner before kicking off the request so the modal never opens
     // empty while the first response is in flight.
@@ -121,7 +131,14 @@ export default class extends Controller {
       if (!this._aiCredentialValue()) return "Choose an AI provider to preview."
       if (!this._aiModelValue()) return "Choose a model to preview."
     }
-    return null
+    return this._invalidNumericOption()?.validationMessage || null
+  }
+
+  _invalidNumericOption() {
+    if (!this.hasFormTarget) return null
+
+    const fields = this.formTarget.querySelectorAll('input[type="number"][data-param-name]:enabled')
+    return Array.from(fields).find((field) => !field.validity.valid)
   }
 
   _showHint(reason) {
