@@ -572,7 +572,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     freeze_time do
       FeedRefreshWorkflow.new(test_feed).execute
 
-      assert_equal Time.current, test_feed.reload.last_refreshed_at
+      assert_equal Time.current, test_feed.reload.last_successful_refresh_at
       assert_empty test_feed.posts
       assert_empty test_feed.feed_entries
     end
@@ -585,7 +585,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     assert_raises(Loader::Error) { FeedRefreshWorkflow.new(test_feed).execute }
 
-    assert_equal refreshed_at, test_feed.reload.last_refreshed_at
+    assert_equal refreshed_at, test_feed.reload.last_successful_refresh_at
   end
 
   test "#execute should handle empty feed content gracefully" do

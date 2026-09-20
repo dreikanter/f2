@@ -213,7 +213,7 @@ class FeedListItemComponent < ListItemComponent
   end
 
   def last_refreshed_tag
-    refreshed_at = feed.last_refreshed_at
+    refreshed_at = feed.last_successful_refresh_at
     return "Never" unless refreshed_at
 
     helpers.short_time_ago_tag(refreshed_at)

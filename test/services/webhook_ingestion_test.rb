@@ -54,7 +54,7 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     freeze_time do
       ingest({ "content" => "Hello world" })
 
-      assert_equal Time.current, feed.reload.last_refreshed_at
+      assert_equal Time.current, feed.reload.last_successful_refresh_at
     end
   end
 

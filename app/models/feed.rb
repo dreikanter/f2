@@ -277,16 +277,6 @@ class Feed < ApplicationRecord
     normalizer_class.new(feed_entry)
   end
 
-  # @return [Time, nil] last recorded successful refresh or ingestion time
-  def last_refreshed_at
-    last_successful_refresh_at
-  end
-
-  # @return [Time, nil] most recent post date or nil if no posts
-  def most_recent_post_date
-    most_recent_post_at
-  end
-
   def record_successful_refresh!
     update_column(:last_successful_refresh_at, Time.current)
   end
