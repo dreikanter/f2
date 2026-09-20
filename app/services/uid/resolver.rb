@@ -3,9 +3,6 @@ module Uid
   class Resolver
     TRACKING_PARAM = /\A(utm_|fbclid\z|gclid\z|mc_)/
 
-    # The URL-to-uid core, also used by callers that hold a permalink rather
-    # than an extracted item (webhook deliveries), so both mint the same uid
-    # for the same link. Returns nil for a URL that can't anchor an identity.
     def self.from_url(url)
       uri = deep_link(url)
       uri && normalize(uri)
