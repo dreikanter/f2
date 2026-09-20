@@ -54,6 +54,7 @@ class CandidateTesterTest < ActiveSupport::TestCase
       result = result_for(url)
       assert_equal FeedIdentification::Candidate::FAILED, result.status
       assert_equal 0, result.posts_found
+      assert_equal "RuntimeError: boom", result.error
     end
   end
 
@@ -64,6 +65,7 @@ class CandidateTesterTest < ActiveSupport::TestCase
     result = result_for(url)
     assert_equal FeedIdentification::Candidate::PASSED, result.status
     assert_equal 1, result.posts_found
+    assert_nil result.error
   end
 
   test "#call should pass an empty-but-valid source with zero posts found" do
@@ -102,6 +104,7 @@ class CandidateTesterTest < ActiveSupport::TestCase
     result = result_for(url)
     assert_equal FeedIdentification::Candidate::FAILED, result.status
     assert_equal 0, result.posts_found
+    assert_includes result.error, "missing_url"
   end
 
   test "#call should fail on an HTTP error status it could not read" do

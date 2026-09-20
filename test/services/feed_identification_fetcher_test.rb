@@ -15,12 +15,60 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal attributes, identification.reload.attributes
   end
 
-  setup do
-    @logger = ActiveSupport::Logger.new(nil) # Silent logger for tests
-  end
-
   def user
     @user ||= create(:user)
+  end
+
+  test "#call should reuse the run event without replacing an accepted result" do
+    url = "https://example.com/feed.xml"
+    identification = create(:feed_identification, user: user, input: url, started_at: Time.current)
+    stub_request(:get, url).to_return(status: 200, body: rss_body("Feed"))
+    worker = FeedIdentificationFetcher.new(feed_identification: identification, run_id: identification.run_id)
+    worker.call
+    message = identification_event.message
+    stub_request(:get, url).to_return(status: 403)
+
+    duplicate = FeedIdentificationFetcher.new(feed_identification: FeedIdentification.find(identification.id),
+                                              run_id: identification.run_id)
+    duplicate.call
+
+    event = identification_event
+    assert_equal message, event.message
+    assert_predicate identification.reload, :working?
+    assert_equal %w[fetch candidate result fetch result], event.details.pluck("stage")
+    assert_equal false, event.details.last.dig("stats", "applied")
+    assert_equal "no_feed (discarded)", event.details.last.fetch("message")
+  end
+
+  test "#call should preserve completed steps when the worker is interrupted" do
+    url = "https://example.com/blog"
+    stub_request(:get, url).to_return(status: 200, body: page_body(%(<link rel="alternate" type="application/rss+xml" href="/feed.xml">)))
+    stub_request(:get, "https://example.com/feed.xml").to_raise(Interrupt)
+
+    assert_raises(Interrupt) { fetcher(url).call }
+
+    event = identification_event
+    assert_equal url, event.message
+    assert_equal ["fetch"], event.details.pluck("stage")
+    assert_equal 200, event.details.first.dig("stats", "http_status")
+    assert_predicate FeedIdentification.find_by!(user: user, input: url), :processing?
+  end
+
+  test "#call should create a separate event for a restarted run" do
+    url = "https://example.com/feed.xml"
+    stub_request(:get, url).to_return(status: 403)
+    fetcher(url).call
+    original = identification_event
+    identification = FeedIdentification.find_by!(user: user, input: url)
+    identification.restart_detection
+
+    FeedIdentificationJob.perform_now(identification.id, identification.run_id)
+
+    events = Event.where(type: "feed_identification", subject: identification).order(:created_at)
+    assert_equal 2, events.count
+    assert_equal original, events.first
+    assert_equal identification.run_id, events.last.metadata.dig("stats", "run_id")
+    assert_equal %w[fetch result], events.last.details.pluck("stage")
   end
 
   test "#call should successfully identify RSS feed and update record" do
@@ -54,6 +102,67 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     suggested = feed_identification.candidates.first
     assert_equal "rss", suggested["profile_key"]
     assert_equal "Test RSS Feed", suggested["title"]
+
+    event = identification_event
+    assert_equal "debug", event.level
+    assert_equal user, event.user
+    assert_equal feed_identification.run_id, event.metadata.dig("stats", "run_id")
+    assert_match(/working: rss/, event.message)
+    details = event.details
+    assert_equal %w[fetch candidate result], details.pluck("stage")
+    assert_equal 200, details.first.dig("stats", "http_status")
+    assert_equal rss_content.bytesize, details.first.dig("stats", "body_bytes")
+    assert_equal "passed", details.second.dig("stats", "status")
+    assert_equal 1, details.second.dig("stats", "posts_found")
+    assert_equal "rss", details.last.dig("stats", "selected_profile")
+    assert_not_includes event.to_json, "Test content"
+
+    feed_identification.destroy!
+    assert_equal event, identification_event
+  end
+
+  test "#call should record blocked responses without URL secrets" do
+    url = "https://example.com/feed.xml?token=secret"
+    stub_request(:get, url).to_return(status: 403, headers: { "Content-Type" => "text/html" })
+
+    fetcher("#{url}#private").call
+
+    event = identification_event
+    details = event.details
+    assert_equal %w[fetch result], details.pluck("stage")
+    assert_equal "https://example.com/feed.xml", details.first.dig("stats", "source_url")
+    assert_equal "https://example.com/feed.xml", details.first.dig("stats", "resolved_url")
+    assert_equal 403, details.first.dig("stats", "http_status")
+    assert_equal "no_feed", details.last.dig("stats", "status")
+    assert_match(/HTTP 403/, details.last.dig("stats", "error"))
+    assert_no_match(/reader|password|secret|private/, event.to_json)
+  end
+
+  test "#call should record transport failures without URL secrets in error messages" do
+    url = "https://example.com/feed.xml"
+    stub_request(:get, url).to_raise(SocketError.new("Cannot reach https://reader:password@example.com/feed.xml?token=secret#private"))
+
+    fetcher(url).call
+
+    event = identification_event
+    details = event.details
+    assert_equal %w[fetch result], details.pluck("stage")
+    assert_match(/Cannot reach https:\/\/example.com\/feed.xml/, details.first.fetch("message"))
+    assert_equal "unreachable", details.last.dig("stats", "status")
+    assert_no_match(/reader|password|secret|private/, event.to_json)
+  end
+
+  test "#call should record candidate parser errors separately from chooser data" do
+    url = "https://xkcd.com/rss.xml"
+    stub_request(:get, url).to_return(status: 200, body: "<html>Temporarily unavailable</html>")
+
+    fetcher(url).call
+
+    detail = identification_event.details.find { |item| item.fetch("stage") == "candidate" }
+    assert_equal "xkcd", detail.dig("stats", "profile_key")
+    assert_equal "failed", detail.dig("stats", "status")
+    assert_match(/NoParserAvailable/, detail.dig("stats", "error"))
+    assert_not FeedIdentification.find_by!(user: user, input: url).candidates.first.key?("error")
   end
 
   test "#call should successfully identify XKCD feed and update record" do
@@ -170,14 +279,13 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal "unreachable", feed_identification.status
   end
 
-  test "#call should log the failure class and status for diagnosis" do
+  test "#call should record the failure class and status for diagnosis" do
     url = "http://example.com/error.xml"
     stub_request(:get, url).to_return(status: 404, body: "Not Found")
 
-    log = StringIO.new
-    fetcher(url, logger: ActiveSupport::Logger.new(log)).call
+    fetcher(url).call
 
-    assert_match(/ResponseStatusError \(HTTP 404\)/, log.string)
+    assert_match(/ResponseStatusError: HTTP 404/, identification_event.details.last.dig("stats", "error"))
   end
 
   test "#call should settle as no_feed and report an unexpected failure" do
@@ -328,6 +436,11 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     feed_identification = FeedIdentification.find_by(user: user, input: page_url)
     assert_equal "working", feed_identification.status
     assert_equal "http://example.com/feed.xml", feed_identification.suggested_candidate.resolved_url
+
+    fetches = identification_event.details.select { |detail| detail.fetch("stage") == "fetch" }
+    assert_equal [page_url, "http://example.com/missing.xml", "http://example.com/feed.xml"],
+                 fetches.map { |detail| detail.dig("stats", "source_url") }
+    assert_equal [200, 404, 200], fetches.map { |detail| detail.dig("stats", "http_status") }
   end
 
   test "#call should stop at the first advertised feed that works" do
@@ -452,8 +565,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
                                                    started_at: Time.current, run_id: run_id)
     stale_fetcher = FeedIdentificationFetcher.new(
       feed_identification: identification,
-      run_id: run_id,
-      logger: @logger
+      run_id: run_id
     )
     stub_request(:get, url).to_return(status: 200, body: rss_body("Late Feed"))
 
@@ -463,6 +575,10 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_predicate identification.reload, :timed_out?
     assert_empty identification.candidates
     refute_equal run_id, identification.run_id
+    event = identification_event
+    assert_equal run_id, event.metadata.dig("stats", "run_id")
+    assert_equal false, event.details.last.dig("stats", "applied")
+    assert_match(/discarded/, event.message)
   end
 
   test "#call should ignore an error transition from a superseded run" do
@@ -472,8 +588,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
                                                    started_at: Time.current, run_id: stale_run_id)
     stale_fetcher = FeedIdentificationFetcher.new(
       feed_identification: identification,
-      run_id: stale_run_id,
-      logger: @logger
+      run_id: stale_run_id
     )
     identification.update!(run_id: SecureRandom.uuid)
     original_attributes = identification.attributes.slice("status", "run_id", "candidates", "updated_at")
@@ -487,11 +602,15 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
   private
 
-  def fetcher(input, logger: @logger)
+  def identification_event
+    Event.where(type: "feed_identification", user: user).sole
+  end
+
+  def fetcher(input)
     run_id = SecureRandom.uuid
     identification = create(:feed_identification, user: user, input: input, status: :processing,
                                                    started_at: Time.current, run_id: run_id)
-    FeedIdentificationFetcher.new(feed_identification: identification, run_id: run_id, logger: logger)
+    FeedIdentificationFetcher.new(feed_identification: identification, run_id: run_id)
   end
 
   def page_body(links)

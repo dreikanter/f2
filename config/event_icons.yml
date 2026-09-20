@@ -6,6 +6,7 @@
 # and entries naming an unbundled icon, fall back to the icon for the event's
 # level (info / triangle-alert / circle-x).
 
+feed_identification: search
 feed_refresh: refresh-ccw
 feed_refresh_skipped: circle-dashed
 feed_refresh_ai_empty: sparkles
