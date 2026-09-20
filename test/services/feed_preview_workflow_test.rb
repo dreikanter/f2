@@ -335,7 +335,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
       preview = ai_preview
       travel preview.timeout_after
 
-      error = assert_raises(Loader::Error) do
+      error = assert_raises(Loader::ExecutionLimitExceeded) do
         FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
       end
 
@@ -358,7 +358,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
         { body: completed_ai_response.to_json, headers: { "Content-Type" => "application/json" } }
       end
 
-      error = assert_raises(Loader::Error) do
+      error = assert_raises(Loader::ExecutionLimitExceeded) do
         FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
       end
 
@@ -386,7 +386,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
         { body: completed_ai_response.to_json, headers: { "Content-Type" => "application/json" } }
       end
 
-      assert_raises(Loader::Error) do
+      assert_raises(Loader::ExecutionLimitExceeded) do
         FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
       end
 

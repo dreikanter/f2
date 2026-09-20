@@ -227,7 +227,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
         { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
       end
 
-      error = assert_raises(Loader::Error) { loader.load }
+      error = assert_raises(Loader::ExecutionLimitExceeded) { loader.load }
 
       assert_kind_of LlmExecution::DeadlineExceeded, error.cause
       chat = feed.llm_chats.sole
@@ -261,7 +261,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     end + response["output"].select { |item| item["type"] == "message" }
     request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
 
-    error = assert_raises(Loader::Error) { Loader::LlmLoader.new(feed).load }
+    error = assert_raises(Loader::ExecutionLimitExceeded) { Loader::LlmLoader.new(feed).load }
 
     assert_equal "AI request exceeded its execution limits.", error.message
     assert_kind_of LlmExecution::ToolLimitExceeded, error.cause
@@ -270,6 +270,20 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal "LlmExecution::ToolLimitExceeded", chat.error_category
     assert_equal 1, chat.ruby_llm_usages.count
     assert_requested request, times: 1
+  end
+
+  test "#load should classify an exhausted request budget as an execution limit" do
+    stub_const(LlmExecution, :MAX_REQUESTS, 0) do
+      error = assert_raises(Loader::ExecutionLimitExceeded) { Loader::LlmLoader.new(feed).load }
+
+      assert_equal "AI request exceeded its execution limits.", error.message
+      assert_kind_of LlmExecution::RequestLimitExceeded, error.cause
+    end
+
+    chat = feed.llm_chats.sole
+    assert chat.failed?
+    assert_equal "LlmExecution::RequestLimitExceeded", chat.error_category
+    assert_not_requested :any, /./
   end
 
   test "#load should reject missing or inactive AI settings before creating a chat" do

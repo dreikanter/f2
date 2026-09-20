@@ -108,22 +108,56 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
-  test "#execute should interrupt late output before the timeout job runs" do
+  test "#perform should record late output without reporting a bug" do
     freeze_time do
       request = stub_response { travel LlmChat::TIMEOUT }
 
-      assert_no_publication do
-        assert_raises(Loader::Error) { FeedRefreshWorkflow.new(feed).execute }
+      reports = capture_error_reports do
+        assert_no_publication { FeedRefreshJob.perform_now(feed.id) }
       end
 
+      assert_empty reports
       chat = feed.llm_chats.sole
       assert chat.interrupted?
       assert_equal "deadline_exceeded", chat.error_category
       assert_equal "succeeded", chat.ruby_llm_usages.sole.status
       assert_equal [chat], refresh_event.references
       assert_equal "failed", refresh_event.metadata.fetch("status")
+      assert_equal "AI request exceeded its deadline.", refresh_event.message
+      assert_equal "Loader::ExecutionLimitExceeded", refresh_event.metadata.dig("error", "class")
+      assert_equal "load_feed_contents", refresh_event.metadata.dig("error", "stage")
+      assert_equal 2, feed.reload.consecutive_failures
       assert_requested request, times: 1
     end
+  end
+
+  test "#perform should record excess tool calls without reporting a bug" do
+    response = completed_response
+    response["output"] = Array.new(5) do |index|
+      { "type" => "web_search_call", "id" => "search_#{index}", "status" => "completed" }
+    end + response["output"].select { |item| item["type"] == "message" }
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+    increments = []
+
+    reports = capture_error_reports do
+      Metrics.stub(:increment, ->(name, **labels) { increments << [name, labels] }) do
+        assert_no_publication { FeedRefreshJob.perform_now(feed.id) }
+      end
+    end
+
+    assert_empty reports
+    assert_includes increments, ["loader_errors_total", { profile: "llm", loader: "LlmLoader" }]
+    chat = feed.llm_chats.sole
+    assert chat.failed?
+    assert_equal "LlmExecution::ToolLimitExceeded", chat.error_category
+    assert_equal "succeeded", chat.ruby_llm_usages.sole.status
+    assert_equal [chat], refresh_event.references
+    assert_equal "failed", refresh_event.metadata.fetch("status")
+    assert_equal "AI request exceeded its execution limits.", refresh_event.message
+    assert_equal "Loader::ExecutionLimitExceeded", refresh_event.metadata.dig("error", "class")
+    assert_equal "load_feed_contents", refresh_event.metadata.dig("error", "stage")
+    assert_equal 2, feed.reload.consecutive_failures
+    assert_requested request, times: 1
   end
 
   test "#execute should reject output after the timeout job interrupts its chat" do
@@ -134,7 +168,7 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
       end
 
       assert_no_publication do
-        assert_raises(Loader::Error) { FeedRefreshWorkflow.new(feed).execute }
+        assert_raises(Loader::ExecutionLimitExceeded) { FeedRefreshWorkflow.new(feed).execute }
       end
 
       chat = feed.llm_chats.sole

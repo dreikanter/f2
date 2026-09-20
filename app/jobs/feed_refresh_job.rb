@@ -16,7 +16,7 @@ class FeedRefreshJob < ApplicationJob
       FeedRefreshWorkflow.new(feed, manual: manual).execute
     end
   rescue Loader::Error => e
-    Rails.error.report(e, context: { feed_id: feed_id })
+    Rails.error.report(e, context: { feed_id: feed_id }) unless e.is_a?(Loader::ExecutionLimitExceeded)
     Metrics.increment("loader_errors_total", profile: feed.feed_profile_key, loader: feed.loader_class.name.demodulize)
   rescue LlmResult::LifecycleError => e
     Rails.error.report(e, context: { feed_id: feed_id })

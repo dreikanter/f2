@@ -15,6 +15,6 @@ class FeedPreviewJob < ApplicationJob
     # The workflow already transitioned the preview to :failed. Do not re-raise:
     # retrying would reset status back to :processing (via initialize_workflow),
     # causing the status to oscillate and leaving the client polling indefinitely.
-    Rails.error.report(e, context: { feed_preview_id: feed_preview_id })
+    Rails.error.report(e, context: { feed_preview_id: feed_preview_id }) unless e.is_a?(Loader::ExecutionLimitExceeded)
   end
 end

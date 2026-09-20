@@ -23,9 +23,9 @@ module Loader
       when RubyLLM::Error, Faraday::Error
         raise Loader::Error, "AI request failed. Please try again later."
       when LlmExecution::DeadlineExceeded
-        raise Loader::Error, "AI request exceeded its deadline."
+        raise Loader::ExecutionLimitExceeded, "AI request exceeded its deadline."
       when LlmExecution::RequestLimitExceeded, LlmExecution::ToolLimitExceeded
-        raise Loader::Error, "AI request exceeded its execution limits."
+        raise Loader::ExecutionLimitExceeded, "AI request exceeded its execution limits."
       else
         raise
       end
