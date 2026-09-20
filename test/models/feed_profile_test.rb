@@ -235,8 +235,16 @@ class FeedProfileTest < ActiveSupport::TestCase
 
   test ".options_for should return nothing for a profile declaring only its source" do
     assert_empty FeedProfile.options_for("rss")
-    assert_empty FeedProfile.options_for("llm")
+
     assert_empty FeedProfile.options_for("webhook")
+  end
+
+  test ".options_for should expose the AI response limit" do
+    option = FeedProfile.options_for("llm").sole
+
+    assert_equal "max_items", option.name
+    assert_equal "Maximum posts per refresh", option.title
+    assert_equal "integer", option.type
   end
 
   test ".options_for should return nothing for an unknown profile" do

@@ -29,8 +29,8 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal "openai", chat.requested_provider
     assert_equal "gpt-5-nano", chat.requested_model
     assert_equal %w[system user assistant], chat.messages.map(&:role)
-    assert_includes chat.messages.first.content, Loader::LlmPrompts::TASK
-    assert_includes chat.messages.first.content, Loader::LlmPrompts::OUTPUT_CONTRACT
+    assert_includes chat.messages.first.content, format(Loader::LlmPrompts::TASK, max_items: 10)
+    assert_includes chat.messages.first.content, format(Loader::LlmPrompts::OUTPUT_CONTRACT, max_items: 10)
     assert_includes chat.messages.first.content, Loader::LlmPrompts::SAFEGUARDS
     assert_not_includes chat.messages.first.content, feed.source_input
     assert_equal "Feed request — what to follow and how to present it:\n\nA daily roundup\n", chat.messages.second.content
@@ -47,6 +47,25 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert usage.total_cost.positive?
     assert_equal chat.messages.last, usage.message
     assert_requested request, times: 1
+  end
+
+  test "#load should isolate each feed's response limit in the schema and instructions" do
+    limited_feed = create(:feed, user: feed.user, feed_profile_key: "llm", ai_credential: credential,
+                                ai_model: feed.ai_model, params: { "prompt" => "Write stories", "max_items" => 1 })
+    payloads = []
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      payloads << JSON.parse(http.body)
+      { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+    end
+
+    Loader::LlmLoader.new(limited_feed).load
+    Loader::LlmLoader.new(feed).load
+
+    assert_equal 1, payloads.first.dig("text", "format", "schema", "properties", "items", "maxItems")
+    assert_equal 10, payloads.last.dig("text", "format", "schema", "properties", "items", "maxItems")
+    assert_includes limited_feed.llm_chats.sole.messages.first.content, "Return at most 1 items"
+    assert_includes feed.llm_chats.sole.messages.first.content, "Return at most 10 items"
+    assert_equal 10, FeedProfile::UNIVERSAL_OUTPUT_SCHEMA.dig("properties", "items", "maxItems")
   end
 
   test "#load should request a schema that accepts empty publication dates" do

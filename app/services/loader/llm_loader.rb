@@ -65,7 +65,7 @@ module Loader
     def prepare_chat(chat)
       options[:refresh_event]&.event_references&.create!(reference: chat)
       chat.with_instructions(<<~TEXT.strip)
-        #{LlmPrompts::EXTRACTION_SYSTEM}
+        #{LlmPrompts.extraction_system(max_items: LlmOutput.new(feed).max_items)}
 
         Include every field in the output schema. Use empty strings or arrays
         for absent optional values; source_url may be null.
@@ -77,7 +77,7 @@ module Loader
 
     # Strict output requires every property; the processor accepts this subset.
     def output_schema
-      schema = config.fetch(:output_schema).deep_dup
+      schema = LlmOutput.new(feed).schema
       item = schema.fetch("properties").fetch("items").fetch("items")
       item.fetch("properties").delete("uid")
       item["required"] = item.fetch("properties").keys

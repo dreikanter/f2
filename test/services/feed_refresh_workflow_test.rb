@@ -985,6 +985,25 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
   end
 
+  test "#execute should reject an over-limit response before persisting entries or posts" do
+    create(:llm_model, model_id: "gpt-4.1")
+    feed = digest_feed_with_schedule
+    feed.update!(params: feed.params.merge("max_items" => 1))
+    request = stub_ai_response([
+      { "source_url" => nil, "body" => "First" },
+      { "source_url" => nil, "body" => "Second" }
+    ])
+
+    assert_no_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"] do
+      assert_no_enqueued_jobs(only: FeedRefreshJob) do
+        assert_raises(Processor::LlmProcessor::InvalidOutput) { FeedRefreshWorkflow.new(feed).execute }
+      end
+    end
+
+    assert_equal 1, feed.reload.consecutive_failures
+    assert_requested request, times: 1
+  end
+
   test "#execute should record the period after a digest-only run" do
     create(:llm_model, model_id: "gpt-4.1")
     freeze_time do

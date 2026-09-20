@@ -109,6 +109,62 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "https://example.com/feed.xml", feed.reload.url
   end
 
+  test "#save should persist the AI response limit" do
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => "1" })
+
+    assert feed.save, feed.errors.full_messages.inspect
+    assert_equal 1, feed.reload.params["max_items"]
+  end
+
+  test "#save should accept the maximum AI response limit" do
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => 10 })
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "#save should omit a blank AI response limit" do
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => " " })
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+    assert_not feed.params.key?("max_items")
+  end
+
+  test "#save should reject a zero AI response limit" do
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => 0 })
+
+    assert_not feed.valid?
+  end
+
+  test "#save should reject an AI response limit above ten" do
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => 11 })
+
+    assert_not feed.valid?
+  end
+
+  test "#save should reject a nonnumeric AI response limit" do
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => "abc" })
+
+    assert_not feed.valid?
+  end
+
+  test "#save should reject a fractional AI response limit" do
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => 1.5 })
+
+    assert_not feed.valid?
+  end
+
+  test "#save should reject a boolean AI response limit" do
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => false })
+
+    assert_not feed.valid?
+  end
+
+  test "#save should reject an array AI response limit" do
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => [1] })
+
+    assert_not feed.valid?
+  end
+
   test "#save should cast an integer param" do
     feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "batch" => "25" })
 
@@ -125,20 +181,20 @@ class FeedTest < ActiveSupport::TestCase
     assert_in_delta 0.5, feed.params["ratio"]
   end
 
-  test "#save should drop an integer param that isn't a number" do
+  test "#save should reject an integer param that isn't a number" do
     feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "batch" => "abc" })
 
-    with_typed_options { assert feed.valid?, feed.errors.full_messages.inspect }
+    with_typed_options { assert_not feed.valid? }
 
-    assert_not feed.params.key?("batch")
+    assert_equal "abc", feed.params["batch"]
   end
 
-  test "#save should drop a number param that isn't a number" do
+  test "#save should reject a number param that isn't a number" do
     feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "ratio" => "abc" })
 
-    with_typed_options { assert feed.valid?, feed.errors.full_messages.inspect }
+    with_typed_options { assert_not feed.valid? }
 
-    assert_not feed.params.key?("ratio")
+    assert_equal "abc", feed.params["ratio"]
   end
 
   test "#valid? should reject undeclared params on create instead of dropping them" do

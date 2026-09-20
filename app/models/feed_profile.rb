@@ -393,7 +393,14 @@ class FeedProfile
       parameter_schema: {
         "type" => "object",
         "properties" => {
-          "prompt" => { "type" => "string", "minLength" => 1, "maxLength" => 2000 }
+          "prompt" => { "type" => "string", "minLength" => 1, "maxLength" => 2000 },
+          "max_items" => {
+            "type" => "integer",
+            "minimum" => 1,
+            "maximum" => 10,
+            "title" => "Maximum posts per refresh",
+            "description" => "Limit each AI response to this many posts. Leave blank for 10."
+          }
         },
         "required" => ["prompt"],
         "additionalProperties" => false
@@ -571,7 +578,7 @@ class FeedProfile
     end
 
     # Form values arrive as strings, so apply the declared type before reading
-    # them. Values that cannot be cast drop out and fail validation as missing.
+    # them. Preserve invalid numeric input so optional values still fail validation.
     # @param key [String] the profile key
     # @param params [Hash, nil] the submitted params
     # @return [Hash] the params as their declared types
@@ -668,11 +675,16 @@ class FeedProfile
     # @param value [Object] the submitted value
     # @return [Object] the value as its declared type
     def cast_value(type, value)
+      if %w[integer number].include?(type)
+        return value unless value.is_a?(String)
+        return nil if value.blank?
+      end
+
       case type
       when "boolean" then ActiveModel::Type::Boolean.new.cast(value)
       # Kernel conversions, not ActiveModel's: those read "abc" as 0.
-      when "integer" then Integer(value, exception: false)
-      when "number" then Float(value, exception: false)
+      when "integer" then Integer(value, exception: false) || value
+      when "number" then Float(value, exception: false) || value
       else value
       end
     end

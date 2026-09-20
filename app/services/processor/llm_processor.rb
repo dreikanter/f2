@@ -27,7 +27,7 @@ module Processor
 
     def parse_output
       data = JSON.parse(raw_data.content)
-      unless JSONSchemer.schema(FeedProfile::UNIVERSAL_OUTPUT_SCHEMA).valid?(data)
+      unless JSONSchemer.schema(LlmOutput.new(feed).schema).valid?(data)
         raise InvalidOutput, "AI response does not match the output schema."
       end
 

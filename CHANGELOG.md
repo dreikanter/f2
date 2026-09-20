@@ -4,6 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-20
 
+- Set “Maximum posts per refresh” on AI feeds to limit each response to 1–10 posts; leaving it blank allows up to 10.
+
 - Use smaller headings in linked cards.
 - Preserve 365tomorrows story paragraphs and line breaks, splitting long stories into up to four comments.
 

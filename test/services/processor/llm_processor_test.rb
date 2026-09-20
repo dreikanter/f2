@@ -53,6 +53,24 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert chat.reload.succeeded?
   end
 
+  test "#process should reject the whole response before deduplication at the configured limit" do
+    feed.params["max_items"] = 1
+    item = { source_url: "https://example.com/post", body: "Post" }
+
+    assert_raises(Processor::LlmProcessor::InvalidOutput) do
+      process({ items: [item, item] }.to_json)
+    end
+
+    assert chat.reload.failed?
+    assert_empty feed.feed_entries
+  end
+
+  test "#process should allow an empty response with a one-item limit" do
+    feed.params["max_items"] = 1
+
+    assert_empty process('{"items":[]}').entries
+  end
+
   test "#process should accept ten items" do
     items = Array.new(10) do |index|
       { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
