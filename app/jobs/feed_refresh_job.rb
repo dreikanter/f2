@@ -16,14 +16,20 @@ class FeedRefreshJob < ApplicationJob
       FeedRefreshWorkflow.new(feed, manual: manual).execute
     end
   rescue Loader::ExecutionLimitExceeded
-    nil
+    record_loader_error(feed)
   rescue Loader::Error => e
     Rails.error.report(e, context: { feed_id: feed_id })
-    Metrics.increment("loader_errors_total", profile: feed.feed_profile_key, loader: feed.loader_class.name.demodulize)
+    record_loader_error(feed)
   rescue LlmResult::LifecycleError => e
     Rails.error.report(e, context: { feed_id: feed_id })
     Metrics.increment("processor_errors_total", profile: feed.feed_profile_key, processor: feed.processor_class.name.demodulize)
   rescue WithAdvisoryLock::FailedToAcquireLock
     Rails.logger.info "Feed #{feed_id} is already being processed, skipping"
+  end
+
+  private
+
+  def record_loader_error(feed)
+    Metrics.increment("loader_errors_total", profile: feed.feed_profile_key, loader: feed.loader_class.name.demodulize)
   end
 end

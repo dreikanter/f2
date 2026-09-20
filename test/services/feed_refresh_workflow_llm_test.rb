@@ -146,7 +146,8 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     end
 
     assert_empty reports
-    assert_not increments.any? { |name, _| name == "loader_errors_total" }
+    assert_equal [["loader_errors_total", { profile: "llm", loader: "LlmLoader" }]],
+                 increments.select { |name, _| name == "loader_errors_total" }
     chat = feed.llm_chats.sole
     assert chat.failed?
     assert_equal "LlmExecution::ToolLimitExceeded", chat.error_category
