@@ -6,13 +6,13 @@ class GlobalStatsComponent < StatsPanelComponent
       {
         key: "total_users",
         label: "Total users",
-        label_short: "Users",
+        label_short: "User".pluralize(total_users_count),
         value: number_with_delimiter(total_users_count)
       },
       {
         key: "total_feeds",
         label: "Total feeds",
-        label_short: "Feeds",
+        label_short: "Feed".pluralize(total_feeds_count),
         value: number_with_delimiter(total_feeds_count)
       },
       {
@@ -43,11 +43,11 @@ class GlobalStatsComponent < StatsPanelComponent
   end
 
   def total_users_count
-    User.count
+    @total_users_count ||= User.count
   end
 
   def total_feeds_count
-    Feed.count
+    @total_feeds_count ||= Feed.count
   end
 
   def total_imported_posts_count
