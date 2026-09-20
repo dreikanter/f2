@@ -195,7 +195,8 @@ In remote Claude Code environments, prefix every Rails/RuboCop command with `doc
 - Keep tests and code changes together.
 - Add or update tests for any code change.
 - Verify database migrations work both ways (up/down).
-- Run test before committing: `bin/rails test`.
+- Before committing, run `bin/rails test`, `yarn test:javascript`, and `bin/rubocop -f github`.
+- JavaScript tests require Node 22.15+ and `yarn install --frozen-lockfile`. They load Stimulus from the bundled `stimulus-rails` gem; install gems with `bundle install` first.
 - Use FactoryBot to create test data.
 - Check and fix RuboCop violations after each change to the code (use command: `bin/rubocop -f github`).
 - Prefer lazy test data initialization over eager initialization in setup block

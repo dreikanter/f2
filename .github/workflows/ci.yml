@@ -209,6 +209,17 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Test Stimulus controllers
+        run: |
+          npm install -g yarn@1.22.21
+          yarn install --frozen-lockfile
+          yarn test:javascript
+
       - name: Run tests
         env:
           RAILS_ENV: test

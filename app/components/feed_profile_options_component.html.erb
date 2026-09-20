@@ -30,6 +30,15 @@
                                disabled: !selected?(profile_key),
                                class: helpers.input_field_classes,
                                data: { key: "form.profile-option-input.#{profile_key}.#{option.name}", param_name: option.name } %>
+              <% elsif option.numeric? %>
+                <%= number_field_tag option.field_name, value_for(option),
+                                     id: option.field_id(profile_key),
+                                     step: option.integer? ? 1 : "any",
+                                     min: option.minimum,
+                                     max: option.maximum,
+                                     disabled: !selected?(profile_key),
+                                     class: helpers.input_field_classes,
+                                     data: { key: "form.profile-option-input.#{profile_key}.#{option.name}", param_name: option.name } %>
               <% else %>
                 <%= text_field_tag option.field_name, value_for(option),
                                    id: option.field_id(profile_key),

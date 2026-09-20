@@ -3,11 +3,11 @@ class FeedProfile
   # The declared type picks the form control, so adding an option means adding
   # a schema property and nothing else.
   class ParamOption
-    # Schema types the form knows how to render. Anything else falls back to a
-    # text field and reaches validation as typed.
     BOOLEAN = "boolean"
+    INTEGER = "integer"
+    NUMBER = "number"
 
-    attr_reader :name, :type, :title, :description, :default, :choices
+    attr_reader :name, :type, :title, :description, :default, :choices, :minimum, :maximum
 
     # @param name [String] the params key
     # @param schema [Hash] the property's JSON Schema fragment
@@ -18,10 +18,20 @@ class FeedProfile
       @description = schema["description"]
       @default = schema["default"]
       @choices = schema["enum"]
+      @minimum = schema["minimum"]
+      @maximum = schema["maximum"]
     end
 
     def boolean?
       type == BOOLEAN
+    end
+
+    def numeric?
+      integer? || type == NUMBER
+    end
+
+    def integer?
+      type == INTEGER
     end
 
     def choices?
