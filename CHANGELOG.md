@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-20
 
+- Use smaller headings in linked cards.
 - Preserve 365tomorrows story paragraphs and line breaks, splitting long stories into up to four comments.
 
 ## 2026-09-19

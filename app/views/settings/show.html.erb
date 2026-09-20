@@ -11,84 +11,66 @@
   <% end %>
 
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-    <%= render LinkedCardComponent.new(href: edit_settings_name_update_path) do %>
-      <div class="space-y-4">
-        <%= h2 class: "flex items-center gap-2" do %>
-          <%= icon("user", css_class: "size-5") %>
-          <span>Your Name</span>
-        <% end %>
-        <p class="text-body" data-key="settings.name">
-          <% if @user.name.present? %>
-            People you invite will see <%= @user.name %>
-          <% else %>
-            Not set, so people you invite will just see "Somebody"
-          <% end %>
-        </p>
-      </div>
-    <% end %>
+    <%= render LinkedCardComponent.new(
+      href: edit_settings_name_update_path,
+      title: "Your Name",
+      icon: "user",
+      description: @user.name.present? ? "People you invite will see #{@user.name}" : 'Not set, so people you invite will just see "Somebody"',
+      data: {
+        key: "settings.name"
+      }
+    ) %>
 
-    <%= render LinkedCardComponent.new(href: edit_settings_email_update_path) do %>
-      <div class="space-y-4">
-        <%= h2 class: "flex items-center gap-2" do %>
-          <%= icon("mail", css_class: "size-5") %>
-          <span>Change Email</span>
-        <% end %>
-        <p class="text-body" data-key="settings.email">Your current email is <%= @user.email_address %></p>
-      </div>
-    <% end %>
+    <%= render LinkedCardComponent.new(
+      href: edit_settings_email_update_path,
+      title: "Change Email",
+      icon: "mail",
+      description: "Your current email is #{@user.email_address}",
+      data: {
+        key: "settings.email"
+      }
+    ) %>
 
-    <%= render LinkedCardComponent.new(href: edit_settings_password_update_path) do %>
-      <div class="space-y-4">
-        <%= h2 class: "flex items-center gap-2" do %>
-          <%= icon("lock", css_class: "size-5") %>
-          <span>Change Password</span>
-        <% end %>
-        <p class="text-body" data-key="settings.password">Last changed <%= time_ago_in_words(@user.password_updated_at || @user.created_at) %> ago</p>
-      </div>
-    <% end %>
+    <%= render LinkedCardComponent.new(
+      href: edit_settings_password_update_path,
+      title: "Change Password",
+      icon: "lock",
+      description: "Last changed #{time_ago_in_words(@user.password_updated_at || @user.created_at)} ago",
+      data: {
+        key: "settings.password"
+      }
+    ) %>
   </div>
 
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-    <%= render LinkedCardComponent.new(href: access_tokens_path) do %>
-      <div class="space-y-4">
-        <%= h2 class: "flex items-center gap-2" do %>
-          <%= icon("key-square", css_class: "size-5") %>
-          <span>Freefeed Tokens</span>
-        <% end %>
-        <p class="text-body">Manage the tokens used for reposting to FreeFeed</p>
-      </div>
-    <% end %>
+    <%= render LinkedCardComponent.new(
+      href: access_tokens_path,
+      title: "Freefeed Tokens",
+      icon: "key-square",
+      description: "Manage the tokens used for reposting to FreeFeed"
+    ) %>
 
-    <%= render LinkedCardComponent.new(href: ai_credentials_path) do %>
-      <div class="space-y-4">
-        <%= h2 class: "flex items-center gap-2" do %>
-          <%= icon("sparkles", css_class: "size-5") %>
-          <span>AI Credentials</span>
-        <% end %>
-        <p class="text-body">Connect AI provider keys for AI-backed feed extraction</p>
-      </div>
-    <% end %>
+    <%= render LinkedCardComponent.new(
+      href: ai_credentials_path,
+      title: "AI Credentials",
+      icon: "sparkles",
+      description: "Connect AI provider keys for AI-backed feed extraction"
+    ) %>
 
     <% if Rails.configuration.x.external_search_enabled %>
-      <%= render LinkedCardComponent.new(href: search_credentials_path) do %>
-        <div class="space-y-4">
-          <%= h2 class: "flex items-center gap-2" do %>
-            <%= icon("search", css_class: "size-5") %>
-            <span>Search Credentials</span>
-          <% end %>
-          <p class="text-body">Connect search-provider keys for AI feeds that search the web</p>
-        </div>
-      <% end %>
+      <%= render LinkedCardComponent.new(
+        href: search_credentials_path,
+        title: "Search Credentials",
+        icon: "search",
+        description: "Connect search-provider keys for AI feeds that search the web"
+      ) %>
     <% end %>
 
-    <%= render LinkedCardComponent.new(href: invites_path) do %>
-      <div class="space-y-4">
-        <%= h2 class: "flex items-center gap-2" do %>
-          <%= icon("mail", css_class: "size-5") %>
-          <span>Invites</span>
-        <% end %>
-        <p class="text-body">Invite people to join Feeder</p>
-      </div>
-    <% end %>
+    <%= render LinkedCardComponent.new(
+      href: invites_path,
+      title: "Invites",
+      icon: "mail",
+      description: "Invite people to join Feeder"
+    ) %>
   </div>
 </div>
