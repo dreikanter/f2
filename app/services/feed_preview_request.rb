@@ -39,6 +39,7 @@ class FeedPreviewRequest
   def validation_error
     return :invalid_source unless FeedProfile.exists?(profile_key)
     return :invalid_source if FeedProfile.source_input_for(profile_key, preview_params).to_s.strip.blank?
+    return :invalid_source unless JSONSchemer.schema(FeedProfile.parameter_schema_for(profile_key), format: true).valid?(preview_params)
     return unless FeedProfile.depends_on_ai?(profile_key)
     return :missing_ai_credentials unless user.ai_credentials.active.exists?
 
