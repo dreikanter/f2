@@ -282,4 +282,51 @@ class PostTest < ActiveSupport::TestCase
       assert_not_includes Post.published_last_week.pluck(:id), enqueued.id
     end
   end
+
+  test "#create should keep the latest post date when importing older posts" do
+    feed = create(:feed)
+    latest_at = 1.hour.ago.change(usec: 0)
+    create(:post, feed: feed, published_at: latest_at)
+    create(:post, feed: feed, published_at: 1.day.ago)
+
+    assert_equal latest_at, feed.reload.most_recent_post_at
+  end
+
+  test "#update should recalculate the latest post date when a date changes" do
+    feed = create(:feed)
+    previous_at = 1.day.ago.change(usec: 0)
+    create(:post, feed: feed, published_at: previous_at)
+    latest = create(:post, feed: feed, published_at: 1.hour.ago)
+
+    latest.update!(published_at: 2.days.ago)
+
+    assert_equal previous_at, feed.reload.most_recent_post_at
+  end
+
+  test "#destroy should recalculate the latest post date and clear it after the last post" do
+    feed = create(:feed)
+    previous_at = 1.day.ago.change(usec: 0)
+    previous = create(:post, feed: feed, published_at: previous_at)
+    latest = create(:post, feed: feed, published_at: 1.hour.ago)
+
+    latest.destroy!
+
+    assert_equal previous_at, feed.reload.most_recent_post_at
+
+    previous.destroy!
+
+    assert_nil feed.reload.most_recent_post_at
+  end
+
+  test "#update should recalculate both feeds when moving a post" do
+    old_feed = create(:feed)
+    new_feed = create(:feed)
+    published_at = 1.hour.ago.change(usec: 0)
+    post = create(:post, feed: old_feed, published_at: published_at)
+
+    post.update!(feed: new_feed)
+
+    assert_nil old_feed.reload.most_recent_post_at
+    assert_equal published_at, new_feed.reload.most_recent_post_at
+  end
 end

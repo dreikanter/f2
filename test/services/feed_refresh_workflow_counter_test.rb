@@ -24,5 +24,6 @@ class FeedRefreshWorkflowCounterTest < ActiveSupport::TestCase
     FeedRefreshWorkflow.new(feed).execute
 
     assert_equal 1, feed.reload.imported_posts_count
+    assert_equal published_at.change(usec: 0), feed.most_recent_post_at
   end
 end

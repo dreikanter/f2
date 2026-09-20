@@ -565,6 +565,29 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     end
   end
 
+  test "#execute should advance the refresh time when no posts are found" do
+    test_feed = create(:feed, last_successful_refresh_at: 1.day.ago)
+    stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
+
+    freeze_time do
+      FeedRefreshWorkflow.new(test_feed).execute
+
+      assert_equal Time.current, test_feed.reload.last_refreshed_at
+      assert_empty test_feed.posts
+      assert_empty test_feed.feed_entries
+    end
+  end
+
+  test "#execute should preserve the last successful refresh time on failure" do
+    refreshed_at = 1.day.ago.change(usec: 0)
+    test_feed = create(:feed, last_successful_refresh_at: refreshed_at)
+    stub_request(:get, test_feed.url).to_return(status: 500)
+
+    assert_raises(Loader::Error) { FeedRefreshWorkflow.new(test_feed).execute }
+
+    assert_equal refreshed_at, test_feed.reload.last_refreshed_at
+  end
+
   test "#execute should handle empty feed content gracefully" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
@@ -580,6 +603,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 0, result.length
     assert_equal 0, FeedEntry.where(feed: test_feed).count
     assert_equal 0, Post.where(feed: test_feed).count
+    assert_not_nil test_feed.reload.last_successful_refresh_at
 
     # Verify stats show empty processing
     assert workflow.stats[:total_entries] == 0 || workflow.stats[:total_entries].nil?

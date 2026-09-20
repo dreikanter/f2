@@ -291,7 +291,7 @@ class FeedsController < ApplicationController
   end
 
   def pagination_scope
-    with_listing_stats(policy_scope(Feed))
+    policy_scope(Feed)
       .includes(:access_token, :ai_credential, :search_credential)
       .order(sortable_order)
   end

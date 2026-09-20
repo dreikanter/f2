@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_20_150000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_20_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -185,6 +185,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_20_150000) do
     t.uuid "search_credential_id"
     t.integer "subscribers_count"
     t.datetime "subscribers_count_updated_at"
+    t.datetime "last_successful_refresh_at"
+    t.datetime "most_recent_post_at"
     t.index ["access_token_id"], name: "index_feeds_on_access_token_id"
     t.index ["ai_credential_id"], name: "index_feeds_on_ai_credential_id"
     t.index ["search_credential_id"], name: "index_feeds_on_search_credential_id"

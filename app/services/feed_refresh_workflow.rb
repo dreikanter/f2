@@ -184,7 +184,6 @@ class FeedRefreshWorkflow
   end
 
   def persist_posts(posts)
-    return posts if posts.empty?
     current_time = Time.current
 
     posts_data = posts.map do |post|
@@ -192,8 +191,8 @@ class FeedRefreshWorkflow
           .merge(created_at: current_time, updated_at: current_time)
     end
 
-    Post.insert_all(posts_data)
-    feed.recount_imported_posts!
+    Post.insert_all(posts_data) if posts_data.any?
+    feed.refresh_post_stats!
 
     new_uids = posts.map(&:uid)
     persisted_posts = feed.posts.where(uid: new_uids).order(:published_at)
@@ -288,6 +287,7 @@ class FeedRefreshWorkflow
 
   def replace_refresh_event(**attributes)
     Event.transaction do
+      feed.record_successful_refresh! if attributes.dig(:metadata, :status) == "completed"
       event = Event.create!(type: "feed_refresh", subject: feed, user: feed.user, **attributes)
       if @refresh_event
         @refresh_event.event_references.update_all(event_id: event.id, updated_at: Time.current)

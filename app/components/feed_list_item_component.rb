@@ -66,7 +66,7 @@ class FeedListItemComponent < ListItemComponent
 
     # Drafts have never run, so their activity times and counts are meaningless.
     unless draft?
-      segments << helpers.tag.span(helpers.safe_join(["Latest updated: ", last_refreshed_tag]), data: { key: "feed.#{feed.id}.last_refreshed" })
+      segments << helpers.tag.span(helpers.safe_join(["Last updated: ", last_refreshed_tag]), data: { key: "feed.#{feed.id}.last_refreshed" })
       segments << helpers.tag.span(helpers.safe_join(["Latest post: ", most_recent_post_tag]), data: { key: "feed.#{feed.id}.most_recent_post" })
       segments << helpers.tag.span(helpers.safe_join(["Posts: ", published_posts_count_tag]), data: { key: "feed.#{feed.id}.published_posts_count" })
     end
@@ -213,29 +213,17 @@ class FeedListItemComponent < ListItemComponent
   end
 
   def last_refreshed_tag
-    refreshed_at = listing_last_refreshed_at
+    refreshed_at = feed.last_refreshed_at
     return "Never" unless refreshed_at
 
     helpers.short_time_ago_tag(refreshed_at)
   end
 
   def most_recent_post_tag
-    published_at = listing_most_recent_post_date
+    published_at = feed.most_recent_post_at
     return "None" unless published_at
 
     helpers.short_time_ago_tag(published_at)
-  end
-
-  def listing_last_refreshed_at
-    return feed[:listing_last_refreshed_at] if feed.has_attribute?(:listing_last_refreshed_at)
-
-    feed.last_refreshed_at
-  end
-
-  def listing_most_recent_post_date
-    return feed[:listing_most_recent_post_date] if feed.has_attribute?(:listing_most_recent_post_date)
-
-    feed.most_recent_post_date
   end
 
   def published_posts_count_tag
