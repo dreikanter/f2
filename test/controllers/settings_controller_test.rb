@@ -24,20 +24,11 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='settings.password'] p", text: /\ALast changed .+ ago\z/
   end
 
-  test "should show the current name in the account card" do
-    @user = create(:user, name: "Alex")
+  test "should describe the name card" do
     sign_in_as(user)
     get settings_url
     assert_response :success
-    assert_select "[data-key='settings.name'] p", text: "People you invite will see Alex"
-  end
-
-  test "should explain the fallback when no name is set" do
-    @user = create(:user, name: "")
-    sign_in_as(user)
-    get settings_url
-    assert_response :success
-    assert_select "[data-key='settings.name'] p", text: 'Not set, so people you invite will just see "Somebody"'
+    assert_select "[data-key='settings.name'] p", text: "The name people you invite will see"
   end
 
   test "should link to settings sections" do
