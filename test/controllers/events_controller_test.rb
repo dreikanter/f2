@@ -266,6 +266,27 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Event #{event.id.to_s.last(5)}"
+    assert_select '[data-key="events.details"]', count: 0
+  end
+
+  test "#show should render ordered event details with escaped messages and stats" do
+    sign_in_as user
+    event = create(:event, user: user)
+    event.append_detail!(stage: :fetch, message: "HTTP 200", stats: { body_bytes: 1234 })
+    event.append_detail!(stage: :result, message: "<script>alert('error')</script>",
+                         stats: { applied: false, error: "<b>Failed</b>" })
+
+    get event_path(event)
+
+    assert_response :success
+    assert_equal %w[Fetch Result], css_select('[data-key="events.detail.stage"]').map(&:text)
+    assert_select '[data-key="events.detail.recorded_at"] time[datetime]', count: 2
+    assert_select '[data-key="events.detail.message"]', text: "HTTP 200"
+    assert_select '[data-key="events.detail.message"]', text: "<script>alert('error')</script>"
+    assert_select '[data-key="events.detail.stats.body_bytes.value"]', text: "1,234"
+    assert_select '[data-key="events.detail.stats.applied.value"]', text: "false"
+    assert_select '[data-key="events.detail.stats.error.value"]', text: "<b>Failed</b>"
+    assert_select '[data-key="events.details"] script, [data-key="events.details"] b', count: 0
   end
 
   test "#show should merge metadata stats into the details list" do

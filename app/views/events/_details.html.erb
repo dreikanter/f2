@@ -1,0 +1,28 @@
+<%# locals: (event:) %>
+<% if event.details.any? %>
+  <section class="space-y-4" data-key="events.details">
+    <%= h2 "Details" %>
+    <ol class="space-y-4">
+      <% event.details.each do |detail| %>
+        <li class="space-y-3 rounded-lg border border-border bg-surface p-4" data-key="events.detail">
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 class="font-medium text-heading" data-key="events.detail.stage"><%= detail.fetch("stage").humanize %></h3>
+            <span class="text-sm text-muted" data-key="events.detail.recorded_at"><%= format_stat_value("recorded_at", detail.fetch("recorded_at")) %></span>
+          </div>
+          <p class="whitespace-pre-wrap break-words text-body" data-key="events.detail.message"><%= detail.fetch("message") %></p>
+          <% if detail.fetch("stats").any? %>
+            <%= render DescriptionListComponent.new do |list| %>
+              <% detail.fetch("stats").each do |key, value| %>
+                <% list.with_item(StatListItemComponent.new(
+                  label: t("events.metadata.stats.#{key}", default: key.humanize),
+                  value: value == false ? "false" : format_stat_value(key, value),
+                  key: "events.detail.stats.#{key}"
+                )) %>
+              <% end %>
+            <% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ol>
+  </section>
+<% end %>

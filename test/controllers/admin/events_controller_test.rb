@@ -1,6 +1,21 @@
 require "test_helper"
 
 class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
+  test "#show should render details for an admin-only event" do
+    sign_in_as admin_user
+    event = create(:event, level: :debug, user: regular_user)
+    event.append_detail!(stage: :fetch, message: "HTTP 403", stats: { http_status: 403 })
+    event.append_detail!(stage: :result, message: "No feed found")
+
+    get admin_event_path(event)
+
+    assert_response :success
+    assert_equal %w[Fetch Result], css_select('[data-key="events.detail.stage"]').map(&:text)
+    assert_select '[data-key="events.detail.message"]', text: "HTTP 403"
+    assert_select '[data-key="events.detail.message"]', text: "No feed found"
+    assert_select '[data-key="events.detail.stats.http_status.value"]', text: "403"
+  end
+
   test "should redirect non-admin users" do
     sign_in_as(regular_user)
 
