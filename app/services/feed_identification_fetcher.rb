@@ -13,10 +13,13 @@ class FeedIdentificationFetcher
     @run_id = run_id
     @user = feed_identification.user
     @input = feed_identification.input
-    @event = Event.where("metadata -> 'stats' ->> 'run_id' = ?", run_id).create_or_find_by!(type: "feed_identification") do |event|
-      event.assign_attributes(level: :debug, user: @user,
-                              subject: feed_identification, message: sanitize_url(@input),
-                              metadata: { stats: { run_id: run_id, source_url: sanitize_url(@input) } })
+    # Serialize event creation for workers sharing this identification.
+    @event = feed_identification.with_lock do
+      Event.where("metadata -> 'stats' ->> 'run_id' = ?", run_id).find_or_create_by!(type: "feed_identification") do |event|
+        event.assign_attributes(level: :debug, user: @user,
+                                subject: feed_identification, message: sanitize_url(@input),
+                                metadata: { stats: { run_id: run_id, source_url: sanitize_url(@input) } })
+      end
     end
   end
 

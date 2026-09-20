@@ -24,11 +24,12 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     identification = create(:feed_identification, user: user, input: url, started_at: Time.current)
     stub_request(:get, url).to_return(status: 200, body: rss_body("Feed"))
     worker = FeedIdentificationFetcher.new(feed_identification: identification, run_id: identification.run_id)
-    duplicate = FeedIdentificationFetcher.new(feed_identification: identification, run_id: identification.run_id)
-
     worker.call
     message = identification_event.message
     stub_request(:get, url).to_return(status: 403)
+
+    duplicate = FeedIdentificationFetcher.new(feed_identification: FeedIdentification.find(identification.id),
+                                              run_id: identification.run_id)
     duplicate.call
 
     event = identification_event
@@ -68,21 +69,6 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal original, events.first
     assert_equal identification.run_id, events.last.metadata.dig("stats", "run_id")
     assert_equal %w[fetch result], events.last.details.pluck("stage")
-  end
-
-  test "#call should enforce one event per run in the database" do
-    url = "https://example.com/feed.xml"
-    stub_request(:get, url).to_return(status: 403)
-    fetcher(url).call
-    event = identification_event
-
-    assert_raises(ActiveRecord::RecordNotUnique) do
-      Event.transaction(requires_new: true) do
-        create(:event, type: "feed_identification", metadata: event.metadata)
-      end
-    end
-
-    assert_equal event, identification_event
   end
 
   test "#call should successfully identify RSS feed and update record" do

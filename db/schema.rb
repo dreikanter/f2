@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_20_020000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_18_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -75,7 +75,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_20_020000) do
     t.string "type", null: false
     t.datetime "updated_at", null: false
     t.uuid "user_id"
-    t.index "(((metadata -> 'stats'::text) ->> 'run_id'::text))", name: "index_feed_identification_events_on_run_id", unique: true, where: "((type)::text = 'feed_identification'::text)"
     t.index ["created_at", "id"], name: "index_events_on_created_at_and_id"
     t.index ["expires_at"], name: "index_events_on_expires_at", where: "(expires_at IS NOT NULL)"
     t.index ["level", "created_at"], name: "index_events_on_level_and_created_at"
