@@ -1,6 +1,6 @@
 <%= content_tag(@disabled ? :div : :a, **card_options) do %>
   <div class="space-y-4">
-    <%= helpers.h2(heading, class: "flex items-start gap-2", size: :lg) %>
+    <%= helpers.h2(heading, class: "flex items-start gap-2", size: "lg") %>
     <p class="text-body"><%= @description %></p>
   </div>
 <% end %>

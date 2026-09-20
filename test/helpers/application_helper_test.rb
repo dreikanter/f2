@@ -29,7 +29,7 @@ class ApplicationHelperTest < ActionView::TestCase
   end
 
   test "#h1 should render a smaller heading for the 2xl size" do
-    render inline: %q(<%= h1 "Sign in", size: :"2xl" %>)
+    render inline: %q(<%= h1 "Sign in", size: "2xl" %>)
 
     assert_select "h1.text-2xl.font-semibold.mb-6.text-heading", text: "Sign in"
     assert_select "h1.text-4xl", count: 0
@@ -50,7 +50,7 @@ class ApplicationHelperTest < ActionView::TestCase
   end
 
   test "#h2 should render a smaller heading for the lg size" do
-    render inline: %q(<%= h2 "Your Name", size: :lg %>)
+    render inline: %q(<%= h2 "Your Name", size: "lg" %>)
 
     assert_select "h2.text-lg.font-semibold.mb-3.text-heading", text: "Your Name"
     assert_select "h2.text-2xl", count: 0
