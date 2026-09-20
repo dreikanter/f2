@@ -86,9 +86,7 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_nil FeedProfile["nope"]
   end
 
-  # Registry shape (required keys, types, matcher/loader/processor rules,
-  # AI output_schema) is validated in FeedProfileValidatorTest against
-  # FeedProfile::PROFILES; no need to re-assert it entry-by-entry here.
+  # Registry shape and stage requirements are validated in FeedProfileValidatorTest.
 
   test "PROFILES should declare resolvable matcher classes" do
     FeedProfile::PROFILES.each do |key, entry|

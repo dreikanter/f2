@@ -412,12 +412,11 @@ class FeedProfile
           # prompt (Loader::LlmPrompts). The user's own prompt is a
           # legitimate instruction, so it travels as the user message,
           # distinct from the untrusted web content the model fetches.
-          prompt_template: <<~PROMPT,
+          prompt_template: <<~PROMPT
             Feed request — what to follow and how to present it:
 
             {{input}}
           PROMPT
-          output_schema: UNIVERSAL_OUTPUT_SCHEMA
         }
       },
       processor: { class: "Processor::LlmProcessor", config: {} },
