@@ -72,6 +72,22 @@ class LinkedCardComponentTest < ViewComponent::TestCase
     refute_includes card["class"], "hover:"
   end
 
+  test "#call should keep caller aria attributes on disabled cards" do
+    result = render_inline(LinkedCardComponent.new(
+      href:        "/emails",
+      title:       "Sent Emails",
+      icon:        "inbox",
+      description: "Review captured emails",
+      disabled:    true,
+      aria:        { label: "Sent emails, unavailable" }
+    ))
+
+    card = result.at_css("[role='link']")
+    assert_not_nil card
+    assert_equal "true", card["aria-disabled"]
+    assert_equal "Sent emails, unavailable", card["aria-label"]
+  end
+
   test "#call should reject block content" do
     error = assert_raises(ArgumentError) do
       render_inline(LinkedCardComponent.new(href: "/settings", title: "Settings", icon: "user", description: "Manage your account")) do

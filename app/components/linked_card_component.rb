@@ -23,7 +23,7 @@ class LinkedCardComponent < CardComponent
     options[:class] = helpers.class_names(options[:class], @disabled ? DISABLED_CLASSES : LINK_CLASSES)
     options[:title] = @tooltip
     if @disabled
-      options.except(:target, :rel).merge(role: "link", aria: { disabled: true })
+      options.except(:target, :rel).merge(role: "link", aria: options.fetch(:aria, {}).merge(disabled: true))
     else
       options.merge(href: @href)
     end
