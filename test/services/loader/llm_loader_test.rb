@@ -34,6 +34,8 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_includes chat.messages.first.content, Loader::LlmPrompts::SAFEGUARDS
     assert_not_includes chat.messages.first.content, feed.source_input
     assert_equal "Feed request — what to follow and how to present it:\n\nA daily roundup\n", chat.messages.second.content
+    assert_equal chat.messages.first.content, payload.fetch("instructions")
+    assert_equal ["Return at most 10 items."], payload.fetch("instructions").scan(/Return at most \d+ items\./)
     assert_equal "gpt-5-nano", payload.fetch("model")
     assert_equal "web_search", payload.fetch("tools").sole.fetch("type")
     assert_equal true, payload.dig("text", "format", "strict")
@@ -61,6 +63,50 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     schema = JSONSchemer.schema(payload.dig("text", "format", "schema"))
     assert schema.valid?({ "items" => [original_item] })
     assert_not schema.valid?({ "items" => [original_item.except("published_at")] })
+  end
+
+  test "#load should include schema-valid examples for retrieval, original content, answers, and no results" do
+    payload = nil
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      payload = JSON.parse(http.body)
+      { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+    end
+
+    Loader::LlmLoader.new(feed).load
+
+    system = payload.fetch("instructions")
+    examples = system.lines.grep(/^\{"items":/).map { |line| JSON.parse(line) }
+    schema = JSONSchemer.schema(payload.dig("text", "format", "schema"))
+    assert_equal 4, examples.size
+    assert schema.valid?(examples[0]), "Retrieved post example must match the provider schema"
+    assert schema.valid?(examples[1]), "Original content example must match the provider schema"
+    assert schema.valid?(examples[2]), "Synthesized answer example must match the provider schema"
+    assert schema.valid?(examples[3]), "Empty result example must match the provider schema"
+    assert_equal "https://example.com/posts/garden", examples[0].fetch("items").sole.fetch("source_url")
+    assert_nil examples[1].fetch("items").sole.fetch("source_url")
+    assert_nil examples[2].fetch("items").sole.fetch("source_url")
+    assert_includes examples[2].fetch("items").sole.fetch("body"), "https://example.com/posts/garden"
+    assert_equal({ "items" => [] }, examples[3])
+  end
+
+  test "#load should use the effective schema limit in the assembled instructions" do
+    profiles = FeedProfile::PROFILES.deep_dup
+    profiles["llm"][:loader][:config][:output_schema]["properties"]["items"]["maxItems"] = 3
+    payload = nil
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      payload = JSON.parse(http.body)
+      { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+    end
+
+    stub_const(FeedProfile, :PROFILES, profiles) do
+      Loader::LlmLoader.new(feed).load
+    end
+
+    system = payload.fetch("instructions")
+    assert_equal ["Return at most 3 items."], system.scan(/Return at most \d+ items\./)
+    assert_equal 3, payload.dig("text", "format", "schema", "properties", "items", "maxItems")
+    assert_equal "Feed request — what to follow and how to present it:\n\nA daily roundup\n",
+                 feed.llm_chats.sole.messages.second.content
   end
 
   test "#load should pass undated original content to the processor" do
@@ -134,20 +180,29 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
       payload = JSON.parse(http.body)
       assert_equal "custom-model", payload.fetch("model")
-      prompts << payload.fetch("input")
+      prompts << payload.fetch("instructions")
       { body: completed_response.merge("model" => "custom-model").to_json, headers: { "Content-Type" => "application/json" } }
     end
     loader = Loader::LlmLoader.new(feed)
 
-    assert_difference "LlmChat.count", 2 do
-      loader.load
-      first_chat = feed.llm_chats.sole
-      loader.load
-      assert_equal 2, feed.llm_chats.count
-      assert feed.llm_chats.where.not(id: first_chat.id).sole.running?
+    travel_to Time.iso8601("2026-09-20T23:30:00+02:00") do
+      assert_difference "LlmChat.count", 2 do
+        loader.load
+        first_chat = feed.llm_chats.sole
+        assert_equal Time.current, first_chat.started_at
+        assert_includes first_chat.messages.first.content, "Reference time for this run: 2026-09-20T21:30:00Z"
+        travel 1.day
+        loader.load
+        second_chat = feed.llm_chats.where.not(id: first_chat.id).sole
+        assert second_chat.running?
+        assert_equal Time.current, second_chat.started_at
+        assert_includes second_chat.messages.first.content, "Reference time for this run: 2026-09-21T21:30:00Z"
+        assert_not_includes second_chat.messages.first.content, "2026-09-20T21:30:00Z"
+        assert_equal first_chat.messages.second.content, second_chat.messages.second.content
+      end
     end
 
-    assert_equal prompts.first, prompts.second
+    assert_not_equal prompts.first, prompts.second
     assert_equal ["custom-model"], feed.llm_chats.map { |chat| chat.model.model_id }.uniq
     assert_requested request, times: 2
   end

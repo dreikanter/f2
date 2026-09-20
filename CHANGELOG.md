@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-20
 
+- AI feeds now receive a reference time for relative dates and clearer instructions for source links and complete post text.
 - Smaller card headings on the Settings, Admin, and Dev Tools pages.
 - The name card in Settings now shows a short description instead of your current name.
 - Preserve 365tomorrows story paragraphs and line breaks, splitting long stories into up to four comments.
