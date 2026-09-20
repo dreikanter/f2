@@ -178,6 +178,23 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "gpt-4.1", preview.ai_model
   end
 
+  test "#create should render a processing preview with the default for an invalid AI response limit" do
+    create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
+    sign_in_as(user)
+    credential = create(:ai_credential, :active, user: user)
+
+    assert_enqueued_with(job: FeedPreviewJob) do
+      post feed_previews_url, params: { profile_key: "llm", params: { prompt: "Write stories", max_items: "abc" },
+                                       ai_credential_id: credential.id, ai_model: "gpt-4.1" },
+           headers: TURBO_STREAM
+    end
+
+    assert_response :success
+    assert_select '[data-key="preview.processing"]'
+    assert_select 'turbo-stream[action="replace"][target="feed-preview"] [data-preview-button-target="frame"]'
+    assert_equal 3, user.feed_previews.sole.params["max_items"]
+  end
+
   test "#create should not preview an AI profile with a model the provider does not offer" do
     create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)

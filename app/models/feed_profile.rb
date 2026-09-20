@@ -397,8 +397,9 @@ class FeedProfile
             "type" => "integer",
             "minimum" => 1,
             "maximum" => 10,
+            "default" => LlmOutput::DEFAULT_MAX_ITEMS,
             "title" => "Maximum posts per refresh",
-            "description" => "Limit each AI response to this many posts. Leave blank for 3."
+            "description" => "Limit each AI response to this many posts. Leave blank for #{LlmOutput::DEFAULT_MAX_ITEMS}."
           }
         },
         "required" => ["prompt"],
@@ -576,8 +577,7 @@ class FeedProfile
       PROFILES.dig(key, :parameter_schema)
     end
 
-    # Form values arrive as strings, so apply the declared type before reading
-    # them. Preserve invalid numeric input so optional values still fail validation.
+    # Cast form values before validation; declared defaults replace invalid input.
     # @param key [String] the profile key
     # @param params [Hash, nil] the submitted params
     # @return [Hash] the params as their declared types
@@ -586,8 +586,12 @@ class FeedProfile
       return params || {} if properties.blank?
 
       (params || {}).each_with_object({}) do |(name, value), result|
-        cast = cast_value(properties.dig(name, "type"), value)
-        result[name] = cast unless cast.nil?
+        schema = properties[name] || {}
+        cast = cast_value(schema["type"], value)
+        next if cast.nil?
+
+        cast = schema["default"] if schema.key?("default") && !JSONSchemer.schema(schema, format: true).valid?(cast)
+        result[name] = cast
       end
     end
 

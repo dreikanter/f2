@@ -41,24 +41,24 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
                          args: [result.preview.id, result.preview.run_id, result.preview.params_digest])
   end
 
-  test "#create should reject an invalid response limit before starting a preview" do
-    assert_no_difference "FeedPreview.count" do
-      assert_no_enqueued_jobs do
-        result = request(profile_key: "llm", params: { prompt: "Write stories", max_items: "abc" }).create
+  test "#create should replace an invalid response limit before starting a preview" do
+    create(:llm_model, model_id: "sample-model")
+    result = request(**ai_attributes.merge(params: { prompt: "Write stories", max_items: "abc" })).create
 
-        assert_equal :invalid_source, result.error
-        assert_nil result.preview
-      end
-    end
+    assert_nil result.error
+    assert_equal 3, result.preview.reload.params["max_items"]
+    assert_enqueued_with(job: FeedPreviewJob,
+                         args: [result.preview.id, result.preview.run_id, result.preview.params_digest])
   end
 
-  test "#create should reject an out-of-range response limit before starting a preview" do
-    assert_no_enqueued_jobs do
-      result = request(profile_key: "llm", params: { prompt: "Write stories", max_items: "11" }).create
+  test "#create should replace an out-of-range response limit before starting a preview" do
+    create(:llm_model, model_id: "sample-model")
+    result = request(**ai_attributes.merge(params: { prompt: "Write stories", max_items: "11" })).create
 
-      assert_equal :invalid_source, result.error
-      assert_nil result.preview
-    end
+    assert_nil result.error
+    assert_equal 3, result.preview.reload.params["max_items"]
+    assert_enqueued_with(job: FeedPreviewJob,
+                         args: [result.preview.id, result.preview.run_id, result.preview.params_digest])
   end
 
   test "#create should persist the response limit and replace the preview when it changes" do

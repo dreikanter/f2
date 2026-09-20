@@ -122,12 +122,11 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?, feed.errors.full_messages.inspect
   end
 
-  test "#update should preserve the saved AI response limit when the new value is invalid" do
+  test "#update should persist the default AI response limit when the new value is invalid" do
     feed = create(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => 1 })
 
-    assert_not feed.update(params: feed.params.merge("max_items" => "abc"))
-    assert_not_empty feed.errors[:params]
-    assert_equal 1, feed.reload.params["max_items"]
+    assert feed.update(params: feed.params.merge("max_items" => "abc")), feed.errors.full_messages.inspect
+    assert_equal 3, feed.reload.params["max_items"]
   end
 
   test "#save should omit a blank AI response limit" do
@@ -137,40 +136,46 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.params.key?("max_items")
   end
 
-  test "#save should reject a zero AI response limit" do
+  test "#save should replace a zero AI response limit with the default" do
     feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => 0 })
 
-    assert_not feed.valid?
+    assert feed.save, feed.errors.full_messages.inspect
+    assert_equal 3, feed.reload.params["max_items"]
   end
 
-  test "#save should reject an AI response limit above ten" do
+  test "#save should replace an AI response limit above ten with the default" do
     feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => 11 })
 
-    assert_not feed.valid?
+    assert feed.save, feed.errors.full_messages.inspect
+    assert_equal 3, feed.reload.params["max_items"]
   end
 
-  test "#save should reject a nonnumeric AI response limit" do
+  test "#save should replace a nonnumeric AI response limit with the default" do
     feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => "abc" })
 
-    assert_not feed.valid?
+    assert feed.save, feed.errors.full_messages.inspect
+    assert_equal 3, feed.reload.params["max_items"]
   end
 
-  test "#save should reject a fractional AI response limit" do
+  test "#save should replace a fractional AI response limit with the default" do
     feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => 1.5 })
 
-    assert_not feed.valid?
+    assert feed.save, feed.errors.full_messages.inspect
+    assert_equal 3, feed.reload.params["max_items"]
   end
 
-  test "#save should reject a boolean AI response limit" do
+  test "#save should replace a boolean AI response limit with the default" do
     feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => false })
 
-    assert_not feed.valid?
+    assert feed.save, feed.errors.full_messages.inspect
+    assert_equal 3, feed.reload.params["max_items"]
   end
 
-  test "#save should reject an array AI response limit" do
+  test "#save should replace an array AI response limit with the default" do
     feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => [1] })
 
-    assert_not feed.valid?
+    assert feed.save, feed.errors.full_messages.inspect
+    assert_equal 3, feed.reload.params["max_items"]
   end
 
   test "#save should cast an integer param" do
