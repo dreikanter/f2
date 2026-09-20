@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-20
 
+- Hide the token in webhook terminal examples until focused; Copy still includes the real token.
 - Speed up feed-list loading and sorting by latest post.
 - Show the latest successful feed update under “Last updated”, even when no new posts were found.
 - Check numeric feed options against their allowed range before previewing or saving.

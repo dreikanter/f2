@@ -49,14 +49,19 @@
     <div class="space-y-2">
       <p class="font-semibold text-heading">Try it from the terminal</p>
       <div class="flex items-start justify-between gap-3">
-        <%= tag.textarea curl_snippet,
+        <%= tag.textarea webhook_curl_example(hook_url, "••••••••"),
                          readonly: true,
                          rows: 4,
                          wrap: "off",
                          spellcheck: false,
                          class: "#{field_class} resize-none whitespace-pre",
                          aria: { label: "curl example" },
-                         data: { key: "webhook.curl" } %>
+                         data: {
+                           key: "webhook.curl",
+                           controller: "masked-field",
+                           masked_field_revealed_value: curl_snippet,
+                           action: "focus->masked-field#reveal blur->masked-field#hide turbo:before-cache@document->masked-field#hide"
+                         } %>
         <%= clipboard_button curl_snippet, label: "Copy curl example", key: "webhook.copy-curl", css_class: "mt-2" %>
       </div>
       <p class="text-sm text-muted">You can also send <code>source_url</code>, <code>images</code>, <code>comments</code>, and a <code>uid</code> to keep retries from double-posting. The standard <code>Idempotency-Key</code> header works the same as <code>uid</code>.</p>
