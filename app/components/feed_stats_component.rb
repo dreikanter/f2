@@ -55,15 +55,12 @@ class FeedStatsComponent < StatsPanelComponent
   end
 
   def last_refresh_value
-    helpers.short_time_ago_tag(last_refreshed_at) if last_refreshed_at
+    refreshed_at = @feed.last_successful_refresh_at
+    helpers.short_time_ago_tag(refreshed_at) if refreshed_at
   end
 
   def most_recent_repost_value
     helpers.short_time_ago_tag(most_recent_repost_at) if most_recent_repost_at
-  end
-
-  def last_refreshed_at
-    @feed.last_refreshed_at
   end
 
   def most_recent_repost_at

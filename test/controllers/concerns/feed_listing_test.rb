@@ -17,7 +17,7 @@ class FeedListingTest < ActiveSupport::TestCase
     assert_equal [feed.id, older_feed.id], listed_feeds.map(&:id)
     listed_feed = listed_feeds.first
 
-    assert_in_delta refreshed_at.to_f, listed_feed.last_refreshed_at.to_f, 0.001
+    assert_in_delta refreshed_at.to_f, listed_feed.last_successful_refresh_at.to_f, 0.001
     assert_in_delta published_at.to_f, listed_feed.most_recent_post_at.to_f, 0.001
   end
 
@@ -31,7 +31,7 @@ class FeedListingTest < ActiveSupport::TestCase
                        .order(Arel.sql(sortable_fields.fetch(:last_refresh).fetch(:order_by) + " DESC")).to_a
 
     assert_equal [empty_feed.id, older_feed.id], listed_feeds.map(&:id)
-    assert_equal refreshed_at, listed_feeds.first.last_refreshed_at
+    assert_equal refreshed_at, listed_feeds.first.last_successful_refresh_at
     assert_nil listed_feeds.first.most_recent_post_at
   end
 
@@ -41,6 +41,6 @@ class FeedListingTest < ActiveSupport::TestCase
 
     listed_feed = Feed.find(feed.id)
 
-    assert_nil listed_feed.last_refreshed_at
+    assert_nil listed_feed.last_successful_refresh_at
   end
 end
