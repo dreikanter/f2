@@ -1,6 +1,67 @@
 require "test_helper"
 
 class EventTest < ActiveSupport::TestCase
+  test "#details should be empty for an event without details" do
+    assert_empty build(:event).details
+  end
+
+  test "#append_detail! should persist timestamped details without changing the event summary" do
+    event = create(:event, message: "Importing feed", metadata: { stats: { new_posts: 2 } })
+    recorded_at = Time.zone.parse("2026-09-20T10:00:00Z")
+
+    travel_to recorded_at do
+      assert_no_difference "Event.count" do
+        event.append_detail!(stage: :fetch, message: "HTTP 200", stats: { http_status: 200 })
+      end
+    end
+
+    event.reload
+    assert_equal "Importing feed", event.message
+    assert_equal({ "new_posts" => 2 }, event.metadata.fetch("stats"))
+    assert_equal [{
+      "recorded_at" => recorded_at.iso8601(6),
+      "stage" => "fetch",
+      "message" => "HTTP 200",
+      "stats" => { "http_status" => 200 }
+    }], event.details
+  end
+
+  test "#append_detail! should preserve earlier details and metadata from a stale instance" do
+    event = create(:event)
+    other = Event.find(event.id)
+    event.append_detail!(stage: :fetch, message: "HTTP 200")
+    event.update!(metadata: event.metadata.merge("stats" => { "new_posts" => 1 }))
+
+    other.append_detail!(stage: :result, message: "Imported one post", stats: { applied: false })
+
+    event.reload
+    assert_equal %w[fetch result], event.details.map { |detail| detail.fetch("stage") }
+    assert_equal({}, event.details.first.fetch("stats"))
+    assert_equal false, event.details.last.dig("stats", "applied")
+    assert_equal({ "new_posts" => 1 }, event.metadata.fetch("stats"))
+  end
+
+  test "#append_detail! should roll back with its enclosing transaction" do
+    event = create(:event)
+    event.append_detail!(stage: :fetch, message: "HTTP 200")
+
+    Event.transaction(requires_new: true) do
+      event.append_detail!(stage: :result, message: "Completed")
+      raise ActiveRecord::Rollback
+    end
+
+    assert_equal ["fetch"], event.reload.details.map { |detail| detail.fetch("stage") }
+  end
+
+  test "#append_detail! should require a persisted event" do
+    event = build(:event)
+
+    assert_raises(ActiveRecord::RecordNotSaved) do
+      event.append_detail!(stage: :fetch, message: "HTTP 200")
+    end
+    assert_not event.persisted?
+  end
+
   def user
     @user ||= create(:user)
   end

@@ -13,6 +13,11 @@ AccessTokenDetail:
     # AccessTokenValidationService; the DB constraint is the right guard.
     UniqueIndexChecker:
       enabled: false
+Event:
+  index_feed_identification_events_on_run_id:
+    # Run events use create_or_find_by!; the index handles concurrent inserts.
+    UniqueIndexChecker:
+      enabled: false
 EventReference:
   index_event_references_on_event_and_reference:
     # wontfix: rows are created via insert_all (FeedRefreshWorkflow), which

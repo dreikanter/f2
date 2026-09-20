@@ -251,6 +251,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     get ai_credential_url(credential)
     assert_response :success
     assert_select "[data-key='ai_credential.show']"
+    assert_select "header [data-key='ai_credential.default-badge']", count: 0
   end
 
   test "#show should place the credential actions in the header menu" do
@@ -274,6 +275,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='ai_credential.make-default']", count: 0
+    assert_select "header [data-key='ai_credential.default-badge']", text: "Default"
   end
 
   test "#show should poll revalidation while keeping the credential active" do

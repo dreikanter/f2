@@ -32,6 +32,30 @@ class Event < ApplicationRecord
   }
   scope :user_relevant, -> { where.not(level: :debug).not_expired }
 
+  def details
+    metadata.fetch("details", [])
+  end
+
+  # Reload under the row lock so concurrent writers preserve each other's details.
+  # Callers sanitize diagnostic values before passing them here.
+  # @param stage [String, Symbol] step name
+  # @param message [String] step summary
+  # @param stats [Hash] diagnostic values
+  # @return [Boolean] whether the detail was saved
+  def append_detail!(stage:, message:, stats: {})
+    raise ActiveRecord::RecordNotSaved, "Event must be persisted before appending details" unless persisted?
+
+    with_lock do
+      detail = {
+        "recorded_at" => Time.current.iso8601(6),
+        "stage" => stage.to_s,
+        "message" => message,
+        "stats" => stats
+      }
+      update!(metadata: metadata.merge("details" => details + [detail]))
+    end
+  end
+
   def alert_variant
     debug? ? :info : level.to_sym
   end

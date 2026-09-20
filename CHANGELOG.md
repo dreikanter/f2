@@ -4,7 +4,9 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-19
 
-- Admins can inspect feed identification fetches, candidate tests, and results in the event log.
+- Admins can inspect each feed identification attempt and its diagnostic steps in one event.
+- Identify AI API Log entries by purpose in the list and transcript header; display error values as code.
+- Show the default badge on AI credential details and status badges in the AI API Log; shorten Freefeed Tokens labels.
 
 ## 2026-09-18
 

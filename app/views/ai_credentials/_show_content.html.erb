@@ -2,9 +2,12 @@
 <div class="space-y-6" data-key="ai_credential.show">
   <%= render PageHeaderComponent.new(title: ai_credential.display_name) do |header| %>
     <% header.with_breadcrumb(label: "AI credentials", url: ai_credentials_path) %>
-    <% unless ai_credential.validation_in_progress? %>
-      <% header.with_context_paragraph do %>
+    <% header.with_context_paragraph do %>
+      <% unless ai_credential.validation_in_progress? %>
         <%= render credential_state_badge(ai_credential) %>
+      <% end %>
+      <% if ai_credential.default? %>
+        <%= render BadgeComponent.new(text: "Default", color: :info, key: "ai_credential.default-badge") %>
       <% end %>
     <% end %>
     <% header.with_action_button do %>

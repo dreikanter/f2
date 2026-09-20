@@ -30,6 +30,8 @@
 
   <%= render EventDetailsComponent.new(event: @event, admin: true) %>
 
+  <%= render "events/details", event: @event %>
+
   <% if @referenced_posts.any? %>
     <section class="space-y-4" data-key="events.imported_posts">
       <%= h2 "Imported Posts" %>
