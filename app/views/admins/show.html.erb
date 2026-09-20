@@ -9,34 +9,25 @@
   </section>
 
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-    <%= render LinkedCardComponent.new(href: admin_users_path) do %>
-      <div class="space-y-4">
-        <%= h2 class: "flex items-center gap-2" do %>
-          <%= icon("users", css_class: "size-5") %>
-          <span>Users</span>
-        <% end %>
-        <p class="text-body">Manage user accounts and permissions</p>
-      </div>
-    <% end %>
+    <%= render LinkedCardComponent.new(
+      href: admin_users_path,
+      title: "Users",
+      icon: "users",
+      description: "Manage user accounts and permissions"
+    ) %>
 
-    <%= render LinkedCardComponent.new(href: admin_events_path) do %>
-      <div class="space-y-4">
-        <%= h2 class: "flex items-center gap-2" do %>
-          <%= icon("calendar", css_class: "size-5") %>
-          <span>Events Log</span>
-        <% end %>
-        <p class="text-body">View system events, logs, and activity</p>
-      </div>
-    <% end %>
+    <%= render LinkedCardComponent.new(
+      href: admin_events_path,
+      title: "Events Log",
+      icon: "calendar",
+      description: "View system events, logs, and activity"
+    ) %>
 
-    <%= render LinkedCardComponent.new(href: admin_feeds_path) do %>
-      <div class="space-y-4">
-        <%= h2 class: "flex items-center gap-2" do %>
-          <%= icon("layers", css_class: "size-5") %>
-          <span>Feeds</span>
-        <% end %>
-        <p class="text-body">Browse feeds across every account</p>
-      </div>
-    <% end %>
+    <%= render LinkedCardComponent.new(
+      href: admin_feeds_path,
+      title: "Feeds",
+      icon: "layers",
+      description: "Browse feeds across every account"
+    ) %>
   </div>
 </div>
