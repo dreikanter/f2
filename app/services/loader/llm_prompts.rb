@@ -65,6 +65,9 @@ module Loader
         is unavailable or unusable, omit the item; do not use null to emit it.
         Use explicit null for newly composed content without its own source-post
         permalink, including original text, roundups, and newly composed answers.
+        When transforming text supplied directly in the feed request without a
+        source-post permalink, return the transformed text with source_url null;
+        do not omit it or search for a URL merely to give it an identity.
         Do not use an arbitrary citation as a synthesized item's identity.
       - title: a short title, when the source has one; metadata only.
       - supplementary: an array of extra notes or comments, when relevant.
@@ -81,9 +84,25 @@ module Loader
       {"items":[{"body":"The last star blinked, and the astronomer waved back.","source_url":null,"title":"","supplementary":[],"images":[],"published_at":""}]}
       Synthesized answer with evidence:
       {"items":[{"body":"The garden is open, but its winter hours remain unclear. Source: https://example.com/posts/garden","source_url":null,"title":"","supplementary":[],"images":[],"published_at":""}]}
+      Transformation of supplied text without a source-post permalink:
+      {"items":[{"body":"Bonjour, monde !","source_url":null,"title":"","supplementary":[],"images":[],"published_at":""}]}
       No supported source posts:
       {"items":[]}
     TEXT
+
+    def self.extraction_system(started_at:, max_items:)
+      <<~TEXT.strip
+        #{EXTRACTION_SYSTEM}
+
+        Reference time for this run (UTC): #{started_at.utc.iso8601}
+        Use this reference to interpret relative dates such as today, yesterday,
+        and this week. Honor explicit dates and timezones in the feed request;
+        convert the reference time to the requested timezone before interpreting
+        relative dates. When no timezone is specified, use UTC.
+
+        Return at most #{max_items} #{"item".pluralize(max_items)}.
+      TEXT
+    end
 
     EXTRACTION_SYSTEM = <<~TEXT.strip
       #{TASK}

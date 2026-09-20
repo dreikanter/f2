@@ -65,8 +65,8 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
 
     assert_equal 1, payloads.first.dig("text", "format", "schema", "properties", "items", "maxItems")
     assert_equal 3, payloads.last.dig("text", "format", "schema", "properties", "items", "maxItems")
-    assert_includes limited_feed.llm_chats.sole.messages.first.content, "Return at most 1 items"
-    assert_includes feed.llm_chats.sole.messages.first.content, "Return at most 3 items"
+    assert_equal ["Return at most 1 item."], payloads.first.fetch("instructions").scan(/Return at most \d+ items?\./)
+    assert_equal ["Return at most 3 items."], payloads.last.fetch("instructions").scan(/Return at most \d+ items?\./)
     assert_equal 10, FeedProfile::UNIVERSAL_OUTPUT_SCHEMA.dig("properties", "items", "maxItems")
   end
 
@@ -105,7 +105,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_not schema.valid?({ "items" => [original_item.except("published_at")] })
   end
 
-  test "#load should include schema-valid examples for retrieval, original content, answers, and no results" do
+  test "#load should include schema-valid examples for retrieval, original content, answers, transformations, and no results" do
     payload = nil
     stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
       payload = JSON.parse(http.body)
@@ -117,16 +117,18 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     system = payload.fetch("instructions")
     examples = system.lines.grep(/^\{"items":/).map { |line| JSON.parse(line) }
     schema = JSONSchemer.schema(payload.dig("text", "format", "schema"))
-    assert_equal 4, examples.size
+    assert_equal 5, examples.size
     assert schema.valid?(examples[0]), "Retrieved post example must match the provider schema"
     assert schema.valid?(examples[1]), "Original content example must match the provider schema"
     assert schema.valid?(examples[2]), "Synthesized answer example must match the provider schema"
-    assert schema.valid?(examples[3]), "Empty result example must match the provider schema"
+    assert schema.valid?(examples[3]), "Supplied-text transformation example must match the provider schema"
+    assert schema.valid?(examples[4]), "Empty result example must match the provider schema"
     assert_equal "https://example.com/posts/garden", examples[0].fetch("items").sole.fetch("source_url")
     assert_nil examples[1].fetch("items").sole.fetch("source_url")
     assert_nil examples[2].fetch("items").sole.fetch("source_url")
     assert_includes examples[2].fetch("items").sole.fetch("body"), "https://example.com/posts/garden"
-    assert_equal({ "items" => [] }, examples[3])
+    assert_nil examples[3].fetch("items").sole.fetch("source_url")
+    assert_equal({ "items" => [] }, examples[4])
   end
 
   test "#load should use the effective schema limit in the assembled instructions" do
@@ -217,31 +219,72 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
       payload = JSON.parse(http.body)
       assert_equal "custom-model", payload.fetch("model")
-      prompts << payload.fetch("instructions")
+      prompts << payload.fetch("input")
       { body: completed_response.merge("model" => "custom-model").to_json, headers: { "Content-Type" => "application/json" } }
     end
     loader = Loader::LlmLoader.new(feed)
 
-    travel_to Time.iso8601("2026-09-20T23:30:00+02:00") do
-      assert_difference "LlmChat.count", 2 do
-        loader.load
-        first_chat = feed.llm_chats.sole
-        assert_equal Time.current, first_chat.started_at
-        assert_includes first_chat.messages.first.content, "Reference time for this run: 2026-09-20T21:30:00Z"
-        travel 1.day
-        loader.load
-        second_chat = feed.llm_chats.where.not(id: first_chat.id).sole
-        assert second_chat.running?
-        assert_equal Time.current, second_chat.started_at
-        assert_includes second_chat.messages.first.content, "Reference time for this run: 2026-09-21T21:30:00Z"
-        assert_not_includes second_chat.messages.first.content, "2026-09-20T21:30:00Z"
-        assert_equal first_chat.messages.second.content, second_chat.messages.second.content
-      end
+    assert_difference "LlmChat.count", 2 do
+      loader.load
+      first_chat = feed.llm_chats.sole
+      loader.load
+      assert_equal 2, feed.llm_chats.count
+      assert feed.llm_chats.where.not(id: first_chat.id).sole.running?
     end
 
-    assert_not_equal prompts.first, prompts.second
+    assert_equal prompts.first, prompts.second
     assert_equal ["custom-model"], feed.llm_chats.map { |chat| chat.model.model_id }.uniq
     assert_requested request, times: 2
+  end
+
+  test "#load should supply a fresh UTC reference time for each run and honor requested timezones" do
+    feed.params = { "prompt" => "Summarize today's news in Asia/Tokyo" }
+    payloads = []
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      payloads << JSON.parse(http.body)
+      { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+    end
+    loader = Loader::LlmLoader.new(feed)
+
+    travel_to Time.iso8601("2026-09-21T00:30:00+09:00") do
+      loader.load
+      assert_equal Time.current, feed.llm_chats.sole.started_at
+      travel 1.day
+      loader.load
+    end
+
+    first_system = payloads.first.fetch("instructions")
+    second_system = payloads.last.fetch("instructions")
+    assert_includes first_system, "Reference time for this run (UTC): 2026-09-20T15:30:00Z"
+    assert_includes second_system, "Reference time for this run (UTC): 2026-09-21T15:30:00Z"
+    assert_not_includes second_system, "2026-09-20T15:30:00Z"
+    assert_includes first_system, "convert the reference time to the requested timezone before interpreting"
+    assert_includes first_system, "When no timezone is specified, use UTC."
+    assert_equal payloads.first.fetch("input"), payloads.last.fetch("input")
+    assert_includes feed.llm_chats.first.messages.second.content, feed.source_input
+    assert_not_includes first_system, feed.source_input
+    assert_requested request, times: 2
+  end
+
+  test "#load should request and accept transformations of supplied text without a source URL" do
+    feed.params = { "prompt" => "Translate this text into French: Hello, world!" }
+    item = original_item.merge("body" => "Bonjour, monde !")
+    payload = nil
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      payload = JSON.parse(http.body)
+      {
+        body: completed_response(content: { "items" => [item] }.to_json).to_json,
+        headers: { "Content-Type" => "application/json" }
+      }
+    end
+
+    content = Loader::LlmLoader.new(feed).load
+    entry = feed.processor_instance(content).process.entries.sole
+
+    assert_includes payload.fetch("instructions"), "return the transformed text with source_url null;"
+    assert_equal item, entry.raw_data
+    assert feed.llm_chats.sole.succeeded?
+    assert_requested request, times: 1
   end
 
   test "#load should retain preview attribution without saving its temporary feed" do

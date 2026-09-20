@@ -4,7 +4,6 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-20
 
-- AI feeds now receive a reference time for relative dates and clearer instructions for source links and complete post text.
 - AI feeds keep distinct original posts and now follow their configured frequency without a hidden daily limit. For at most one post per scheduled refresh each day, choose a daily schedule and set “Maximum posts per refresh” to 1; manual refreshes are extra attempts.
 - Set “Maximum posts per refresh” on AI feeds to limit each response to 1–10 posts; leaving it blank allows up to 3.
 - AI feeds use the default post limit for invalid values when saving, previewing, or refreshing.

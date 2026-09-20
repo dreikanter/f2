@@ -64,24 +64,16 @@ module Loader
 
     def prepare_chat(chat)
       options[:refresh_event]&.event_references&.create!(reference: chat)
-      schema = output_schema
-      chat.with_instructions(<<~TEXT.strip)
-        #{LlmPrompts::EXTRACTION_SYSTEM}
-
-        Reference time for this run: #{chat.started_at.iso8601}
-        Use this reference to interpret relative dates such as today, yesterday,
-        and this week. Honor explicit dates and timezones in the feed request.
-
-        Return at most #{schema.fetch("properties").fetch("items").fetch("maxItems")} items.
-      TEXT
-      chat.with_schema(schema)
+      output = LlmOutput.new(feed)
+      chat.with_instructions(LlmPrompts.extraction_system(started_at: chat.started_at, max_items: output.max_items))
+      chat.with_schema(output_schema(output))
       chat.with_server_tools(:web_search)
       chat.ask_later(config.fetch(:prompt_template).gsub("{{input}}") { feed.source_input })
     end
 
     # Strict output requires every property; the processor accepts this subset.
-    def output_schema
-      schema = LlmOutput.new(feed).schema
+    def output_schema(output)
+      schema = output.schema
       item = schema.fetch("properties").fetch("items").fetch("items")
       item.fetch("properties").delete("uid")
       item["required"] = item.fetch("properties").keys
