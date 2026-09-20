@@ -66,7 +66,7 @@ class FeedListItemComponent < ListItemComponent
 
     # Drafts have never run, so their activity times and counts are meaningless.
     unless draft?
-      segments << helpers.tag.span(helpers.safe_join(["Latest updated: ", last_refreshed_tag]), data: { key: "feed.#{feed.id}.last_refreshed" })
+      segments << helpers.tag.span(helpers.safe_join(["Last updated: ", last_refreshed_tag]), data: { key: "feed.#{feed.id}.last_refreshed" })
       segments << helpers.tag.span(helpers.safe_join(["Latest post: ", most_recent_post_tag]), data: { key: "feed.#{feed.id}.most_recent_post" })
       segments << helpers.tag.span(helpers.safe_join(["Posts: ", published_posts_count_tag]), data: { key: "feed.#{feed.id}.published_posts_count" })
     end

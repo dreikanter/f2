@@ -270,7 +270,7 @@ class FeedListItemComponentTest < ViewComponent::TestCase
   test "#render should label the activity times" do
     result = render_inline FeedListItemComponent.new(feed: feed)
 
-    assert_includes result.text, "Latest updated:"
+    assert_includes result.text, "Last updated:"
     assert_includes result.text, "Latest post:"
   end
 
@@ -306,7 +306,7 @@ class FeedListItemComponentTest < ViewComponent::TestCase
 
     assert_empty result.css("[data-key='feed.#{draft_feed.id}.last_refreshed']")
     assert_empty result.css("[data-key='feed.#{draft_feed.id}.most_recent_post']")
-    assert_not_includes result.text, "Latest updated:"
+    assert_not_includes result.text, "Last updated:"
     assert_not_includes result.text, "Latest post:"
   end
 

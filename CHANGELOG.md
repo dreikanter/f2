@@ -4,7 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-20
 
-- Show the latest successful feed update even when no new posts were found.
+- Show the latest successful feed update under “Last updated”, even when no new posts were found.
 - Check numeric feed options against their allowed range before previewing or saving.
 - AI feeds keep distinct original posts and now follow their configured frequency without a hidden daily limit. For at most one post per scheduled refresh each day, choose a daily schedule and set “Maximum posts per refresh” to 1; manual refreshes are extra attempts.
 - Set “Maximum posts per refresh” on AI feeds to limit each response to 1–10 posts; leaving it blank allows up to 3.
