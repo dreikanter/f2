@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-20
 
+- Use singular user and feed labels in admin stats when the count is one.
 - Mark AI feeds with a small blue AI badge in the feed list.
 - Show “No posts yet” for empty feeds instead of an empty latest-post date and zero post count.
 - Hide the token in webhook terminal examples until focused; Copy still includes the real token.
