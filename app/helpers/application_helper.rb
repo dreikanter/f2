@@ -4,8 +4,13 @@ module ApplicationHelper
     tag.h1(content, **options, &block)
   end
 
-  def h2(content = nil, **options, &block)
-    options[:class] = class_names("text-2xl font-semibold mb-3 text-heading", options[:class])
+  H2_SIZE_CLASSES = {
+    default: "text-2xl",
+    sm: "text-lg"
+  }.freeze
+
+  def h2(content = nil, size: :default, **options, &block)
+    options[:class] = class_names(H2_SIZE_CLASSES.fetch(size), "font-semibold mb-3 text-heading", options[:class])
     tag.h2(content, **options, &block)
   end
 

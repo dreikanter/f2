@@ -42,6 +42,13 @@ class ApplicationHelperTest < ActionView::TestCase
     end
   end
 
+  test "#h2 should render a smaller heading for the sm size" do
+    render inline: %q(<%= h2 "Your Name", size: :sm %>)
+
+    assert_select "h2.text-lg.font-semibold.mb-3.text-heading", text: "Your Name"
+    assert_select "h2.text-2xl", count: 0
+  end
+
   test "#post_content_preview returns empty string for nil content" do
     assert_equal "", post_content_preview(nil)
   end

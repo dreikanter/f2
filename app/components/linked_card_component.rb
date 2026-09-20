@@ -25,6 +25,16 @@ class LinkedCardComponent < CardComponent
     end
   end
 
+  # Built in Ruby because block helpers called through `helpers` capture into
+  # the view context buffer, not the component one.
+  def heading
+    safe_join([
+      helpers.icon(@icon, css_class: "mt-1 size-5 shrink-0"),
+      tag.span(@title),
+      (helpers.icon("external-link", css_class: "mt-1 size-4 shrink-0 text-muted") if opens_new_tab?)
+    ].compact)
+  end
+
   def opens_new_tab?
     !@disabled && @html_options[:target] == "_blank"
   end
