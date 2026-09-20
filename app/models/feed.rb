@@ -287,11 +287,8 @@ class Feed < ApplicationRecord
     most_recent_post_at
   end
 
-  # Serialize recalculation so concurrent post writes cannot leave a stale value.
-  def refresh_most_recent_post_at!
-    with_lock("FOR NO KEY UPDATE") do
-      update_column(:most_recent_post_at, posts.maximum(:published_at))
-    end
+  def record_successful_refresh!
+    update_column(:last_successful_refresh_at, Time.current)
   end
 
   # Time of the most recent repost to FreeFeed, regardless of the source
@@ -306,11 +303,12 @@ class Feed < ApplicationRecord
     posts.published_last_week.count
   end
 
-  # Single source of truth for the cached post counters. Post's create/destroy
-  # callbacks keep these current on single-record writes; bulk paths that skip
-  # those callbacks (FeedRefreshWorkflow's insert_all) must call these to resync.
-  def recount_imported_posts!
-    update_column(:imported_posts_count, posts.count)
+  # Post callbacks and bulk imports share this recalculation. The lock keeps
+  # concurrent writes from leaving stale stats while allowing foreign-key checks.
+  def refresh_post_stats!
+    with_lock("FOR NO KEY UPDATE") do
+      update_columns(imported_posts_count: posts.count, most_recent_post_at: posts.maximum(:published_at))
+    end
   end
 
   def recount_published_posts!

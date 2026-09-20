@@ -179,7 +179,7 @@ class WebhookIngestion
       post.feed_entry.save!
       FeedEntryUid.create!(feed: feed, uid: uid, imported_at: Time.current)
       post.save!
-      feed.update_column(:last_successful_refresh_at, Time.current)
+      feed.record_successful_refresh!
       # SQL-side increment: concurrent deliveries must not lose counts to a
       # stale read-modify-write.
       WebhookEndpoint.update_counters(endpoint.id, received_count: 1, touch: :last_received_at)

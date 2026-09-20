@@ -1425,7 +1425,7 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
-  test "#recount_imported_posts! should resync the counter after a callback-bypassing insert" do
+  test "#refresh_post_stats! should resync post stats after a callback-bypassing insert" do
     feed = create(:feed)
     feed_entry = create(:feed_entry, feed: feed)
     now = Time.current
@@ -1435,9 +1435,10 @@ class FeedTest < ActiveSupport::TestCase
     }])
     assert_equal 0, feed.reload.imported_posts_count
 
-    feed.recount_imported_posts!
+    feed.refresh_post_stats!
 
     assert_equal 1, feed.reload.imported_posts_count
+    assert_in_delta now.to_f, feed.most_recent_post_at.to_f, 0.001
   end
 
   test "#recount_published_posts! should count only published posts" do

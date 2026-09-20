@@ -56,14 +56,11 @@ class Post < ApplicationRecord
     published.where(published_at: 6.days.ago.beginning_of_day..Time.current.end_of_day)
   }
 
-  after_create :refresh_most_recent_post_at
-  after_destroy :refresh_most_recent_post_at
-  after_update :refresh_most_recent_post_at, if: -> { saved_change_to_published_at? || saved_change_to_feed_id? }
-
-  after_create :recount_imported_posts
+  after_create :refresh_post_stats
   after_create :recount_published_posts, if: :published?
-  after_destroy :recount_imported_posts
+  after_destroy :refresh_post_stats
   after_destroy :recount_published_posts, if: :published?
+  after_update :refresh_post_stats, if: -> { saved_change_to_published_at? || saved_change_to_feed_id? }
   after_update :recount_published_posts, if: :saved_change_to_status?
 
   def normalized_attributes
@@ -105,15 +102,11 @@ class Post < ApplicationRecord
     end
   end
 
-  def refresh_most_recent_post_at
-    feed.refresh_most_recent_post_at!
+  def refresh_post_stats
+    feed.refresh_post_stats!
     return unless saved_change_to_feed_id? && feed_id_before_last_save
 
-    Feed.find_by(id: feed_id_before_last_save)&.refresh_most_recent_post_at!
-  end
-
-  def recount_imported_posts
-    feed.recount_imported_posts!
+    Feed.find_by(id: feed_id_before_last_save)&.refresh_post_stats!
   end
 
   def recount_published_posts
