@@ -1,4 +1,4 @@
-class LinkedCardComponent < ViewComponent::Base
+class LinkedCardComponent < CardComponent
   LINK_CLASSES = "block no-underline shadow-xs hover:bg-surface-muted hover:shadow-md transition duration-75"
   DISABLED_CLASSES = "opacity-50 cursor-not-allowed"
 
@@ -9,23 +9,17 @@ class LinkedCardComponent < ViewComponent::Base
     @description = description
     @disabled = disabled
     @tooltip = tooltip
-    @html_options = html_options
+    super(**html_options)
   end
 
   private
 
   def card_options
-    options = @html_options.merge(
-      class: helpers.class_names(
-        CardComponent::BASE_CLASSES,
-        CardComponent::PADDED_CLASSES,
-        @disabled ? DISABLED_CLASSES : LINK_CLASSES,
-        @html_options[:class]
-      ),
-      title: @tooltip
-    )
+    options = merged_options
+    options[:class] = helpers.class_names(options[:class], @disabled ? DISABLED_CLASSES : LINK_CLASSES)
+    options[:title] = @tooltip
     if @disabled
-      options.except(:href, :target, :rel).merge("aria-disabled": "true")
+      options.except(:target, :rel).merge("aria-disabled": "true")
     else
       options.merge(href: @href)
     end

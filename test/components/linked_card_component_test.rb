@@ -13,6 +13,7 @@ class LinkedCardComponentTest < ViewComponent::TestCase
     ))
 
     card = result.at_css("a[data-key='settings.card']")
+    assert_not_nil card
     assert_equal "/settings", card["href"]
     assert_equal "Settings", card.at_css("h2").text.strip
     assert_equal "Manage your account", card.at_css("p").text
@@ -20,6 +21,10 @@ class LinkedCardComponentTest < ViewComponent::TestCase
     assert_includes card["class"], "custom-card"
     assert_includes card["class"], "bg-surface"
     assert_includes card["class"], "p-6"
+    assert_includes card["class"], "no-underline"
+    assert_includes card["class"], "shadow-xs"
+    assert_includes card["class"], "hover:shadow-md"
+    assert_includes card["class"], "hover:bg-surface-muted"
   end
 
   test "#call should indicate links opening in a new tab" do
@@ -33,6 +38,7 @@ class LinkedCardComponentTest < ViewComponent::TestCase
     ))
 
     card = result.at_css("a")
+    assert_not_nil card
     assert_equal "_blank", card["target"]
     assert_equal "noopener noreferrer", card["rel"]
     assert_equal 2, card.css("svg").size
@@ -52,6 +58,7 @@ class LinkedCardComponentTest < ViewComponent::TestCase
 
     assert_empty result.css("a")
     card = result.at_css("[aria-disabled='true']")
+    assert_not_nil card
     assert_equal "Sent Emails", card.at_css("h2").text.strip
     assert_equal "Review captured emails", card.at_css("p").text
     assert_equal "Email capture is not configured", card["title"]
@@ -59,6 +66,8 @@ class LinkedCardComponentTest < ViewComponent::TestCase
     assert_nil card["target"]
     assert_nil card["rel"]
     assert_equal 1, card.css("svg").size
+    assert_includes card["class"], "opacity-50"
+    assert_includes card["class"], "cursor-not-allowed"
     refute_includes card["class"], "hover:"
   end
 
