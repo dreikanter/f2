@@ -71,7 +71,17 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert_empty process('{"items":[]}').entries
   end
 
-  test "#process should accept ten items" do
+  test "#process should accept three items by default" do
+    items = Array.new(3) do |index|
+      { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
+    end
+
+    assert_equal items, process({ items: items }.to_json).entries.map(&:raw_data)
+    assert chat.reload.succeeded?
+  end
+
+  test "#process should accept ten items when explicitly configured" do
+    feed.update!(params: feed.params.merge("max_items" => 10))
     items = Array.new(10) do |index|
       { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
     end
@@ -80,13 +90,13 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert chat.reload.succeeded?
   end
 
-  test "#process should reject an oversized response" do
-    items = Array.new(10) do |index|
+  test "#process should reject more than three items by default" do
+    items = Array.new(3) do |index|
       { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
     end
 
     error = assert_raises(Processor::LlmProcessor::InvalidOutput) do
-      process({ items: items + [{ "source_url" => "https://example.com/post/10", "body" => "Extra post" }] }.to_json)
+      process({ items: items + [{ "source_url" => "https://example.com/post/3", "body" => "Extra post" }] }.to_json)
     end
     assert_equal "AI response does not match the output schema.", error.message
   end
@@ -103,7 +113,7 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
   test "#process should enforce the default limit when the stored response limit is too large" do
     feed.update_column(:params, feed.params.merge("max_items" => 11))
     feed.reload
-    items = Array.new(11) do |index|
+    items = Array.new(4) do |index|
       { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
     end
 

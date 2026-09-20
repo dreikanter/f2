@@ -1,6 +1,6 @@
 # The response bound shared by AI instructions, provider schemas, and validation.
 class LlmOutput
-  DEFAULT_MAX_ITEMS = 10
+  DEFAULT_MAX_ITEMS = 3
 
   def initialize(feed)
     @feed = feed

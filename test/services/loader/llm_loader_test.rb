@@ -29,8 +29,8 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal "openai", chat.requested_provider
     assert_equal "gpt-5-nano", chat.requested_model
     assert_equal %w[system user assistant], chat.messages.map(&:role)
-    assert_includes chat.messages.first.content, format(Loader::LlmPrompts::TASK, max_items: 10)
-    assert_includes chat.messages.first.content, format(Loader::LlmPrompts::OUTPUT_CONTRACT, max_items: 10)
+    assert_includes chat.messages.first.content, format(Loader::LlmPrompts::TASK, max_items: 3)
+    assert_includes chat.messages.first.content, format(Loader::LlmPrompts::OUTPUT_CONTRACT, max_items: 3)
     assert_includes chat.messages.first.content, Loader::LlmPrompts::SAFEGUARDS
     assert_not_includes chat.messages.first.content, feed.source_input
     assert_equal "Feed request — what to follow and how to present it:\n\nA daily roundup\n", chat.messages.second.content
@@ -62,9 +62,9 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     Loader::LlmLoader.new(feed).load
 
     assert_equal 1, payloads.first.dig("text", "format", "schema", "properties", "items", "maxItems")
-    assert_equal 10, payloads.last.dig("text", "format", "schema", "properties", "items", "maxItems")
+    assert_equal 3, payloads.last.dig("text", "format", "schema", "properties", "items", "maxItems")
     assert_includes limited_feed.llm_chats.sole.messages.first.content, "Return at most 1 items"
-    assert_includes feed.llm_chats.sole.messages.first.content, "Return at most 10 items"
+    assert_includes feed.llm_chats.sole.messages.first.content, "Return at most 3 items"
     assert_equal 10, FeedProfile::UNIVERSAL_OUTPUT_SCHEMA.dig("properties", "items", "maxItems")
   end
 
@@ -222,7 +222,8 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
-  test "#load should send a strict ten-item limit that the processor also enforces" do
+  test "#load should send the configured ten-item limit that the processor also enforces" do
+    feed.update!(params: feed.params.merge("max_items" => 10))
     item = {
       "body" => "A source post", "source_url" => "https://example.com/post",
       "title" => "", "supplementary" => [], "images" => [], "published_at" => ""

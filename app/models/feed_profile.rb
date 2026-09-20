@@ -398,7 +398,7 @@ class FeedProfile
             "minimum" => 1,
             "maximum" => 10,
             "title" => "Maximum posts per refresh",
-            "description" => "Limit each AI response to this many posts. Leave blank for 10."
+            "description" => "Limit each AI response to this many posts. Leave blank for 3."
           }
         },
         "required" => ["prompt"],

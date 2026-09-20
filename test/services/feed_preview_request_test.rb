@@ -80,7 +80,7 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
 
     assert_nil result.error
     assert_equal({ "prompt" => "Write stories" }, result.preview.params)
-    assert_equal 10, LlmOutput.new(Feed.new(params: result.preview.params)).max_items
+    assert_equal 3, LlmOutput.new(Feed.new(params: result.preview.params)).max_items
   end
 
   test "#create should reject an unknown profile without creating a preview" do

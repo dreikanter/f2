@@ -5,7 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-09-20
 
 - AI feeds keep distinct original posts and now follow their configured frequency without a hidden daily limit. For at most one post per scheduled refresh each day, choose a daily schedule and set “Maximum posts per refresh” to 1; manual refreshes are extra attempts.
-- Set “Maximum posts per refresh” on AI feeds to limit each response to 1–10 posts; leaving it blank allows up to 10.
+- Set “Maximum posts per refresh” on AI feeds to limit each response to 1–10 posts; leaving it blank allows up to 3.
 - AI feeds use the default post limit if a stored limit is invalid.
 - Use smaller headings in linked cards.
 - Preserve 365tomorrows story paragraphs and line breaks, splitting long stories into up to four comments.
