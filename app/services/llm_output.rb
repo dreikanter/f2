@@ -7,7 +7,9 @@ class LlmOutput
   end
 
   def max_items
-    @feed.params["max_items"].presence || DEFAULT_MAX_ITEMS
+    value = @feed.params["max_items"]
+    schema = FeedProfile.parameter_schema_for("llm").fetch("properties").fetch("max_items")
+    JSONSchemer.schema(schema).valid?(value) ? value : DEFAULT_MAX_ITEMS
   end
 
   def schema

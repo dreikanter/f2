@@ -68,6 +68,27 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal 10, FeedProfile::UNIVERSAL_OUTPUT_SCHEMA.dig("properties", "items", "maxItems")
   end
 
+  test "#load should use the default limit when a stored value is invalid" do
+    feed.update_column(:params, feed.params.merge("max_items" => "abc"))
+    payload = nil
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      payload = JSON.parse(http.body)
+      {
+        body: completed_response(content: { "items" => [original_item] }.to_json).to_json,
+        headers: { "Content-Type" => "application/json" }
+      }
+    end
+
+    content = Loader::LlmLoader.new(feed.reload).load
+    entries = feed.processor_instance(content).process.entries
+
+    assert_equal original_item, entries.sole.raw_data
+    assert_equal LlmOutput::DEFAULT_MAX_ITEMS, payload.dig("text", "format", "schema", "properties", "items", "maxItems")
+    assert_includes feed.llm_chats.sole.messages.first.content,
+                    format(Loader::LlmPrompts::OUTPUT_CONTRACT, max_items: LlmOutput::DEFAULT_MAX_ITEMS)
+    assert_requested request, times: 1
+  end
+
   test "#load should request a schema that accepts empty publication dates" do
     payload = nil
     stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|

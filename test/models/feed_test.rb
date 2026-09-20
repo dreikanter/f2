@@ -122,6 +122,14 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?, feed.errors.full_messages.inspect
   end
 
+  test "#update should preserve the saved AI response limit when the new value is invalid" do
+    feed = create(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => 1 })
+
+    assert_not feed.update(params: feed.params.merge("max_items" => "abc"))
+    assert_not_empty feed.errors[:params]
+    assert_equal 1, feed.reload.params["max_items"]
+  end
+
   test "#save should omit a blank AI response limit" do
     feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => " " })
 

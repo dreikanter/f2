@@ -91,6 +91,28 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert_equal "AI response does not match the output schema.", error.message
   end
 
+  test "#process should accept output when the stored response limit is zero" do
+    feed.update_column(:params, feed.params.merge("max_items" => 0))
+    feed.reload
+    item = { "source_url" => "https://example.com/post", "body" => "Post" }
+
+    assert_equal item, process({ items: [item] }.to_json).entries.sole.raw_data
+    assert chat.reload.succeeded?
+  end
+
+  test "#process should enforce the default limit when the stored response limit is too large" do
+    feed.update_column(:params, feed.params.merge("max_items" => 11))
+    feed.reload
+    items = Array.new(11) do |index|
+      { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
+    end
+
+    assert_raises(Processor::LlmProcessor::InvalidOutput) { process({ items: items }.to_json) }
+
+    assert chat.reload.failed?
+    assert_empty feed.feed_entries
+  end
+
   test "#process should assign distinct system UUIDs to original items even on the same day" do
     freeze_time do
       result = process({ items: [
