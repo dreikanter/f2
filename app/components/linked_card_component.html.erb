@@ -1,12 +1,6 @@
 <%= content_tag(@disabled ? :div : :a, **card_options) do %>
   <div class="space-y-4">
-    <h2 class="flex items-start gap-2 text-lg font-semibold mb-3 text-heading">
-      <%= helpers.icon(@icon, css_class: "mt-1 size-5 shrink-0") %>
-      <span><%= @title %></span>
-      <% if opens_new_tab? %>
-        <%= helpers.icon("external-link", css_class: "mt-1 size-4 shrink-0 text-muted") %>
-      <% end %>
-    </h2>
+    <%= helpers.h2(heading, class: "flex items-start gap-2", size: "lg") %>
     <p class="text-body"><%= @description %></p>
   </div>
 <% end %>

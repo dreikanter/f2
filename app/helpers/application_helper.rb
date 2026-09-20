@@ -1,11 +1,17 @@
 module ApplicationHelper
-  def h1(content = nil, **options, &block)
-    options[:class] = class_names("text-4xl font-semibold mb-6 text-heading", options[:class])
+  HEADING_SIZE_CLASSES = {
+    "4xl" => "text-4xl",
+    "2xl" => "text-2xl",
+    "lg" => "text-lg"
+  }.freeze
+
+  def h1(content = nil, size: "4xl", **options, &block)
+    options[:class] = class_names(HEADING_SIZE_CLASSES.fetch(size), "font-semibold mb-6 text-heading", options[:class])
     tag.h1(content, **options, &block)
   end
 
-  def h2(content = nil, **options, &block)
-    options[:class] = class_names("text-2xl font-semibold mb-3 text-heading", options[:class])
+  def h2(content = nil, size: "2xl", **options, &block)
+    options[:class] = class_names(HEADING_SIZE_CLASSES.fetch(size), "font-semibold mb-3 text-heading", options[:class])
     tag.h2(content, **options, &block)
   end
 
