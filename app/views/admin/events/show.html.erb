@@ -4,6 +4,12 @@
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: event_title) do |header| %>
     <% header.with_breadcrumb(label: "Events Log", url: admin_events_path) %>
+    <% header.with_context_paragraph do %>
+      <%= event_level_badge(@event) %>
+    <% end %>
+    <% header.with_context_paragraph do %>
+      <%= render Admin::EventDescriptionComponent.for(@event) %>
+    <% end %>
     <% if @previous_event %>
       <% header.with_action_button do %>
         <%= link_to "← Previous", admin_event_path(@previous_event), class: secondary_button_classes(compact: true) %>
@@ -22,10 +28,6 @@
         <%= tag.span "Next →", class: secondary_button_classes(compact: true, disabled: true) %>
       <% end %>
     <% end %>
-  <% end %>
-
-  <%= render AlertComponent.new(variant: @event.alert_variant) do %>
-    <%= render Admin::EventDescriptionComponent.for(@event) %>
   <% end %>
 
   <%= render EventDetailsComponent.new(event: @event, admin: true) %>

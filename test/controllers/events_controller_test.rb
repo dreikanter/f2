@@ -292,6 +292,23 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="events.details"]', count: 0
   end
 
+  test "#show should put the event level and linked description in the header" do
+    sign_in_as user
+    feed = create(:feed, user: user, name: "NASA")
+    post = create(:post, feed: feed)
+    event = create(:event, type: "feed_refresh", level: :info, user: user, subject: feed)
+    create(:event_reference, event: event, reference: post)
+
+    get event_path(event)
+
+    assert_response :success
+    assert_select "header p span", text: "info"
+    assert_select "header p", text: /NASA refreshed.*\(\+1 post\)/ do
+      assert_select "a[href=?]", feed_path(feed), text: "NASA"
+    end
+    assert_select '[role="alert"]', count: 0
+  end
+
   test "#show should render ordered event details with escaped messages and stats" do
     sign_in_as user
     event = create(:event, user: user)

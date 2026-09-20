@@ -3,6 +3,11 @@
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: @preview[:label]) do |header| %>
     <% header.with_breadcrumb(label: "Email Previews", url: development_email_previews_path) %>
+    <% header.with_context_paragraph(@preview[:description]) %>
+    <% header.with_context_paragraph do %>
+      <span class="font-medium text-heading">Subject:</span>
+      <%= @subject %>
+    <% end %>
     <% header.with_action_button do %>
       <%= button_to "Test…",
                     development_email_preview_test_email_path(@preview[:id]),
@@ -12,14 +17,6 @@
   <% end %>
 
   <div class="space-y-6">
-    <div class="rounded-lg border border-border bg-surface p-4 space-y-1">
-      <p class="text-sm text-muted"><%= @preview[:description] %></p>
-      <p class="text-sm text-muted">
-        <span class="font-medium text-heading">Subject:</span>
-        <%= @subject %>
-      </p>
-    </div>
-
     <% if @html_body.present? %>
       <div class="space-y-2">
         <%= h2 "HTML" %>

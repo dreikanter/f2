@@ -101,6 +101,18 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
     assert_select %([data-key="development.job_runs.#{run.id}.event.#{event.id}"]), text: /Purged 3 expired events/
   end
 
+  test "#show should put the run status and timing in the header" do
+    run = create(:job_run, job_class: "PurgeExpiredEventsJob", status: :succeeded,
+                          started_at: 2.minutes.ago, finished_at: 1.minute.ago)
+    sign_in_as(dev_user)
+
+    get development_job_job_run_path("PurgeExpiredEventsJob", run)
+
+    assert_response :success
+    assert_select %(header p [data-key="development.job_runs.#{run.id}.status"]), text: "succeeded"
+    assert_select "header p", text: /Enqueued .*ran for 1 minute/
+  end
+
   test "#show should title the page with the compact run id" do
     run = create(:job_run, job_class: "PurgeExpiredEventsJob", status: :succeeded)
     sign_in_as(dev_user)
