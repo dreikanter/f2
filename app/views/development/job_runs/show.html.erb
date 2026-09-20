@@ -4,15 +4,16 @@
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: run_title) do |header| %>
     <% header.with_breadcrumb(label: @job_class.display_name, url: development_job_job_runs_path(@job_class.name)) %>
+    <% header.with_context_paragraph do %>
+      <%= job_run_status_badge(@run) %>
+    <% end %>
+    <% header.with_context_paragraph do %>
+      <%= safe_join([
+        "Enqueued #{short_time_ago(@run.created_at)}",
+        (@run.started_at && @run.finished_at ? "ran for #{distance_of_time_in_words(@run.started_at, @run.finished_at, include_seconds: true)}" : nil)
+      ].compact.map { |segment| tag.span(segment) }, middot) %>
+    <% end %>
   <% end %>
-
-  <div class="flex flex-wrap items-center gap-3" data-key="development.job_runs.<%= @run.id %>">
-    <%= job_run_status_badge(@run) %>
-    <span class="text-sm text-muted"><%= safe_join([
-      "Enqueued #{short_time_ago(@run.created_at)}",
-      (@run.started_at && @run.finished_at ? "ran for #{distance_of_time_in_words(@run.started_at, @run.finished_at, include_seconds: true)}" : nil)
-    ].compact.map { |segment| tag.span(segment) }, middot) %></span>
-  </div>
 
   <% if @events.any? %>
     <div class="space-y-4">

@@ -46,6 +46,16 @@ class Development::EmailPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to development_email_previews_path
   end
 
+  test "#show should put the description and subject in the header" do
+    sign_in_as(dev_user)
+
+    get development_email_preview_path("profile_mailer-account_confirmation")
+
+    assert_response :success
+    assert_select "header p", text: "Sent during signup to verify the email address"
+    assert_select "header p", text: "Subject: Confirm your email address"
+  end
+
   %w[
     passwords_mailer-reset
     profile_mailer-account_confirmation
