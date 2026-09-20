@@ -33,7 +33,7 @@ module Loader
       When asked to retrieve existing source posts, use available
       retrieval and supplied page content. Return only results supported by that
       evidence, newest first. Missing evidence is a reason to return no source
-      posts, never a reason to invent current updates. Return at most 10 items.
+      posts, never a reason to invent current updates. Return at most %{max_items} items.
     TEXT
 
     SAFEGUARDS = <<~TEXT.strip
@@ -76,9 +76,13 @@ module Loader
         Use an empty string when no source publication date is available,
         including for original content and general-knowledge answers. Never
         invent a publication date.
-      Do not include a uid — the system derives it. Return at most 10 items,
+      Do not include a uid — the system derives it. Return at most %{max_items} items,
       newest first.
     TEXT
+
+    def self.extraction_system(max_items:)
+      format(EXTRACTION_SYSTEM, max_items: max_items)
+    end
 
     EXTRACTION_SYSTEM = <<~TEXT.strip
       #{TASK}

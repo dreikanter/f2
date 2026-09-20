@@ -49,13 +49,24 @@ class Normalizer::LlmNormalizerTest < ActiveSupport::TestCase
     assert_includes post.validation_errors, "missing_source_url"
   end
 
-  test "#normalize should publish a digest post carrying a null source_url" do
+  test "#normalize should preserve a legacy original post identity with a null source URL" do
     entry = feed_entry("source_url" => nil, "uid" => "digest:2026-07-07")
     post = Normalizer::LlmNormalizer.new(entry).normalize
 
     assert_equal "enqueued", post.status
     assert_nil post.source_url
+    assert_equal entry.uid, post.uid
     assert_not_includes post.validation_errors, "missing_source_url"
+  end
+
+  test "#normalize should reuse the stored UUID instead of model metadata" do
+    entry = feed_entry("source_url" => nil, "uid" => "invented-id")
+    entry.uid = SecureRandom.uuid
+
+    post = Normalizer::LlmNormalizer.new(entry).normalize
+
+    assert_equal entry.uid, post.uid
+    assert_equal "enqueued", post.status
   end
 
   test "#normalize should reject when content is missing" do

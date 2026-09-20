@@ -41,6 +41,48 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
                          args: [result.preview.id, result.preview.run_id, result.preview.params_digest])
   end
 
+  test "#create should replace an invalid response limit before starting a preview" do
+    create(:llm_model, model_id: "sample-model")
+    result = request(**ai_attributes.merge(params: { prompt: "Write stories", max_items: "abc" })).create
+
+    assert_nil result.error
+    assert_equal 3, result.preview.reload.params["max_items"]
+    assert_enqueued_with(job: FeedPreviewJob,
+                         args: [result.preview.id, result.preview.run_id, result.preview.params_digest])
+  end
+
+  test "#create should replace an out-of-range response limit before starting a preview" do
+    create(:llm_model, model_id: "sample-model")
+    result = request(**ai_attributes.merge(params: { prompt: "Write stories", max_items: "11" })).create
+
+    assert_nil result.error
+    assert_equal 3, result.preview.reload.params["max_items"]
+    assert_enqueued_with(job: FeedPreviewJob,
+                         args: [result.preview.id, result.preview.run_id, result.preview.params_digest])
+  end
+
+  test "#create should persist the response limit and replace the preview when it changes" do
+    create(:llm_model, model_id: "sample-model")
+    first = request(**ai_attributes.merge(params: { prompt: "Write stories", max_items: "1" })).create
+    second = request(**ai_attributes.merge(params: { prompt: "Write stories", max_items: "2" })).create
+
+    assert_nil first.error
+    assert_nil second.error
+    assert_equal 1, first.preview.reload.params["max_items"]
+    assert_equal 2, second.preview.reload.params["max_items"]
+    assert_not_equal first.preview.id, second.preview.id
+    assert_not_equal first.preview.params_digest, second.preview.params_digest
+  end
+
+  test "#create should omit a blank response limit" do
+    create(:llm_model, model_id: "sample-model")
+    result = request(**ai_attributes.merge(params: { prompt: "Write stories", max_items: " " })).create
+
+    assert_nil result.error
+    assert_equal({ "prompt" => "Write stories" }, result.preview.params)
+    assert_equal 3, LlmOutput.new(Feed.new(params: result.preview.params)).max_items
+  end
+
   test "#create should reject an unknown profile without creating a preview" do
     assert_no_difference -> { FeedPreview.count } do
       assert_no_enqueued_jobs do

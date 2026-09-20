@@ -13,7 +13,7 @@ class FeedProfile
         "items" => {
           "type" => "object",
           "properties" => {
-            # The processor derives the uid from source_url. `uid` is
+            # The processor assigns identity from source metadata. `uid` is
             # accepted only so a stray field from a non-strict provider
             # doesn't fail the schema; it's ignored downstream.
             "uid" => { "type" => "string" },
@@ -21,9 +21,8 @@ class FeedProfile
             "body" => { "type" => "string" },
             "supplementary" => { "type" => "array", "items" => { "type" => "string" } },
             "images" => { "type" => "array", "items" => { "type" => "string" } },
-            # An explicit null signals the digest/standing-query regime; a real
-            # permalink signals feed-style. The key is always required;
-            # a missing key is malformed, not a digest.
+            # Explicit null allows content without a canonical source. Missing
+            # source metadata is malformed and must fail validation.
             "source_url" => { "type" => ["string", "null"] },
             "published_at" => { "type" => "string" }
           },
@@ -393,7 +392,15 @@ class FeedProfile
       parameter_schema: {
         "type" => "object",
         "properties" => {
-          "prompt" => { "type" => "string", "minLength" => 1, "maxLength" => 2000 }
+          "prompt" => { "type" => "string", "minLength" => 1, "maxLength" => 2000 },
+          "max_items" => {
+            "type" => "integer",
+            "minimum" => 1,
+            "maximum" => 10,
+            "default" => LlmOutput::DEFAULT_MAX_ITEMS,
+            "title" => "Maximum posts per refresh",
+            "description" => "Limit each AI response to this many posts. Leave blank for #{LlmOutput::DEFAULT_MAX_ITEMS}."
+          }
         },
         "required" => ["prompt"],
         "additionalProperties" => false
@@ -405,12 +412,11 @@ class FeedProfile
           # prompt (Loader::LlmPrompts). The user's own prompt is a
           # legitimate instruction, so it travels as the user message,
           # distinct from the untrusted web content the model fetches.
-          prompt_template: <<~PROMPT,
+          prompt_template: <<~PROMPT
             Feed request — what to follow and how to present it:
 
             {{input}}
           PROMPT
-          output_schema: UNIVERSAL_OUTPUT_SCHEMA
         }
       },
       processor: { class: "Processor::LlmProcessor", config: {} },
@@ -570,8 +576,7 @@ class FeedProfile
       PROFILES.dig(key, :parameter_schema)
     end
 
-    # Form values arrive as strings, so apply the declared type before reading
-    # them. Values that cannot be cast drop out and fail validation as missing.
+    # Cast form values before validation; declared defaults replace invalid input.
     # @param key [String] the profile key
     # @param params [Hash, nil] the submitted params
     # @return [Hash] the params as their declared types
@@ -580,8 +585,12 @@ class FeedProfile
       return params || {} if properties.blank?
 
       (params || {}).each_with_object({}) do |(name, value), result|
-        cast = cast_value(properties.dig(name, "type"), value)
-        result[name] = cast unless cast.nil?
+        schema = properties[name] || {}
+        cast = cast_value(schema["type"], value)
+        next if cast.nil?
+
+        cast = schema["default"] if schema.key?("default") && !JSONSchemer.schema(schema, format: true).valid?(cast)
+        result[name] = cast
       end
     end
 
@@ -668,11 +677,16 @@ class FeedProfile
     # @param value [Object] the submitted value
     # @return [Object] the value as its declared type
     def cast_value(type, value)
+      if %w[integer number].include?(type)
+        return value unless value.is_a?(String)
+        return nil if value.blank?
+      end
+
       case type
       when "boolean" then ActiveModel::Type::Boolean.new.cast(value)
       # Kernel conversions, not ActiveModel's: those read "abc" as 0.
-      when "integer" then Integer(value, exception: false)
-      when "number" then Float(value, exception: false)
+      when "integer" then Integer(value, exception: false) || value
+      when "number" then Float(value, exception: false) || value
       else value
       end
     end

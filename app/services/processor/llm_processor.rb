@@ -9,7 +9,7 @@ module Processor
       entries = data.fetch("items").map do |item|
         FeedEntry.new(
           feed: feed,
-          uid: Uid::Resolver.call(item, clock: now),
+          uid: item["source_url"].nil? ? SecureRandom.uuid : Uid::Resolver.from_url(item["source_url"]),
           published_at: parse_time(item["published_at"]) || now,
           status: :pending,
           raw_data: item
@@ -27,7 +27,7 @@ module Processor
 
     def parse_output
       data = JSON.parse(raw_data.content)
-      unless JSONSchemer.schema(FeedProfile::UNIVERSAL_OUTPUT_SCHEMA).valid?(data)
+      unless JSONSchemer.schema(LlmOutput.new(feed).schema).valid?(data)
         raise InvalidOutput, "AI response does not match the output schema."
       end
 

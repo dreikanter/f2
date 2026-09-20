@@ -29,8 +29,8 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal "openai", chat.requested_provider
     assert_equal "gpt-5-nano", chat.requested_model
     assert_equal %w[system user assistant], chat.messages.map(&:role)
-    assert_includes chat.messages.first.content, Loader::LlmPrompts::TASK
-    assert_includes chat.messages.first.content, Loader::LlmPrompts::OUTPUT_CONTRACT
+    assert_includes chat.messages.first.content, format(Loader::LlmPrompts::TASK, max_items: 3)
+    assert_includes chat.messages.first.content, format(Loader::LlmPrompts::OUTPUT_CONTRACT, max_items: 3)
     assert_includes chat.messages.first.content, Loader::LlmPrompts::SAFEGUARDS
     assert_not_includes chat.messages.first.content, feed.source_input
     assert_equal "Feed request — what to follow and how to present it:\n\nA daily roundup\n", chat.messages.second.content
@@ -46,6 +46,46 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal 20, usage.output_tokens
     assert usage.total_cost.positive?
     assert_equal chat.messages.last, usage.message
+    assert_requested request, times: 1
+  end
+
+  test "#load should isolate each feed's response limit in the schema and instructions" do
+    limited_feed = create(:feed, user: feed.user, feed_profile_key: "llm", ai_credential: credential,
+                                ai_model: feed.ai_model, params: { "prompt" => "Write stories", "max_items" => 1 })
+    payloads = []
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      payloads << JSON.parse(http.body)
+      { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+    end
+
+    Loader::LlmLoader.new(limited_feed).load
+    Loader::LlmLoader.new(feed).load
+
+    assert_equal 1, payloads.first.dig("text", "format", "schema", "properties", "items", "maxItems")
+    assert_equal 3, payloads.last.dig("text", "format", "schema", "properties", "items", "maxItems")
+    assert_includes limited_feed.llm_chats.sole.messages.first.content, "Return at most 1 items"
+    assert_includes feed.llm_chats.sole.messages.first.content, "Return at most 3 items"
+    assert_equal 10, FeedProfile::UNIVERSAL_OUTPUT_SCHEMA.dig("properties", "items", "maxItems")
+  end
+
+  test "#load should use the default limit when a stored value is invalid" do
+    feed.update_column(:params, feed.params.merge("max_items" => "abc"))
+    payload = nil
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      payload = JSON.parse(http.body)
+      {
+        body: completed_response(content: { "items" => [original_item] }.to_json).to_json,
+        headers: { "Content-Type" => "application/json" }
+      }
+    end
+
+    content = Loader::LlmLoader.new(feed.reload).load
+    entries = feed.processor_instance(content).process.entries
+
+    assert_equal original_item, entries.sole.raw_data
+    assert_equal LlmOutput::DEFAULT_MAX_ITEMS, payload.dig("text", "format", "schema", "properties", "items", "maxItems")
+    assert_includes feed.llm_chats.sole.messages.first.content,
+                    format(Loader::LlmPrompts::OUTPUT_CONTRACT, max_items: LlmOutput::DEFAULT_MAX_ITEMS)
     assert_requested request, times: 1
   end
 
@@ -182,7 +222,8 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
-  test "#load should send a strict ten-item limit that the processor also enforces" do
+  test "#load should send the configured ten-item limit that the processor also enforces" do
+    feed.update!(params: feed.params.merge("max_items" => 10))
     item = {
       "body" => "A source post", "source_url" => "https://example.com/post",
       "title" => "", "supplementary" => [], "images" => [], "published_at" => ""

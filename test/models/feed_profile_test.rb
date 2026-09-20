@@ -86,9 +86,7 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_nil FeedProfile["nope"]
   end
 
-  # Registry shape (required keys, types, matcher/loader/processor rules,
-  # AI output_schema) is validated in FeedProfileValidatorTest against
-  # FeedProfile::PROFILES; no need to re-assert it entry-by-entry here.
+  # Registry shape and stage requirements are validated in FeedProfileValidatorTest.
 
   test "PROFILES should declare resolvable matcher classes" do
     FeedProfile::PROFILES.each do |key, entry|
@@ -218,7 +216,7 @@ class FeedProfileTest < ActiveSupport::TestCase
 
   test ".parameter_keys_for should return the keys a profile declares" do
     assert_equal ["url"], FeedProfile.parameter_keys_for("rss")
-    assert_equal ["prompt"], FeedProfile.parameter_keys_for("llm")
+    assert_equal ["prompt", "max_items"], FeedProfile.parameter_keys_for("llm")
     assert_equal [], FeedProfile.parameter_keys_for("webhook")
   end
 
@@ -235,8 +233,16 @@ class FeedProfileTest < ActiveSupport::TestCase
 
   test ".options_for should return nothing for a profile declaring only its source" do
     assert_empty FeedProfile.options_for("rss")
-    assert_empty FeedProfile.options_for("llm")
+
     assert_empty FeedProfile.options_for("webhook")
+  end
+
+  test ".options_for should expose the AI response limit" do
+    option = FeedProfile.options_for("llm").sole
+
+    assert_equal "max_items", option.name
+    assert_equal "Maximum posts per refresh", option.title
+    assert_equal "integer", option.type
   end
 
   test ".options_for should return nothing for an unknown profile" do

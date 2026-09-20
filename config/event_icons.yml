@@ -8,7 +8,6 @@
 
 feed_identification: search
 feed_refresh: refresh-ccw
-feed_refresh_skipped: circle-dashed
 feed_refresh_ai_empty: sparkles
 feed_ai_model_unavailable: sparkles
 feed_ai_credential_removed: sparkles

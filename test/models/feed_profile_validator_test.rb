@@ -104,27 +104,6 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     assert_includes error.message, "rogue_key"
   end
 
-  test ".validate! should require a loader output_schema when depends_on_ai is true" do
-    entry = valid_entry.merge(depends_on_ai: true)
-
-    error = assert_raises(FeedProfileValidator::Error) do
-      FeedProfileValidator.validate!("sample" => entry)
-    end
-
-    assert_includes error.message, "loader.config.output_schema is required when depends_on_ai is true"
-  end
-
-  test ".validate! should accept AI profile with a loader output_schema" do
-    entry = valid_entry.except(:matcher).merge(
-      depends_on_ai: true,
-      loader: { class: "Loader::LlmLoader", config: { output_schema: { "type" => "object" } } }
-    )
-
-    assert_nothing_raised do
-      FeedProfileValidator.validate!("sample" => entry)
-    end
-  end
-
   test ".validate! should require a matcher for non-AI profiles" do
     entry = valid_entry.except(:matcher)
 
@@ -138,7 +117,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
   test ".validate! should accept an AI profile without a matcher (structural detection exclusion)" do
     entry = valid_entry.except(:matcher)
                        .merge(depends_on_ai: true,
-                              loader: { class: "Loader::LlmLoader", config: { output_schema: { "type" => "object" } } })
+                              loader: { class: "Loader::LlmLoader", config: {} })
 
     assert_nothing_raised do
       FeedProfileValidator.validate!("sample" => entry)
@@ -147,7 +126,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
 
   test ".validate! should reject an AI profile that registers a matcher" do
     entry = valid_entry.merge(depends_on_ai: true,
-                              loader: { class: "Loader::LlmLoader", config: { output_schema: { "type" => "object" } } })
+                              loader: { class: "Loader::LlmLoader", config: {} })
 
     error = assert_raises(FeedProfileValidator::Error) do
       FeedProfileValidator.validate!("sample" => entry)

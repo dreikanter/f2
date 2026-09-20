@@ -1,6 +1,12 @@
 require "test_helper"
 
 class FeedPreviewTest < ActiveSupport::TestCase
+  test ".digest_for should invalidate the preview when the AI response limit changes" do
+    original = FeedPreview.digest_for("llm", { "prompt" => "Write stories", "max_items" => 1 })
+
+    assert_not_equal original, FeedPreview.digest_for("llm", { "prompt" => "Write stories", "max_items" => 2 })
+  end
+
   test ".digest_for should change when the AI profile's prompt template changes" do
     params = { "prompt" => "Follow Ruby news" }
     original = FeedPreview.digest_for("llm", params)
