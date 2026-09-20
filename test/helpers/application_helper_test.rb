@@ -28,6 +28,13 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_select "h1#page-title.text-4xl.font-semibold.mb-6.text-heading.break-words", text: "Sign in"
   end
 
+  test "#h1 should render a smaller heading for the 2xl size" do
+    render inline: %q(<%= h1 "Sign in", size: :"2xl" %>)
+
+    assert_select "h1.text-2xl.font-semibold.mb-6.text-heading", text: "Sign in"
+    assert_select "h1.text-4xl", count: 0
+  end
+
   test "#h2 should capture heading content and retain layout classes" do
     render inline: <<~ERB
       <%= h2 class: "flex items-center gap-2", data: { key: "settings.heading" } do %>
@@ -42,8 +49,8 @@ class ApplicationHelperTest < ActionView::TestCase
     end
   end
 
-  test "#h2 should render a smaller heading for the sm size" do
-    render inline: %q(<%= h2 "Your Name", size: :sm %>)
+  test "#h2 should render a smaller heading for the lg size" do
+    render inline: %q(<%= h2 "Your Name", size: :lg %>)
 
     assert_select "h2.text-lg.font-semibold.mb-3.text-heading", text: "Your Name"
     assert_select "h2.text-2xl", count: 0
