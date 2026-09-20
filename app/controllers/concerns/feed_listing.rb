@@ -6,7 +6,6 @@ module FeedListing
   MAX_RECENT_POSTS = 5
   MAX_RECENT_EVENTS = 10
 
-  LAST_REFRESH_SQL = "COALESCE(feeds.last_successful_refresh_at, (SELECT MAX(created_at) FROM feed_entries WHERE feed_entries.feed_id = feeds.id))".freeze
   MOST_RECENT_POST_SQL = "(SELECT MAX(published_at) FROM posts WHERE posts.feed_id = feeds.id)".freeze
 
   SORTABLE_FIELDS = {
@@ -27,7 +26,7 @@ module FeedListing
     },
     last_refresh: {
       title: "Last Refresh",
-      order_by: LAST_REFRESH_SQL,
+      order_by: "feeds.last_successful_refresh_at",
       direction: :desc
     },
     recent_post: {
@@ -46,7 +45,6 @@ module FeedListing
   def with_listing_stats(scope)
     scope.select(
       "feeds.*",
-      "#{LAST_REFRESH_SQL} AS listing_last_refreshed_at",
       "#{MOST_RECENT_POST_SQL} AS listing_most_recent_post_date"
     )
   end

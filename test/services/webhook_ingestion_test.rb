@@ -50,6 +50,14 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     end
   end
 
+  test "#call should record the feed update time on successful ingestion" do
+    freeze_time do
+      ingest({ "content" => "Hello world" })
+
+      assert_equal Time.current, feed.reload.last_refreshed_at
+    end
+  end
+
   test "#call should prefer the explicit uid" do
     result = ingest({ "content" => "Hello", "uid" => "article-42", "source_url" => "https://example.com/a" })
 

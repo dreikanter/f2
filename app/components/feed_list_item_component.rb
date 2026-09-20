@@ -213,7 +213,7 @@ class FeedListItemComponent < ListItemComponent
   end
 
   def last_refreshed_tag
-    refreshed_at = listing_last_refreshed_at
+    refreshed_at = feed.last_refreshed_at
     return "Never" unless refreshed_at
 
     helpers.short_time_ago_tag(refreshed_at)
@@ -224,12 +224,6 @@ class FeedListItemComponent < ListItemComponent
     return "None" unless published_at
 
     helpers.short_time_ago_tag(published_at)
-  end
-
-  def listing_last_refreshed_at
-    return feed[:listing_last_refreshed_at] if feed.has_attribute?(:listing_last_refreshed_at)
-
-    feed.last_refreshed_at
   end
 
   def listing_most_recent_post_date
