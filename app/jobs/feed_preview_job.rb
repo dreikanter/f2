@@ -11,10 +11,12 @@ class FeedPreviewJob < ApplicationJob
     return if params_digest && params_digest != feed_preview.params_digest
 
     FeedPreviewWorkflow.new(feed_preview, run_id: run_id).execute
+  rescue Loader::ExecutionLimitExceeded
+    nil
   rescue => e
     # The workflow already transitioned the preview to :failed. Do not re-raise:
     # retrying would reset status back to :processing (via initialize_workflow),
     # causing the status to oscillate and leaving the client polling indefinitely.
-    Rails.error.report(e, context: { feed_preview_id: feed_preview_id }) unless e.is_a?(Loader::ExecutionLimitExceeded)
+    Rails.error.report(e, context: { feed_preview_id: feed_preview_id })
   end
 end
