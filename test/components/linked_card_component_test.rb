@@ -72,6 +72,16 @@ class LinkedCardComponentTest < ViewComponent::TestCase
     refute_includes card["class"], "hover:"
   end
 
+  test "#call should reject block content" do
+    error = assert_raises(ArgumentError) do
+      render_inline(LinkedCardComponent.new(href: "/settings", title: "Settings", icon: "user", description: "Manage your account")) do
+        "Custom content"
+      end
+    end
+
+    assert_match(/not a block/, error.message)
+  end
+
   test "#call should escape title and description text" do
     result = render_inline(LinkedCardComponent.new(
       href:        "/settings",

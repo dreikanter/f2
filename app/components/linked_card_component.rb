@@ -12,6 +12,10 @@ class LinkedCardComponent < CardComponent
     super(**html_options)
   end
 
+  def before_render
+    raise ArgumentError, "LinkedCardComponent takes title and description keywords, not a block" if content?
+  end
+
   private
 
   def card_options
