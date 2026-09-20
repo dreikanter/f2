@@ -275,6 +275,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   test "#execute should agree with refresh on unidentified and rejected AI items" do
     freeze_time
     preview = ai_preview
+    preview.update!(params: preview.params.merge("max_items" => 4))
     feed = create(:feed, user: user, feed_profile_key: "llm", params: preview.params,
                   ai_credential: preview.ai_credential, ai_model: preview.ai_model, search_credential: nil)
     preview.update!(feed: feed)
