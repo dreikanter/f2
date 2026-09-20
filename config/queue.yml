@@ -3,17 +3,16 @@ default: &default
     - polling_interval: 1
       batch_size: 500
   workers:
-    - queues: "default"
+    - queues: "*"
       threads: 3
       processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>
       polling_interval: 0.1
-    # Deadlines must not wait behind long-running work in the default pool.
+    # Reserve capacity for deadlines when general workers are busy.
     - queues: "timeouts"
       threads: 1
       processes: 1
       polling_interval: 0.1
-    # Service work is unrelated to feed traffic, so it keeps running when the
-    # other pools are paused.
+    # Reserve capacity for maintenance when general workers are busy.
     - queues: "service"
       threads: 1
       processes: 1
