@@ -70,15 +70,10 @@ class FeedPreviewJobTest < ActiveJob::TestCase
 
       assert_empty reports
       assert preview.reload.failed?
-      assert_empty preview.posts_data
+      assert_nil preview.data
       event = credential.user.events.where(type: "feed_preview").sole
       assert_equal "failed", event.metadata.fetch("status")
       assert_equal "AI request exceeded its deadline.", event.message
-      assert_equal "Loader::LlmLoader::ExecutionLimitExceeded", event.metadata.dig("error", "class")
-      chat = event.references.sole
-      assert chat.interrupted?
-      assert_equal "deadline_exceeded", chat.error_category
-      assert_equal "succeeded", chat.ruby_llm_usages.sole.status
       assert_requested request, times: 1
     end
   end

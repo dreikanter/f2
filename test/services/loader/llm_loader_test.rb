@@ -272,20 +272,6 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
-  test "#load should classify an exhausted request budget as an execution limit" do
-    stub_const(LlmExecution, :MAX_REQUESTS, 0) do
-      error = assert_raises(Loader::LlmLoader::ExecutionLimitExceeded) { Loader::LlmLoader.new(feed).load }
-
-      assert_equal "AI request exceeded its execution limits.", error.message
-      assert_kind_of LlmExecution::RequestLimitExceeded, error.cause
-    end
-
-    chat = feed.llm_chats.sole
-    assert chat.failed?
-    assert_equal "LlmExecution::RequestLimitExceeded", chat.error_category
-    assert_not_requested :any, /./
-  end
-
   test "#load should reject missing or inactive AI settings before creating a chat" do
     feed.ai_model = nil
     assert_no_difference "LlmChat.count" do

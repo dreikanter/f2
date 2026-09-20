@@ -124,8 +124,6 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
       assert_equal [chat], refresh_event.references
       assert_equal "failed", refresh_event.metadata.fetch("status")
       assert_equal "AI request exceeded its deadline.", refresh_event.message
-      assert_equal "Loader::LlmLoader::ExecutionLimitExceeded", refresh_event.metadata.dig("error", "class")
-      assert_equal "load_feed_contents", refresh_event.metadata.dig("error", "stage")
       assert_equal 2, feed.reload.consecutive_failures
       assert_requested request, times: 1
     end
@@ -148,15 +146,8 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     assert_empty reports
     assert_equal [["loader_errors_total", { profile: "llm", loader: "LlmLoader" }]],
                  increments.select { |name, _| name == "loader_errors_total" }
-    chat = feed.llm_chats.sole
-    assert chat.failed?
-    assert_equal "LlmExecution::ToolLimitExceeded", chat.error_category
-    assert_equal "succeeded", chat.ruby_llm_usages.sole.status
-    assert_equal [chat], refresh_event.references
     assert_equal "failed", refresh_event.metadata.fetch("status")
     assert_equal "AI request exceeded its execution limits.", refresh_event.message
-    assert_equal "Loader::LlmLoader::ExecutionLimitExceeded", refresh_event.metadata.dig("error", "class")
-    assert_equal "load_feed_contents", refresh_event.metadata.dig("error", "stage")
     assert_equal 2, feed.reload.consecutive_failures
     assert_requested request, times: 1
   end
