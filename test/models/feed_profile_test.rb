@@ -218,7 +218,7 @@ class FeedProfileTest < ActiveSupport::TestCase
 
   test ".parameter_keys_for should return the keys a profile declares" do
     assert_equal ["url"], FeedProfile.parameter_keys_for("rss")
-    assert_equal ["prompt"], FeedProfile.parameter_keys_for("llm")
+    assert_equal ["prompt", "max_items"], FeedProfile.parameter_keys_for("llm")
     assert_equal [], FeedProfile.parameter_keys_for("webhook")
   end
 

@@ -387,42 +387,27 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "Feedjira::NoParserAvailable", error_event.metadata["error"]["class"]
   end
 
-  test "#execute should persist a digest item as a publishable null-source post" do
+  test "#execute should persist an original item as a publishable null-source post" do
     create(:llm_model, model_id: "gpt-4.1")
-    digest_user = create(:user)
-    credential = create(:ai_credential, :active, user: digest_user)
-    digest_feed = create(:feed, :enabled, feed_profile_key: "llm", user: digest_user,
+    original_user = create(:user)
+    credential = create(:ai_credential, :active, user: original_user)
+    original_feed = create(:feed, :enabled, feed_profile_key: "llm", user: original_user,
                                           ai_credential: credential, ai_model: "gpt-4.1",
                                           params: { "prompt" => "daily roundup" })
 
     raw_data = { items: [{ "source_url" => nil, "body" => "Сегодня: A, B, C" }] }.to_json
     stub_ai_response(JSON.parse(raw_data).fetch("items"))
-    workflow = FeedRefreshWorkflow.new(digest_feed)
+    workflow = FeedRefreshWorkflow.new(original_feed)
 
     workflow.execute
 
     assert_equal raw_data.bytesize, workflow.stats[:content_size]
 
-    post = digest_feed.posts.last
-    assert_not_nil post, "a digest item should persist a post"
+    post = original_feed.posts.last
+    assert_not_nil post, "an original item should persist a post"
     assert_nil post.source_url
-    assert_match(/\Adigest:\d{4}-\d{2}-\d{2}\z/, post.uid)
+    assert_match(/\A[0-9a-f-]{36}\z/, post.uid)
     assert_equal "Сегодня: A, B, C", post.content
-  end
-
-  test "#execute should collapse two digest items in one run into a single period post" do
-    create(:llm_model, model_id: "gpt-4.1")
-    digest_user = create(:user)
-    credential = create(:ai_credential, :active, user: digest_user)
-    digest_feed = create(:feed, :enabled, feed_profile_key: "llm", user: digest_user,
-                                          ai_credential: credential, ai_model: "gpt-4.1",
-                                          params: { "prompt" => "daily roundup" })
-
-    stub_ai_response([{ "source_url" => nil, "body" => "part one" }, { "source_url" => nil, "body" => "part two" }])
-
-    FeedRefreshWorkflow.new(digest_feed).execute
-
-    assert_equal 1, digest_feed.posts.count, "same-period digests collapse to one post"
   end
 
   test "#execute should not disable an AI credential when an ordinary loader fails" do
@@ -1018,7 +1003,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal uids, feed.posts.order(:uid).pluck(:uid)
     assert_equal uids, FeedEntryUid.where(feed: feed).order(:uid).pluck(:uid)
 
-    perform_enqueued_jobs(only: PostPublishJob)
+    perform_enqueued_jobs(only: PostPublishJob) { PostPublishJob.perform_now(feed.id) }
 
     assert_equal 2, feed.posts.where(status: :published).count
     assert_equal uids, feed.posts.order(:uid).pluck(:uid)
