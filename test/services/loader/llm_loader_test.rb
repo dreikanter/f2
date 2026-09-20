@@ -227,7 +227,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
         { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
       end
 
-      error = assert_raises(Loader::Error) { loader.load }
+      error = assert_raises(Loader::LlmLoader::ExecutionLimitExceeded) { loader.load }
 
       assert_kind_of LlmExecution::DeadlineExceeded, error.cause
       chat = feed.llm_chats.sole
@@ -261,7 +261,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     end + response["output"].select { |item| item["type"] == "message" }
     request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
 
-    error = assert_raises(Loader::Error) { Loader::LlmLoader.new(feed).load }
+    error = assert_raises(Loader::LlmLoader::ExecutionLimitExceeded) { Loader::LlmLoader.new(feed).load }
 
     assert_equal "AI request exceeded its execution limits.", error.message
     assert_kind_of LlmExecution::ToolLimitExceeded, error.cause

@@ -53,13 +53,40 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     assert_not_requested :any, /./
   end
 
+  test "#perform should record an AI deadline without reporting a bug" do
+    freeze_time do
+      create(:llm_model, model_id: "gpt-5-nano")
+      credential = create(:ai_credential, :active)
+      preview = create(:feed_preview, user: credential.user, feed_profile_key: "llm",
+                       params: { "prompt" => "Daily roundup" }, ai_credential: credential,
+                       ai_model: "gpt-5-nano", run_id: RUN_ID)
+      response = file_fixture("llm_transcripts/completed.json").read
+      request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do
+        travel LlmChat::TIMEOUT
+        { body: response, headers: { "Content-Type" => "application/json" } }
+      end
+
+      reports = capture_error_reports { FeedPreviewJob.perform_now(preview.id, RUN_ID) }
+
+      assert_empty reports
+      assert preview.reload.failed?
+      assert_nil preview.data
+      event = credential.user.events.where(type: "feed_preview").sole
+      assert_equal "failed", event.metadata.fetch("status")
+      assert_equal "AI request exceeded its deadline.", event.message
+      assert_requested request, times: 1
+    end
+  end
+
   test "#perform should mark the preview failed and not retry when the loader fails" do
     preview = create(:feed_preview, feed_profile_key: "rss",
                      params: { "url" => "https://example.com/feed.xml" }, run_id: RUN_ID)
 
     stub_request(:get, "https://example.com/feed.xml").to_return(status: 500)
 
-    assert_nothing_raised { FeedPreviewJob.perform_now(preview.id, RUN_ID) }
+    reports = capture_error_reports { FeedPreviewJob.perform_now(preview.id, RUN_ID) }
+
+    assert_kind_of Loader::Error, reports.sole.error
     assert preview.reload.failed?
   end
 

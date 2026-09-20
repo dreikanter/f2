@@ -1,6 +1,8 @@
 module Loader
   # AI extraction entry point for the shared feed pipeline.
   class LlmLoader < Base
+    class ExecutionLimitExceeded < Loader::Error; end
+
     # @return [LlmResult] response content with its guarded extraction lifecycle
     def load
       raise Loader::Error, "An active AI credential is required." unless feed.ai_credential&.active?
@@ -23,9 +25,9 @@ module Loader
       when RubyLLM::Error, Faraday::Error
         raise Loader::Error, "AI request failed. Please try again later."
       when LlmExecution::DeadlineExceeded
-        raise Loader::Error, "AI request exceeded its deadline."
+        raise ExecutionLimitExceeded, "AI request exceeded its deadline."
       when LlmExecution::RequestLimitExceeded, LlmExecution::ToolLimitExceeded
-        raise Loader::Error, "AI request exceeded its execution limits."
+        raise ExecutionLimitExceeded, "AI request exceeded its execution limits."
       else
         raise
       end
