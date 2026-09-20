@@ -18,6 +18,35 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
     assert schedule.next_run_at > Time.current
   end
 
+  test ".perform_now should generate originals at multiple configured same-day slots" do
+    travel_to Time.utc(2026, 9, 20, 6)
+    create(:llm_model, model_id: "gpt-4.1")
+    credential = create(:ai_credential, :active)
+    feed = create(:feed, :enabled, user: credential.user, feed_profile_key: "llm",
+                                  ai_credential: credential, ai_model: "gpt-4.1",
+                                  cron_expression: "0 */6 * * *",
+                                  params: { "prompt" => "Write a story", "max_items" => 1 })
+    schedule = create(:feed_schedule, feed: feed, next_run_at: Time.current)
+    response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
+    response["model"] = "gpt-4.1"
+    response["output"].last["content"].first["text"] = '{"items":[{"source_url":null,"body":"A story"}]}'
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+    perform_enqueued_jobs(only: FeedRefreshJob) { FeedSchedulerJob.perform_now }
+
+    assert_equal 1, feed.posts.count
+    assert_equal Time.current, schedule.reload.last_run_at
+    assert_equal Time.utc(2026, 9, 20, 12), schedule.next_run_at
+
+    travel_to schedule.next_run_at
+    perform_enqueued_jobs(only: FeedRefreshJob) { FeedSchedulerJob.perform_now }
+
+    assert_equal 2, feed.posts.pluck(:uid).uniq.size
+    assert_equal Time.current, schedule.reload.last_run_at
+    assert_equal Time.utc(2026, 9, 20, 18), schedule.next_run_at
+    assert_requested request, times: 2
+  end
+
   test ".perform_now should skip disabled feeds" do
     feed = create(:feed, :disabled)
     create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)

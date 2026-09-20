@@ -13,7 +13,7 @@ class FeedProfile
         "items" => {
           "type" => "object",
           "properties" => {
-            # The processor derives the uid from source_url. `uid` is
+            # The processor assigns identity from source metadata. `uid` is
             # accepted only so a stray field from a non-strict provider
             # doesn't fail the schema; it's ignored downstream.
             "uid" => { "type" => "string" },
@@ -21,9 +21,8 @@ class FeedProfile
             "body" => { "type" => "string" },
             "supplementary" => { "type" => "array", "items" => { "type" => "string" } },
             "images" => { "type" => "array", "items" => { "type" => "string" } },
-            # An explicit null signals the digest/standing-query regime; a real
-            # permalink signals feed-style. The key is always required;
-            # a missing key is malformed, not a digest.
+            # Explicit null allows content without a canonical source. Missing
+            # source metadata is malformed and must fail validation.
             "source_url" => { "type" => ["string", "null"] },
             "published_at" => { "type" => "string" }
           },

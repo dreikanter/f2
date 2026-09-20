@@ -45,7 +45,6 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   test ".workflow_steps should list expected sequence" do
     expected_steps = [
       :interrupt_abandoned_refresh_events,
-      :skip_current_digest_period,
       :initialize_workflow,
       :load_feed_contents,
       :process_feed_contents,
@@ -966,15 +965,13 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     end
   end
 
-  # --- Digest cadence skip ---
-
-  def digest_feed_with_schedule(last_digest_period: nil)
+  def ai_feed_with_schedule
     user = create(:user)
     credential = create(:ai_credential, :active, user: user)
     feed = create(:feed, :enabled, feed_profile_key: "llm", user: user,
                                    ai_credential: credential, ai_model: "gpt-4.1",
                                    params: { "prompt" => "daily roundup" })
-    create(:feed_schedule, feed: feed, last_digest_period: last_digest_period)
+    create(:feed_schedule, feed: feed)
     feed
   end
 
@@ -987,7 +984,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
   test "#execute should reject an over-limit response before persisting entries or posts" do
     create(:llm_model, model_id: "gpt-4.1")
-    feed = digest_feed_with_schedule
+    feed = ai_feed_with_schedule
     feed.update!(params: feed.params.merge("max_items" => 1))
     request = stub_ai_response([
       { "source_url" => nil, "body" => "First" },
@@ -1004,111 +1001,78 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
-  test "#execute should record the period after a digest-only run" do
+  test "#execute should import every original item and preserve identities through publication" do
     create(:llm_model, model_id: "gpt-4.1")
-    freeze_time do
-      feed = digest_feed_with_schedule
-      stub_ai_response([{ "source_url" => nil, "body" => "roundup" }])
+    feed = ai_feed_with_schedule
+    stub_ai_response([
+      { "source_url" => nil, "body" => "First story" },
+      { "source_url" => nil, "body" => "Second story" }
+    ])
+    publication = stub_request(:post, "#{feed.access_token.host}/v4/posts")
+      .to_return_json(body: { posts: { id: "published-story" } })
 
+    FeedRefreshWorkflow.new(feed).execute
+
+    uids = feed.feed_entries.order(:uid).pluck(:uid)
+    assert_equal 2, uids.uniq.size
+    assert_equal uids, feed.posts.order(:uid).pluck(:uid)
+    assert_equal uids, FeedEntryUid.where(feed: feed).order(:uid).pluck(:uid)
+
+    perform_enqueued_jobs(only: PostPublishJob)
+
+    assert_equal 2, feed.posts.where(status: :published).count
+    assert_equal uids, feed.posts.order(:uid).pluck(:uid)
+    assert_requested publication, times: 2
+  end
+
+  test "#execute should deduplicate equivalent source URLs within and across refreshes" do
+    create(:llm_model, model_id: "gpt-4.1")
+    feed = ai_feed_with_schedule
+    stub_ai_response([
+      { "source_url" => "http://www.example.com/post/?utm_source=feed", "body" => "First" },
+      { "source_url" => "https://example.com/post", "body" => "Duplicate" }
+    ])
+
+    FeedRefreshWorkflow.new(feed).execute
+    FeedRefreshWorkflow.new(feed).execute
+
+    assert_equal "https://example.com/post", feed.posts.sole.uid
+    assert_equal 1, feed.feed_entries.count
+  end
+
+  test "#execute should allow independent same-day originals while preserving historical identities" do
+    create(:llm_model, model_id: "gpt-4.1")
+    feed = ai_feed_with_schedule
+    historical = create(:feed_entry, feed: feed, uid: "digest:2026-07-07")
+    create(:feed_entry_uid, feed: feed, uid: historical.uid)
+    request = stub_ai_response([{ "source_url" => nil, "body" => "A story" }])
+
+    freeze_time do
       FeedRefreshWorkflow.new(feed).execute
-
-      recorded = feed.feed_schedule.reload.last_digest_period
-      assert_equal Time.current.utc.to_date, recorded
-      # The recorded period is read from the minted uid, not re-derived from the
-      # clock, so it always matches the digest the run actually produced.
-      assert_equal Uid::Resolver.period_from_uid(feed.posts.last.uid), recorded
-    end
-  end
-
-  test "#execute should skip a scheduled run while the digest period is still current" do
-    create(:llm_model, model_id: "gpt-4.1")
-    freeze_time do
-      feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date)
-      request = stub_ai_response([{ "source_url" => nil, "body" => "roundup" }])
-
       FeedRefreshWorkflow.new(feed).execute
-
-      assert_not_requested request
-      assert_equal 0, feed.posts.count
-      assert_equal 1, Event.where(subject: feed, type: "feed_refresh_skipped", level: "debug").count
     end
+
+    assert_equal 2, feed.posts.pluck(:uid).uniq.size
+    assert_equal "digest:2026-07-07", historical.reload.uid
+    assert FeedEntryUid.exists?(feed: feed, uid: historical.uid)
+    assert_requested request, times: 2
   end
 
-  test "#execute should sweep abandoned events even when the digest skip halts the run" do
+  test "#execute should accept empty AI output without publication or another refresh" do
     create(:llm_model, model_id: "gpt-4.1")
-    freeze_time do
-      feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date)
-      abandoned = Event.create!(
-        type: "feed_refresh",
-        level: :info,
-        subject: feed,
-        user: feed.user,
-        metadata: { status: "started" }
-      )
-      request = stub_ai_response([{ "source_url" => nil, "body" => "roundup" }])
+    feed = ai_feed_with_schedule
+    request = stub_ai_response([])
+    schedule = feed.feed_schedule.attributes
 
-      FeedRefreshWorkflow.new(feed).execute
-
-      assert_not_requested request
-      assert_equal "interrupted", abandoned.reload.metadata["status"]
+    assert_no_enqueued_jobs(only: [FeedRefreshJob, PostPublishJob]) do
+      assert_empty FeedRefreshWorkflow.new(feed).execute
     end
+
+    assert_empty feed.posts
+    assert_equal schedule, feed.feed_schedule.reload.attributes
+    assert_requested request, times: 1
   end
 
-  test "#execute should force a manual run through the cadence skip" do
-    create(:llm_model, model_id: "gpt-4.1")
-    freeze_time do
-      feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date)
-      request = stub_ai_response([{ "source_url" => nil, "body" => "roundup" }])
-
-      FeedRefreshWorkflow.new(feed, manual: true).execute
-
-      assert_requested request, times: 1
-      assert_equal 1, feed.posts.count
-      assert_equal 0, Event.where(subject: feed, type: "feed_refresh_skipped").count
-    end
-  end
-
-  test "#execute should not skip when the recorded digest period is stale" do
-    create(:llm_model, model_id: "gpt-4.1")
-    freeze_time do
-      feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date - 1)
-      request = stub_ai_response([{ "source_url" => nil, "body" => "today's roundup" }])
-
-      FeedRefreshWorkflow.new(feed).execute
-
-      assert_requested request, times: 1
-      assert_equal Time.current.utc.to_date, feed.feed_schedule.reload.last_digest_period
-    end
-  end
-
-  test "#execute should clear the recorded period when a run produces feed-style items" do
-    create(:llm_model, model_id: "gpt-4.1")
-    freeze_time do
-      feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date - 1)
-      stub_ai_response([{ "source_url" => "https://example.com/post-1", "body" => "a real post" }])
-
-      FeedRefreshWorkflow.new(feed).execute
-
-      assert_nil feed.feed_schedule.reload.last_digest_period
-    end
-  end
-
-  test "#execute should clear the period for a mixed digest/feed-style run" do
-    create(:llm_model, model_id: "gpt-4.1")
-    freeze_time do
-      # Seed a stale period so this proves the mixed run *clears* it, not just a
-      # trivial nil == nil no-write.
-      feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date - 1)
-      stub_ai_response([
-        { "source_url" => nil, "body" => "roundup" },
-        { "source_url" => "https://example.com/post-1", "body" => "a real post" }
-      ])
-
-      FeedRefreshWorkflow.new(feed).execute
-
-      assert_nil feed.feed_schedule.reload.last_digest_period, "mixed runs never mark a period"
-    end
-  end
   test "#execute should preserve unknown SDK cost in completed refresh statistics" do
     create(:llm_model, model_id: "custom-model")
     credential = create(:ai_credential, :active)

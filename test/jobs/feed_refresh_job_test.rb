@@ -68,9 +68,9 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     end
   end
 
-  test "#perform should run a manual refresh even when today's digest is complete" do
+  test "#perform should accept a previously queued manual refresh keyword" do
     freeze_time do
-      create(:feed_schedule, feed: ai_feed, last_digest_period: Time.current.utc.to_date)
+      create(:feed_schedule, feed: ai_feed)
       response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
       response["output"].last["content"].first["text"] = '{"items":[{"source_url":null,"body":"Today’s roundup"}]}'
       request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
@@ -85,16 +85,28 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     end
   end
 
-  test "#perform should skip a scheduled refresh when today's digest is complete" do
-    freeze_time do
-      create(:feed_schedule, feed: ai_feed, last_digest_period: Time.current.utc.to_date)
+  test "#perform should allow a manual refresh to import another original post" do
+    response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
+    response["output"].last["content"].first["text"] = '{"items":[{"source_url":null,"body":"A story"}]}'
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
 
+    FeedRefreshJob.perform_now(ai_feed.id)
+    FeedRefreshJob.perform_now(ai_feed.id)
+
+    assert_equal 2, ai_feed.posts.pluck(:uid).uniq.size
+    assert_requested request, times: 2
+  end
+
+  test "#perform should record an AI failure without queuing a retry" do
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return(status: 400, body: "Bad request")
+
+    assert_no_enqueued_jobs(only: FeedRefreshJob) do
       FeedRefreshJob.perform_now(ai_feed.id)
-
-      assert_equal 1, ai_feed.events.where(type: "feed_refresh_skipped").count
-      assert_empty ai_feed.events.where(type: "feed_refresh")
-      assert_not_requested :any, /./
     end
+
+    assert_equal 1, ai_feed.reload.consecutive_failures
+    assert_empty ai_feed.posts
+    assert_requested request, times: 1
   end
 
   private

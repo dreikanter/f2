@@ -91,12 +91,28 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert_equal "AI response does not match the output schema.", error.message
   end
 
-  test "#process should derive a digest uid only from an explicit null source_url" do
+  test "#process should assign distinct system UUIDs to original items even on the same day" do
     freeze_time do
-      result = process('{"items":[{"source_url":null,"body":"Daily roundup"}]}')
+      result = process({ items: [
+        { source_url: nil, body: "First story", uid: "invented-id" },
+        { source_url: nil, body: "Second story", uid: "invented-id" }
+      ] }.to_json)
 
-      assert_equal "digest:#{Time.current.utc.to_date.iso8601}", result.entries.sole.uid
+      first, second = result.entries
+      assert_match(/\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/, first.uid)
+      assert_match(/\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/, second.uid)
+      assert_not_equal first.uid, second.uid
     end
+  end
+
+  test "#process should leave blank and malformed sources unidentified" do
+    result = process({ items: [
+      { source_url: "", body: "Blank" },
+      { source_url: "not a URL", body: "Malformed" }
+    ] }.to_json)
+
+    assert_nil result.entries.first.uid
+    assert_nil result.entries.last.uid
   end
 
   test "#process should leave unusable permalinks for the workflow to drop and count" do

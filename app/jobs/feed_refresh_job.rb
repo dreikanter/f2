@@ -2,10 +2,8 @@ class FeedRefreshJob < ApplicationJob
   queue_as :default
 
   # @param feed_id [Integer] ID of the feed to refresh
-  # @param manual [Boolean] a user-initiated refresh forces through the
-  #   digest cadence skip; scheduled runs may skip a redundant same-period
-  #   digest.
-  def perform(feed_id, manual: false)
+  # Accept the obsolete keyword while already queued jobs drain.
+  def perform(feed_id, manual: nil)
     feed = Feed.find_by(id: feed_id)
     return unless feed
 
@@ -13,7 +11,7 @@ class FeedRefreshJob < ApplicationJob
     return if feed.feed_profile_key == "webhook"
 
     Feed.with_advisory_lock!("feed_refresh_#{feed.id}", timeout_seconds: 0) do
-      FeedRefreshWorkflow.new(feed, manual: manual).execute
+      FeedRefreshWorkflow.new(feed).execute
     end
   rescue Loader::LlmLoader::ExecutionLimitExceeded
     record_loader_error(feed)
