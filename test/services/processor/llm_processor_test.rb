@@ -53,7 +53,35 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert chat.reload.succeeded?
   end
 
-  test "#process should accept ten items" do
+  test "#process should reject the whole response before deduplication at the configured limit" do
+    feed.params["max_items"] = 1
+    item = { source_url: "https://example.com/post", body: "Post" }
+
+    assert_raises(Processor::LlmProcessor::InvalidOutput) do
+      process({ items: [item, item] }.to_json)
+    end
+
+    assert chat.reload.failed?
+    assert_empty feed.feed_entries
+  end
+
+  test "#process should allow an empty response with a one-item limit" do
+    feed.params["max_items"] = 1
+
+    assert_empty process('{"items":[]}').entries
+  end
+
+  test "#process should accept three items by default" do
+    items = Array.new(3) do |index|
+      { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
+    end
+
+    assert_equal items, process({ items: items }.to_json).entries.map(&:raw_data)
+    assert chat.reload.succeeded?
+  end
+
+  test "#process should accept ten items when explicitly configured" do
+    feed.update!(params: feed.params.merge("max_items" => 10))
     items = Array.new(10) do |index|
       { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
     end
@@ -62,23 +90,61 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert chat.reload.succeeded?
   end
 
-  test "#process should reject an oversized response" do
-    items = Array.new(10) do |index|
+  test "#process should reject more than three items by default" do
+    items = Array.new(3) do |index|
       { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
     end
 
     error = assert_raises(Processor::LlmProcessor::InvalidOutput) do
-      process({ items: items + [{ "source_url" => "https://example.com/post/10", "body" => "Extra post" }] }.to_json)
+      process({ items: items + [{ "source_url" => "https://example.com/post/3", "body" => "Extra post" }] }.to_json)
     end
     assert_equal "AI response does not match the output schema.", error.message
   end
 
-  test "#process should derive a digest uid only from an explicit null source_url" do
-    freeze_time do
-      result = process('{"items":[{"source_url":null,"body":"Daily roundup"}]}')
+  test "#process should accept output when the stored response limit is zero" do
+    feed.update_column(:params, feed.params.merge("max_items" => 0))
+    feed.reload
+    item = { "source_url" => "https://example.com/post", "body" => "Post" }
 
-      assert_equal "digest:#{Time.current.utc.to_date.iso8601}", result.entries.sole.uid
+    assert_equal item, process({ items: [item] }.to_json).entries.sole.raw_data
+    assert chat.reload.succeeded?
+  end
+
+  test "#process should enforce the default limit when the stored response limit is too large" do
+    feed.update_column(:params, feed.params.merge("max_items" => 11))
+    feed.reload
+    items = Array.new(4) do |index|
+      { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
     end
+
+    assert_raises(Processor::LlmProcessor::InvalidOutput) { process({ items: items }.to_json) }
+
+    assert chat.reload.failed?
+    assert_empty feed.feed_entries
+  end
+
+  test "#process should assign distinct system UUIDs to original items even on the same day" do
+    freeze_time do
+      result = process({ items: [
+        { source_url: nil, body: "First story", uid: "invented-id" },
+        { source_url: nil, body: "Second story", uid: "invented-id" }
+      ] }.to_json)
+
+      first, second = result.entries
+      assert_match(/\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/, first.uid)
+      assert_match(/\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/, second.uid)
+      assert_not_equal first.uid, second.uid
+    end
+  end
+
+  test "#process should leave blank and malformed sources unidentified" do
+    result = process({ items: [
+      { source_url: "", body: "Blank" },
+      { source_url: "not a URL", body: "Malformed" }
+    ] }.to_json)
+
+    assert_nil result.entries.first.uid
+    assert_nil result.entries.last.uid
   end
 
   test "#process should leave unusable permalinks for the workflow to drop and count" do

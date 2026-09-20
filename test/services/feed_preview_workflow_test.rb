@@ -238,9 +238,44 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     end
   end
 
+  test "#execute should preview two original items with distinct identities" do
+    preview = ai_preview
+    response = completed_ai_response
+    response["output"].last["content"].first["text"] = {
+      items: [{ source_url: nil, body: "First story" }, { source_url: nil, body: "Second story" }]
+    }.to_json
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+    FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
+
+    assert preview.reload.ready?
+    assert_equal ["First story", "Second story"], preview.posts_data.map { |post| post["content"] }
+    assert_equal 2, preview.posts_data.map { |post| post["uid"] }.uniq.size
+  end
+
+  test "#execute should reject an over-limit AI response before importing anything" do
+    preview = ai_preview
+    preview.update!(params: preview.params.merge("max_items" => 1))
+    response = completed_ai_response
+    response["output"].last["content"].first["text"] = {
+      items: [{ source_url: nil, body: "First" }, { source_url: nil, body: "Second" }]
+    }.to_json
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+    assert_no_difference ["FeedEntry.count", "Post.count"] do
+      assert_raises(Processor::LlmProcessor::InvalidOutput) do
+        FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
+      end
+    end
+
+    assert preview.reload.failed?
+    assert LlmChat.sole.failed?
+  end
+
   test "#execute should agree with refresh on unidentified and rejected AI items" do
     freeze_time
     preview = ai_preview
+    preview.update!(params: preview.params.merge("max_items" => 4))
     feed = create(:feed, user: user, feed_profile_key: "llm", params: preview.params,
                   ai_credential: preview.ai_credential, ai_model: preview.ai_model, search_credential: nil)
     preview.update!(feed: feed)
@@ -272,7 +307,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_empty accepted["validation_errors"]
     assert_equal "enqueued", digest["status"]
     assert_nil digest["source_url"]
-    assert_equal Uid::Resolver.digest_period_uid(Time.current), digest["uid"]
+    assert_match(/\A[0-9a-f-]{36}\z/, digest["uid"])
     assert_equal 4, preview.total_entries_count
     assert_equal 1, preview.unidentified_entries_count
     assert_equal 1, preview.rejected_posts_count
@@ -285,9 +320,9 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
       FeedRefreshWorkflow.new(feed).execute
     end
 
-    fields = %w[uid status validation_errors]
-    expected = preview.posts_data.map { |post| post.slice(*fields) }.sort_by { |post| post["uid"] }
-    assert_equal expected, feed.posts.order(:uid).map { |post| post.attributes.slice(*fields) }
+    fields = %w[content status validation_errors]
+    expected = preview.posts_data.map { |post| post.slice(*fields) }.sort_by { |post| post["content"] }
+    assert_equal expected, feed.posts.order(:content).map { |post| post.attributes.slice(*fields) }
     assert_equal 2, feed.llm_chats.where(status: :succeeded).count
   end
 

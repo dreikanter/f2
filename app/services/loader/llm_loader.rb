@@ -81,7 +81,7 @@ module Loader
 
     # Strict output requires every property; the processor accepts this subset.
     def output_schema
-      schema = config.fetch(:output_schema).deep_dup
+      schema = LlmOutput.new(feed).schema
       item = schema.fetch("properties").fetch("items").fetch("items")
       item.fetch("properties").delete("uid")
       item["required"] = item.fetch("properties").keys

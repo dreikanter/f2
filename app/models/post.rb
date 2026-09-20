@@ -30,8 +30,7 @@ class Post < ApplicationRecord
   validates :uid, presence: true
   validates :uid, uniqueness: { scope: :feed_id }
   validates :published_at, presence: true
-  # A digest/standing-query post carries source_url = null; allow_nil
-  # lets that through while still rejecting a blank string on a feed-style post.
+  # Original content may have no canonical source URL.
   validates :source_url, presence: true, allow_nil: true
   # Length limits gate enqueueing only. Once a post leaves the queue (published,
   # failed, withdrawn) these must not block the status transition, or a post that

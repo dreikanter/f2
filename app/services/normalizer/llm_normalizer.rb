@@ -4,16 +4,14 @@ module Normalizer
   class LlmNormalizer < Base
     private
 
-    # A digest item carries source_url = null end-to-end: keep it nil
-    # (not "") so the nullable column stores NULL and Post's conditional
-    # validation lets it publish. A feed-style item keeps its string permalink.
+    # Preserve explicit nulls for Post's optional source URL validation.
     def normalize_source_url
-      return nil if digest?
+      return nil if original?
 
       raw_data["source_url"].to_s
     end
 
-    def digest?
+    def original?
       raw_data.key?("source_url") && raw_data["source_url"].nil?
     end
 
@@ -36,7 +34,7 @@ module Normalizer
 
     def validate_content
       errors = []
-      errors << "missing_source_url" if source_url.blank? && !digest?
+      errors << "missing_source_url" if source_url.blank? && !original?
       errors << "missing_content" if content.blank?
       errors.concat(images_only_errors)
       errors

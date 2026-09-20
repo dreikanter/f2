@@ -55,10 +55,6 @@ module FeedProfileValidator
         failures << "FeedProfile #{key.inspect}#{pointer}: #{err['error']}"
       end
 
-      if entry[:depends_on_ai] && !entry.dig(:loader, :config, :output_schema).is_a?(Hash)
-        failures << "FeedProfile #{key.inspect}: loader.config.output_schema is required when depends_on_ai is true"
-      end
-
       # The webhook profile has nothing to fetch, so it alone
       # omits matcher, loader, and processor. Every other profile declares a
       # loader/processor, and a matcher unless it's AI-backed.

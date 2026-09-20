@@ -10,7 +10,7 @@ class Feeds::RefreshesController < ApplicationController
     @feed = Current.user.feeds.find(params[:feed_id])
     authorize @feed, :refresh?
 
-    FeedRefreshJob.perform_later(@feed.id, manual: true)
+    FeedRefreshJob.perform_later(@feed.id)
 
     respond_to do |format|
       format.turbo_stream do
