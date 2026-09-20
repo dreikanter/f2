@@ -1,5 +1,5 @@
 class LinkedCardComponent < CardComponent
-  BASE_CLASSES = "#{CardComponent::BASE_CLASSES} block no-underline shadow-xs hover:bg-surface-muted hover:shadow-md transition duration-75"
+  BASE_CLASSES = "#{CardComponent::BASE_CLASSES} block no-underline shadow-xs hover:bg-surface-muted hover:shadow-md transition duration-75 [&_h2]:text-lg"
 
   def initialize(href:, **html_options)
     @href = href
