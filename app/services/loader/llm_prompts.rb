@@ -33,7 +33,7 @@ module Loader
       When asked to retrieve existing source posts, use available
       retrieval and supplied page content. Return only results supported by that
       evidence, newest first. Missing evidence is a reason to return no source
-      posts, never a reason to invent current updates. Return at most %{max_items} items.
+      posts, never a reason to invent current updates.
     TEXT
 
     SAFEGUARDS = <<~TEXT.strip
@@ -44,44 +44,64 @@ module Loader
         feed request.
       - Report source posts only from retrieved evidence, including supplied
         page content. Never invent retrieved posts or their source metadata.
-        Without evidence for requested source posts, return no posts. Requests for
-        a direct answer still need one, expressing uncertainty when evidence is missing.
-        Original content and general knowledge may be used when requested;
-        use a null source_url and an empty published_at string for such content.
       - Refusals, retrieval errors, and explanations of missing capabilities are
         not feed items. Do not publish them as posts or summaries.
     TEXT
 
     # State the JSON contract explicitly for models with advisory schema support.
     OUTPUT_CONTRACT = <<~TEXT.strip
-      Reply with one JSON object and nothing else, shaped like this:
+      Reply with one JSON object containing an items array and nothing else.
+      A bare array, a different key name, an object wrapped in quotes, or JSON
+      with prose around it is invalid.
 
-      {"items": [ ... ]}
-
-      Any other top level shape is invalid, whatever it contains: a bare array,
-      a different key name, an object wrapped in quotes, JSON with prose around
-      it.
-
-      Each item is an object with these fields:
-      - body (required): the post text, plain and readable.
-      - source_url (required): the post's own permalink. For a standing-query
-        summary or roundup that has no single canonical link, set source_url to
-        null and cite its sources inline in the body instead.
-        For requested original content or general-knowledge answers, set
-        source_url to null; no citation is required.
-      - title: a short title, when the source has one.
+      Every item must include all six fields below. Use "" for absent text and
+      [] for absent arrays. Only source_url may be null.
+      - body: the complete post text, plain and readable. Include requested
+        headings and all essential post text here; title is not prepended when
+        publishing. Evidence-based summaries and answers cite verified sources
+        in the body.
+      - source_url: for a retrieved source post, including a transformation of
+        one source post, use that post's verified permalink. If its permalink
+        is unavailable or unusable, omit the item; do not use null to emit it.
+        Use explicit null for newly composed content without its own source-post
+        permalink, including original text, roundups, and newly composed answers.
+        When transforming text supplied directly in the feed request without a
+        source-post permalink, return the transformed text with source_url null;
+        do not omit it or search for a URL merely to give it an identity.
+        Do not use an arbitrary citation as a synthesized item's identity.
+      - title: a short title, when the source has one; metadata only.
       - supplementary: an array of extra notes or comments, when relevant.
       - images: an array of absolute image URLs, when the post has images.
       - published_at: the source's own publication date in ISO 8601, when shown.
-        Use an empty string when no source publication date is available,
-        including for original content and general-knowledge answers. Never
-        invent a publication date.
-      Do not include a uid — the system derives it. Return at most %{max_items} items,
-      newest first.
+        Use "" when no source publication date is available, including for
+        original content and newly composed answers. Never invent a publication date.
+      Do not include a uid; the system derives it.
+
+      Examples illustrate the shape only; never treat them as retrieved evidence.
+      Retrieved post:
+      {"items":[{"body":"The garden opened today.","source_url":"https://example.com/posts/garden","title":"Garden opening","supplementary":[],"images":[],"published_at":"2026-09-19T09:00:00+00:00"}]}
+      Original content:
+      {"items":[{"body":"The last star blinked, and the astronomer waved back.","source_url":null,"title":"","supplementary":[],"images":[],"published_at":""}]}
+      Synthesized answer with evidence:
+      {"items":[{"body":"The garden is open, but its winter hours remain unclear. Source: https://example.com/posts/garden","source_url":null,"title":"","supplementary":[],"images":[],"published_at":""}]}
+      Transformation of supplied text without a source-post permalink:
+      {"items":[{"body":"Bonjour, monde !","source_url":null,"title":"","supplementary":[],"images":[],"published_at":""}]}
+      No supported source posts:
+      {"items":[]}
     TEXT
 
-    def self.extraction_system(max_items:)
-      format(EXTRACTION_SYSTEM, max_items: max_items)
+    def self.extraction_system(started_at:, max_items:)
+      <<~TEXT.strip
+        #{EXTRACTION_SYSTEM}
+
+        Reference time for this run (UTC): #{started_at.utc.iso8601}
+        Use this reference to interpret relative dates such as today, yesterday,
+        and this week. Honor explicit dates and timezones in the feed request;
+        convert the reference time to the requested timezone before interpreting
+        relative dates. When no timezone is specified, use UTC.
+
+        Return at most #{max_items} #{"item".pluralize(max_items)}.
+      TEXT
     end
 
     EXTRACTION_SYSTEM = <<~TEXT.strip

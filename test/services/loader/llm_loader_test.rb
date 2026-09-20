@@ -29,11 +29,13 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal "openai", chat.requested_provider
     assert_equal "gpt-5-nano", chat.requested_model
     assert_equal %w[system user assistant], chat.messages.map(&:role)
-    assert_includes chat.messages.first.content, format(Loader::LlmPrompts::TASK, max_items: 3)
-    assert_includes chat.messages.first.content, format(Loader::LlmPrompts::OUTPUT_CONTRACT, max_items: 3)
+    assert_includes chat.messages.first.content, Loader::LlmPrompts::TASK
+    assert_includes chat.messages.first.content, Loader::LlmPrompts::OUTPUT_CONTRACT
     assert_includes chat.messages.first.content, Loader::LlmPrompts::SAFEGUARDS
     assert_not_includes chat.messages.first.content, feed.source_input
     assert_equal "Feed request — what to follow and how to present it:\n\nA daily roundup\n", chat.messages.second.content
+    assert_equal chat.messages.first.content, payload.fetch("instructions")
+    assert_equal ["Return at most 3 items."], payload.fetch("instructions").scan(/Return at most \d+ items\./)
     assert_equal "gpt-5-nano", payload.fetch("model")
     assert_equal "web_search", payload.fetch("tools").sole.fetch("type")
     assert_equal true, payload.dig("text", "format", "strict")
@@ -63,8 +65,8 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
 
     assert_equal 1, payloads.first.dig("text", "format", "schema", "properties", "items", "maxItems")
     assert_equal 3, payloads.last.dig("text", "format", "schema", "properties", "items", "maxItems")
-    assert_includes limited_feed.llm_chats.sole.messages.first.content, "Return at most 1 items"
-    assert_includes feed.llm_chats.sole.messages.first.content, "Return at most 3 items"
+    assert_equal ["Return at most 1 item."], payloads.first.fetch("instructions").scan(/Return at most \d+ items?\./)
+    assert_equal ["Return at most 3 items."], payloads.last.fetch("instructions").scan(/Return at most \d+ items?\./)
     assert_equal 10, FeedProfile::UNIVERSAL_OUTPUT_SCHEMA.dig("properties", "items", "maxItems")
   end
 
@@ -85,7 +87,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal original_item, entries.sole.raw_data
     assert_equal LlmOutput::DEFAULT_MAX_ITEMS, payload.dig("text", "format", "schema", "properties", "items", "maxItems")
     assert_includes feed.llm_chats.sole.messages.first.content,
-                    format(Loader::LlmPrompts::OUTPUT_CONTRACT, max_items: LlmOutput::DEFAULT_MAX_ITEMS)
+                    Loader::LlmPrompts::OUTPUT_CONTRACT
     assert_requested request, times: 1
   end
 
@@ -101,6 +103,49 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     schema = JSONSchemer.schema(payload.dig("text", "format", "schema"))
     assert schema.valid?({ "items" => [original_item] })
     assert_not schema.valid?({ "items" => [original_item.except("published_at")] })
+  end
+
+  test "#load should include schema-valid examples for retrieval, original content, answers, transformations, and no results" do
+    payload = nil
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      payload = JSON.parse(http.body)
+      { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+    end
+
+    Loader::LlmLoader.new(feed).load
+
+    system = payload.fetch("instructions")
+    examples = system.lines.grep(/^\{"items":/).map { |line| JSON.parse(line) }
+    schema = JSONSchemer.schema(payload.dig("text", "format", "schema"))
+    assert_equal 5, examples.size
+    assert schema.valid?(examples[0]), "Retrieved post example must match the provider schema"
+    assert schema.valid?(examples[1]), "Original content example must match the provider schema"
+    assert schema.valid?(examples[2]), "Synthesized answer example must match the provider schema"
+    assert schema.valid?(examples[3]), "Supplied-text transformation example must match the provider schema"
+    assert schema.valid?(examples[4]), "Empty result example must match the provider schema"
+    assert_equal "https://example.com/posts/garden", examples[0].fetch("items").sole.fetch("source_url")
+    assert_nil examples[1].fetch("items").sole.fetch("source_url")
+    assert_nil examples[2].fetch("items").sole.fetch("source_url")
+    assert_includes examples[2].fetch("items").sole.fetch("body"), "https://example.com/posts/garden"
+    assert_nil examples[3].fetch("items").sole.fetch("source_url")
+    assert_equal({ "items" => [] }, examples[4])
+  end
+
+  test "#load should use the effective schema limit in the assembled instructions" do
+    feed.update!(params: feed.params.merge("max_items" => 2))
+    payload = nil
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      payload = JSON.parse(http.body)
+      { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+    end
+
+    Loader::LlmLoader.new(feed).load
+
+    system = payload.fetch("instructions")
+    assert_equal ["Return at most 2 items."], system.scan(/Return at most \d+ items\./)
+    assert_equal 2, payload.dig("text", "format", "schema", "properties", "items", "maxItems")
+    assert_equal "Feed request — what to follow and how to present it:\n\nA daily roundup\n",
+                 feed.llm_chats.sole.messages.second.content
   end
 
   test "#load should pass undated original content to the processor" do
@@ -190,6 +235,56 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal prompts.first, prompts.second
     assert_equal ["custom-model"], feed.llm_chats.map { |chat| chat.model.model_id }.uniq
     assert_requested request, times: 2
+  end
+
+  test "#load should supply a fresh UTC reference time for each run and honor requested timezones" do
+    feed.params = { "prompt" => "Summarize today's news in Asia/Tokyo" }
+    payloads = []
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      payloads << JSON.parse(http.body)
+      { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+    end
+    loader = Loader::LlmLoader.new(feed)
+
+    travel_to Time.iso8601("2026-09-21T00:30:00+09:00") do
+      loader.load
+      assert_equal Time.current, feed.llm_chats.sole.started_at
+      travel 1.day
+      loader.load
+    end
+
+    first_system = payloads.first.fetch("instructions")
+    second_system = payloads.last.fetch("instructions")
+    assert_includes first_system, "Reference time for this run (UTC): 2026-09-20T15:30:00Z"
+    assert_includes second_system, "Reference time for this run (UTC): 2026-09-21T15:30:00Z"
+    assert_not_includes second_system, "2026-09-20T15:30:00Z"
+    assert_includes first_system, "convert the reference time to the requested timezone before interpreting"
+    assert_includes first_system, "When no timezone is specified, use UTC."
+    assert_equal payloads.first.fetch("input"), payloads.last.fetch("input")
+    assert_includes feed.llm_chats.first.messages.second.content, feed.source_input
+    assert_not_includes first_system, feed.source_input
+    assert_requested request, times: 2
+  end
+
+  test "#load should request and accept transformations of supplied text without a source URL" do
+    feed.params = { "prompt" => "Translate this text into French: Hello, world!" }
+    item = original_item.merge("body" => "Bonjour, monde !")
+    payload = nil
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      payload = JSON.parse(http.body)
+      {
+        body: completed_response(content: { "items" => [item] }.to_json).to_json,
+        headers: { "Content-Type" => "application/json" }
+      }
+    end
+
+    content = Loader::LlmLoader.new(feed).load
+    entry = feed.processor_instance(content).process.entries.sole
+
+    assert_includes payload.fetch("instructions"), "return the transformed text with source_url null;"
+    assert_equal item, entry.raw_data
+    assert feed.llm_chats.sole.succeeded?
+    assert_requested request, times: 1
   end
 
   test "#load should retain preview attribution without saving its temporary feed" do
