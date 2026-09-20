@@ -59,6 +59,7 @@ class LinkedCardComponentTest < ViewComponent::TestCase
     assert_empty result.css("a")
     card = result.at_css("[aria-disabled='true']")
     assert_not_nil card
+    assert_equal "link", card["role"]
     assert_equal "Sent Emails", card.at_css("h2").text.strip
     assert_equal "Review captured emails", card.at_css("p").text
     assert_equal "Email capture is not configured", card["title"]
