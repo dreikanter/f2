@@ -20,8 +20,8 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get settings_url
     assert_response :success
-    assert_select "[data-key='settings.email']", text: /Your current email is #{Regexp.escape(user.email_address)}/
-    assert_select "[data-key='settings.password']", text: /Last changed .+ ago/
+    assert_select "[data-key='settings.email'] p", text: "Your current email is #{user.email_address}"
+    assert_select "[data-key='settings.password'] p", text: /\ALast changed .+ ago\z/
   end
 
   test "should show the current name in the account card" do
@@ -29,7 +29,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get settings_url
     assert_response :success
-    assert_select "[data-key='settings.name']", text: /People you invite will see Alex/
+    assert_select "[data-key='settings.name'] p", text: "People you invite will see Alex"
   end
 
   test "should explain the fallback when no name is set" do
@@ -37,7 +37,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get settings_url
     assert_response :success
-    assert_select "[data-key='settings.name']", text: /Somebody/
+    assert_select "[data-key='settings.name'] p", text: 'Not set, so people you invite will just see "Somebody"'
   end
 
   test "should link to settings sections" do
