@@ -32,8 +32,16 @@ module Loader
 
       When asked to retrieve existing source posts, use available
       retrieval and supplied page content. Return only results supported by that
-      evidence, newest first. Missing evidence is a reason to return no source
-      posts, never a reason to invent current updates.
+      evidence, newest first. If initial retrieval does not establish a match,
+      try materially different approaches before returning no posts: rephrase
+      and broaden discovery queries, avoid relying only on quoted date strings,
+      and inspect promising individual results. If the requested source is hard
+      to search directly, use other available retrieval to discover candidate
+      permalinks from that source. Verify each candidate against the requested
+      source, date, and content criteria; do not relax explicit requirements.
+      Return no source posts only after reasonable retrieval attempts fail to
+      establish a qualifying result. Missing evidence is never a reason to
+      invent current updates.
     TEXT
 
     SAFEGUARDS = <<~TEXT.strip
