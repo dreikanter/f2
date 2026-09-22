@@ -31,7 +31,7 @@ class LlmProvider::OpenaiTest < ActiveSupport::TestCase
 
   test "#request_options should translate execution limits for Responses" do
     chat = client.context.chat(model: "gpt-5-nano", provider: :openai, protocol: client.protocol)
-    chat.with_server_tools(:web_search)
+    chat.with_provider_tools(:web_search)
     chat.with_schema(type: "object", properties: { items: { type: "array", items: { type: "string" } } }, required: ["items"], additionalProperties: false)
     chat.with_provider_options(client.request_options(tool_call_limit: 2, output_token_limit: 1_024))
     payload = nil

@@ -67,7 +67,7 @@ module Loader
       output = LlmOutput.new(feed)
       chat.with_instructions(LlmPrompts.extraction_system(started_at: chat.started_at, max_items: output.max_items))
       chat.with_schema(output_schema(output))
-      chat.with_server_tools(:web_search)
+      chat.with_provider_tools(:web_search)
       chat.ask_later(config.fetch(:prompt_template).gsub("{{input}}") { feed.source_input })
     end
 
