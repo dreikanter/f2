@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-21
+
+- AI feeds try broader searches and inspect promising results before concluding that no requested posts were found.
+
 ## 2026-09-20
 
 - Give AI feeds more room to research sources and explain when a preview reaches its time or search limit.

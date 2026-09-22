@@ -25,7 +25,7 @@ class LlmExecutionTest < ActiveSupport::TestCase
 
   test "#call should send bounded requests and preserve RubyLLM usage" do
     record = staged_chat
-    record.with_server_tools(:web_search)
+    record.with_provider_tools(:web_search)
     record.with_provider_options(service_tier: "default", max_tool_calls: 99, max_output_tokens: 100_000)
     payload = nil
     request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
@@ -155,7 +155,7 @@ class LlmExecutionTest < ActiveSupport::TestCase
 
   test "#call should reduce the hosted tool budget across requests" do
     record = staged_chat
-    record.with_tools(Lookup).with_server_tools(:web_search)
+    record.with_tools(Lookup).with_provider_tools(:web_search)
     payloads = []
     first_response = tool_response
     first_response[:output].unshift(completed_response.fetch("output").first)
@@ -175,7 +175,7 @@ class LlmExecutionTest < ActiveSupport::TestCase
 
   test "#call should stop when hosted tools consume the remaining budget" do
     record = staged_chat
-    record.with_tools(Lookup).with_server_tools(:web_search)
+    record.with_tools(Lookup).with_provider_tools(:web_search)
     response = tool_response
     response[:output].concat(16.times.map { |index| { type: "web_search_call", id: "search_#{index}", status: "completed" } })
     request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
@@ -188,7 +188,7 @@ class LlmExecutionTest < ActiveSupport::TestCase
 
   test "#call should accept a final answer at the hosted tool limit" do
     record = staged_chat
-    record.with_server_tools(:web_search)
+    record.with_provider_tools(:web_search)
     response = completed_response
     response["output"] = Array.new(16) do |index|
       { type: "web_search_call", id: "search_#{index}", status: "completed" }
@@ -203,7 +203,7 @@ class LlmExecutionTest < ActiveSupport::TestCase
 
   test "#call should recognize provider tool exhaustion even below the local limit" do
     record = staged_chat
-    record.with_server_tools(:web_search)
+    record.with_provider_tools(:web_search)
     response = completed_response
     response["status"] = "incomplete"
     response["incomplete_details"] = { "reason" => "max_tool_calls" }
@@ -218,7 +218,7 @@ class LlmExecutionTest < ActiveSupport::TestCase
 
   test "#call should reject a tool-exhausted response with partial text" do
     record = staged_chat
-    record.with_server_tools(:web_search)
+    record.with_provider_tools(:web_search)
     response = completed_response
     response["status"] = "incomplete"
     response["incomplete_details"] = { "reason" => "max_tool_calls" }
