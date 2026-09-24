@@ -11,7 +11,7 @@ module Loader
 
       provider = feed.ai_credential.build_llm_provider
       chat = create_chat(provider)
-      prepare_chat(chat)
+      prepare_chat(chat, provider)
       response = chat.execute(provider: provider)
       unless response.stopped? && response.content.is_a?(String)
         raise Loader::Error, "AI response did not complete."
@@ -62,12 +62,12 @@ module Loader
       )
     end
 
-    def prepare_chat(chat)
+    def prepare_chat(chat, provider)
       options[:refresh_event]&.event_references&.create!(reference: chat)
       output = LlmOutput.new(feed)
       chat.with_instructions(LlmPrompts.extraction_system(started_at: chat.started_at, max_items: output.max_items))
       chat.with_schema(output_schema(output))
-      chat.with_provider_tools(:web_search)
+      chat.with_provider_tools(*provider.retrieval_tools)
       chat.ask_later(config.fetch(:prompt_template).gsub("{{input}}") { feed.source_input })
     end
 

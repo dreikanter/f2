@@ -25,6 +25,11 @@ module LlmProvider
       raise NotImplementedError, "Subclasses must implement #protocol"
     end
 
+    # @return [Array<Symbol>] provider-hosted tools available for feed retrieval
+    def retrieval_tools
+      [:web_search]
+    end
+
     # Translate execution limits into provider-specific request options.
     # @abstract Subclasses supply the provider's options.
     # @param tool_call_limit [Integer] maximum additional hosted-tool calls

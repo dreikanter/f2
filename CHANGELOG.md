@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-24
+
+- Connect an xAI key to use Grok for AI feeds, with both web and X search available.
+
 ## 2026-09-21
 
 - AI feeds try broader searches and inspect promising results before concluding that no requested posts were found.

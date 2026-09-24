@@ -1,6 +1,47 @@
 require "test_helper"
 
 class Loader::LlmLoaderTest < ActiveSupport::TestCase
+  test "#load should use xAI retrieval tools and pass source posts through the shared processor" do
+    credential = create(:ai_credential, :active, provider: "xai", credential_data: { "api_key" => "xai-loader-key" })
+    feed = create(:feed, user: credential.user, ai_credential: credential, ai_model: "grok-4.3",
+                        feed_profile_key: "llm", params: { "prompt" => "Find one AI news post on X" })
+    item = {
+      "body" => "A new AI model is available.",
+      "source_url" => "https://x.com/example/status/1234567890",
+      "title" => "",
+      "supplementary" => [],
+      "images" => [],
+      "published_at" => "2026-09-24T09:00:00Z"
+    }
+    response = completed_response(content: { "items" => [item] }.to_json)
+    response["model"] = "grok-4.3"
+    response["usage"]["cost_in_usd_ticks"] = 10_000_000
+    payload = nil
+    request = stub_request(:post, "https://api.x.ai/v1/responses")
+      .with(headers: { "Authorization" => "Bearer xai-loader-key" })
+      .to_return do |http|
+        payload = JSON.parse(http.body)
+        { body: response.to_json, headers: { "Content-Type" => "application/json" } }
+      end
+
+    result = Loader::LlmLoader.new(feed).load
+    entry = feed.processor_instance(result).process.entries.sole
+
+    assert_equal %w[web_search x_search], payload.fetch("tools").pluck("type")
+    assert_equal LlmExecution::MAX_TOOL_CALLS, payload.fetch("max_turns")
+    assert_equal false, payload.fetch("parallel_tool_calls")
+    assert_equal true, payload.dig("text", "format", "strict")
+    assert_equal item, entry.raw_data
+    assert_equal item.fetch("source_url"), entry.uid
+    chat = feed.llm_chats.sole
+    assert chat.succeeded?
+    assert_equal "xai", chat.requested_provider
+    assert_equal %w[system user assistant], chat.messages.map(&:role)
+    assert_equal 40, chat.ruby_llm_usages.sole.input_tokens
+    assert_equal 20, chat.ruby_llm_usages.sole.output_tokens
+    assert_requested request, times: 1
+  end
+
   test "#load should stage the selected model with bundled metadata when the database is empty" do
     assert_empty RubyLLM::ActiveRecord::Model.all
     RubyLLM.models.load_from_store

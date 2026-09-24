@@ -8,6 +8,11 @@ module LlmProvider
       display_name: "OpenAI",
       adapter_class: Openai,
       validator_class: AiCredentialValidator::Openai
+    }.freeze,
+    "xai" => {
+      display_name: "xAI",
+      adapter_class: Xai,
+      validator_class: AiCredentialValidator::Xai
     }.freeze
   }.freeze
 

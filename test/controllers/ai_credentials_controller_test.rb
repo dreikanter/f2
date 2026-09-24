@@ -110,7 +110,8 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='ai_credentials.new']"
     assert_select "[data-key='ai_credentials.provider']"
     assert_select "option[value='openai'][selected]:not([disabled])"
-    assert_select "[data-key='ai_credentials.provider'] option", count: 1
+    assert_select "option[value='xai']:not([disabled])", text: "xAI"
+    assert_select "[data-key='ai_credentials.provider'] option", count: 2
     assert_select "[data-key='ai_credentials.credential-data.api_key']"
   end
 
