@@ -11,7 +11,7 @@ class FeedPreviewJob < ApplicationJob
     return if params_digest && params_digest != feed_preview.params_digest
 
     FeedPreviewWorkflow.new(feed_preview, run_id: run_id).execute
-  rescue Loader::LlmLoader::ExecutionLimitExceeded
+  rescue Loader::LlmLoader::ExecutionLimitExceeded, Loader::HttpBase::TransportError
     nil
   rescue => e
     # The workflow already transitioned the preview to :failed. Do not re-raise:

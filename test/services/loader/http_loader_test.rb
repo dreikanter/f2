@@ -40,11 +40,12 @@ class Loader::HttpLoaderTest < ActiveSupport::TestCase
 
     loader = Loader::HttpLoader.new(feed, { http_client: mock_client })
 
-    error = assert_raises(Loader::Error) do
+    error = assert_raises(Loader::HttpBase::TransportError) do
       loader.load
     end
 
     assert_equal "Connection refused", error.message
+    assert_kind_of HttpClient::ConnectionError, error.cause
   end
 
   test "#load should handle timeout errors" do
@@ -52,11 +53,12 @@ class Loader::HttpLoaderTest < ActiveSupport::TestCase
 
     loader = Loader::HttpLoader.new(feed, { http_client: mock_client })
 
-    error = assert_raises(Loader::Error) do
+    error = assert_raises(Loader::HttpBase::TransportError) do
       loader.load
     end
 
     assert_equal "Request timed out", error.message
+    assert_kind_of HttpClient::TimeoutError, error.cause
   end
 
   test "#load should handle too many redirects error" do

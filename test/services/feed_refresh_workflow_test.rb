@@ -354,7 +354,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "failed", error_event.metadata["status"]
     assert_equal "error", error_event.level
     assert_match(/execution expired/, error_event.message)
-    assert_equal "Loader::Error", error_event.metadata["error"]["class"]
+    assert_equal "Loader::HttpBase::TransportError", error_event.metadata["error"]["class"]
   end
 
   test "#execute should handle RSS processing errors gracefully" do
