@@ -178,7 +178,7 @@ module RateLimit
     # @return [void]
     def penalize(name, subject:, retry_after:)
       with_locked_row(name, subject) do |row, _now|
-        row.update!(blocked_until: retry_after.seconds.from_now)
+        row.update!(blocked_until: [row.blocked_until, retry_after.seconds.from_now].compact.max)
       end
       Rails.logger.warn("RateLimit cooldown #{name}:#{subject} blocked for #{retry_after}s (server throttled us)")
       Honeybadger.event("rate_limit.penalized", policy: name.to_s, subject: subject, retry_after: retry_after)

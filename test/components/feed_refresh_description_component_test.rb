@@ -122,6 +122,14 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "interrupted"
   end
 
+  test "#call should describe a throttled refresh as delayed" do
+    event = event_with_status("throttled", level: :warning)
+
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
+
+    assert_includes result.text, "Test Feed refresh was delayed by the source's rate limit"
+  end
+
   test "#call should treat events without a status as completed" do
     result = render_inline(FeedRefreshDescriptionComponent.new(event: refresh_event))
 

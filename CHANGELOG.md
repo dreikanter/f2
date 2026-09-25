@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-25
+
+- Retry rate-limited feed refreshes after a cooldown, without counting them toward automatic disabling.
+
 ## 2026-09-21
 
 - AI feeds try broader searches and inspect promising results before concluding that no requested posts were found.

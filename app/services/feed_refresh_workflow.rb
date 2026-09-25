@@ -26,10 +26,22 @@ class FeedRefreshWorkflow
   end
 
   def on_error(error)
+    return throttle_refresh_event(error) if error.is_a?(Loader::Throttled)
+
     Metrics.increment("feed_refresh_total", status: "error", profile: feed.feed_profile_key)
     record_error_stats(current_step: current_step)
     fail_refresh_event(error)
     feed.record_refresh_failure!
+  end
+
+  def throttle_refresh_event(error)
+    Metrics.increment("feed_refresh_total", status: "throttled", profile: feed.feed_profile_key)
+    record_completed_at
+    replace_refresh_event(
+      level: :warning,
+      message: error.message,
+      metadata: { status: "throttled", stats: stats, rate_limit: error.details }
+    )
   end
 
   def initialize_workflow(*)

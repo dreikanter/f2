@@ -22,6 +22,9 @@
 # FreeFeed also allows GET /vN/attachments/:attId/:type 1000/min, but that's the
 # attachment-download route, which Feeder never calls, so it gets no bucket.
 Rails.application.config.to_prepare do
+  # Arbitrary sources declare their own cooldown through HTTP 429.
+  RateLimit.define(:web_fetch) { }
+
   RateLimit.define :freefeed do
     limit :post, 30, per: 1.minute, burst: 20   # worst window 50, under FreeFeed POST 60/min
     limit :get, 100, per: 1.minute, burst: 30   # worst window 130, under FreeFeed GET 200/min

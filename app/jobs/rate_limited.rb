@@ -22,13 +22,13 @@ module RateLimited
 
   # Defer this run because there's no capacity. Reschedules with backoff until
   # the attempt cap, then reports the throttle once and invokes the cleanup hook.
-  def reschedule_for_rate_limit(retry_after)
+  def reschedule_for_rate_limit(retry_after, error: nil)
     @rate_limited = true
 
     if executions < MAX_ATTEMPTS
       retry_job(wait: retry_after + rand(0.0..JITTER_SECONDS))
     else
-      error = RateLimit::Throttled.new(retry_after: retry_after)
+      error ||= RateLimit::Throttled.new(retry_after: retry_after)
       Rails.error.report(error, context: { job: self.class.name, arguments: arguments })
       on_rate_limit_exhausted(error)
     end

@@ -50,6 +50,7 @@ en:
       description_html: "%{subject_link} refreshed"
       started_description_html: "%{subject_link} refresh is in progress"
       failed_description_html: "%{subject_link} couldn't refresh; %{message}"
+      throttled_description_html: "%{subject_link} refresh was delayed by the source's rate limit"
       interrupted_description_html: "%{subject_link} refresh was interrupted"
       unknown_status_description_html: "%{subject_link} refresh status is unknown"
     feed_refresh_ai_empty:

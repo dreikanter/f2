@@ -16,6 +16,7 @@ class FeedRefreshDescriptionComponent < EventDescriptionComponent
     case event.metadata["status"]
     when "started" then "events.feed_refresh.started_description_html"
     when "failed" then "events.feed_refresh.failed_description_html"
+    when "throttled" then "events.feed_refresh.throttled_description_html"
     when "interrupted" then "events.feed_refresh.interrupted_description_html"
     when "completed", nil then super
     else "events.feed_refresh.unknown_status_description_html"

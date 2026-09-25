@@ -57,11 +57,12 @@ class Loader::RedditLoaderTest < ActiveSupport::TestCase
     assert_equal RSS_BODY, result
   end
 
-  test "#load should raise on HTTP error" do
+  test "#load should preserve a Reddit rate limit as throttling" do
     feed = create(:feed, feed_profile_key: "reddit", url: "r/worldnews")
     error_client = MockHttpClient.new(response: HttpClient::Response.new(status: 429, body: "Too Many Requests"))
-    error = assert_raises(Loader::Error) { Loader::RedditLoader.new(feed, { http_client: error_client }).load }
-    assert_equal "HTTP 429", error.message
+    error = assert_raises(Loader::Throttled) { Loader::RedditLoader.new(feed, { http_client: error_client }).load }
+    assert_equal 429, error.http_status
+    assert_equal "www.reddit.com", error.source_host
   end
 
   test "#load should wrap transport timeouts as loader errors" do

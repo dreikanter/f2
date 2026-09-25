@@ -5,7 +5,24 @@ module Loader
     private
 
     def http_get(url, **request_options)
-      http_client.get(url, **request_options)
+      host = URI.parse(url).host.downcase
+      capacity = RateLimit.acquire(:web_fetch, subject: host, cost: {})
+      unless capacity.allowed?
+        raise Throttled.new(source_host: host, retry_after: capacity.retry_after)
+      end
+
+      response = http_client.get(url, **request_options)
+      if response.status == 429
+        source_host = response.url.present? ? URI.parse(response.url).host.downcase : host
+        error = Throttled.from_response(response, source_host: source_host)
+        # Remember both hosts so the redirecting URL also respects the cooldown.
+        [host, source_host].uniq.each do |subject|
+          RateLimit.penalize(:web_fetch, subject: subject, retry_after: error.retry_after)
+        end
+        raise error
+      end
+
+      response
     rescue HttpClient::Error => e
       raise Loader::Error, e.message
     end

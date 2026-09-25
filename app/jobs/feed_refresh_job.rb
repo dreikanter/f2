@@ -1,4 +1,6 @@
 class FeedRefreshJob < ApplicationJob
+  include RateLimited
+
   queue_as :default
 
   # @param feed_id [Integer] ID of the feed to refresh
@@ -10,8 +12,17 @@ class FeedRefreshJob < ApplicationJob
     return if feed.feed_profile_key == "webhook"
 
     Feed.with_advisory_lock!("feed_refresh_#{feed.id}", timeout_seconds: 0) do
+      if executions > 1
+        feed.reload
+        return unless feed.enabled?
+        return if enqueued_at && feed.last_successful_refresh_at&.after?(enqueued_at)
+      end
+
       FeedRefreshWorkflow.new(feed).execute
     end
+  rescue Loader::Throttled => e
+    Rails.logger.warn("Feed refresh throttled", **e.details, feed_id: feed_id)
+    reschedule_for_rate_limit(e.retry_after, error: e)
   rescue Loader::LlmLoader::ExecutionLimitExceeded
     record_loader_error(feed)
   rescue Loader::Error => e

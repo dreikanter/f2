@@ -236,6 +236,18 @@ class RateLimitTest < ActiveSupport::TestCase
     assert_match(/RateLimit cooldown t:a blocked for 30s/, out)
   end
 
+  test ".penalize should preserve a longer cooldown from a concurrent response" do
+    freeze_time
+    RateLimit.define(:t) { }
+    RateLimit.penalize(:t, subject: "source", retry_after: 600)
+    RateLimit.penalize(:t, subject: "source", retry_after: 30)
+
+    result = RateLimit.acquire(:t, subject: "source", cost: {})
+
+    assert_not result.allowed?
+    assert_equal 600, result.retry_after
+  end
+
   test ".acquire should emit a Honeybadger event when throttled" do
     RateLimit.define(:t) { limit :requests, 1, per: 60 }
     RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1))
