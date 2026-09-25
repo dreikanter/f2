@@ -21,7 +21,7 @@ class FeedRefreshJob < ApplicationJob
       FeedRefreshWorkflow.new(feed).execute
     end
   rescue Loader::Throttled => e
-    Rails.logger.warn("Feed refresh throttled", **e.details, feed_id: feed_id)
+    Rails.logger.warn({ event: "feed_refresh.throttled", feed_id: feed_id, **e.details }.to_json)
     reschedule_for_rate_limit(e.retry_after, error: e)
   rescue Loader::LlmLoader::ExecutionLimitExceeded
     record_loader_error(feed)
