@@ -46,15 +46,50 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     assert_requested request, times: 1
   end
 
-  test "#perform should retain the cause of a remote connection failure" do
-    stub_request(:get, feed.url).to_raise(SocketError.new("Name resolution failed"))
+  test "#perform should record a connection failure without reporting a bug or retrying" do
+    request = stub_request(:get, feed.url).to_raise(SocketError.new("Name resolution failed"))
+
+    reports = capture_error_reports do
+      assert_no_enqueued_jobs(only: FeedRefreshJob) { FeedRefreshJob.perform_now(feed.id) }
+    end
+
+    assert_empty reports
+    event = feed.events.where(type: "feed_refresh").sole
+    assert_equal "failed", event.metadata["status"]
+    assert_match(/Name resolution failed/, event.message)
+    assert_equal 1, feed.reload.consecutive_failures
+    assert_requested request, times: 1
+  end
+
+  test "#perform should count a read timeout without reporting a bug or retrying" do
+    request = stub_request(:get, feed.url).to_raise(Net::ReadTimeout.new("read timed out"))
+    increments = []
+
+    reports = capture_error_reports do
+      Metrics.stub(:increment, ->(name, **labels) { increments << [name, labels] }) do
+        assert_no_enqueued_jobs(only: FeedRefreshJob) { FeedRefreshJob.perform_now(feed.id) }
+      end
+    end
+
+    assert_empty reports
+    assert_includes increments, ["loader_errors_total", { profile: "rss", loader: "HttpLoader" }]
+    event = feed.events.where(type: "feed_refresh").sole
+    assert_equal "failed", event.metadata["status"]
+    assert_equal "load_feed_contents", event.metadata.dig("error", "stage")
+    assert_match(/read timed out/, event.message)
+    assert_equal 1, feed.reload.consecutive_failures
+    assert_requested request, times: 1
+  end
+
+  test "#perform should still disable a feed after repeated transport failures" do
+    feed = create(:feed, :enabled, feed_profile_key: "rss", consecutive_failures: Feed::MAX_CONSECUTIVE_FAILURES - 1)
+    stub_request(:get, feed.url).to_timeout
 
     reports = capture_error_reports { FeedRefreshJob.perform_now(feed.id) }
 
-    error = reports.sole.error
-    assert_kind_of Loader::Error, error
-    assert_kind_of HttpClient::ConnectionError, error.cause
-    assert_equal feed.id, reports.sole.context[:feed_id]
+    assert_empty reports
+    assert_predicate feed.reload, :disabled?
+    assert_equal "failed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
   end
 
   test ".perform_now should skip without raising when the feed is already being refreshed" do
