@@ -18,13 +18,15 @@ module Loader
     def log_transport_error(url, error)
       uri = URI.parse(url.to_s)
       Rails.logger.warn(
-        "Feed source request failed",
-        feed_id: feed.id,
-        profile: feed.feed_profile_key,
-        loader: self.class.name,
-        host: uri.host,
-        path: uri.path,
-        error_class: error.class.name
+        message: "Feed source request failed",
+        payload: {
+          feed_id: feed.id,
+          profile: feed.feed_profile_key,
+          loader: self.class.name,
+          host: uri.host,
+          path: uri.path,
+          error_class: error.class.name
+        }
       )
     end
 
