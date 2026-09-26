@@ -13,22 +13,25 @@
     <% end %>
   <% end %>
 
-  <%= render DescriptionListComponent.new do |list| %>
-    <% list.with_item(StatListItemComponent.new(label: "Provider", value: @chat.requested_provider)) %>
-    <% list.with_item(StatListItemComponent.new(label: "Model", value: @chat.requested_model)) %>
-    <% list.with_item(StatListItemComponent.new(label: "Purpose", value: @chat.purpose.humanize)) %>
-    <% list.with_item(StatListItemComponent.new(label: "Started", value: datetime_with_duration_tag(@chat.started_at), key: "ai_history.started")) %>
-    <% list.with_item(StatListItemComponent.new(label: "User", value: link_to_if(policy([:admin, @chat.user]).show?, @chat.user.email_address, admin_user_path(@chat.user), class: text_link_classes))) %>
-    <% if @chat.feed %>
-      <% list.with_item(StatListItemComponent.new(label: "Feed", value: link_to_if(policy([:admin, @chat.feed]).show?, @chat.feed.name, admin_feed_path(@chat.feed), class: text_link_classes))) %>
+  <section class="space-y-4" data-key="ai_history.chat_details">
+    <%= h2 "Chat details" %>
+    <%= render DescriptionListComponent.new do |list| %>
+      <% list.with_item(StatListItemComponent.new(label: "Provider", value: @chat.requested_provider)) %>
+      <% list.with_item(StatListItemComponent.new(label: "Model", value: @chat.requested_model)) %>
+      <% list.with_item(StatListItemComponent.new(label: "Purpose", value: @chat.purpose.humanize)) %>
+      <% list.with_item(StatListItemComponent.new(label: "Started", value: datetime_with_duration_tag(@chat.started_at), key: "ai_history.started")) %>
+      <% list.with_item(StatListItemComponent.new(label: "User", value: link_to_if(policy([:admin, @chat.user]).show?, @chat.user.email_address, admin_user_path(@chat.user), class: text_link_classes))) %>
+      <% if @chat.feed %>
+        <% list.with_item(StatListItemComponent.new(label: "Feed", value: link_to_if(policy([:admin, @chat.feed]).show?, @chat.feed.name, admin_feed_path(@chat.feed), class: text_link_classes))) %>
+      <% end %>
+      <% if @chat.ai_credential %>
+        <% list.with_item(StatListItemComponent.new(label: "AI Credential", value: link_to_if(policy([:admin, @chat.ai_credential]).show?, @chat.ai_credential.display_name, admin_ai_credential_path(@chat.ai_credential), class: text_link_classes))) %>
+      <% end %>
+      <% if @chat.error_category.present? %>
+        <% list.with_item(StatListItemComponent.new(label: "Error", value: tag.code(@chat.error_category))) %>
+      <% end %>
     <% end %>
-    <% if @chat.ai_credential %>
-      <% list.with_item(StatListItemComponent.new(label: "AI Credential", value: link_to_if(policy([:admin, @chat.ai_credential]).show?, @chat.ai_credential.display_name, admin_ai_credential_path(@chat.ai_credential), class: text_link_classes))) %>
-    <% end %>
-    <% if @chat.error_category.present? %>
-      <% list.with_item(StatListItemComponent.new(label: "Error", value: tag.code(@chat.error_category))) %>
-    <% end %>
-  <% end %>
+  </section>
 
   <section class="space-y-4" data-key="ai_history.messages">
     <%= h2 "Conversation" %>
@@ -38,19 +41,28 @@
           <h3 class="font-semibold text-heading"><%= llm_message_title(message.role) %></h3>
           <%= short_time_ago_tag(message.created_at, css_class: "shrink-0 text-sm tabular-nums text-muted") %>
         <% end %>
-        <% card.with_section(class: "space-y-3 px-5 py-4") do %>
-          <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.content"><%= format_llm_message_content(message.content) %></pre>
-          <% if message.server_tool_calls.present? %>
-            <details>
-              <summary class="text-muted">Provider tool calls</summary>
-              <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.tool_calls"><%= JSON.pretty_generate(message.server_tool_calls.map(&:to_h)) %></pre>
-            </details>
+        <% card.with_section(class: "px-5 py-4") do %>
+          <pre class="<%= llm_message_json?(message.content) ? "overflow-x-auto whitespace-pre" : "whitespace-pre-wrap break-words" %> text-sm text-body" data-key="ai_history.content"><%= format_llm_message_content(message.content) %></pre>
+        <% end %>
+        <% message.server_tool_calls.each do |call| %>
+          <% card.with_section(class: "space-y-2 px-5 py-4", data: { key: "ai_history.tool_call" }) do %>
+            <h4 class="font-medium text-heading"><%= call.type.humanize %></h4>
+            <% if (query = call.input.is_a?(Hash) && call.input[:query]).present? %>
+              <p class="break-words text-sm text-body" data-key="ai_history.search_query"><%= query %></p>
+            <% end %>
+            <pre class="overflow-x-auto whitespace-pre text-sm text-body"><%= JSON.pretty_generate(call.raw || call.to_h) %></pre>
           <% end %>
-          <% if message.citations.present? %>
-            <details>
-              <summary class="text-muted">Sources</summary>
-              <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.citations"><%= JSON.pretty_generate(message.citations.map(&:to_h)) %></pre>
-            </details>
+        <% end %>
+        <% message.ruby_llm_tool_calls.each do |call| %>
+          <% card.with_section(class: "space-y-2 px-5 py-4", data: { key: "ai_history.tool_call" }) do %>
+            <h4 class="font-medium text-heading"><%= call.name %></h4>
+            <pre class="overflow-x-auto whitespace-pre text-sm text-body"><%= JSON.pretty_generate(call.arguments) %></pre>
+          <% end %>
+        <% end %>
+        <% if message.citations.present? %>
+          <% card.with_section(class: "space-y-2 px-5 py-4") do %>
+            <h4 class="font-medium text-heading">Sources</h4>
+            <pre class="overflow-x-auto whitespace-pre text-sm text-body" data-key="ai_history.citations"><%= JSON.pretty_generate(message.citations.map(&:to_h)) %></pre>
           <% end %>
         <% end %>
       <% end %>

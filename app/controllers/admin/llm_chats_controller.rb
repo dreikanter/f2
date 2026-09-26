@@ -9,7 +9,7 @@ class Admin::LlmChatsController < ApplicationController
   def show
     authorize [:admin, LlmChat]
     @chat = policy_scope([:admin, LlmChat]).find(params[:id])
-    @messages = @chat.messages.order(:created_at, :id)
+    @messages = @chat.messages.includes(:ruby_llm_tool_calls).order(:created_at, :id)
     @usages = LlmUsageReport.new(chats: LlmChat.where(id: @chat.id)).usages.includes(:message).order(:created_at, :id)
   end
 

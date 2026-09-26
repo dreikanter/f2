@@ -33,6 +33,7 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     credential = create(:ai_credential, user: regular_user)
     chat = create(:llm_chat, user: regular_user, feed: feed, ai_credential: credential)
     chat.messages.create!(role: "system", content: "Extract items", created_at: 1.minute.ago)
+    chat.messages.create!(role: "user", content: "Find today's news", created_at: 30.seconds.ago)
     chat.messages.create!(role: "assistant", content: '<script>alert("hello")</script>')
     usage = create(:ruby_llm_usage, chat: chat, input_tokens: 123, output_tokens: 45)
     unrelated = create(:llm_chat, user: other_user)
@@ -50,8 +51,10 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
-    assert_equal ["System instructions", "AI response"], css_select('[data-key="ai_history.message"] h3').map(&:text)
+    assert_equal ["System instructions", "User request", "AI response"], css_select('[data-key="ai_history.message"] h3').map(&:text)
+    assert_select '[data-key="ai_history.chat_details"] h2', "Chat details"
     assert_select '[data-key="ai_history.messages"] script', count: 0
+    assert_select '[data-key="ai_history.content"].whitespace-pre-wrap', count: 3
     assert_includes response.body, "&lt;script&gt;"
     assert_not_includes response.body, "Private other transcript"
     assert_select "[data-llm-usage-id=?]", usage.id
@@ -85,6 +88,7 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
         cited_text: "Definitions differ."
       }]
     )
+    message.ruby_llm_tool_calls.create!(tool_call_id: "call_1", name: "lookup", arguments: { "query" => "economic report" })
 
     get admin_llm_chat_path(chat)
 
@@ -92,12 +96,20 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="ai_history.messages"] h2', "Conversation"
     assert_select '[data-key="ai_history.message"] h3', "AI response"
     assert_select '[data-key="ai_history.message_header"] time[datetime=?]', message.created_at.iso8601
-    assert_select '[data-key="ai_history.message"] summary', text: "Provider tool calls"
-    assert_select '[data-key="ai_history.message"] summary', text: "Sources"
+    assert_select '[data-key="ai_history.message"] > [data-key="ai_history.tool_call"]', count: 2
+    assert_select '[data-key="ai_history.tool_call"] h4', text: "Web search call"
+    assert_select '[data-key="ai_history.tool_call"] h4', text: "lookup"
+    assert_select '[data-key="ai_history.search_query"]', "economic report"
+    assert_select '[data-key="ai_history.message"] > div > h4', text: "Sources"
+    assert_select '[data-key="ai_history.message"] details', count: 0
+    assert_select '[data-key="ai_history.content"].overflow-x-auto.whitespace-pre'
+    assert_select '[data-key="ai_history.tool_call"] pre.overflow-x-auto.whitespace-pre', count: 2
+    assert_select '[data-key="ai_history.citations"].overflow-x-auto.whitespace-pre'
     assert_select '[data-key="ai_history.usage"] h2', "Token Usage and Cost"
     response_text = css_select('[data-key="ai_history.content"]').sole.text
     assert_equal content, JSON.parse(response_text)
-    assert_equal message[:server_tool_calls], JSON.parse(css_select('[data-key="ai_history.tool_calls"]').sole.text)
+    assert_equal message[:server_tool_calls].sole.fetch("raw"), JSON.parse(css_select('[data-key="ai_history.tool_call"] pre').first.text)
+    assert_equal({ "query" => "economic report" }, JSON.parse(css_select('[data-key="ai_history.tool_call"] pre').last.text))
     assert_equal message[:citations], JSON.parse(css_select('[data-key="ai_history.citations"]').sole.text)
   end
 
