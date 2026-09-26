@@ -84,6 +84,16 @@ class TimeHelperTest < ActiveSupport::TestCase
     end
   end
 
+  test "#long_time_tag should include seconds when requested" do
+    time = Time.zone.parse("2025-01-15 15:45:30")
+
+    travel_to Time.zone.parse("2025-01-15 16:45:30") do
+      result = long_time_tag(time, seconds: true)
+      expected = '<time datetime="2025-01-15T15:45:30Z" title="1 hour ago">15 Jan 2025, 15:45:30</time>'
+      assert_equal expected, result
+    end
+  end
+
   test "#short_time_ago_tag should return nil for nil input" do
     assert_nil short_time_ago_tag(nil)
   end

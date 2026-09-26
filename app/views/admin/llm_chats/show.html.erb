@@ -38,7 +38,7 @@
     <% @messages.each do |message| %>
       <%= render CardComponent.new(data: { key: "ai_history.message" }) do |card| %>
         <% card.with_section(class: "flex items-center gap-3 px-5 py-4", data: { key: "ai_history.message_header" }) do %>
-          <%= long_time_tag(message.created_at) %>
+          <%= long_time_tag(message.created_at, seconds: true) %>
           <h3 class="font-semibold text-heading"><%= llm_message_title(message.role) %></h3>
         <% end %>
         <% card.with_section(class: "px-5 py-4") do %>
