@@ -6,6 +6,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 - AI API logs now show chat details separately, with tool calls and sources in clear sections under each message.
 - Long JSON lines in AI API logs now scroll sideways instead of wrapping.
+- AI feeds avoid publishing an original item twice when its refresh job retries.
 
 ## 2026-09-21
 

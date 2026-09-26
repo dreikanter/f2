@@ -17,7 +17,7 @@ module Loader
         raise Loader::Error, "AI response did not complete."
       end
 
-      LlmResult.new(content: response.content, chat: chat)
+      LlmResult.new(content: response.content, chat: chat, generation_id: options.fetch(:generation_id, chat.id))
     rescue StandardError => error
       chat&.fail!(error)
 

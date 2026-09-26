@@ -66,7 +66,8 @@ class FeedPreviewWorkflow
       purpose: :preview,
       refresh_event: @activity&.event,
       usage_feed: feed_preview.feed,
-      deadline_at: deadline_at
+      deadline_at: deadline_at,
+      generation_id: @run_id
     )
 
     raw_data = loader.load

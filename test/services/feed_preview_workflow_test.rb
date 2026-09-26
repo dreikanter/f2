@@ -381,7 +381,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_empty accepted["validation_errors"]
     assert_equal "enqueued", digest["status"]
     assert_nil digest["source_url"]
-    assert_match(/\A[0-9a-f-]{36}\z/, digest["uid"])
+    assert_match(/\Agenerated:[0-9a-f]{64}\z/, digest["uid"])
     assert_equal 4, preview.total_entries_count
     assert_equal 1, preview.unidentified_entries_count
     assert_equal 1, preview.rejected_posts_count

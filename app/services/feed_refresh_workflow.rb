@@ -15,8 +15,9 @@ class FeedRefreshWorkflow
 
   attr_reader :feed
 
-  def initialize(feed)
+  def initialize(feed, generation_id: SecureRandom.uuid)
     @feed = feed
+    @generation_id = generation_id
   end
 
   private
@@ -79,7 +80,7 @@ class FeedRefreshWorkflow
   end
 
   def load_feed_contents(*)
-    raw_data = feed.loader_instance(refresh_event: @refresh_event).load
+    raw_data = feed.loader_instance(refresh_event: @refresh_event, generation_id: @generation_id).load
     record_stats(content_size: content_bytesize(raw_data))
     raw_data
   end

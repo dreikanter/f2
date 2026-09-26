@@ -1,3 +1,5 @@
+require "digest"
+
 module Processor
   # Validates AI response JSON before building entries for the feed pipeline.
   class LlmProcessor < Base
@@ -6,10 +8,10 @@ module Processor
     def process
       data = parse_output
       now = Time.current
-      entries = data.fetch("items").map do |item|
+      entries = data.fetch("items").each_with_index.map do |item, index|
         FeedEntry.new(
           feed: feed,
-          uid: item["source_url"].nil? ? SecureRandom.uuid : Uid::Resolver.from_url(item["source_url"]),
+          uid: item["source_url"].nil? ? generated_uid(index) : Uid::Resolver.from_url(item["source_url"]),
           published_at: parse_time(item["published_at"]) || now,
           status: :pending,
           raw_data: item
@@ -24,6 +26,10 @@ module Processor
     end
 
     private
+
+    def generated_uid(index)
+      "generated:#{Digest::SHA256.hexdigest("#{raw_data.generation_id}:#{index}")}"
+    end
 
     def parse_output
       data = JSON.parse(raw_data.content)

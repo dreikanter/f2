@@ -2,14 +2,15 @@
 class LlmResult
   class LifecycleError < StandardError; end
 
-  attr_reader :content
+  attr_reader :content, :generation_id
 
   delegate :bytesize, to: :content
   delegate :fail!, to: :chat
 
-  def initialize(content:, chat:)
+  def initialize(content:, chat:, generation_id: chat.id)
     @content = content
     @chat = chat
+    @generation_id = generation_id
   end
 
   def complete!
