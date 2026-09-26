@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_20_200000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_26_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -167,6 +167,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_20_200000) do
     t.uuid "access_token_id"
     t.datetime "created_at", null: false
     t.string "cron_expression"
+    t.integer "refresh_interval"
     t.string "description", default: "", null: false
     t.string "feed_profile_key"
     t.datetime "import_after"
@@ -191,6 +192,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_20_200000) do
     t.index ["ai_credential_id"], name: "index_feeds_on_ai_credential_id"
     t.index ["search_credential_id"], name: "index_feeds_on_search_credential_id"
     t.index ["user_id"], name: "index_feeds_on_user_id"
+    t.check_constraint "refresh_interval > 0", name: "feeds_refresh_interval_positive"
   end
 
   create_table "invites", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|

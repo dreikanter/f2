@@ -323,6 +323,19 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.errors.of_kind?(:cron_expression, :blank)
   end
 
+  test "#valid? should accept refresh_interval instead of cron_expression" do
+    feed = build(:feed, state: :enabled, cron_expression: nil, refresh_interval: 2.hours.to_i)
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "#valid? should reject nonpositive refresh_interval" do
+    feed = build(:feed, refresh_interval: 0)
+
+    assert_not feed.valid?
+    assert feed.errors.of_kind?(:refresh_interval, :greater_than)
+  end
+
   test "#valid? should not require cron_expression for an unscheduled profile" do
     FeedProfile.stub(:scheduled?, false) do
       feed = build(:feed, state: :enabled, cron_expression: nil)
@@ -1389,6 +1402,15 @@ class FeedTest < ActiveSupport::TestCase
     feed.reset_refresh_failures!
 
     assert_equal 0, feed.reload.consecutive_failures
+  end
+
+  test "#schedule_interval= should replace a stored refresh interval" do
+    feed = build(:feed, cron_expression: nil, refresh_interval: 2.hours.to_i)
+
+    feed.schedule_interval = "1h"
+
+    assert_equal "0 * * * *", feed.cron_expression
+    assert_nil feed.refresh_interval
   end
 
   test "#reset_schedule! should update next_run_at to now on the existing schedule" do
