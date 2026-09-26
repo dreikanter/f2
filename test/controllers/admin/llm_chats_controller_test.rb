@@ -74,6 +74,7 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     message = chat.messages.create!(
       role: "assistant",
       content: JSON.generate(content),
+      created_at: Time.zone.local(2026, 9, 17, 22, 47),
       server_tool_calls: [{
         type: "web_search_call",
         name: "web_search",
@@ -95,7 +96,8 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select '[data-key="ai_history.messages"] h2', "Conversation"
     assert_select '[data-key="ai_history.message"] h3', "AI response"
-    assert_select '[data-key="ai_history.message_header"] time[datetime=?]', message.created_at.iso8601
+    assert_select '[data-key="ai_history.message_header"] time[datetime=?]', message.created_at.iso8601, text: "17 Sep 2026, 22:47"
+    assert_equal ["time", "h3"], css_select('[data-key="ai_history.message_header"]').sole.element_children.map(&:name)
     assert_select '[data-key="ai_history.message"] > [data-key="ai_history.tool_call"]', count: 2
     assert_select '[data-key="ai_history.tool_call"] h4', text: "Web search call"
     assert_select '[data-key="ai_history.tool_call"] h4', text: "lookup"
