@@ -78,6 +78,22 @@ Changing from `gpt-5-nano` to `gpt-5-mini` therefore did not pass the case in
 this single comparison. It does show that discovery and candidate inspection
 are distinct failure points.
 
+An isolated diagnostic supplied one of those exact X status URLs. The model
+opened the individual page directly and still returned no verified item. With
+four requested native calls it also searched the post ID and archives, but
+reached a fifth call without source text or publication time. This narrows the
+failure beyond discovery: native search activity did not provide usable
+verification for that candidate in either run. The provider record does not
+include the page text returned by `open_page`, so the exact access failure, if
+any, remains unknown.
+
+Direct HTTP checks from the local development machine found source publication
+metadata for seven individual X links surfaced across the native searches.
+Their dates ranged from September 2024 to June 2026; none belonged to the
+September 26, 2026 UTC publication window. This independent check supports
+rejecting those candidates as stale. It does not show which page content
+OpenAI's `open_page` action saw, or whether other current posts were searchable.
+
 A separate original Rails-tip case completed with one preview item and no
 search calls using a 4096 output-token cap. At 1024 output tokens, the same
 case hit the output limit without a final answer. This supports keeping
@@ -91,9 +107,16 @@ past quotes cannot be verified by the model because the feed prompt does not
 include prior quote identities. The search record supports the output-limit
 finding; it does not establish which quotation would have been returned.
 
+A later `developer_news` run used one request, six requested native calls, and
+8192 output tokens. It searched for official Rails announcements, then opened
+Rails and PostgreSQL index pages repeatedly. A seventh call began, no item was
+produced, and the run failed after 52.3 seconds. This shows that unproductive
+candidate inspection also occurs outside X under these bounds. It does not
+establish whether the production allowance of more calls would complete.
+
 No prompt candidate improved the X case in the bounded local trials, so no
 prompt change is included here. Future live tests should repeat a promising
 result, compare it to this baseline, and use held-out cases before changing
-the production prompt. The remaining work includes stable identity for
-generated content, deterministic date and deduplication checks, and distinct
+the production prompt. Stable generated identity is proposed separately in
+PR #1830. The remaining work includes deterministic date checks and distinct
 diagnostic outcomes for empty runs.
