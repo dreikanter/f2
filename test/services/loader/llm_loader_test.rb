@@ -449,6 +449,100 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
+  test "#load should retry an empty X-today search with verified source posts" do
+    feed.params = { "prompt" => "Find one AI post published TODAY on x.com", "max_items" => 1 }
+    post_id = "2103847338905088489"
+    post_url = "https://x.com/TechCrunch/status/#{post_id}"
+    first = completed_response
+    first.fetch("output").first.fetch("action")["sources"] = [{ "url" => "https://x.com/TechCrunch" }]
+    item = original_item.merge("body" => "A verified AI post", "source_url" => post_url,
+                               "published_at" => "2026-09-26T14:01:07Z")
+    second = completed_response(content: { "items" => [item] }.to_json).merge("id" => "response_retry")
+    payloads = []
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      payloads << JSON.parse(http.body)
+      { body: (payloads.size == 1 ? first : second).to_json, headers: { "Content-Type" => "application/json" } }
+    end
+    stub_request(:get, "https://x.com/TechCrunch").to_return(
+      body: %(<a href="/TechCrunch/status/#{post_id}">post</a>)
+    )
+    stub_request(:get, "https://x.com/i/status/#{post_id}")
+      .to_return(status: 307, headers: { "Location" => "/TechCrunch/status/#{post_id}" })
+    stub_request(:get, post_url).to_return(body: <<~HTML)
+      <meta property="og:url" content="#{post_url}">
+      <meta property="article:published_time" content="2026-09-26T14:01:07.000Z">
+      <meta property="og:description" content="A verified AI post">
+    HTML
+
+    travel_to Time.iso8601("2026-09-26T19:00:00Z") do
+      result = Loader::LlmLoader.new(feed, execution_limits: { max_requests: 2, max_tool_calls: 8 }).load
+      entry = feed.processor_instance(result).process.entries.sole
+
+      assert_equal post_url, entry.uid
+      assert_equal Time.iso8601("2026-09-26T14:01:07.845Z"), entry.published_at
+      assert_equal item, entry.raw_data
+    end
+
+    assert_equal "web_search", payloads.first.fetch("tools").sole.fetch("type")
+    assert_empty payloads.second.fetch("tools", [])
+    assert_includes feed.llm_chats.sole.messages.pluck(:content).join, post_url
+    assert_requested request, times: 2
+  end
+
+  test "#load should reject an X fallback answer outside its verified candidates" do
+    feed.params = { "prompt" => "Find one AI post published TODAY on x.com", "max_items" => 1 }
+    post_id = "2103847338905088489"
+    first = completed_response
+    first.fetch("output").first.fetch("action")["sources"] = [{ "url" => "https://x.com/TechCrunch" }]
+    item = original_item.merge("body" => "An unverified post",
+                               "source_url" => "https://x.com/Other/status/#{post_id}")
+    second = completed_response(content: { "items" => [item] }.to_json).merge("id" => "response_retry")
+    request = stub_request(:post, "https://api.openai.com/v1/responses")
+      .to_return_json(body: first).then.to_return_json(body: second)
+    stub_request(:get, "https://x.com/TechCrunch").to_return(
+      body: %(<a href="/TechCrunch/status/#{post_id}">post</a>)
+    )
+    stub_request(:get, "https://x.com/i/status/#{post_id}")
+      .to_return(status: 307, headers: { "Location" => "/TechCrunch/status/#{post_id}" })
+    stub_request(:get, "https://x.com/TechCrunch/status/#{post_id}").to_return(body: <<~HTML)
+      <meta property="og:url" content="https://x.com/TechCrunch/status/#{post_id}">
+      <meta property="article:published_time" content="2026-09-26T14:01:07.000Z">
+      <meta property="og:description" content="A verified AI post">
+    HTML
+
+    travel_to Time.iso8601("2026-09-26T19:00:00Z") do
+      error = assert_raises(Loader::Error) do
+        Loader::LlmLoader.new(feed, execution_limits: { max_requests: 2, max_tool_calls: 8 }).load
+      end
+
+      assert_equal "AI selected an unverified X post.", error.message
+    end
+    assert feed.llm_chats.sole.failed?
+    assert_requested request, times: 2
+  end
+
+  test "#load should leave explicit timezone requests to native search" do
+    feed.params = { "prompt" => "Find an X post published TODAY in Europe/Belgrade on x.com" }
+    request = stub_request(:post, "https://api.openai.com/v1/responses")
+      .to_return_json(body: completed_response)
+
+    assert_equal '{"items":[]}', Loader::LlmLoader.new(feed).load.content
+
+    assert_requested request, times: 1
+    assert_not_requested :get, /x\.com/
+  end
+
+  test "#fallback_execution_limits should carry the remaining total token budget" do
+    loader = Loader::LlmLoader.new(feed, execution_limits: { max_requests: 2, max_total_tokens: 100 })
+    usage = Struct.new(:input_tokens, :output_tokens).new(40, 20)
+    chat = Struct.new(:ruby_llm_usages).new([usage])
+
+    limits = loader.send(:fallback_execution_limits, chat)
+
+    assert_equal 1, limits.fetch(:max_requests)
+    assert_equal 40, limits.fetch(:max_total_tokens)
+  end
+
   test "#load should reject missing or inactive AI settings before creating a chat" do
     feed.ai_model = nil
     assert_no_difference "LlmChat.count" do

@@ -7,6 +7,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 - AI API logs now show chat details separately, with tool calls and sources in clear sections under each message.
 - Long JSON lines in AI API logs now scroll sideways instead of wrapping.
 - AI feeds use X post times from their permalinks and reject posts whose claimed dates conflict with them.
+- When a same-day X search comes up empty, AI feeds check recent posts from accounts found in that search before giving up.
 
 ## 2026-09-21
 
