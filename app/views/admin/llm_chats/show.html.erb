@@ -42,7 +42,7 @@
           <%= short_time_ago_tag(message.created_at, css_class: "shrink-0 text-sm tabular-nums text-muted") %>
         <% end %>
         <% card.with_section(class: "px-5 py-4") do %>
-          <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.content"><%= format_llm_message_content(message.content) %></pre>
+          <pre class="<%= llm_message_json?(message.content) ? "overflow-x-auto whitespace-pre" : "whitespace-pre-wrap break-words" %> text-sm text-body" data-key="ai_history.content"><%= format_llm_message_content(message.content) %></pre>
         <% end %>
         <% message.server_tool_calls.each do |call| %>
           <% card.with_section(class: "space-y-2 px-5 py-4", data: { key: "ai_history.tool_call" }) do %>
@@ -50,19 +50,19 @@
             <% if (query = call.input.is_a?(Hash) && call.input[:query]).present? %>
               <p class="break-words text-sm text-body" data-key="ai_history.search_query"><%= query %></p>
             <% end %>
-            <pre class="whitespace-pre-wrap break-words text-sm text-body"><%= JSON.pretty_generate(call.raw || call.to_h) %></pre>
+            <pre class="overflow-x-auto whitespace-pre text-sm text-body"><%= JSON.pretty_generate(call.raw || call.to_h) %></pre>
           <% end %>
         <% end %>
         <% message.ruby_llm_tool_calls.each do |call| %>
           <% card.with_section(class: "space-y-2 px-5 py-4", data: { key: "ai_history.tool_call" }) do %>
             <h4 class="font-medium text-heading"><%= call.name %></h4>
-            <pre class="whitespace-pre-wrap break-words text-sm text-body"><%= JSON.pretty_generate(call.arguments) %></pre>
+            <pre class="overflow-x-auto whitespace-pre text-sm text-body"><%= JSON.pretty_generate(call.arguments) %></pre>
           <% end %>
         <% end %>
         <% if message.citations.present? %>
           <% card.with_section(class: "space-y-2 px-5 py-4") do %>
             <h4 class="font-medium text-heading">Sources</h4>
-            <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.citations"><%= JSON.pretty_generate(message.citations.map(&:to_h)) %></pre>
+            <pre class="overflow-x-auto whitespace-pre text-sm text-body" data-key="ai_history.citations"><%= JSON.pretty_generate(message.citations.map(&:to_h)) %></pre>
           <% end %>
         <% end %>
       <% end %>

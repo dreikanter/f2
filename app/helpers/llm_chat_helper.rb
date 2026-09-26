@@ -19,6 +19,15 @@ module LlmChatHelper
     content
   end
 
+  def llm_message_json?(content)
+    return false if content.blank?
+
+    JSON.parse(content)
+    true
+  rescue JSON::ParserError
+    false
+  end
+
   def llm_chat_status_badge_color(status)
     case status.to_s
     when "running"

@@ -54,6 +54,7 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     assert_equal ["System instructions", "User request", "AI response"], css_select('[data-key="ai_history.message"] h3').map(&:text)
     assert_select '[data-key="ai_history.chat_details"] h2', "Chat details"
     assert_select '[data-key="ai_history.messages"] script', count: 0
+    assert_select '[data-key="ai_history.content"].whitespace-pre-wrap', count: 3
     assert_includes response.body, "&lt;script&gt;"
     assert_not_includes response.body, "Private other transcript"
     assert_select "[data-llm-usage-id=?]", usage.id
@@ -101,6 +102,9 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="ai_history.search_query"]', "economic report"
     assert_select '[data-key="ai_history.message"] > div > h4', text: "Sources"
     assert_select '[data-key="ai_history.message"] details', count: 0
+    assert_select '[data-key="ai_history.content"].overflow-x-auto.whitespace-pre'
+    assert_select '[data-key="ai_history.tool_call"] pre.overflow-x-auto.whitespace-pre', count: 2
+    assert_select '[data-key="ai_history.citations"].overflow-x-auto.whitespace-pre'
     assert_select '[data-key="ai_history.usage"] h2', "Token Usage and Cost"
     response_text = css_select('[data-key="ai_history.content"]').sole.text
     assert_equal content, JSON.parse(response_text)
