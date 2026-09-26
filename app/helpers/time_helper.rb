@@ -44,18 +44,18 @@ module TimeHelper
     time_distance(current_time - past_time)
   end
 
-  def long_time_format(time)
+  def long_time_format(time, seconds: false)
     return nil unless time
 
-    time.strftime("%-d %b %Y, %H:%M")
+    time.strftime(seconds ? "%-d %b %Y, %H:%M:%S" : "%-d %b %Y, %H:%M")
   end
 
-  def long_time_tag(time)
+  def long_time_tag(time, seconds: false)
     return nil unless time
 
     content_tag(
       :time,
-      long_time_format(time),
+      long_time_format(time, seconds: seconds),
       datetime: time.rfc3339,
       title: "#{time_ago(time)} ago"
     )

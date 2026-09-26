@@ -37,12 +37,16 @@
     <%= h2 "Conversation" %>
     <% @messages.each do |message| %>
       <%= render CardComponent.new(data: { key: "ai_history.message" }) do |card| %>
-        <% card.with_section(class: "flex items-start justify-between gap-4 px-5 py-4", data: { key: "ai_history.message_header" }) do %>
+        <% card.with_section(class: "flex items-center gap-3 px-5 py-4", data: { key: "ai_history.message_header" }) do %>
+          <%= long_time_tag(message.created_at, seconds: true) %>
           <h3 class="font-semibold text-heading"><%= llm_message_title(message.role) %></h3>
-          <%= short_time_ago_tag(message.created_at, css_class: "shrink-0 text-sm tabular-nums text-muted") %>
         <% end %>
         <% card.with_section(class: "px-5 py-4") do %>
-          <pre class="<%= llm_message_json?(message.content) ? "overflow-x-auto whitespace-pre" : "whitespace-pre-wrap break-words" %> text-sm text-body" data-key="ai_history.content"><%= format_llm_message_content(message.content) %></pre>
+          <% if message.content.present? %>
+            <pre class="<%= llm_message_json?(message.content) ? "overflow-x-auto whitespace-pre" : "whitespace-pre-wrap break-words" %> text-sm text-body" data-key="ai_history.content"><%= format_llm_message_content(message.content) %></pre>
+          <% else %>
+            <p class="text-sm text-muted" data-key="ai_history.empty_content">No message text.</p>
+          <% end %>
         <% end %>
         <% message.server_tool_calls.each do |call| %>
           <% card.with_section(class: "space-y-2 px-5 py-4", data: { key: "ai_history.tool_call" }) do %>

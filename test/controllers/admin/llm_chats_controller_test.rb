@@ -74,6 +74,7 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     message = chat.messages.create!(
       role: "assistant",
       content: JSON.generate(content),
+      created_at: Time.zone.local(2026, 9, 17, 22, 47, 32),
       server_tool_calls: [{
         type: "web_search_call",
         name: "web_search",
@@ -95,7 +96,8 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select '[data-key="ai_history.messages"] h2', "Conversation"
     assert_select '[data-key="ai_history.message"] h3', "AI response"
-    assert_select '[data-key="ai_history.message_header"] time[datetime=?]', message.created_at.iso8601
+    assert_select '[data-key="ai_history.message_header"] time[datetime=?]', message.created_at.iso8601, text: "17 Sep 2026, 22:47:32"
+    assert_equal ["time", "h3"], css_select('[data-key="ai_history.message_header"]').sole.element_children.map(&:name)
     assert_select '[data-key="ai_history.message"] > [data-key="ai_history.tool_call"]', count: 2
     assert_select '[data-key="ai_history.tool_call"] h4', text: "Web search call"
     assert_select '[data-key="ai_history.tool_call"] h4', text: "lookup"
@@ -111,6 +113,20 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     assert_equal message[:server_tool_calls].sole.fetch("raw"), JSON.parse(css_select('[data-key="ai_history.tool_call"] pre').first.text)
     assert_equal({ "query" => "economic report" }, JSON.parse(css_select('[data-key="ai_history.tool_call"] pre').last.text))
     assert_equal message[:citations], JSON.parse(css_select('[data-key="ai_history.citations"]').sole.text)
+  end
+
+  test "should explain blank messages and keep their tool calls" do
+    sign_in_as(dev_user)
+    chat = create(:llm_chat)
+    chat.messages.create!(role: "assistant", content: nil, server_tool_calls: [{ type: "web_search_call", id: "search_1" }])
+    chat.messages.create!(role: "assistant", content: "  ")
+
+    get admin_llm_chat_path(chat)
+
+    assert_response :success
+    assert_select '[data-key="ai_history.empty_content"].text-muted', text: "No message text.", count: 2
+    assert_select '[data-key="ai_history.content"]', count: 0
+    assert_select '[data-key="ai_history.tool_call"] h4', "Web search call"
   end
 
   test "should exclude expired chats before they are purged" do
