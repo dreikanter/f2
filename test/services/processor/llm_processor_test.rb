@@ -9,8 +9,8 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     @chat ||= create(:llm_chat, feed: feed, user: feed.user)
   end
 
-  def process(json)
-    payload = LlmResult.new(content: json, chat: chat)
+  def process(json, target_chat: chat, generation_id: target_chat.id)
+    payload = LlmResult.new(content: json, chat: target_chat, generation_id: generation_id)
     feed.processor_instance(payload).process
   end
 
@@ -123,7 +123,7 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert_empty feed.feed_entries
   end
 
-  test "#process should assign distinct system UUIDs to original items even on the same day" do
+  test "#process should assign distinct generation UIDs to original items" do
     freeze_time do
       result = process({ items: [
         { source_url: nil, body: "First story", uid: "invented-id" },
@@ -131,10 +131,28 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
       ] }.to_json)
 
       first, second = result.entries
-      assert_match(/\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/, first.uid)
-      assert_match(/\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/, second.uid)
+      assert_equal "generated:#{Digest::SHA256.hexdigest("#{chat.id}:0")}", first.uid
+      assert_equal "generated:#{Digest::SHA256.hexdigest("#{chat.id}:1")}", second.uid
       assert_not_equal first.uid, second.uid
     end
+  end
+
+  test "#process should reuse a generated UID across retries of one generation" do
+    first = process({ items: [{ source_url: nil, body: "A useful  tip\nfor Rails" }] }.to_json)
+    retry_chat = create(:llm_chat, feed: feed, user: feed.user)
+    retried = process({ items: [{ source_url: nil, body: "A revised tip for Rails" }] }.to_json,
+                      target_chat: retry_chat, generation_id: chat.id)
+
+    assert_equal first.entries.sole.uid, retried.entries.sole.uid
+  end
+
+  test "#process should allow a new generation with identical content" do
+    first = process({ items: [{ source_url: nil, body: "One tip" }] }.to_json)
+    next_chat = create(:llm_chat, feed: feed, user: feed.user)
+    next_result = process({ items: [{ source_url: nil, body: "One tip" }] }.to_json,
+                          target_chat: next_chat)
+
+    assert_not_equal first.entries.sole.uid, next_result.entries.sole.uid
   end
 
   test "#process should leave blank and malformed sources unidentified" do

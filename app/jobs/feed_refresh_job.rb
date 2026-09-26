@@ -10,7 +10,7 @@ class FeedRefreshJob < ApplicationJob
     return if feed.feed_profile_key == "webhook"
 
     Feed.with_advisory_lock!("feed_refresh_#{feed.id}", timeout_seconds: 0) do
-      FeedRefreshWorkflow.new(feed).execute
+      FeedRefreshWorkflow.new(feed, generation_id: job_id).execute
     end
   rescue Loader::LlmLoader::ExecutionLimitExceeded, Loader::HttpBase::TransportError
     record_loader_error(feed)

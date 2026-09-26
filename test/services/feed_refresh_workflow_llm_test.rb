@@ -55,6 +55,24 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
+  test "#execute should not publish twice when one generation is retried" do
+    output = { items: [{ body: "One original Rails tip", source_url: nil }] }.to_json
+    request = stub_response(output: output)
+    generation_id = SecureRandom.uuid
+
+    assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
+      FeedRefreshWorkflow.new(feed, generation_id: generation_id).execute
+    end
+    assert_no_enqueued_jobs(only: PostPublishJob) do
+      FeedRefreshWorkflow.new(feed, generation_id: generation_id).execute
+    end
+
+    assert_equal 2, feed.llm_chats.count
+    assert_equal 1, feed.feed_entries.count
+    assert_equal 1, feed.posts.count
+    assert_requested request, times: 2
+  end
+
   test "#execute should reject invalid output while retaining RubyLLM usage" do
     request = stub_response(output: '{"items":[{"body":"missing source_url"}]}')
 
