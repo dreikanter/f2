@@ -173,6 +173,43 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     end
   end
 
+  test "#process should use the X post ID time when the model reports a shifted time" do
+    result = process({ items: [{
+      source_url: "https://www.x.com/sundarpichai/status/2024356296800059730?utm_source=search",
+      body: "AI can improve billions of lives.",
+      published_at: "2026-02-19T00:32:00Z"
+    }] }.to_json)
+
+    entry = result.entries.sole
+    assert_equal Time.iso8601("2026-02-19T05:32:06.535Z"), entry.published_at
+    assert_equal "2026-02-19T00:32:00Z", entry.raw_data.fetch("published_at")
+    assert_equal "https://x.com/sundarpichai/status/2024356296800059730", entry.uid
+  end
+
+  test "#process should use the X post ID time when the model reports only a date" do
+    result = process({ items: [{
+      source_url: "https://twitter.com/LuhengH/status/2024542942522986780",
+      body: "Gemini 3.1 Pro has landed.",
+      published_at: "2026-02-19"
+    }] }.to_json)
+
+    assert_equal Time.iso8601("2026-02-19T17:53:46.343Z"), result.entries.sole.published_at
+  end
+
+  test "#process should reject an X post whose claimed date conflicts with its permalink" do
+    output = { items: [{
+      source_url: "https://x.com/xai/status/1892456789012345678",
+      body: "Post text could not be retrieved due to access restrictions.",
+      published_at: "2026-02-19T15:30:00Z"
+    }] }
+
+    error = assert_raises(Processor::LlmProcessor::InvalidOutput) { process(output.to_json) }
+
+    assert_equal "AI source date conflicts with its X post permalink.", error.message
+    assert chat.reload.failed?
+    assert_empty feed.feed_entries
+  end
+
   test "#process should reject malformed JSON without exposing response content in the error" do
     error = assert_raises(Processor::LlmProcessor::InvalidOutput) { process('{"private-content":') }
 

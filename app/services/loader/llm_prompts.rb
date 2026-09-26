@@ -81,8 +81,11 @@ module Loader
       - supplementary: an array of extra notes or comments, when relevant.
       - images: an array of absolute image URLs, when the post has images.
       - published_at: the source's own publication date in ISO 8601, when shown.
-        Use "" when no source publication date is available, including for
-        original content and newly composed answers. Never invent a publication date.
+        Include a clock time only when the source provides its timezone or UTC
+        offset; convert that time to UTC with a Z suffix. When only the calendar
+        date is established, use YYYY-MM-DD. Use "" when no source publication
+        date is available, including for original content and newly composed
+        answers. Never infer publication time from indexing or retrieval time.
       Do not include a uid; the system derives it.
 
       Examples illustrate the shape only; never treat them as retrieved evidence.

@@ -235,14 +235,17 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     response = completed_ai_response
     response["model"] = preview.ai_model
     message = response["output"].last
+    published_at = Time.current.change(usec: 0)
+    post_id = ((published_at.to_i * 1_000 - 1_288_834_974_657) << 22)
+    source_url = "https://x.com/example/status/#{post_id}"
     message["content"].first["text"] = {
       items: [{
         body: "Today's AI news",
-        source_url: "https://x.com/example/status/123",
+        source_url: source_url,
         title: "",
         supplementary: [],
         images: [],
-        published_at: Time.current.iso8601
+        published_at: published_at.iso8601
       }]
     }.to_json
     response["output"] = Array.new(5) do |index|
@@ -265,7 +268,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
 
     assert preview.reload.ready?
-    assert_equal "https://x.com/example/status/123", preview.posts_data.sole["source_url"]
+    assert_equal source_url, preview.posts_data.sole["source_url"]
     assert_empty preview.posts_data.sole["comments"]
     assert LlmChat.sole.succeeded?
     event = Event.find_by!(type: "feed_preview", subject: credential)
