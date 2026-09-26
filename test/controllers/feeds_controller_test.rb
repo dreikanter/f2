@@ -1478,7 +1478,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
   test "#update should reset schedule next_run_at when interval changes" do
     sign_in_as(user)
-    enabled_feed = create(:feed, user: user, state: :enabled, access_token: access_token)
+    enabled_feed = create(:feed, user: user, state: :enabled, access_token: access_token,
+                                 cron_expression: nil, refresh_interval: 2.hours.to_i)
     enabled_feed.create_feed_schedule!(next_run_at: 12.hours.from_now, last_run_at: Time.current)
     old_next_run = enabled_feed.feed_schedule.next_run_at
 

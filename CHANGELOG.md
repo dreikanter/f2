@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-26
+
+- Feed refresh times are now spread across each selected interval instead of clustering on fixed clock times.
+
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
 ## 2026-09-26
