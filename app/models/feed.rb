@@ -4,15 +4,15 @@ class Feed < ApplicationRecord
   TARGET_GROUP_MAX_LENGTH = 80
 
   SCHEDULE_INTERVALS = {
-    "10m" => { cron: "*/10 * * * *", display: "10 minutes" },
-    "20m" => { cron: "*/20 * * * *", display: "20 minutes" },
-    "30m" => { cron: "*/30 * * * *", display: "30 minutes" },
-    "1h" => { cron: "0 * * * *", display: "1 hour" },
-    "2h" => { cron: "0 */2 * * *", display: "2 hours" },
-    "6h" => { cron: "0 */6 * * *", display: "6 hours" },
-    "12h" => { cron: "0 */12 * * *", display: "12 hours" },
-    "1d" => { cron: "0 0 * * *", display: "1 day" },
-    "2d" => { cron: "0 0 */2 * *", display: "2 days" }
+    "10m" => { seconds: 10.minutes.to_i, display: "10 minutes" },
+    "20m" => { seconds: 20.minutes.to_i, display: "20 minutes" },
+    "30m" => { seconds: 30.minutes.to_i, display: "30 minutes" },
+    "1h" => { seconds: 1.hour.to_i, display: "1 hour" },
+    "2h" => { seconds: 2.hours.to_i, display: "2 hours" },
+    "6h" => { seconds: 6.hours.to_i, display: "6 hours" },
+    "12h" => { seconds: 12.hours.to_i, display: "12 hours" },
+    "1d" => { seconds: 1.day.to_i, display: "1 day" },
+    "2d" => { seconds: 2.days.to_i, display: "2 days" }
   }.freeze
 
   # Pre-selected interval for the "Check for new posts every" dropdown when a
@@ -101,12 +101,12 @@ class Feed < ApplicationRecord
   end
 
   def schedule_interval
-    SCHEDULE_INTERVALS.find { |_key, config| config[:cron] == cron_expression }&.first
+    SCHEDULE_INTERVALS.find { |_key, config| config[:seconds] == refresh_interval }&.first
   end
 
   def schedule_interval=(key)
-    self.cron_expression = SCHEDULE_INTERVALS.dig(key, :cron)
-    self.refresh_interval = nil
+    self.refresh_interval = SCHEDULE_INTERVALS.dig(key, :seconds)
+    self.cron_expression = nil if refresh_interval.present?
   end
 
   # Form-facing accessors splitting import_after into checkbox, date, and

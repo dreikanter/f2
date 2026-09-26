@@ -107,7 +107,7 @@ class FeedsController < ApplicationController
       sync_webhook_endpoint(@feed)
       # Capture interval-change signal from the first save before the
       # promotion attempt's save overwrites `saved_changes`.
-      interval_changed = @feed.saved_change_to_cron_expression?
+      interval_changed = @feed.saved_change_to_cron_expression? || @feed.saved_change_to_refresh_interval?
       record_feed_disabled(@feed) if @feed.saved_change_to_state? && @feed.disabled?
       cleanup_feed_identification(@feed.source_input)
 

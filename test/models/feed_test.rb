@@ -778,32 +778,34 @@ class FeedTest < ActiveSupport::TestCase
     assert_includes Feed::SCHEDULE_INTERVALS.keys, Feed::DEFAULT_SCHEDULE_INTERVAL
   end
 
-  test "#schedule_interval should return key for matching cron expression" do
-    feed = build(:feed, cron_expression: "0 * * * *")
+  test "#schedule_interval should return key for matching refresh interval" do
+    feed = build(:feed, cron_expression: nil, refresh_interval: 1.hour.to_i)
 
     assert_equal "1h", feed.schedule_interval
   end
 
-  test "#schedule_interval should return nil for non-standard cron expression" do
+  test "#schedule_interval should return nil for a legacy cron expression" do
     feed = build(:feed, cron_expression: "15 3 * * *")
 
     assert_nil feed.schedule_interval
   end
 
-  test "#schedule_interval= should set cron_expression from valid key" do
+  test "#schedule_interval= should set refresh_interval from valid key" do
     feed = build(:feed)
 
     feed.schedule_interval = "1h"
 
-    assert_equal "0 * * * *", feed.cron_expression
+    assert_equal 1.hour.to_i, feed.refresh_interval
+    assert_nil feed.cron_expression
   end
 
-  test "#schedule_interval= should set nil for invalid key" do
+  test "#schedule_interval= should clear refresh_interval for invalid key" do
     feed = build(:feed, cron_expression: "0 * * * *")
 
     feed.schedule_interval = "invalid"
 
-    assert_nil feed.cron_expression
+    assert_nil feed.refresh_interval
+    assert_equal "0 * * * *", feed.cron_expression
   end
 
   # Preview is optional and does not gate enabling.
@@ -1409,8 +1411,18 @@ class FeedTest < ActiveSupport::TestCase
 
     feed.schedule_interval = "1h"
 
-    assert_equal "0 * * * *", feed.cron_expression
-    assert_nil feed.refresh_interval
+    assert_nil feed.cron_expression
+    assert_equal 1.hour.to_i, feed.refresh_interval
+  end
+
+  test "#schedule_interval= should configure a floating interval schedule" do
+    feed = build(:feed, cron_expression: "0 */6 * * *")
+
+    feed.schedule_interval = "2h"
+
+    assert_equal 2.hours.to_i, feed.refresh_interval
+    assert_nil feed.cron_expression
+    assert_equal "2h", feed.schedule_interval
   end
 
   test "#reset_schedule! should update next_run_at to now on the existing schedule" do

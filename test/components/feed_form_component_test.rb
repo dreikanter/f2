@@ -148,9 +148,9 @@ class FeedFormComponentTest < ViewComponent::TestCase
     assert_equal "10:30", component(feed(import_after: Time.utc(2026, 1, 15, 10, 30))).import_after_time_value
   end
 
-  test "#selected_schedule_interval should fall back to the default interval" do
-    assert_equal "6h", component(feed).selected_schedule_interval
-    assert_equal Feed::DEFAULT_SCHEDULE_INTERVAL, component(feed(cron_expression: nil)).selected_schedule_interval
+  test "#selected_schedule_interval should use the configured interval or default" do
+    assert_equal "6h", component(feed(refresh_interval: 6.hours.to_i)).selected_schedule_interval
+    assert_equal Feed::DEFAULT_SCHEDULE_INTERVAL, component(feed(refresh_interval: nil)).selected_schedule_interval
   end
 
   test "#enable_blocked? should require a token selected on the feed" do
