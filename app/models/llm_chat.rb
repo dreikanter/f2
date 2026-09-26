@@ -30,10 +30,10 @@ class LlmChat < ApplicationRecord
   # Run the prepared chat, leaving success to the processor's output validation.
   # @param provider [LlmProvider::Base] provider responsible for request configuration
   # @return [RubyLLM::Message] final SDK response
-  def execute(provider:)
+  def execute(provider:, execution_limits: {})
     raise ArgumentError, "Chat must be running" unless self.class.running.exists?(id)
 
-    LlmExecution.new(chat: to_llm, provider: provider, deadline_at: deadline_at).call
+    LlmExecution.new(chat: to_llm, provider: provider, deadline_at: deadline_at, **execution_limits).call
   ensure
     timeout!
   end
