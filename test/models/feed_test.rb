@@ -1397,6 +1397,15 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal 0, feed.reload.consecutive_failures
   end
 
+  test "#schedule_interval= should replace a stored refresh interval" do
+    feed = build(:feed, cron_expression: nil, refresh_interval: 2.hours.to_i)
+
+    feed.schedule_interval = "1h"
+
+    assert_equal "0 * * * *", feed.cron_expression
+    assert_nil feed.refresh_interval
+  end
+
   test "#reset_schedule! should update next_run_at to now on the existing schedule" do
     feed = create(:feed, :enabled, cron_expression: "0 * * * *")
     existing_schedule = feed.feed_schedule || create(:feed_schedule, feed: feed, next_run_at: 1.hour.from_now)

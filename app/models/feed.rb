@@ -106,6 +106,7 @@ class Feed < ApplicationRecord
 
   def schedule_interval=(key)
     self.cron_expression = SCHEDULE_INTERVALS.dig(key, :cron)
+    self.refresh_interval = nil
   end
 
   # Form-facing accessors splitting import_after into checkbox, date, and
