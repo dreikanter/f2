@@ -115,6 +115,20 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     assert_equal message[:citations], JSON.parse(css_select('[data-key="ai_history.citations"]').sole.text)
   end
 
+  test "should explain blank messages and keep their tool calls" do
+    sign_in_as(dev_user)
+    chat = create(:llm_chat)
+    chat.messages.create!(role: "assistant", content: nil, server_tool_calls: [{ type: "web_search_call", id: "search_1" }])
+    chat.messages.create!(role: "assistant", content: "  ")
+
+    get admin_llm_chat_path(chat)
+
+    assert_response :success
+    assert_select '[data-key="ai_history.empty_content"].text-muted', text: "No message text.", count: 2
+    assert_select '[data-key="ai_history.content"]', count: 0
+    assert_select '[data-key="ai_history.tool_call"] h4', "Web search call"
+  end
+
   test "should exclude expired chats before they are purged" do
     sign_in_as(dev_user)
     freeze_time do
