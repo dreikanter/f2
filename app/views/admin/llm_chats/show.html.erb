@@ -41,36 +41,28 @@
           <h3 class="font-semibold text-heading"><%= llm_message_title(message.role) %></h3>
           <%= short_time_ago_tag(message.created_at, css_class: "shrink-0 text-sm tabular-nums text-muted") %>
         <% end %>
-        <% card.with_section(class: "space-y-3 px-5 py-4") do %>
+        <% card.with_section(class: "px-5 py-4") do %>
           <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.content"><%= format_llm_message_content(message.content) %></pre>
-          <% if message.server_tool_calls.present? || message.ruby_llm_tool_calls.any? %>
-            <div class="space-y-3" data-key="ai_history.tool_calls">
-              <h4 class="font-medium text-heading">Tool calls</h4>
-              <% message.server_tool_calls.each do |call| %>
-                <div class="rounded-lg border border-border p-3" data-key="ai_history.tool_call">
-                  <p class="text-sm font-medium text-heading"><%= call.type.humanize %></p>
-                  <% if (query = call.input.is_a?(Hash) && call.input[:query]).present? %>
-                    <p class="break-words text-sm text-body" data-key="ai_history.search_query"><%= query %></p>
-                  <% end %>
-                  <details>
-                    <summary class="text-muted">Details</summary>
-                    <pre class="whitespace-pre-wrap break-words text-sm text-body"><%= JSON.pretty_generate(call.raw || call.to_h) %></pre>
-                  </details>
-                </div>
-              <% end %>
-              <% message.ruby_llm_tool_calls.each do |call| %>
-                <div class="rounded-lg border border-border p-3" data-key="ai_history.tool_call">
-                  <p class="text-sm font-medium text-heading"><%= call.name %></p>
-                  <pre class="whitespace-pre-wrap break-words text-sm text-body"><%= JSON.pretty_generate(call.arguments) %></pre>
-                </div>
-              <% end %>
-            </div>
+        <% end %>
+        <% message.server_tool_calls.each do |call| %>
+          <% card.with_section(class: "space-y-2 px-5 py-4", data: { key: "ai_history.tool_call" }) do %>
+            <h4 class="font-medium text-heading"><%= call.type.humanize %></h4>
+            <% if (query = call.input.is_a?(Hash) && call.input[:query]).present? %>
+              <p class="break-words text-sm text-body" data-key="ai_history.search_query"><%= query %></p>
+            <% end %>
+            <pre class="whitespace-pre-wrap break-words text-sm text-body"><%= JSON.pretty_generate(call.raw || call.to_h) %></pre>
           <% end %>
-          <% if message.citations.present? %>
-            <details>
-              <summary class="text-muted">Sources</summary>
-              <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.citations"><%= JSON.pretty_generate(message.citations.map(&:to_h)) %></pre>
-            </details>
+        <% end %>
+        <% message.ruby_llm_tool_calls.each do |call| %>
+          <% card.with_section(class: "space-y-2 px-5 py-4", data: { key: "ai_history.tool_call" }) do %>
+            <h4 class="font-medium text-heading"><%= call.name %></h4>
+            <pre class="whitespace-pre-wrap break-words text-sm text-body"><%= JSON.pretty_generate(call.arguments) %></pre>
+          <% end %>
+        <% end %>
+        <% if message.citations.present? %>
+          <% card.with_section(class: "space-y-2 px-5 py-4") do %>
+            <h4 class="font-medium text-heading">Sources</h4>
+            <pre class="whitespace-pre-wrap break-words text-sm text-body" data-key="ai_history.citations"><%= JSON.pretty_generate(message.citations.map(&:to_h)) %></pre>
           <% end %>
         <% end %>
       <% end %>

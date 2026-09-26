@@ -4,7 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-26
 
-- AI API logs now show chat details separately and place tool calls under their conversation messages.
+- AI API logs now show chat details separately, with tool calls and sources in clear sections under each message.
 
 ## 2026-09-21
 

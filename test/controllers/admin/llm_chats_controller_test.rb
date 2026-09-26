@@ -95,12 +95,12 @@ class Admin::LlmChatsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="ai_history.messages"] h2', "Conversation"
     assert_select '[data-key="ai_history.message"] h3', "AI response"
     assert_select '[data-key="ai_history.message_header"] time[datetime=?]', message.created_at.iso8601
-    assert_select '[data-key="ai_history.message"] h4', text: "Tool calls"
-    assert_select '[data-key="ai_history.message"] [data-key="ai_history.tool_call"]', count: 2
-    assert_select '[data-key="ai_history.tool_call"] p', text: "Web search call"
-    assert_select '[data-key="ai_history.tool_call"] p', text: "lookup"
+    assert_select '[data-key="ai_history.message"] > [data-key="ai_history.tool_call"]', count: 2
+    assert_select '[data-key="ai_history.tool_call"] h4', text: "Web search call"
+    assert_select '[data-key="ai_history.tool_call"] h4', text: "lookup"
     assert_select '[data-key="ai_history.search_query"]', "economic report"
-    assert_select '[data-key="ai_history.message"] summary', text: "Sources"
+    assert_select '[data-key="ai_history.message"] > div > h4', text: "Sources"
+    assert_select '[data-key="ai_history.message"] details', count: 0
     assert_select '[data-key="ai_history.usage"] h2', "Token Usage and Cost"
     response_text = css_select('[data-key="ai_history.content"]').sole.text
     assert_equal content, JSON.parse(response_text)
