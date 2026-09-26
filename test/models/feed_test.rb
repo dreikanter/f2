@@ -323,6 +323,12 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.errors.of_kind?(:cron_expression, :blank)
   end
 
+  test "#valid? should accept refresh_interval instead of cron_expression" do
+    feed = build(:feed, state: :enabled, cron_expression: nil, refresh_interval: 2.hours.to_i)
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
   test "#valid? should not require cron_expression for an unscheduled profile" do
     FeedProfile.stub(:scheduled?, false) do
       feed = build(:feed, state: :enabled, cron_expression: nil)

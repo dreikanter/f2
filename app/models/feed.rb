@@ -62,7 +62,8 @@ class Feed < ApplicationRecord
   validates :name, uniqueness: { scope: :user_id }, length: { maximum: NAME_MAX_LENGTH }
   validates :name, presence: true, if: :enabled?
 
-  validates :cron_expression, presence: true, if: -> { enabled? && scheduled? }
+  validates :cron_expression, presence: true, if: -> { enabled? && scheduled? && refresh_interval.blank? }
+  validates :refresh_interval, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validates :feed_profile_key, presence: true
   validates :feed_profile_key, inclusion: { in: ->(_) { FeedProfile.all } }, if: -> { feed_profile_key.present? }
 
@@ -227,7 +228,7 @@ class Feed < ApplicationRecord
     parts << "feed profile" unless feed_profile_present?
     parts << "active access token" unless access_token&.active?
     parts << "target group" if target_group.blank?
-    parts << "schedule" if scheduled? && cron_expression.blank?
+    parts << "schedule" if scheduled? && cron_expression.blank? && refresh_interval.blank?
     return parts unless depends_on_ai?
 
     parts << "active AI credential" unless ai_credential&.active?
