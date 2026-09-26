@@ -101,6 +101,7 @@ class FeedRefreshWorkflow
     uids = deduped_entries.map(&:uid)
     existing_uids = FeedEntryUid.where(feed_id: feed.id, uid: uids).pluck(:uid).to_set
     new_entries = deduped_entries.filter { |entry| existing_uids.exclude?(entry.uid) }
+    record_stats(already_imported_entries: deduped_entries.size - new_entries.size) if feed.feed_profile_key == "llm"
     reject_entries_before_threshold(new_entries)
   end
 
@@ -216,6 +217,7 @@ class FeedRefreshWorkflow
   def finalize_workflow(posts)
     enqueued_posts_count = posts.count(&:enqueued?)
     rejected_posts_count = posts.count(&:rejected?)
+    record_stats(outcome: ai_outcome(posts)) if feed.feed_profile_key == "llm"
 
     record_completed_at
     feed.reset_refresh_failures!
@@ -235,6 +237,15 @@ class FeedRefreshWorkflow
                       "#{rejected_posts_count} rejected"
 
     posts
+  end
+
+  def ai_outcome(posts)
+    return "queued_for_publication" if posts.any?(&:enqueued?)
+    return "all_candidates_rejected" if posts.any? && posts.all?(&:rejected?)
+    return "no_candidates_reported" if stats[:total_entries].zero?
+    return "already_imported" if stats[:already_imported_entries] == stats[:total_entries]
+
+    "no_new_posts"
   end
 
   def record_duration(step_name)

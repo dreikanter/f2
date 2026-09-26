@@ -40,6 +40,14 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
     assert_nil result.css("[data-key='events.posts_count']").first
   end
 
+  test "#call should explain an empty AI response without claiming no matches exist" do
+    refresh_event.update!(metadata: { status: "completed", stats: { outcome: "no_candidates_reported" } })
+
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: refresh_event))
+
+    assert_equal "(AI returned no posts; reason unknown)", result.css("[data-key='events.ai_outcome']").first&.text
+  end
+
   def event_with_spend(cents, **attributes)
     Event.create!(
       type: "feed_refresh",

@@ -51,7 +51,31 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
 
     assert feed.llm_chats.sole.succeeded?
     assert_equal "completed", refresh_event.metadata.fetch("status")
+    assert_equal "no_candidates_reported", refresh_event.metadata.dig("stats", "outcome")
     assert_empty feed.feed_entries
+    assert_requested request, times: 1
+  end
+
+  test "#execute should identify repeated source posts as already imported" do
+    request = stub_response
+
+    2.times { FeedRefreshWorkflow.new(feed).execute }
+
+    events = feed.events.where(type: "feed_refresh").order(:created_at).to_a
+    assert_equal "queued_for_publication", events.first.metadata.dig("stats", "outcome")
+    assert_equal "already_imported", events.last.metadata.dig("stats", "outcome")
+    assert_equal 1, events.last.metadata.dig("stats", "already_imported_entries")
+    assert_equal 1, feed.posts.count
+    assert_requested request, times: 2
+  end
+
+  test "#execute should distinguish rejected candidates from an empty AI response" do
+    request = stub_response(output: { items: [item.merge("body" => "")] }.to_json)
+
+    FeedRefreshWorkflow.new(feed).execute
+
+    assert_equal "all_candidates_rejected", refresh_event.metadata.dig("stats", "outcome")
+    assert_equal 1, refresh_event.metadata.dig("stats", "rejected_posts")
     assert_requested request, times: 1
   end
 

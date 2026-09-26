@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-26
+
+- AI feed updates now explain when no posts were returned, posts were already added, or candidates could not be used.
+
 ## 2026-09-21
 
 - AI feeds try broader searches and inspect promising results before concluding that no requested posts were found.

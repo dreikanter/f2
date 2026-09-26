@@ -3,7 +3,7 @@
 # e.g. "My Feed refreshed (+2 posts) (AI: $0.03)".
 class FeedRefreshDescriptionComponent < EventDescriptionComponent
   def call
-    suffixes = [posts_count_tag, spend_tag].compact
+    suffixes = [posts_count_tag, ai_outcome_tag, spend_tag].compact
     suffixes.any? ? safe_join([super, *suffixes], " ") : super
   end
 
@@ -27,6 +27,18 @@ class FeedRefreshDescriptionComponent < EventDescriptionComponent
     return if count.zero?
 
     helpers.tag.span("(+#{helpers.pluralize(count, "post")})", class: "text-muted", data: { key: "events.posts_count" })
+  end
+
+  def ai_outcome_tag
+    label = case event.metadata.dig("stats", "outcome")
+    when "no_candidates_reported" then "AI returned no posts; reason unknown"
+    when "already_imported" then "Posts already added"
+    when "all_candidates_rejected" then "No usable posts"
+    when "no_new_posts" then "No new posts"
+    end
+    return unless label
+
+    helpers.tag.span("(#{label})", class: "text-muted", data: { key: "events.ai_outcome" })
   end
 
   # Reads the metadata snapshot, not the referenced rows, so the log renders
