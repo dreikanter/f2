@@ -4,9 +4,6 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-09-26
 
-- AI API message times now include seconds.
-- AI API logs now say when a message has no text.
-- AI API logs now show each message's date and time beside its title.
 - AI API logs now show chat details separately, with tool calls and sources in clear sections under each message.
 - Long JSON lines in AI API logs now scroll sideways instead of wrapping.
 
