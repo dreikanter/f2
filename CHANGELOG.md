@@ -6,6 +6,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 - AI API logs now show chat details separately, with tool calls and sources in clear sections under each message.
 - Long JSON lines in AI API logs now scroll sideways instead of wrapping.
+- AI previews and feed activity now show when AI returned no posts or candidates were already published.
 
 ## 2026-09-21
 

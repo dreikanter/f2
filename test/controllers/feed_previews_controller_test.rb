@@ -131,6 +131,19 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="preview.rejected"]', count: 0
   end
 
+  test "#show should explain when AI returned no candidates" do
+    sign_in_as(user)
+    preview = create(:feed_preview, :completed, user: user, feed_profile_key: "llm", data: {
+      posts: [],
+      stats: { total_entries: 0, ai_outcome: "no_candidates_returned" }
+    })
+
+    get feed_preview_url(preview)
+
+    assert_response :success
+    assert_select '[data-key="preview.empty"]', text: "AI returned no posts. The response did not explain why."
+  end
+
   test "#create should clear the pane and create nothing when source is blank" do
     sign_in_as(user)
 

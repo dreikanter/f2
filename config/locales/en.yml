@@ -141,6 +141,13 @@ en:
     job_llm_capability_probe_completed:
       name: "Capability probe finished"
     metadata:
+      ai_outcomes:
+        no_candidates_returned: "AI returned no posts"
+        already_published: "Candidates already published"
+        no_publishable_candidates: "No publishable posts"
+        candidates_rejected: "Candidates rejected"
+        posts_queued: "Posts queued"
+        posts_ready: "Posts ready"
       stats:
         started_at: "Started at"
         completed_at: "Completed at"
@@ -150,6 +157,8 @@ en:
         llm_calls: "AI calls"
         llm_cost_cents: "Estimated AI spend"
         search_calls: "Search calls"
+        ai_outcome: "AI outcome"
+        already_published_entries: "Already published entries"
     llm_usage:
       section_title: "AI usage"
     web_search_usage:

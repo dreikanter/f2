@@ -179,8 +179,10 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal "preview", chat.purpose
     assert preview.reload.ready?
     assert_equal '{"items":[]}'.bytesize, preview.data.dig("stats", "content_size")
+    assert_equal "no_candidates_returned", preview.data.dig("stats", "ai_outcome")
     event = Event.find_by!(type: "feed_preview", subject: credential)
     assert_equal "completed", event.metadata["status"]
+    assert_equal "no_candidates_returned", event.metadata.dig("stats", "ai_outcome")
     assert_equal [chat], event.references
     assert_requested request, times: 1
   end
@@ -385,6 +387,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal 4, preview.total_entries_count
     assert_equal 1, preview.unidentified_entries_count
     assert_equal 1, preview.rejected_posts_count
+    assert_equal "posts_ready", preview.data.dig("stats", "ai_outcome")
     event = Event.find_by!(type: "feed_preview", subject: feed)
     assert_equal "completed", event.metadata["status"]
     assert_equal 1, event.metadata.dig("stats", "unidentified_entries")

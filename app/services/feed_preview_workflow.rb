@@ -131,6 +131,18 @@ class FeedPreviewWorkflow
 
   def finalize_workflow(posts)
     record_completed_at
+    if feed_preview.feed_profile_key == "llm"
+      outcome = if stats[:total_entries].to_i.zero?
+        "no_candidates_returned"
+      elsif posts.any? { |post| post[:status] == "enqueued" }
+        "posts_ready"
+      elsif posts.any? { |post| post[:status] == "rejected" }
+        "candidates_rejected"
+      else
+        "no_publishable_candidates"
+      end
+      record_stats(ai_outcome: outcome)
+    end
     FeedPreview.transaction do
       updated = transition!(
         status: FeedPreview.statuses[:ready],

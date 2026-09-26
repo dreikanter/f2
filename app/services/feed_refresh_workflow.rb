@@ -100,6 +100,10 @@ class FeedRefreshWorkflow
     deduped_entries = collapse_duplicate_uids(processed_entries)
     uids = deduped_entries.map(&:uid)
     existing_uids = FeedEntryUid.where(feed_id: feed.id, uid: uids).pluck(:uid).to_set
+    record_stats(already_published_entries: existing_uids.size) if feed.feed_profile_key == "llm" && existing_uids.any?
+    if feed.feed_profile_key == "llm" && existing_uids.size == deduped_entries.size && stats[:unidentified_entries].to_i.zero?
+      record_stats(ai_outcome: "already_published")
+    end
     new_entries = deduped_entries.filter { |entry| existing_uids.exclude?(entry.uid) }
     reject_entries_before_threshold(new_entries)
   end
@@ -218,6 +222,20 @@ class FeedRefreshWorkflow
     rejected_posts_count = posts.count(&:rejected?)
 
     record_completed_at
+    if feed.feed_profile_key == "llm"
+      outcome = if stats[:total_entries].to_i.zero?
+        "no_candidates_returned"
+      elsif enqueued_posts_count.positive?
+        "posts_queued"
+      elsif rejected_posts_count.positive?
+        "candidates_rejected"
+      elsif stats[:ai_outcome] == "already_published"
+        "already_published"
+      else
+        "no_publishable_candidates"
+      end
+      record_stats(ai_outcome: outcome)
+    end
     feed.reset_refresh_failures!
     Metrics.increment("feed_refresh_total", status: "ok", profile: feed.feed_profile_key)
     complete_refresh_event(posts)

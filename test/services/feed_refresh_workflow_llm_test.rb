@@ -51,7 +51,32 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
 
     assert feed.llm_chats.sole.succeeded?
     assert_equal "completed", refresh_event.metadata.fetch("status")
+    assert_equal "no_candidates_returned", refresh_event.metadata.dig("stats", "ai_outcome")
     assert_empty feed.feed_entries
+    assert_requested request, times: 1
+  end
+
+  test "#execute should distinguish an already published candidate from an empty response" do
+    request = stub_response
+
+    FeedRefreshWorkflow.new(feed).execute
+    assert_no_enqueued_jobs(only: PostPublishJob) { FeedRefreshWorkflow.new(feed).execute }
+
+    outcomes = feed.events.where(type: "feed_refresh").order(:created_at).map { |event|
+      event.metadata.dig("stats", "ai_outcome")
+    }
+    assert_equal %w[posts_queued already_published], outcomes
+    assert_equal 1, feed.posts.count
+    assert_requested request, times: 2
+  end
+
+  test "#execute should record when every returned candidate is rejected" do
+    request = stub_response(output: { items: [item.merge("body" => "")] }.to_json)
+
+    assert_no_enqueued_jobs(only: PostPublishJob) { FeedRefreshWorkflow.new(feed).execute }
+
+    assert feed.posts.sole.rejected?
+    assert_equal "candidates_rejected", refresh_event.metadata.dig("stats", "ai_outcome")
     assert_requested request, times: 1
   end
 

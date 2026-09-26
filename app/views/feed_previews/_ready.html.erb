@@ -39,7 +39,11 @@
     </div>
   <% else %>
     <p class="text-body" data-key="preview.empty">
-      <%= preview.total_entries_count.positive? ? "No items to preview." : "No posts found in this feed." %>
+      <% if preview.data.dig("stats", "ai_outcome") == "no_candidates_returned" %>
+        AI returned no posts. The response did not explain why.
+      <% else %>
+        <%= preview.total_entries_count.positive? ? "No items to preview." : "No posts found in this feed." %>
+      <% end %>
     </p>
   <% end %>
 </div>

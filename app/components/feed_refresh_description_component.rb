@@ -3,11 +3,19 @@
 # e.g. "My Feed refreshed (+2 posts) (AI: $0.03)".
 class FeedRefreshDescriptionComponent < EventDescriptionComponent
   def call
-    suffixes = [posts_count_tag, spend_tag].compact
+    suffixes = [outcome_tag, posts_count_tag, spend_tag].compact
     suffixes.any? ? safe_join([super, *suffixes], " ") : super
   end
 
   private
+
+  def outcome_tag
+    outcome = event.metadata.dig("stats", "ai_outcome")
+    return if outcome.blank? || outcome == "posts_queued"
+
+    description = helpers.t("events.metadata.ai_outcomes.#{outcome}", default: outcome.humanize)
+    helpers.tag.span("(#{description})", class: "text-muted", data: { key: "events.ai_outcome" })
+  end
 
   # A nil status is a legacy event from before the lifecycle; those were
   # completed runs. An unrecognized status must not fall through to the
