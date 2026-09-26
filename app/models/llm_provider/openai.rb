@@ -8,7 +8,8 @@ module LlmProvider
     def request_options(tool_call_limit:, output_token_limit:)
       {
         max_tool_calls: tool_call_limit,
-        max_output_tokens: output_token_limit
+        max_output_tokens: output_token_limit,
+        include: ["reasoning.encrypted_content", "web_search_call.action.sources"]
       }
     end
 
