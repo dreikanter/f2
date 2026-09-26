@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-09-26
+
+- AI API logs now show chat details separately and place tool calls under their conversation messages.
+
 ## 2026-09-21
 
 - AI feeds try broader searches and inspect promising results before concluding that no requested posts were found.
