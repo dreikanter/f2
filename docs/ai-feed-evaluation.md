@@ -69,6 +69,15 @@ the configured native-call limit. The observed proximate failure is lack of
 an inspected, date-verifiable source post in this run. The source list is the
 provider's consulted URLs, not a complete ranking of all available results.
 
+One `gpt-5-mini` run with the same X-today prompt did surface individual X
+status URLs in search sources, then opened X's search page instead of an
+individual post. It never established the text and source publication time of
+a qualifying post. The run made five native calls against a requested limit
+of four and failed after 31.1 seconds, with incomplete final-call usage.
+Changing from `gpt-5-nano` to `gpt-5-mini` therefore did not pass the case in
+this single comparison. It does show that discovery and candidate inspection
+are distinct failure points.
+
 A separate original Rails-tip case completed with one preview item and no
 search calls using a 4096 output-token cap. At 1024 output tokens, the same
 case hit the output limit without a final answer. This supports keeping
