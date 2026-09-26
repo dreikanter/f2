@@ -192,6 +192,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_26_160000) do
     t.index ["ai_credential_id"], name: "index_feeds_on_ai_credential_id"
     t.index ["search_credential_id"], name: "index_feeds_on_search_credential_id"
     t.index ["user_id"], name: "index_feeds_on_user_id"
+    t.check_constraint "refresh_interval > 0", name: "feeds_refresh_interval_positive"
   end
 
   create_table "invites", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
