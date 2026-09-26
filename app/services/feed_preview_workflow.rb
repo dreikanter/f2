@@ -8,11 +8,13 @@ class FeedPreviewWorkflow
   step :normalize_entries
   step :finalize_workflow
 
-  attr_reader :feed_preview
+  attr_reader :feed_preview, :activity
 
-  def initialize(feed_preview, run_id:)
+  def initialize(feed_preview, run_id:, execution_limits: {}, thinking_effort: nil)
     @feed_preview = feed_preview
     @run_id = run_id
+    @execution_limits = execution_limits
+    @thinking_effort = thinking_effort
   end
 
   private
@@ -66,7 +68,9 @@ class FeedPreviewWorkflow
       purpose: :preview,
       refresh_event: @activity&.event,
       usage_feed: feed_preview.feed,
-      deadline_at: deadline_at
+      deadline_at: deadline_at,
+      execution_limits: @execution_limits,
+      thinking_effort: @thinking_effort
     )
 
     raw_data = loader.load

@@ -67,6 +67,36 @@ class LlmExecutionTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
+  test "#call should apply smaller evaluation limits to the real OpenAI request" do
+    record = staged_chat
+    record.with_provider_tools(:web_search)
+    payload = nil
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|
+      payload = JSON.parse(http.body)
+      { body: completed_response.to_json, headers: { "Content-Type" => "application/json" } }
+    end
+
+    LlmExecution.new(chat: record, provider: provider, deadline_at: 180.seconds.from_now,
+                     max_requests: 1, max_tool_calls: 2, max_output_tokens: 1_024,
+                     max_total_tokens: 100).call
+
+    assert_equal 2, payload.fetch("max_tool_calls")
+    assert_equal 1_024, payload.fetch("max_output_tokens")
+    assert_requested request, times: 1
+  end
+
+  test "#call should stop after the configured token budget is exceeded" do
+    record = staged_chat
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: completed_response)
+
+    assert_raises(LlmExecution::TokenLimitExceeded) do
+      LlmExecution.new(chat: record, provider: provider, deadline_at: 180.seconds.from_now,
+                       max_total_tokens: 1).call
+    end
+
+    assert_requested request, times: 1
+  end
+
   { "model ceiling" => [8_192, 4_096], "prepared limit" => [1_024, 1_024] }.each do |limit_name, (prepared_limit, expected_limit)|
     test "#call should respect the lower #{limit_name}" do
       chat = provider.context.chat(model: "gpt-4-turbo", provider: :openai, protocol: provider.protocol)

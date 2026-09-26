@@ -7,23 +7,35 @@ class LlmExecution
   class DeadlineExceeded < StandardError; end
   class RequestLimitExceeded < StandardError; end
   class ToolLimitExceeded < StandardError; end
+  class TokenLimitExceeded < StandardError; end
 
   # @param chat [RubyLLM::Chat] prepared SDK chat with its initial prompt staged
   # @param provider [LlmProvider::Base] provider responsible for request configuration
   # @param deadline_at [Time] extraction deadline, including any earlier preview limit
-  def initialize(chat:, provider:, deadline_at:)
+  def initialize(chat:, provider:, deadline_at:, max_requests: MAX_REQUESTS,
+                 max_tool_calls: MAX_TOOL_CALLS, max_output_tokens: MAX_OUTPUT_TOKENS,
+                 max_total_tokens: nil)
     unless chat.context&.config&.max_retries == 0
       raise ArgumentError, "Chat must use a provider context with retries disabled"
     end
 
     raise ArgumentError, "Concurrent local tools are not supported" if chat.concurrency
+    unless max_requests.between?(1, MAX_REQUESTS) && max_tool_calls.between?(1, MAX_TOOL_CALLS) &&
+           max_output_tokens.between?(1, MAX_OUTPUT_TOKENS) &&
+           (max_total_tokens.nil? || max_total_tokens.positive?)
+      raise ArgumentError, "Execution limits must be positive and within production limits"
+    end
 
     @deadline_at = deadline_at
+    @max_requests = max_requests
+    @max_tool_calls = max_tool_calls
+    @max_total_tokens = max_total_tokens
     @requests = 0
     @tool_calls = 0
+    @total_tokens = 0
     @chat = chat
     @provider = provider
-    @output_token_limit = [MAX_OUTPUT_TOKENS, @chat.model.max_output_tokens, @chat.max_output_tokens].compact.min
+    @output_token_limit = [max_output_tokens, @chat.model.max_output_tokens, @chat.max_output_tokens].compact.min
     @chat.with_fallbacks(nil).with_compaction(false)
     @chat.with_max_output_tokens(@output_token_limit)
     @chat.before_tool_call { check_deadline! }
@@ -33,20 +45,21 @@ class LlmExecution
   def call
     check_deadline!
     until @chat.complete?
-      raise RequestLimitExceeded if @requests >= MAX_REQUESTS
-      raise ToolLimitExceeded if @tool_calls >= MAX_TOOL_CALLS
+      raise RequestLimitExceeded if @requests >= @max_requests
+      raise ToolLimitExceeded if @tool_calls >= @max_tool_calls
 
       check_deadline!
       options = @provider.request_options(
-        tool_call_limit: MAX_TOOL_CALLS - @tool_calls,
+        tool_call_limit: @max_tool_calls - @tool_calls,
         output_token_limit: @output_token_limit
       )
       @chat.with_provider_options(@chat.provider_options.symbolize_keys.merge(options))
       @requests += 1
       response = @chat.generate
       @tool_calls += response.server_tool_calls.size
+      track_tokens!(response) if @max_total_tokens
       check_deadline!
-      raise ToolLimitExceeded if @tool_calls > MAX_TOOL_CALLS
+      raise ToolLimitExceeded if @tool_calls > @max_tool_calls
       raise ToolLimitExceeded if response.finish_reason == :max_tool_calls
 
       return response if @chat.complete?
@@ -58,6 +71,15 @@ class LlmExecution
   end
 
   private
+
+  def track_tokens!(response)
+    input = response.tokens.input
+    output = response.tokens.output
+    raise TokenLimitExceeded if input.nil? || output.nil?
+
+    @total_tokens += input + output
+    raise TokenLimitExceeded if @total_tokens > @max_total_tokens
+  end
 
   def check_deadline!
     raise DeadlineExceeded if Time.current >= @deadline_at

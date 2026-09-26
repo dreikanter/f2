@@ -1,0 +1,227 @@
+#!/usr/bin/env ruby
+
+require "optparse"
+require "json"
+require "yaml"
+require "set"
+require "open3"
+require_relative "../config/environment"
+
+options = {
+  iterations: 1,
+  max_requests: 1,
+  max_search_calls: 2,
+  max_output_tokens: 1_024,
+  max_total_tokens: 500_000,
+  max_spend_usd: BigDecimal("0.06"),
+  search_call_usd: BigDecimal("0.01")
+}
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: bin/ai-feed-eval --case NAME [--live] [limits]"
+  parser.on("--case NAME", "Case from config/ai_feed_evaluation_cases.yml") { |value| options[:case] = value }
+  parser.on("--model ID", "OpenAI model; required unless the credential has a default") { |value| options[:model] = value }
+  parser.on("--thinking-effort EFFORT", %w[low medium high], "Optional reasoning effort") { |value| options[:thinking_effort] = value.to_sym }
+  parser.on("--hypothesis TEXT", "Specific change being evaluated") { |value| options[:hypothesis] = value }
+  parser.on("--baseline PATH", "Earlier JSON report for comparison") { |value| options[:baseline] = value }
+  parser.on("--output PATH", "Report path") { |value| options[:output] = value }
+  parser.on("--iterations N", Integer) { |value| options[:iterations] = value }
+  parser.on("--max-requests N", Integer) { |value| options[:max_requests] = value }
+  parser.on("--max-search-calls N", Integer) { |value| options[:max_search_calls] = value }
+  parser.on("--max-output-tokens N", Integer) { |value| options[:max_output_tokens] = value }
+  parser.on("--max-total-tokens N", Integer) { |value| options[:max_total_tokens] = value }
+  parser.on("--max-spend-usd USD") { |value| options[:max_spend_usd] = BigDecimal(value) }
+  parser.on("--search-call-usd USD") { |value| options[:search_call_usd] = BigDecimal(value) }
+  parser.on("--live", "Use the stored application credential; never publish") { options[:live] = true }
+end.parse!
+
+cases = YAML.safe_load_file(Rails.root.join("config/ai_feed_evaluation_cases.yml"))
+test_case = cases.fetch(options.fetch(:case))
+raise ArgumentError, "At most five iterations" unless options[:iterations].between?(1, 5)
+raise ArgumentError, "Search call price must be nonnegative" if options[:search_call_usd].negative?
+raise ArgumentError, "Spend limit must be positive" unless options[:max_spend_usd].positive?
+
+limits = {
+  max_requests: options[:max_requests],
+  max_tool_calls: options[:max_search_calls],
+  max_output_tokens: options[:max_output_tokens],
+  max_total_tokens: options[:max_total_tokens]
+}
+raise ArgumentError, "Request limit is outside the application cap" unless limits[:max_requests].between?(1, LlmExecution::MAX_REQUESTS)
+raise ArgumentError, "Search limit is outside the application cap" unless limits[:max_tool_calls].between?(1, LlmExecution::MAX_TOOL_CALLS)
+raise ArgumentError, "Output limit is outside the application cap" unless limits[:max_output_tokens].between?(1, LlmExecution::MAX_OUTPUT_TOKENS)
+raise ArgumentError, "Token limit must be positive" unless limits[:max_total_tokens].positive?
+
+credential = AiCredential.active.where(provider: "openai").sole
+model_id = options[:model] || credential.default_model
+raise ArgumentError, "Select a model with --model" if model_id.blank?
+
+if RubyLLM::ActiveRecord::Model.exists?
+  RubyLLM.models.load_from_store
+else
+  RubyLLM.models.load_from_json
+end
+model = RubyLLM.models.find(model_id, provider: "openai")
+raise ArgumentError, "Model context window and prices are required for cost bounds" unless
+  model.context_window&.positive? && model.price(:input) && model.price(:output)
+
+input_rate = BigDecimal(model.price(:input).to_s)
+output_rate = BigDecimal(model.price(:output).to_s)
+per_iteration_reserve = limits[:max_requests] * (
+  BigDecimal(model.context_window.to_s) * input_rate +
+  BigDecimal(limits[:max_output_tokens].to_s) * output_rate
+) / 1_000_000 + (limits[:max_tool_calls] + 1) * options[:search_call_usd]
+raise ArgumentError, "One iteration exceeds the spend limit at the model's context ceiling" if
+  per_iteration_reserve > options[:max_spend_usd]
+
+feed = Feed.new(
+  user: credential.user,
+  ai_credential: credential,
+  ai_model: model_id,
+  feed_profile_key: "llm",
+  params: { "prompt" => test_case.fetch("prompt"), "max_items" => test_case.fetch("max_items") }
+)
+output = LlmOutput.new(feed)
+system_prompt = Loader::LlmPrompts.extraction_system(started_at: Time.current, max_items: output.max_items)
+schema = feed.loader_instance.send(:output_schema, output)
+user_prompt = FeedProfile.config_for("llm", :loader).fetch(:prompt_template).gsub("{{input}}") { feed.source_input }
+revision, = Open3.capture2("git", "rev-parse", "HEAD")
+code_files = %w[
+  bin/ai-feed-eval
+  app/services/loader/llm_prompts.rb
+  app/services/loader/llm_loader.rb
+  app/services/llm_execution.rb
+  app/models/llm_provider/openai.rb
+  app/services/feed_preview_workflow.rb
+].to_h { |path| [path, Digest::SHA256.file(Rails.root.join(path)).hexdigest] }
+report_path = options[:output] || Rails.root.join("tmp", "ai-feed-eval-#{Time.current.utc.strftime('%Y%m%dT%H%M%SZ')}.json").to_s
+report = {
+  code_revision: revision.strip,
+  code_file_sha256: code_files,
+  case: options[:case],
+  group: test_case.fetch("group"),
+  hypothesis: options[:hypothesis],
+  baseline: options[:baseline] && JSON.parse(File.read(options[:baseline])).slice("code_revision", "case", "runs"),
+  model: model_id,
+  provider: "openai",
+  settings: limits.merge(max_spend_usd: options[:max_spend_usd].to_s("F"),
+                         search_call_usd: options[:search_call_usd].to_s("F"),
+                         input_usd_per_million: input_rate.to_s("F"),
+                         output_usd_per_million: output_rate.to_s("F"),
+                         context_window: model.context_window,
+                         thinking_effort: options[:thinking_effort],
+                         reserved_usd_per_iteration: per_iteration_reserve.to_s("F")),
+  requested_prompt: test_case.fetch("prompt"),
+  reference_timezone: "UTC",
+  user_prompt: user_prompt,
+  output_schema: schema,
+  pricing_source: "RubyLLM model catalog; native search call price supplied to this command",
+  notes: [
+    "No FreeFeed publication occurs in this command.",
+    "Native search results are included only when the provider exposes them in saved tool calls or citations.",
+    "UID repeat decisions compare iterations in this evaluation; no feed entries or FreeFeed posts are written.",
+    "Token limits are checked after each provider response; a single request may cross the observed token limit.",
+    "Cost reserve includes one extra native call because a provider response exceeded a requested tool-call limit in local evaluation.",
+    "The provider can exceed a requested tool-call cap within one response. Missing or incomplete usage stops later iterations."
+  ],
+  runs: []
+}
+
+unless options[:live]
+  report[:planned_system_prompt] = system_prompt
+  File.write(report_path, JSON.pretty_generate(report) + "\n")
+  puts "Dry run only. Report: #{report_path}"
+  exit
+end
+
+seen_uids = Set.new
+known_spend = BigDecimal("0")
+options[:iterations].times do
+  break if known_spend + per_iteration_reserve > options[:max_spend_usd]
+
+  started = Time.current
+  digest = FeedPreview.digest_for("llm", feed.params, ai_credential_id: credential.id, ai_model: model_id)
+  preview = FeedPreview.find_or_initialize_by(user: credential.user, feed_profile_key: "llm", params_digest: digest)
+  preview.assign_attributes(ai_credential: credential, ai_model: model_id, params: feed.params,
+                            status: :pending, data: nil, ready_at: nil, run_id: SecureRandom.uuid)
+  preview.save!
+  workflow = FeedPreviewWorkflow.new(preview, run_id: preview.run_id, execution_limits: limits,
+                                     thinking_effort: options[:thinking_effort])
+  error = nil
+  begin
+    workflow.execute
+  rescue StandardError => exception
+    error = exception
+  end
+
+  preview.reload
+  event = workflow.activity&.event
+  chat = event&.references&.grep(LlmChat)&.sole
+  usages = chat&.ruby_llm_usages&.includes(:message)&.to_a || []
+  search_counts = usages.map { |usage| LlmUsageDetails.new(usage).web_search_count }
+  search_statuses = chat&.messages&.flat_map(&:server_tool_calls)&.select { |call| call.type == "web_search_call" }&.map { |call|
+    call.raw&.dig("status") || call.raw&.dig(:status)
+  } || []
+  token_costs = usages.map(&:total_cost)
+  unknown_cost = usages.empty? || token_costs.any?(&:nil?) || search_counts.any?(&:nil?) ||
+                 search_statuses.any? { |status| status != "completed" }
+  search_count = search_counts.sum if search_counts.none?(&:nil?)
+  token_cost = token_costs.sum(BigDecimal("0")) unless token_costs.any?(&:nil?)
+  run_cost = token_cost + search_count * options[:search_call_usd] unless unknown_cost
+  known_spend += run_cost if run_cost
+  posts = preview.posts_data
+  decisions = posts.map do |post|
+    uid = post.fetch("uid")
+    repeated = seen_uids.include?(uid)
+    seen_uids << uid
+    { uid: uid, source_url: post["source_url"], seen_in_earlier_iteration: repeated,
+      status: post["status"], validation_errors: post["validation_errors"] }
+  end
+  report[:runs] << {
+    reference_time_utc: chat&.started_at&.utc&.iso8601(6),
+    system_prompt: chat && Loader::LlmPrompts.extraction_system(started_at: chat.started_at, max_items: output.max_items),
+    elapsed_seconds: (Time.current - started).round(3),
+    preview_status: preview.status,
+    processing_stats: preview.data&.dig("stats"),
+    messages: chat&.messages&.order(:created_at)&.map { |message|
+      message.slice(:role, :content, :finish_reason).merge(
+        server_tool_calls: Array(message.server_tool_calls).map(&:to_h),
+        citations: Array(message.citations).map(&:to_h)
+      )
+    },
+    posts: posts,
+    uid_decisions: decisions,
+    search_calls: search_count,
+    search_call_statuses: search_statuses,
+    search_limit_exceeded: search_count && search_count > limits[:max_tool_calls],
+    input_tokens: usages.sum { |usage| usage.input_tokens.to_i },
+    output_tokens: usages.sum { |usage| usage.output_tokens.to_i },
+    usage: usages.map { |usage|
+      usage.slice(:status, :input_tokens, :output_tokens, :cache_read_tokens, :cache_write_tokens,
+                  :thinking_tokens, :input_cost, :output_cost, :cache_read_cost, :cache_write_cost,
+                  :thinking_cost, :total_cost)
+    },
+    token_cost_usd: token_cost&.to_s("F"),
+    search_cost_usd: search_count && (search_count * options[:search_call_usd]).to_s("F"),
+    total_cost_usd: run_cost&.to_s("F"),
+    cost_unknown: unknown_cost,
+    error_class: error&.class&.name,
+    chat_error_category: chat&.error_category
+  }
+  if (baseline_run = report.dig(:baseline, "runs", 0))
+    report[:comparison] = {
+      baseline_preview_status: baseline_run["preview_status"],
+      current_preview_status: preview.status,
+      baseline_post_count: Array(baseline_run["posts"]).size,
+      current_post_count: posts.size,
+      baseline_search_calls: baseline_run["search_calls"],
+      current_search_calls: search_count,
+      baseline_elapsed_seconds: baseline_run["elapsed_seconds"],
+      current_elapsed_seconds: report[:runs].last[:elapsed_seconds]
+    }
+  end
+  File.write(report_path, JSON.pretty_generate(report) + "\n")
+  break if unknown_cost || error || known_spend >= options[:max_spend_usd]
+end
+
+puts "Report: #{report_path}"

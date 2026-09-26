@@ -35,11 +35,15 @@ class LlmProvider::OpenaiTest < ActiveSupport::TestCase
     chat.with_schema(type: "object", properties: { items: { type: "array", items: { type: "string" } } }, required: ["items"], additionalProperties: false)
     chat.with_provider_options(client.request_options(tool_call_limit: 2, output_token_limit: 1_024))
     payload = nil
+    response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
+    response.fetch("output").first.fetch("action")["sources"] = [
+      { "type" => "url", "url" => "https://example.com/source" }
+    ]
     request = stub_request(:post, "https://api.openai.com/v1/responses")
       .with(headers: { "Authorization" => "Bearer first-key" })
       .to_return do |http|
         payload = JSON.parse(http.body)
-        { body: file_fixture("llm_transcripts/completed.json").read, headers: { "Content-Type" => "application/json" } }
+        { body: response.to_json, headers: { "Content-Type" => "application/json" } }
       end
 
     chat.ask("Find one item.")
@@ -47,8 +51,11 @@ class LlmProvider::OpenaiTest < ActiveSupport::TestCase
     assert_equal "gpt-5-nano", payload.fetch("model")
     assert_equal 2, payload.fetch("max_tool_calls")
     assert_equal 1_024, payload.fetch("max_output_tokens")
+    assert_equal ["reasoning.encrypted_content", "web_search_call.action.sources"], payload.fetch("include")
     assert_equal "web_search", payload.fetch("tools").sole.fetch("type")
     assert_equal true, payload.dig("text", "format", "strict")
+    assert_equal "https://example.com/source",
+                 chat.messages.last.server_tool_calls.sole.raw.fetch("action").fetch("sources").sole.fetch("url")
     assert_requested request, times: 1
   end
 end

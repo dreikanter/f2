@@ -12,7 +12,7 @@ module Loader
       provider = feed.ai_credential.build_llm_provider
       chat = create_chat(provider)
       prepare_chat(chat)
-      response = chat.execute(provider: provider)
+      response = chat.execute(provider: provider, execution_limits: options.fetch(:execution_limits, {}))
       unless response.stopped? && response.content.is_a?(String)
         raise Loader::Error, "AI response did not complete."
       end
@@ -26,7 +26,7 @@ module Loader
         raise ExecutionLimitExceeded, "AI request exceeded its deadline."
       when RubyLLM::Error, Faraday::Error
         raise Loader::Error, "AI request failed. Please try again later."
-      when LlmExecution::RequestLimitExceeded, LlmExecution::ToolLimitExceeded
+      when LlmExecution::RequestLimitExceeded, LlmExecution::ToolLimitExceeded, LlmExecution::TokenLimitExceeded
         raise ExecutionLimitExceeded, "AI request exceeded its execution limits."
       else
         raise
@@ -66,6 +66,7 @@ module Loader
       options[:refresh_event]&.event_references&.create!(reference: chat)
       output = LlmOutput.new(feed)
       chat.with_instructions(LlmPrompts.extraction_system(started_at: chat.started_at, max_items: output.max_items))
+      chat.with_thinking(effort: options[:thinking_effort]) if options[:thinking_effort]
       chat.with_schema(output_schema(output))
       chat.with_provider_tools(:web_search)
       chat.ask_later(config.fetch(:prompt_template).gsub("{{input}}") { feed.source_input })

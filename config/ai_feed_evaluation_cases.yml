@@ -1,0 +1,38 @@
+x_today:
+  group: tuning
+  prompt: >-
+    Find one hottest AI tech news post published TODAY on x.com. Use effective search queries.
+    If nothing found, widen the search. If the post text is shorter than 140 character, quote it,
+    otherwise summarize it. Do not add any comments to the result post.
+  max_items: 1
+x_any_date:
+  group: diagnostic
+  prompt: >-
+    Find one substantive AI technology post on x.com with a direct permalink to the individual post.
+    The publication date does not matter. Quote it if short; otherwise summarize it.
+  max_items: 1
+developer_news:
+  group: tuning
+  prompt: >-
+    Find up to three substantive announcements about Ruby on Rails or PostgreSQL published in the
+    last seven days. Summarize each in one or two sentences and link to its original announcement.
+    Skip items whose publication date you cannot establish.
+  max_items: 3
+original_tip:
+  group: holdout
+  prompt: >-
+    Write one original, practical tip for a developer maintaining a Rails application.
+    Keep it under 500 characters. Do not add a link or comments.
+  max_items: 1
+stoic_quote:
+  group: holdout
+  prompt: >-
+    Find one short, verifiable quote by a well-known Stoic philosopher that this feed has not posted before.
+    Give the quote and author, and name the work or translation when known.
+    If attribution is uncertain, skip that quote.
+  max_items: 1
+legitimate_empty:
+  group: holdout
+  prompt: >-
+    Find one x.com post about AI published on 2099-01-01. Return nothing if no post meets that date.
+  max_items: 1
