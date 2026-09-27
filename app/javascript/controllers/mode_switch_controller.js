@@ -1,10 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Reveals the panel matching the checked mode radio. The radios live outside
-// the panels' forms, so switching is pure disclosure; each mode keeps its own
-// form and fields untouched.
+// Separate forms keep validation and submitted fields local to each mode.
 export default class extends Controller {
-  static targets = ["radio", "panel"]
+  static targets = ["radio", "panel", "submit"]
 
   connect() {
     this.sync()
@@ -20,7 +18,10 @@ export default class extends Controller {
     this.panelTargets.forEach((panel) => {
       const active = panel.dataset.mode === mode
       panel.hidden = !active
-      if (active && focus) panel.querySelector("input:not([type=hidden]):not([type=submit]), textarea")?.focus()
+      if (!active) return
+
+      this.submitTarget.setAttribute("form", panel.querySelector("form").id)
+      if (focus) panel.querySelector("input:not([type=hidden]):not([type=submit]), textarea")?.focus()
     })
   }
 }

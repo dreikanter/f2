@@ -16,7 +16,7 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
       assert_response :success
       assert_select "[data-key='entry.mode-ai']", count: 0
       assert_select "[data-key='entry.panel-ai']", count: 0
-      assert_select "[data-key='entry.actions-ai']", count: 0
+      assert_select "[data-key='entry.submit'][form='entry-link-form']", count: 1
       assert_select "[data-key='entry.mode-link'] input[checked]"
     end
   end
@@ -64,6 +64,8 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='entry.panel-webhook']:not([hidden])"
     assert_select "[data-key='entry.panel-link'][hidden]"
     assert_select "[data-key='entry.panel-webhook'] form input[type=hidden][name='webhook']"
+    assert_select "#feed-form input[type=submit]", count: 1
+    assert_select "[data-key='entry.submit'][form='entry-webhook-form'][data-turbo-submits-with='Working…']"
   end
 
   test "#new with mode=ai should select the AI mode" do
@@ -78,6 +80,8 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='entry.panel-link'][hidden]"
     assert_select "textarea#entry-ai-input[name='prompt'][aria-label='What should AI follow?']"
     assert_select "label[for='entry-ai-input']", count: 0
+    assert_select "#feed-form input[type=submit]", count: 1
+    assert_select "[data-key='entry.submit'][form='entry-ai-form'][data-turbo-submits-with='Working…']"
   end
 
   test "#new with an unknown mode should fall back to the link mode" do
