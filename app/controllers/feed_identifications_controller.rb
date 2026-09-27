@@ -13,8 +13,6 @@ class FeedIdentificationsController < ApplicationController
 
     return render(blank_input_error) if raw_url.blank?
 
-    # A non-link input re-renders the form with the AI panel carrying the
-    # text, so switching the mode radio is the bridge.
     return render(not_a_link_error) if source_url.nil?
 
     # A working result is shown as-is and an in-flight check keeps polling;
@@ -88,14 +86,7 @@ class FeedIdentificationsController < ApplicationController
   end
 
   def not_a_link_error
-    unless Features.ai?
-      return entry_form(error: "That doesn't look like a link. Paste a feed or page URL.")
-    end
-
-    entry_form(
-      prompt: raw_url,
-      error: "That doesn't look like a link. Paste a feed or page URL — or switch to “Follow with AI” to go after it anyway."
-    )
+    entry_form(error: "That doesn't look like a link. Paste a feed or page URL.")
   end
 
   def feed_identification
@@ -253,7 +244,7 @@ class FeedIdentificationsController < ApplicationController
   end
 
   # The canonical source URL for detection (silent scheme-fix), or nil when the
-  # input isn't a link, in which case the entry flow bridges to the AI profile.
+  # input isn't a link.
   def source_url
     return @source_url if defined?(@source_url)
 
