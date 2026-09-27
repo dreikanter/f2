@@ -179,7 +179,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
   test "#create should not attach when feed_id is foreign" do
     sign_in_as(user)
     other_draft = create(:feed, :draft, user: other_user)
-    original_credential_id = other_draft.ai_credential_id
+    assert_nil other_draft.ai_credential_id
 
     post ai_credentials_url, params: {
       feed_id: other_draft.id,
@@ -191,7 +191,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     }
 
     other_draft.reload
-    assert_equal original_credential_id, other_draft.ai_credential_id
+    assert_nil other_draft.ai_credential_id
   end
 
   test "#create should redirect with feed_id in the show path" do
