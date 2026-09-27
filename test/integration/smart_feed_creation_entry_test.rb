@@ -10,7 +10,7 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
   test "#new should hide AI mode when AI is disabled" do
     sign_in_as(user)
 
-    Rails.configuration.x.stub(:ai_enabled, false) do
+    Features.stub(:ai?, false) do
       get new_feed_path(mode: "ai")
 
       assert_response :success
@@ -24,7 +24,7 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
   test "#create should use link entry when AI is disabled" do
     sign_in_as(user)
 
-    Rails.configuration.x.stub(:ai_enabled, false) do
+    Features.stub(:ai?, false) do
       post feed_identification_path, params: { prompt: "Follow Ruby news" }
 
       assert_response :success

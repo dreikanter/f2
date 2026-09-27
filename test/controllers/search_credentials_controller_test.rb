@@ -2,11 +2,11 @@ require "test_helper"
 
 class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @external_search_enabled = Rails.configuration.x.external_search_enabled
-    Rails.configuration.x.external_search_enabled = true
+    @external_search_enabled = Rails.configuration.x.features.external_search
+    Rails.configuration.x.features.external_search = true
   end
 
-  teardown { Rails.configuration.x.external_search_enabled = @external_search_enabled }
+  teardown { Rails.configuration.x.features.external_search = @external_search_enabled }
 
   include ActiveJob::TestHelper
 
