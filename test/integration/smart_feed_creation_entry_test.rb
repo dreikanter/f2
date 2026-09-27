@@ -7,6 +7,30 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
     @user ||= regular_user
   end
 
+  test "#new should hide AI mode when AI is disabled" do
+    sign_in_as(user)
+
+    Rails.configuration.x.stub(:ai_enabled, false) do
+      get new_feed_path(mode: "ai")
+
+      assert_response :success
+      assert_select "[data-key='entry.mode-ai']", count: 0
+      assert_select "[data-key='entry.panel-ai']", count: 0
+      assert_select "[data-key='entry.actions-ai']", count: 0
+      assert_select "[data-key='entry.mode-link'] input[checked]"
+    end
+  end
+
+  test "#create should reject AI entry when AI is disabled" do
+    sign_in_as(user)
+
+    Rails.configuration.x.stub(:ai_enabled, false) do
+      post feed_identification_path, params: { prompt: "Follow Ruby news" }
+
+      assert_response :forbidden
+    end
+  end
+
   test "#new should render all modes with the link mode selected" do
     sign_in_as(user)
 
@@ -15,7 +39,7 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-key='entry.mode-link'] input[type=radio][value=link][checked]"
     assert_select "[data-key='entry.mode-ai'] input[type=radio][value=ai]:not([checked])"
-    assert_select "[data-key='entry.ai-beta-badge']", text: "Beta"
+    assert_select "[data-key='entry.ai-beta-badge']", count: 0
     assert_select "[data-key='entry.mode-webhook'] input[type=radio][value=webhook]:not([checked])"
     assert_select "[data-key='entry.panel-link']:not([hidden])"
     assert_select "[data-key='entry.panel-ai'][hidden]"
