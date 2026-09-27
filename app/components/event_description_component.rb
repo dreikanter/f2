@@ -105,7 +105,7 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def search_credential_link_path(credential)
-    helpers.search_credential_path(credential) if Rails.configuration.x.external_search_enabled
+    helpers.search_credential_path(credential) if Features.external_search?
   end
 
   def escaped_message

@@ -52,7 +52,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
   test "should expose search credentials when external search is enabled" do
     sign_in_as(user)
 
-    Rails.configuration.x.stub(:external_search_enabled, true) do
+    Features.stub(:external_search?, true) do
       get settings_url
     end
 

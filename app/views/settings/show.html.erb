@@ -57,7 +57,7 @@
       description: "Connect AI provider keys for AI-backed feed extraction"
     ) %>
 
-    <% if Rails.configuration.x.external_search_enabled %>
+    <% if Features.external_search? %>
       <%= render LinkedCardComponent.new(
         href: search_credentials_path,
         title: "Search Credentials",

@@ -69,7 +69,7 @@
         <% end %>
       </div>
 
-      <% if Rails.configuration.x.ai_enabled %>
+      <% if Features.ai? %>
         <div class="space-y-3">
           <label class="flex items-center gap-3 font-semibold text-heading" data-key="entry.mode-ai">
             <%= radio_button_tag "entry_mode", "ai", mode == "ai",
@@ -143,7 +143,7 @@
     <% end %>
   <% end %>
 
-  <% if Rails.configuration.x.ai_enabled %>
+  <% if Features.ai? %>
     <%= tag.div class: "mt-6 flex flex-wrap items-center justify-start gap-4 text-body", hidden: mode != "ai",
                 data: { key: "entry.actions-ai", mode: "ai", mode_switch_target: "panel" } do %>
       <%= submit_tag "Continue", form: "entry-ai-form", class: primary_button_classes,

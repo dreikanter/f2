@@ -89,7 +89,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     create(:llm_model, model_id: "gpt-4.1", name: "GPT-4.1")
     sign_in_as(user)
 
-    Rails.configuration.x.stub(:external_search_enabled, true) do
+    Features.stub(:external_search?, true) do
       get edit_feed_path(ai_feed)
     end
 

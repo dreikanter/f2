@@ -48,7 +48,7 @@
         </div>
       <% end %>
 
-      <% if Rails.configuration.x.external_search_enabled %>
+      <% if Features.external_search? %>
         <%= render PanelComponent.new do %>
           <div class="space-y-2">
             <%= form.label :search_credential_id, "External search (optional)", class: helpers.form_label_classes %>

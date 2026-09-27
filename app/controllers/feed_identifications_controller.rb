@@ -49,7 +49,7 @@ class FeedIdentificationsController < ApplicationController
   # The AI form submits the text as `prompt`; the link form submits `url`; the
   # webhook form submits a bare `webhook` marker. The param name is the mode.
   def ai_mode?
-    Rails.configuration.x.ai_enabled && params.key?(:prompt)
+    Features.ai? && params.key?(:prompt)
   end
 
   def webhook_mode?
@@ -88,7 +88,7 @@ class FeedIdentificationsController < ApplicationController
   end
 
   def not_a_link_error
-    unless Rails.configuration.x.ai_enabled
+    unless Features.ai?
       return entry_form(error: "That doesn't look like a link. Paste a feed or page URL.")
     end
 
@@ -198,7 +198,7 @@ class FeedIdentificationsController < ApplicationController
       return identification_error(error: "We couldn't pull any posts from that link. Try a different one — your current source is untouched.")
     end
 
-    unless Rails.configuration.x.ai_enabled
+    unless Features.ai?
       return identification_error(error: "We couldn't pull any posts from that link. Try a different one.")
     end
 
@@ -215,7 +215,7 @@ class FeedIdentificationsController < ApplicationController
       return identification_error(error: "We couldn't reach that link. It might be a temporary hiccup — save again to retry, or keep the current source.")
     end
 
-    unless Rails.configuration.x.ai_enabled
+    unless Features.ai?
       return identification_error(error: "We couldn't reach that link. It might be a temporary hiccup — try again in a moment.")
     end
 

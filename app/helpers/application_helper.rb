@@ -208,7 +208,7 @@ module ApplicationHelper
           name: "Search Credentials",
           path: search_credentials_path,
           active: current_page?(search_credentials_path)
-        } if Rails.configuration.x.external_search_enabled),
+        } if Features.external_search?),
         {
           name: "Invites",
           path: invites_path,

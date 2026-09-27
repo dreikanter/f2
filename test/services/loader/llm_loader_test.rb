@@ -476,7 +476,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
   test "#load should reject external search even when its settings are exposed" do
     feed.search_credential = create(:search_credential, :active, user: feed.user)
 
-    Rails.configuration.x.stub(:external_search_enabled, true) do
+    Features.stub(:external_search?, true) do
       assert_raises(Loader::Error) { Loader::LlmLoader.new(feed).load }
     end
 
