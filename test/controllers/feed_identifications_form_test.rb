@@ -32,7 +32,7 @@ class FeedIdentificationsFormTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "#feed-form input[type=submit]", count: 1
-    assert_select "[data-key='entry.submit'][form='entry-link-form'][data-turbo-submits-with='Checking…']"
+    assert_select "[data-key='entry.submit'][form='entry-link-form'][data-turbo-submits-with='Working…']"
     assert_select "[data-key='entry.actions'] a", text: "Cancel", count: 1
     assert_select "[data-key='entry.actions'] a[href='#{feeds_path}']:not([data-turbo-method])"
   end
@@ -48,7 +48,7 @@ class FeedIdentificationsFormTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-key='entry.checking-status']", text: "Checking this feed. This usually takes a few seconds."
     assert_select "#feed-form input[type=submit]", count: 1
-    assert_select "[data-key='entry.submit'][form='entry-link-form'][value='Checking…'][disabled]"
+    assert_select "[data-key='entry.submit'][form='entry-link-form'][value='Working…'][disabled]"
     assert_select "[data-key='entry.actions'] a", text: "Cancel", count: 1
     assert_select "[data-key='entry.cancel-check'][href='#{feed_identification_path(url: url)}'][data-turbo-method='delete']"
   end

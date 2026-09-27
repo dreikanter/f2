@@ -120,14 +120,14 @@
   </fieldset>
 
   <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body" data-key="entry.actions">
-    <%= submit_tag checking ? "Checking…" : "Continue",
+    <%= submit_tag checking ? "Working…" : "Continue",
                    form: "entry-#{mode}-form",
                    disabled: checking,
                    class: "#{primary_button_classes} disabled:bg-brand disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-brand",
                    data: {
                      key: "entry.submit",
                      mode_switch_target: "submit",
-                     turbo_submits_with: mode == "link" ? "Checking…" : "Preparing…"
+                     turbo_submits_with: "Working…"
                    } %>
     <% if checking %>
       <%= link_to "Cancel", feed_identification_path(url: url), class: secondary_button_classes,

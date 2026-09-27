@@ -21,7 +21,6 @@ export default class extends Controller {
       if (!active) return
 
       this.submitTarget.setAttribute("form", panel.querySelector("form").id)
-      this.submitTarget.dataset.turboSubmitsWith = mode === "link" ? "Checking…" : "Preparing…"
       if (focus) panel.querySelector("input:not([type=hidden]):not([type=submit]), textarea")?.focus()
     })
   }

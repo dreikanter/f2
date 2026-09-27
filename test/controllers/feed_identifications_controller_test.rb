@@ -228,7 +228,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, 'data-identification-state="checking"'
     assert_select "input#entry-link-input[disabled][value=?]", url
-    assert_select "input[type=submit][value='Checking…'][disabled]"
+    assert_select "[data-key='entry.submit'][value='Working…'][disabled]"
     assert_select "[data-key='entry.mode-ai'] input[type=radio][disabled]"
     assert_select "[data-polling-interval-value='2500'][data-polling-max-polls-value='36']"
     # Cancel stays live as the escape hatch: it aborts the check and re-renders

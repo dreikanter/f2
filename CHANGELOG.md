@@ -2,6 +2,7 @@
 
 ## 2026-09-27
 
+- Show “Working…” consistently while preparing a new feed.
 - Removed the Beta badge from AI feeds. Adding AI feeds can now be disabled while existing feeds keep working.
 
 ## 2026-09-26

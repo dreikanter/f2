@@ -27,7 +27,7 @@ async function mount({ mode = "link", checking = false } = {}) {
         </div>
       </fieldset>
       <input type="submit" form="entry-${mode}-form" data-mode-switch-target="submit"
-             value="${checking ? "Checking…" : "Continue"}" ${checking ? "disabled" : ""}>
+             value="${checking ? "Working…" : "Continue"}" ${checking ? "disabled" : ""}>
     </div>
   `, { url: "http://localhost" })
   const { window } = dom
@@ -59,7 +59,6 @@ test("submits the link form while the hidden AI prompt is empty", async () => {
   await mount()
   document.querySelector("[name=url]").value = "https://example.com/feed.xml"
 
-  assert.equal(submit.dataset.turboSubmitsWith, "Checking…")
   submit.click()
 
   assert.deepEqual(submissions, [{ url: "https://example.com/feed.xml" }])
@@ -75,7 +74,6 @@ test("switches the shared submit between AI and link while preserving input", as
   assert.equal(document.querySelector('[data-mode="link"]').hidden, true)
   assert.equal(document.querySelector('[data-mode="ai"]').hidden, false)
   assert.equal(document.activeElement, prompt)
-  assert.equal(submit.dataset.turboSubmitsWith, "Preparing…")
   submit.click()
   assert.deepEqual(submissions, [])
 
@@ -85,7 +83,6 @@ test("switches the shared submit between AI and link while preserving input", as
 
   document.querySelector("[value=link]").click()
   assert.equal(document.activeElement, url)
-  assert.equal(submit.dataset.turboSubmitsWith, "Checking…")
   submit.click()
   assert.deepEqual(submissions, [
     { prompt: "Follow Ruby news" },
@@ -99,17 +96,15 @@ test("submits webhook mode while both source fields are empty", async () => {
   document.querySelector("[value=webhook]").click()
 
   assert.equal(document.querySelector('[data-mode="webhook"]').hidden, false)
-  assert.equal(submit.dataset.turboSubmitsWith, "Preparing…")
   submit.click()
 
   assert.deepEqual(submissions, [{ webhook: "1" }])
 })
 
-test("connects with AI selected and prepares its submission", async () => {
+test("submits AI mode when initially selected", async () => {
   await mount({ mode: "ai" })
   document.querySelector("[name=prompt]").value = "Follow Ruby news"
 
-  assert.equal(submit.dataset.turboSubmitsWith, "Preparing…")
   submit.click()
 
   assert.deepEqual(submissions, [{ prompt: "Follow Ruby news" }])
@@ -119,7 +114,7 @@ test("keeps submission disabled when connecting during a check", async () => {
   await mount({ checking: true })
 
   assert.equal(submit.disabled, true)
-  assert.equal(submit.value, "Checking…")
+  assert.equal(submit.value, "Working…")
   assert.equal(submit.form.id, "entry-link-form")
   submit.click()
 
