@@ -12,7 +12,6 @@
     arrives with the AI panel pre-filled, so switching the mode radio is the
     bridge to it. %>
 <%
-  mode = "link" if mode == "ai" && !Rails.configuration.x.ai_enabled
   wrapper_data = { controller: "mode-switch",
                    identification_state: checking ? "checking" : ("error" if error) }
   if checking

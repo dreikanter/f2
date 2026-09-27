@@ -21,13 +21,16 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "#create should reject AI entry when AI is disabled" do
+  test "#create should use link entry when AI is disabled" do
     sign_in_as(user)
 
     Rails.configuration.x.stub(:ai_enabled, false) do
       post feed_identification_path, params: { prompt: "Follow Ruby news" }
 
-      assert_response :forbidden
+      assert_response :success
+      assert_select "[data-key='entry.mode-link'] input[checked]"
+      assert_select "[data-key='entry.panel-ai']", count: 0
+      assert_select "[data-key='entry.error']", text: "Enter a link to a feed or page."
     end
   end
 

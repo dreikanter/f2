@@ -49,7 +49,7 @@ class FeedIdentificationsController < ApplicationController
   # The AI form submits the text as `prompt`; the link form submits `url`; the
   # webhook form submits a bare `webhook` marker. The param name is the mode.
   def ai_mode?
-    params.key?(:prompt)
+    Rails.configuration.x.ai_enabled && params.key?(:prompt)
   end
 
   def webhook_mode?
@@ -75,8 +75,6 @@ class FeedIdentificationsController < ApplicationController
   # No detection: the prompt is the source. AI feeds default to a daily
   # cadence.
   def handle_prompt_submission
-    return head :forbidden unless Rails.configuration.x.ai_enabled
-
     if raw_prompt.blank?
       return render(entry_form(mode: "ai", error: "Tell AI what to follow — a link or a few words about it."))
     end

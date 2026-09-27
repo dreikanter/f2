@@ -137,7 +137,10 @@ class FeedsController < ApplicationController
 
   # Entry mode on the new-feed page, normalized from the ?mode tab links.
   def mode
-    %w[ai webhook].include?(params[:mode]) ? params[:mode] : "link"
+    return "ai" if params[:mode] == "ai" && Rails.configuration.x.ai_enabled
+    return "webhook" if params[:mode] == "webhook"
+
+    "link"
   end
 
   def enable_feed?
