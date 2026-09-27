@@ -1500,7 +1500,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
   test "#update should not allow direct cron_expression updates" do
     sign_in_as(user)
     feed.update!(schedule_interval: "1h")
-    original_cron = feed.cron_expression
+    assert_nil feed.cron_expression
 
     patch feed_url(feed), params: {
       feed: {
@@ -1511,7 +1511,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to feed_path(feed)
     feed.reload
-    assert_equal original_cron, feed.cron_expression
+    assert_nil feed.cron_expression
     assert_equal "Updated Name", feed.name
   end
 

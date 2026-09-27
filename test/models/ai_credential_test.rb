@@ -200,15 +200,15 @@ class AiCredentialTest < ActiveSupport::TestCase
   test "#build_llm_provider should provide isolated SDK contexts without retries" do
     first = build(:ai_credential, provider: "openai", credential_data: { "api_key" => "first-key" })
     second = build(:ai_credential, provider: "openai", credential_data: { "api_key" => "second-key" })
-    original_key = RubyLLM.config.openai_api_key
 
-    first_context = first.build_llm_provider.context
-    second_context = second.build_llm_provider.context
+    assert_no_changes -> { RubyLLM.config.openai_api_key } do
+      first_context = first.build_llm_provider.context
+      second_context = second.build_llm_provider.context
 
-    assert_equal "first-key", first_context.config.openai_api_key
-    assert_equal "second-key", second_context.config.openai_api_key
-    assert_equal 0, first_context.config.max_retries
-    assert_equal original_key, RubyLLM.config.openai_api_key
+      assert_equal "first-key", first_context.config.openai_api_key
+      assert_equal "second-key", second_context.config.openai_api_key
+      assert_equal 0, first_context.config.max_retries
+    end
     assert_not_requested :any, /./
   end
 
