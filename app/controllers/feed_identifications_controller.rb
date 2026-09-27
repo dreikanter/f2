@@ -203,21 +203,13 @@ class FeedIdentificationsController < ApplicationController
   # creation the AI panel stays available as a secondary escape.
   def unreachable_error
     if editing?
-      return identification_error(error: "We couldn't reach that link. It might be a temporary hiccup — save again to retry, or keep the current source.")
+      identification_error(error: "We couldn't reach that link. It might be a temporary hiccup — save again to retry, or keep the current source.")
+    else
+      identification_error(prompt: raw_url, error: "We couldn't reach that link. It might be a temporary hiccup — try again in a moment.")
     end
-
-    unless Features.ai?
-      return identification_error(error: "We couldn't reach that link. It might be a temporary hiccup — try again in a moment.")
-    end
-
-    identification_error(
-      prompt: raw_url,
-      error: "We couldn't reach that link. It might be a temporary hiccup — try again in a moment, or switch to “Follow with AI”."
-    )
   end
 
-  def identification_success(feed, candidates: [], source_changed: false, profile_changed: false,
-                             source_discovered: false)
+  def identification_success(feed, candidates: [], source_changed: false, profile_changed: false, source_discovered: false)
     expanded_form(feed, candidates: candidates,
                         source_changed: source_changed, profile_changed: profile_changed,
                         source_discovered: source_discovered)
