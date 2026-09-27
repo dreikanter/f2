@@ -1,25 +1,6 @@
 require "test_helper"
 
 class FeedTest < ActiveSupport::TestCase
-  test "#save should reject new AI feeds when AI is disabled" do
-    feed = build(:feed, :draft, feed_profile_key: "llm", params: { "prompt" => "Follow Ruby news" })
-
-    Rails.configuration.x.stub(:ai_enabled, false) do
-      assert_not feed.save
-      assert_includes feed.errors[:base], "Adding AI feeds is currently disabled."
-      assert build(:feed).valid?
-    end
-  end
-
-  test "#update should allow existing AI drafts when AI is disabled" do
-    feed = create(:feed, :draft, feed_profile_key: "llm", params: { "prompt" => "Follow Ruby news" })
-
-    Rails.configuration.x.stub(:ai_enabled, false) do
-      assert feed.update(params: { "prompt" => "Follow Rails news" })
-      assert_equal "Follow Rails news", feed.reload.params["prompt"]
-    end
-  end
-
   test "#valid? should return true with all required attributes" do
     feed = build(:feed)
     assert feed.valid?

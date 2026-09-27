@@ -76,7 +76,6 @@ class Feed < ApplicationRecord
   validate :params_against_profile_schema
   validate :associations_belong_to_user
   validate :ai_credential_required_when_enabled_ai_profile, if: :enabled?
-  validate :ai_creation_enabled, on: :create
   validate :engine_fixed_on_edit
   validate :source_change_reverified
   validates :access_token, presence: true, if: :enabled?
@@ -448,12 +447,6 @@ class Feed < ApplicationRecord
 
       errors.add(association, "must belong to the same user")
     end
-  end
-
-  def ai_creation_enabled
-    return if Rails.configuration.x.ai_enabled || !depends_on_ai?
-
-    errors.add(:base, "Adding AI feeds is currently disabled.")
   end
 
   # The engine (deterministic vs AI) is fixed at creation; crossing the AI
