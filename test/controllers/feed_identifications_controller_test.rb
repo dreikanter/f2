@@ -275,7 +275,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "ai safety news"
   end
 
-  test "#create should hint at the AI mode and carry the text over when the link input isn't a link" do
+  test "#create should ask for a URL and keep invalid input in the link field" do
     sign_in_as(user)
 
     assert_no_enqueued_jobs(only: FeedIdentificationJob) do
@@ -284,12 +284,10 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, 'data-identification-state="error"'
-    assert_includes response.body, "look like a link"
-    # The user stays in the mode they chose; the AI panel carries the
-    # text so switching the radio is the bridge.
     assert_select "[data-key='entry.mode-link'] input[type=radio][checked]"
-    assert_select "[data-key='entry.error']", text: /look like a link/
-    assert_select "textarea#entry-ai-input", text: "@alice"
+    assert_select "[data-key='form.entry-link'][value='@alice']"
+    assert_select "[data-key='entry.error']", text: "That doesn't look like a link. Paste a feed or page URL."
+    assert_select "[data-key='form.entry-ai']", text: ""
   end
 
   test "#create should not persist an identification record on the AI bridge" do

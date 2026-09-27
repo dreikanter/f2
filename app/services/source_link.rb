@@ -2,7 +2,7 @@
 # fetch. Explicit http(s) inputs pass as typed; http is never forced to
 # https since some feeds are http-only. A bare dotted host gets https
 # prepended. Anything else (a handle, free text, a non-http scheme)
-# returns nil, which the entry flow reads as "offer the AI mode".
+# returns nil.
 class SourceLink
   def self.canonical(input)
     new(input).canonical

@@ -1,9 +1,5 @@
 require "test_helper"
 
-# The two entry modes for a non-link input: "Follow with AI" bridges
-# straight to a draft AI feed, while a non-link typed into the link mode
-# ("Follow a feed or channel") re-renders the entry form with the AI panel
-# carrying the text; switching the mode radio is the bridge.
 class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 
@@ -26,14 +22,16 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "climate change"
   end
 
-  test "the link mode hints at the AI mode and carries the text over when the input isn't a link" do
+  test "the link mode asks for a URL and keeps invalid input in the link field" do
     sign_in_as(user)
 
     post feed_identification_path, params: { url: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, 'data-identification-state="error"'
-    assert_select "[data-key='entry.error']", text: /look like a link/
-    assert_select "textarea#entry-ai-input", text: "@alice"
+    assert_select "[data-key='entry.mode-link'] input[type=radio][checked]"
+    assert_select "[data-key='form.entry-link'][value='@alice']"
+    assert_select "[data-key='entry.error']", text: "That doesn't look like a link. Paste a feed or page URL."
+    assert_select "[data-key='form.entry-ai']", text: ""
   end
 end

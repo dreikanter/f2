@@ -2,6 +2,7 @@
 
 ## 2026-09-27
 
+- Invalid feed links now ask for a URL without suggesting AI or copying the text into the AI prompt.
 - Show “Working…” consistently while preparing a new feed.
 - Removed the Beta badge from AI feeds. Adding AI feeds can now be disabled while existing feeds keep working.
 

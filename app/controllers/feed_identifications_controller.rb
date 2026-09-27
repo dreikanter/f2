@@ -13,8 +13,6 @@ class FeedIdentificationsController < ApplicationController
 
     return render(blank_input_error) if raw_url.blank?
 
-    # A non-link input re-renders the form with the AI panel carrying the
-    # text, so switching the mode radio is the bridge.
     return render(not_a_link_error) if source_url.nil?
 
     # A working result is shown as-is and an in-flight check keeps polling;
@@ -88,14 +86,7 @@ class FeedIdentificationsController < ApplicationController
   end
 
   def not_a_link_error
-    unless Features.ai?
-      return entry_form(error: "That doesn't look like a link. Paste a feed or page URL.")
-    end
-
-    entry_form(
-      prompt: raw_url,
-      error: "That doesn't look like a link. Paste a feed or page URL — or switch to “Follow with AI” to go after it anyway."
-    )
+    entry_form(error: "That doesn't look like a link. Paste a feed or page URL.")
   end
 
   def feed_identification
@@ -212,21 +203,13 @@ class FeedIdentificationsController < ApplicationController
   # creation the AI panel stays available as a secondary escape.
   def unreachable_error
     if editing?
-      return identification_error(error: "We couldn't reach that link. It might be a temporary hiccup — save again to retry, or keep the current source.")
+      identification_error(error: "We couldn't reach that link. It might be a temporary hiccup — save again to retry, or keep the current source.")
+    else
+      identification_error(prompt: raw_url, error: "We couldn't reach that link. It might be a temporary hiccup — try again in a moment.")
     end
-
-    unless Features.ai?
-      return identification_error(error: "We couldn't reach that link. It might be a temporary hiccup — try again in a moment.")
-    end
-
-    identification_error(
-      prompt: raw_url,
-      error: "We couldn't reach that link. It might be a temporary hiccup — try again in a moment, or switch to “Follow with AI”."
-    )
   end
 
-  def identification_success(feed, candidates: [], source_changed: false, profile_changed: false,
-                             source_discovered: false)
+  def identification_success(feed, candidates: [], source_changed: false, profile_changed: false, source_discovered: false)
     expanded_form(feed, candidates: candidates,
                         source_changed: source_changed, profile_changed: profile_changed,
                         source_discovered: source_discovered)
@@ -253,7 +236,7 @@ class FeedIdentificationsController < ApplicationController
   end
 
   # The canonical source URL for detection (silent scheme-fix), or nil when the
-  # input isn't a link, in which case the entry flow bridges to the AI profile.
+  # input isn't a link.
   def source_url
     return @source_url if defined?(@source_url)
 
