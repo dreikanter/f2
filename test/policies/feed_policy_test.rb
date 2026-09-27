@@ -56,6 +56,16 @@ class FeedPolicyTest < ActiveSupport::TestCase
     assert policy.create?
   end
 
+  test "#create? should deny AI feeds when AI is disabled" do
+    ai_feed = build(:feed, :draft, user: user, feed_profile_key: "llm", params: { "prompt" => "Follow Ruby news" })
+
+    Rails.configuration.x.stub(:ai_enabled, false) do
+      assert_not policy_for_user(user, ai_feed).create?
+      assert policy_for_user(user).create?
+      assert policy_for_user(user, ai_feed).update?
+    end
+  end
+
   test "should deny create access to nil user" do
     policy = FeedPolicy.new(nil, feed)
     assert_not policy.create?

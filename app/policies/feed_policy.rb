@@ -8,7 +8,7 @@ class FeedPolicy < ApplicationPolicy
   end
 
   def create?
-    authenticated?
+    authenticated? && (Rails.configuration.x.ai_enabled || !record.depends_on_ai?)
   end
 
   def update?

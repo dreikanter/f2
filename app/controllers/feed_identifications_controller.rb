@@ -49,7 +49,7 @@ class FeedIdentificationsController < ApplicationController
   # The AI form submits the text as `prompt`; the link form submits `url`; the
   # webhook form submits a bare `webhook` marker. The param name is the mode.
   def ai_mode?
-    params.key?(:prompt)
+    Rails.configuration.x.ai_enabled && params.key?(:prompt)
   end
 
   def webhook_mode?
@@ -84,10 +84,14 @@ class FeedIdentificationsController < ApplicationController
   end
 
   def blank_input_error
-    entry_form(error: "Enter a link, or a few words describing what to follow.")
+    entry_form(error: "Enter a link to a feed or page.")
   end
 
   def not_a_link_error
+    unless Rails.configuration.x.ai_enabled
+      return entry_form(error: "That doesn't look like a link. Paste a feed or page URL.")
+    end
+
     entry_form(
       prompt: raw_url,
       error: "That doesn't look like a link. Paste a feed or page URL — or switch to “Follow with AI” to go after it anyway."
@@ -194,6 +198,10 @@ class FeedIdentificationsController < ApplicationController
       return identification_error(error: "We couldn't pull any posts from that link. Try a different one — your current source is untouched.")
     end
 
+    unless Rails.configuration.x.ai_enabled
+      return identification_error(error: "We couldn't pull any posts from that link. Try a different one.")
+    end
+
     identification_error(
       prompt: raw_url,
       error: "We couldn't pull any posts from that link. Try a different one — or switch to “Follow with AI”, which can follow pages without a feed."
@@ -205,6 +213,10 @@ class FeedIdentificationsController < ApplicationController
   def unreachable_error
     if editing?
       return identification_error(error: "We couldn't reach that link. It might be a temporary hiccup — save again to retry, or keep the current source.")
+    end
+
+    unless Rails.configuration.x.ai_enabled
+      return identification_error(error: "We couldn't reach that link. It might be a temporary hiccup — try again in a moment.")
     end
 
     identification_error(

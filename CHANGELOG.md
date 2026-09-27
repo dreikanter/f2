@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-27
+
+- Removed the Beta badge from AI feeds. Adding AI feeds can now be disabled while existing feeds keep working.
+
 ## 2026-09-26
 
 - Feed refresh times are now spread across each selected interval instead of clustering on fixed clock times.

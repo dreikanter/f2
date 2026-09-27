@@ -69,41 +69,40 @@
         <% end %>
       </div>
 
-      <div class="space-y-3">
-        <label class="flex items-center gap-3 font-semibold text-heading" data-key="entry.mode-ai">
-          <%= radio_button_tag "entry_mode", "ai", mode == "ai",
-                               disabled: checking,
-                               data: { mode_switch_target: "radio", action: "change->mode-switch#switch" } %>
-          <span class="inline-flex items-center gap-2">
+      <% if Rails.configuration.x.ai_enabled %>
+        <div class="space-y-3">
+          <label class="flex items-center gap-3 font-semibold text-heading" data-key="entry.mode-ai">
+            <%= radio_button_tag "entry_mode", "ai", mode == "ai",
+                                 disabled: checking,
+                                 data: { mode_switch_target: "radio", action: "change->mode-switch#switch" } %>
             Follow with AI
-            <%= render BetaBadgeComponent.new(key: "entry.ai-beta-badge") %>
-          </span>
-        </label>
+          </label>
 
-        <%= tag.div class: "ps-7", hidden: mode != "ai",
-                    data: { key: "entry.panel-ai", mode: "ai", mode_switch_target: "panel" } do %>
-          <%= form_with url: feed_identification_path, method: :post, id: "entry-ai-form" do |f| %>
-            <div class="space-y-2">
-              <%= f.text_area :prompt,
-                              id: "entry-ai-input",
-                              rows: 3,
-                              maxlength: 2000,
-                              value: prompt,
-                              placeholder: "e.g. Follow A24's blog and turn each new post into a one-line announcement",
-                              class: input_field_classes,
-                              required: true,
-                              autofocus: mode == "ai",
-                              aria: { label: "What should AI follow?" },
-                              data: { key: "form.entry-ai" } %>
-              <% if error && mode == "ai" %>
-                <p class="text-sm text-danger" data-key="entry.error"><%= error %></p>
-              <% else %>
-                <p class="text-sm text-muted">Describe a source or topic in your own words. Use a link, a few links, or explain what you're after. AI reads the web to keep up with it.</p>
-              <% end %>
-            </div>
+          <%= tag.div class: "ps-7", hidden: mode != "ai",
+                      data: { key: "entry.panel-ai", mode: "ai", mode_switch_target: "panel" } do %>
+            <%= form_with url: feed_identification_path, method: :post, id: "entry-ai-form" do |f| %>
+              <div class="space-y-2">
+                <%= f.text_area :prompt,
+                                id: "entry-ai-input",
+                                rows: 3,
+                                maxlength: 2000,
+                                value: prompt,
+                                placeholder: "e.g. Follow A24's blog and turn each new post into a one-line announcement",
+                                class: input_field_classes,
+                                required: true,
+                                autofocus: mode == "ai",
+                                aria: { label: "What should AI follow?" },
+                                data: { key: "form.entry-ai" } %>
+                <% if error && mode == "ai" %>
+                  <p class="text-sm text-danger" data-key="entry.error"><%= error %></p>
+                <% else %>
+                  <p class="text-sm text-muted">Describe a source or topic in your own words. Use a link, a few links, or explain what you're after. AI reads the web to keep up with it.</p>
+                <% end %>
+              </div>
+            <% end %>
           <% end %>
-        <% end %>
-      </div>
+        </div>
+      <% end %>
 
       <div class="space-y-3">
         <label class="flex items-center gap-3 font-semibold text-heading" data-key="entry.mode-webhook">
@@ -144,11 +143,13 @@
     <% end %>
   <% end %>
 
-  <%= tag.div class: "mt-6 flex flex-wrap items-center justify-start gap-4 text-body", hidden: mode != "ai",
-              data: { key: "entry.actions-ai", mode: "ai", mode_switch_target: "panel" } do %>
-    <%= submit_tag "Continue", form: "entry-ai-form", class: primary_button_classes,
-                   data: { turbo_submits_with: "Preparing…" } %>
-    <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
+  <% if Rails.configuration.x.ai_enabled %>
+    <%= tag.div class: "mt-6 flex flex-wrap items-center justify-start gap-4 text-body", hidden: mode != "ai",
+                data: { key: "entry.actions-ai", mode: "ai", mode_switch_target: "panel" } do %>
+      <%= submit_tag "Continue", form: "entry-ai-form", class: primary_button_classes,
+                     data: { turbo_submits_with: "Preparing…" } %>
+      <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
+    <% end %>
   <% end %>
 
   <%= tag.div class: "mt-6 flex flex-wrap items-center justify-start gap-4 text-body", hidden: mode != "webhook",

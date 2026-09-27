@@ -31,6 +31,7 @@ module Feeder
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.0
 
+    config.x.ai_enabled = true
     config.x.external_search_enabled = false
 
     # Please, add to the `ignore` list any other `lib` subdirectories that do
