@@ -36,7 +36,7 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
       assert_equal ["https://example.com/post/1", "https://example.com/post/2"], result.entries.map(&:uid)
       assert_equal items, result.entries.map(&:raw_data)
       assert_equal Time.zone.parse("2026-04-15T12:30:00Z"), result.entries.first.published_at
-      assert_equal Time.current, result.entries.last.published_at
+      assert_nil result.entries.last.published_at
       result.entries.each do |entry|
         assert_equal feed, entry.feed
         assert entry.pending?
@@ -154,22 +154,33 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert_nil result.entries.sole.uid
   end
 
-  test "#process should use the current time when the source publication date is empty" do
+  test "#process should preserve an unknown source publication date" do
     freeze_time do
       result = process('{"items":[{"source_url":"https://example.com/post","body":"Post","published_at":""}]}')
       entry = result.entries.sole
 
-      assert_equal Time.current, entry.published_at
+      assert_nil entry.published_at
       assert_equal "", entry.raw_data.fetch("published_at")
       assert chat.reload.succeeded?
     end
   end
 
-  test "#process should use the current time for an unreadable publication date" do
+  test "#process should preserve an unreadable source publication date as unknown" do
     freeze_time do
       result = process('{"items":[{"source_url":"https://example.com/post","body":"Post","published_at":"not a date"}]}')
 
-      assert_equal Time.current, result.entries.sole.published_at
+      assert_nil result.entries.sole.published_at
+    end
+  end
+
+  test "#process should date generated content at the run start regardless of model dates" do
+    freeze_time do
+      started_at = chat.started_at
+      travel 30.seconds
+      result = process('{"items":[{"source_url":null,"body":"A story","published_at":"2020-01-01"}]}')
+
+      assert_equal started_at, result.entries.sole.published_at
+      assert_equal "2020-01-01", result.entries.sole.raw_data.fetch("published_at")
     end
   end
 

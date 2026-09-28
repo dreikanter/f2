@@ -106,7 +106,7 @@ module Loader
         Use this reference to interpret relative dates such as today, yesterday,
         and this week. Honor explicit dates and timezones in the feed request;
         convert the reference time to the requested timezone before interpreting
-        relative dates. When no timezone is specified, use UTC.
+        relative dates. When no timezone is specified, use #{Time.zone.tzinfo.name}.
 
         Return at most #{max_items} #{"item".pluralize(max_items)}.
       TEXT

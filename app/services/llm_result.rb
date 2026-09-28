@@ -5,7 +5,7 @@ class LlmResult
   attr_reader :content
 
   delegate :bytesize, to: :content
-  delegate :fail!, to: :chat
+  delegate :fail!, :started_at, to: :chat
 
   def initialize(content:, chat:)
     @content = content

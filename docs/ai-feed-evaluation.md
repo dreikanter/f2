@@ -24,3 +24,9 @@ The live candidate's timezone-free claimed publication time became 11:00 UTC. It
 Validation at the evaluated revision: 13 evaluator tests / 152 assertions pass; all 18 JavaScript tests and RuboCop pass. The full local Rails suite runs 4,297 tests with one pre-existing macOS encoded-loopback failure in `PublicUrlTest`, reproduced in the original checkout. Linux CI passes this test. There are no migrations or user-facing runtime changes.
 
 Keep the evaluator aligned with final selection limits, preview parity, and cost accounting. Preserve the fixture/live distinction, isolated history, bounded invocation, and absent publication path. Current refresh selection is reused through its private stage methods; update that call when selection gains a shared public interface. Exceptions retain only available usage, so interrupted in-flight spend may be missing. No legacy execution mode is retained.
+
+## Dates and source references
+
+Single-source items use `source_url`; synthesized posts preserve any citations in their body and use `source_url: null`. F2 does not independently verify those citations. A blank or unreadable source date stays null on `FeedEntry`, so it passes an explicit import threshold as other undated feeds do. Generated items use the run start for ordering and thresholds. `Post.published_at` uses the existing display/order fallback for undated entries; it is not evidence of a source publication date. Raw model fields remain available on the entry.
+
+The model receives the run time in UTC and the application's time zone as the default for relative dates. An explicit timezone in the user's prompt takes precedence.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-28
+
+- AI feeds interpret relative dates in the application time zone and preserve unknown source dates.
+
 ## 2026-09-27
 
 - Invalid feed links now ask for a URL without suggesting AI or copying the text into the AI prompt.

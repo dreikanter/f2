@@ -259,11 +259,19 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_includes second_system, "Reference time for this run (UTC): 2026-09-21T15:30:00Z"
     assert_not_includes second_system, "2026-09-20T15:30:00Z"
     assert_includes first_system, "convert the reference time to the requested timezone before interpreting"
-    assert_includes first_system, "When no timezone is specified, use UTC."
+    assert_includes first_system, "When no timezone is specified, use #{Time.zone.tzinfo.name}."
     assert_equal payloads.first.fetch("input"), payloads.last.fetch("input")
     assert_includes feed.llm_chats.first.messages.second.content, feed.source_input
     assert_not_includes first_system, feed.source_input
     assert_requested request, times: 2
+  end
+
+  test "#load should supply the application timezone for relative dates" do
+    Time.use_zone("Europe/Belgrade") do
+      instructions = Loader::LlmPrompts.extraction_system(started_at: Time.current, max_items: 1)
+
+      assert_includes instructions, "When no timezone is specified, use Europe/Belgrade."
+    end
   end
 
   test "#load should request and accept transformations of supplied text without a source URL" do

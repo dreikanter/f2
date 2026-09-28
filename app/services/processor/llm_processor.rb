@@ -5,12 +5,11 @@ module Processor
 
     def process
       data = parse_output
-      now = Time.current
       entries = data.fetch("items").map do |item|
         FeedEntry.new(
           feed: feed,
           uid: item["source_url"].nil? ? SecureRandom.uuid : Uid::Resolver.from_url(item["source_url"]),
-          published_at: parse_time(item["published_at"]) || now,
+          published_at: item["source_url"].nil? ? raw_data.started_at : parse_time(item["published_at"]),
           status: :pending,
           raw_data: item
         )
