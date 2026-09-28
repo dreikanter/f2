@@ -1,0 +1,46 @@
+qualifying:
+  prompt: Find one substantive X post about AI programming or developer tooling from the last 24 hours. Quote complete short text and include its permalink and publication time. Skip unsupported claims.
+  items:
+    - {body: "Every software developer should own a potato PC.", source_url: "https://x.com/dhh/status/2104203632572842293", published_at: "2026-09-27T13:36:54Z"}
+  expected_usable: 1
+empty:
+  prompt: Find one X post published on 2099-01-01. Return no items if none can be verified.
+  items: []
+  expected_usable: 0
+rejected:
+  prompt: Find one source-backed post. Return no items if no source text is available.
+  items:
+    - {body: "", source_url: "https://x.com/dhh/status/2104203632572842293"}
+  expected_usable: 0
+  expected_rejected: 1
+seeded:
+  prompt: Retrieve and quote https://x.com/dhh/status/2104203632572842293 without a date restriction.
+  imported_urls: ["https://x.com/dhh/status/2104203632572842293"]
+  items:
+    - {body: "Every software developer should own a potato PC.", source_url: "https://x.com/dhh/status/2104203632572842293"}
+  expected_usable: 0
+  expected_filtered: 1
+stale_id:
+  prompt: Find one X post from the last 24 hours. Establish its publication date from the original source.
+  items:
+    - {body: "Synthetic stale source with a recent claimed date", source_url: "https://x.com/example/status/1830000000000000000", published_at: "2026-09-27T13:00:00Z"}
+  expected_usable: 1
+missing_date:
+  prompt: Find one recent source-backed X post. Skip it if the publication date is unknown.
+  items:
+    - {body: "Synthetic source with no publication date", source_url: "https://x.com/example/status/2104203632572842293"}
+  expected_usable: 1
+  expected_published_at: "2026-09-27T18:00:00Z"
+url_variants:
+  prompt: Retrieve up to two distinct X posts about developer tooling, with their original permalinks.
+  max_items: 2
+  items:
+    - {body: "Equivalent URL", source_url: "https://x.com/dhh/status/2104203632572842293"}
+    - {body: "Equivalent URL", source_url: "https://twitter.com/dhh/status/2104203632572842293?s=20"}
+  expected_usable: 2
+truncated:
+  prompt: Find one X post about developer tooling and quote only complete verified text.
+  source_preview: "Every software developer should own a potato PC…"
+  items:
+    - {body: "Synthetic summary with claims absent from the truncated preview", source_url: "https://x.com/dhh/status/2104203632572842293"}
+  expected_usable: 1
