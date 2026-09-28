@@ -64,6 +64,7 @@ class FeedPreviewWorkflow
   def load_feed_contents(temp_feed)
     loader = temp_feed.loader_instance(
       purpose: :preview,
+      run_id: run_id,
       refresh_event: @activity&.event,
       usage_feed: feed_preview.feed,
       deadline_at: deadline_at

@@ -2,6 +2,7 @@
 
 ## 2026-09-28
 
+- Retrying an AI feed refresh preserves generated post identities to prevent duplicate imports.
 - AI feeds interpret relative dates in the application time zone and preserve unknown source dates.
 
 ## 2026-09-27

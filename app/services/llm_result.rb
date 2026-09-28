@@ -7,9 +7,14 @@ class LlmResult
   delegate :bytesize, to: :content
   delegate :fail!, :started_at, to: :chat
 
-  def initialize(content:, chat:)
+  def initialize(content:, chat:, run_id: chat.id)
     @content = content
     @chat = chat
+    @run_id = run_id
+  end
+
+  def generated_uid(index)
+    "llm:#{@run_id}:#{index}"
   end
 
   def complete!

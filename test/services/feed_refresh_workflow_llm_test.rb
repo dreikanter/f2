@@ -44,6 +44,22 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
+  test "#perform should reuse generated identities on retry and allow a later run" do
+    request = stub_response(output: { items: [item.merge("source_url" => nil)] }.to_json)
+    job = FeedRefreshJob.new(feed.id)
+
+    assert_difference "feed.posts.count", 1 do
+      job.perform_now
+      job.perform_now
+    end
+    assert_equal "llm:#{job.job_id}:0", feed.posts.sole.uid
+    assert_difference "feed.posts.count", 1 do
+      FeedRefreshJob.perform_now(feed.id)
+    end
+    assert_equal 2, FeedEntryUid.where(feed: feed).count
+    assert_requested request, times: 3
+  end
+
   test "#execute should settle empty valid output without publication" do
     request = stub_response(output: '{"items":[]}')
 

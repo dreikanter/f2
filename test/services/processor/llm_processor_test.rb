@@ -123,7 +123,7 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert_empty feed.feed_entries
   end
 
-  test "#process should assign distinct system UUIDs to original items even on the same day" do
+  test "#process should assign distinct run identities while ignoring model IDs" do
     freeze_time do
       result = process({ items: [
         { source_url: nil, body: "First story", uid: "invented-id" },
@@ -131,8 +131,8 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
       ] }.to_json)
 
       first, second = result.entries
-      assert_match(/\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/, first.uid)
-      assert_match(/\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/, second.uid)
+      assert_equal "llm:#{chat.id}:0", first.uid
+      assert_equal "llm:#{chat.id}:1", second.uid
       assert_not_equal first.uid, second.uid
     end
   end

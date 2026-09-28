@@ -397,7 +397,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     raw_data = { items: [{ "source_url" => nil, "body" => "Сегодня: A, B, C" }] }.to_json
     stub_ai_response(JSON.parse(raw_data).fetch("items"))
-    workflow = FeedRefreshWorkflow.new(original_feed)
+    workflow = FeedRefreshWorkflow.new(original_feed, run_id: "original-run")
 
     workflow.execute
 
@@ -406,7 +406,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     post = original_feed.posts.last
     assert_not_nil post, "an original item should persist a post"
     assert_nil post.source_url
-    assert_match(/\A[0-9a-f-]{36}\z/, post.uid)
+    assert_equal "llm:original-run:0", post.uid
     assert_equal "Сегодня: A, B, C", post.content
   end
 
