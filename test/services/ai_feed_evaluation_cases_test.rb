@@ -9,6 +9,7 @@ class AiFeedEvaluationCasesTest < ActiveSupport::TestCase
       travel_to Time.utc(2026, 9, 27, 18) do
         credential = create(:ai_credential, :active)
         response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
+        response["output"].select! { |part| part["type"] == "message" } if scenario["search_calls"] == 0
         response["output"].last["content"].first["text"] = { items: scenario.fetch("items") }.to_json
         request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
         assert_no_difference ["Feed.count", "FeedEntryUid.count", "LlmChat.count", "Post.count"] do
@@ -22,6 +23,10 @@ class AiFeedEvaluationCasesTest < ActiveSupport::TestCase
             assert_equal scenario.fetch("expected_usable"), report[:usable_new_posts]
             assert_equal scenario.fetch("expected_rejected", 0), report[:rejected]
             assert_equal scenario.fetch("expected_filtered", 0), report[:filtered]
+            assert_equal scenario.fetch("search_calls", 1), report[:search_calls]
+            if scenario["expected_content"]
+              assert_includes report[:posts].sole.fetch("content"), scenario["expected_content"]
+            end
             if scenario["expected_published_at"]
               assert_equal Time.iso8601(scenario["expected_published_at"]), report[:posts].sole.fetch("published_at")
             end

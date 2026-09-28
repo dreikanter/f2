@@ -26,3 +26,23 @@ missing_date:
     - {body: "Synthetic source with no publication date", source_url: "https://www.ruby-lang.org/en/about/"}
   expected_usable: 1
   expected_published_at: "2026-09-27T18:00:00Z"
+mixed_sources:
+  prompt: Compare Ruby and Python briefly using their official documentation. Cite both sources in one post.
+  items:
+    - {body: "Ruby and Python are dynamic languages. Sources: https://www.ruby-lang.org/en/about/ and https://docs.python.org/3/tutorial/", source_url: null}
+  expected_usable: 1
+  expected_content: "https://docs.python.org/3/tutorial/"
+generation:
+  prompt: Invent a short story about an astronomer. No research is needed.
+  search_calls: 0
+  items:
+    - {body: "The last star blinked, and the astronomer waved back.", source_url: null}
+  expected_usable: 1
+  expected_content: "The last star blinked, and the astronomer waved back."
+transformation:
+  prompt: "Translate this supplied text into French: Hello, world!"
+  search_calls: 0
+  items:
+    - {body: "Bonjour, monde !", source_url: null}
+  expected_usable: 1
+  expected_content: "Bonjour, monde !"
