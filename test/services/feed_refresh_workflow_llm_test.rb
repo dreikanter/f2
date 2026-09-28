@@ -57,7 +57,38 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
       FeedRefreshJob.perform_now(feed.id)
     end
     assert_equal 2, FeedEntryUid.where(feed: feed).count
-    assert_requested request, times: 3
+    assert_requested request, times: 2
+  end
+
+  test "#perform should roll back an incomplete import and allow the same job to retry" do
+    request = stub_response(output: { items: [item.merge("source_url" => nil)] }.to_json)
+    job = FeedRefreshJob.new(feed.id)
+
+    Post.stub(:insert_all, ->(*) { raise ActiveRecord::StatementInvalid, "Write failed" }) do
+      assert_no_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"] do
+        assert_raises(ActiveRecord::StatementInvalid) { job.perform_now }
+      end
+    end
+    assert_difference "feed.posts.count", 1 do
+      job.perform_now
+    end
+    assert_equal "llm:#{job.job_id}:0", feed.posts.sole.uid
+    assert_equal 1, FeedEntryUid.where(feed: feed).count
+    assert_requested request, times: 2
+  end
+
+  test "#perform should not repeat committed imports after publication enqueue fails" do
+    request = stub_response(output: { items: [item.merge("source_url" => nil)] }.to_json)
+    job = FeedRefreshJob.new(feed.id)
+
+    PostPublishJob.stub(:perform_later, ->(*) { raise "Queue unavailable" }) do
+      assert_raises(RuntimeError) { job.perform_now }
+    end
+    assert_equal 1, feed.posts.count
+    assert_no_difference ["FeedEntryUid.count", "Post.count", "LlmChat.count"] do
+      job.perform_now
+    end
+    assert_requested request, times: 1
   end
 
   test "#execute should settle empty valid output without publication" do

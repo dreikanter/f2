@@ -7,9 +7,7 @@ class FeedRefreshWorkflow
   step :load_feed_contents
   step :process_feed_contents
   step :filter_new_entries
-  step :persist_entries
-  step :normalize_entries
-  step :persist_posts
+  step :persist_content
   step :enqueue_publication
   step :finalize_workflow
 
@@ -34,6 +32,11 @@ class FeedRefreshWorkflow
   end
 
   def initialize_workflow(*)
+    if feed.feed_profile_key == "llm"
+      halt! if feed.events.where(type: "feed_refresh").exists?(
+        ["metadata @> ?::jsonb", { imported: true, run_id: @run_id }.to_json]
+      )
+    end
     record_started_at
     @refresh_event = create_refresh_event
   end
@@ -75,7 +78,7 @@ class FeedRefreshWorkflow
       level: :info,
       subject: feed,
       user: feed.user,
-      metadata: { status: "started", stats: stats }
+      metadata: { status: "started", run_id: @run_id, stats: stats }
     )
   end
 
@@ -132,6 +135,22 @@ class FeedRefreshWorkflow
 
     record_stats(entries_before_threshold: stale_entries.size) if stale_entries.any?
     fresh_entries
+  end
+
+  def persist_content(entries)
+    return persist_entries_and_posts(entries) unless feed.feed_profile_key == "llm"
+
+    ApplicationRecord.transaction do
+      posts = persist_entries_and_posts(entries)
+      @refresh_event.update!(metadata: @refresh_event.metadata.merge("imported" => true))
+      posts
+    end
+  end
+
+  def persist_entries_and_posts(entries)
+    persisted_entries = persist_entries(entries)
+    posts = normalize_entries(persisted_entries)
+    persist_posts(posts)
   end
 
   def persist_entries(new_entries)
@@ -287,6 +306,7 @@ class FeedRefreshWorkflow
   end
 
   def replace_refresh_event(**attributes)
+    attributes.fetch(:metadata).merge!(run_id: @run_id, imported: @refresh_event&.metadata&.fetch("imported", false))
     Event.transaction do
       feed.record_successful_refresh! if attributes.dig(:metadata, :status) == "completed"
       event = Event.create!(type: "feed_refresh", subject: feed, user: feed.user, **attributes)

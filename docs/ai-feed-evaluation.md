@@ -32,3 +32,5 @@ Single-source items use `source_url`; synthesized posts preserve any citations i
 The model receives the run time in UTC and the application's time zone as the default for relative dates. An explicit timezone in the user's prompt takes precedence.
 
 Single-source identities use the shared URL normalizer. Synthesized/generated items use the job's logical run ID plus their response position, ignoring model-provided IDs and arbitrary citations. Retrying a refresh job preserves those identities; a separately scheduled run gets new identities. Direct loader/evaluator runs default to their chat ID. Similar wording across separate runs is not semantically deduplicated.
+
+AI refreshes commit entries, posts, and imported identities in one transaction after the model request. The refresh event atomically records the imported run ID, so retrying that job does not make another inference or import spare candidates. Failed writes roll back the import and can be retried with the same item identities. The existing publication watchdog recovers committed posts if the worker stops before enqueueing publication.

@@ -49,9 +49,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       :load_feed_contents,
       :process_feed_contents,
       :filter_new_entries,
-      :persist_entries,
-      :normalize_entries,
-      :persist_posts,
+      :persist_content,
       :enqueue_publication,
       :finalize_workflow
     ]
@@ -511,7 +509,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     end
 
     # Should fail during normalize step
-    assert_equal :normalize_entries, workflow.stats[:failed_at_step]
+    assert_equal :persist_content, workflow.stats[:failed_at_step]
 
     # Entry should still be created even though normalization failed
     assert_equal 1, FeedEntry.where(feed: test_feed).count
@@ -553,7 +551,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       assert_equal "Database error", error.message
 
       # Should fail during persist_entries step
-      assert_equal :persist_entries, workflow.stats[:failed_at_step]
+      assert_equal :persist_content, workflow.stats[:failed_at_step]
 
       # Verify error event was created
       events = Event.where(subject: test_feed, type: "feed_refresh")

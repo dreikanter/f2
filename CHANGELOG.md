@@ -2,6 +2,7 @@
 
 ## 2026-09-28
 
+- AI imports now save posts and import history together, so interrupted writes can be retried safely.
 - Retrying an AI feed refresh preserves generated post identities to prevent duplicate imports.
 - AI feeds interpret relative dates in the application time zone and preserve unknown source dates.
 
