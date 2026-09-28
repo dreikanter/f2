@@ -16,7 +16,7 @@ class AiFeedEvaluationTest < ActiveSupport::TestCase
       end
     end
     assert_equal credential, calls.sole.fetch(:credential)
-    assert_equal ["https://x.com/dhh/status/2104203632572842293"], calls.sole.fetch(:imported_urls)
+    assert_equal ["https://www.ruby-lang.org/en/about/"], calls.sole.fetch(:imported_urls)
   end
 
   test "#runner should reject unknown cases before discovery with safe output" do
@@ -106,7 +106,6 @@ class AiFeedEvaluationTest < ActiveSupport::TestCase
         assert_equal 1, report[:search_calls]
         assert_equal 1, report[:cost_totals].fetch(:call_count)
         assert_includes report[:tool_cost_usd], "Unknown"
-        assert_includes report[:source_verification], "Unavailable"
         assert report[:system_prompt].present?
       end
     end

@@ -9,8 +9,6 @@ class AiFeedEvaluation
       model: model,
       started_at: Time.current.iso8601,
       time_zone: Time.zone.name,
-      window: "Unavailable: current contract expresses dates only in the prompt",
-      source_verification: "Unavailable: current loader does not verify source facts",
       tool_cost_usd: "Unknown: current usage records do not separate tool charges"
     }
     Feed.transaction(requires_new: true) do
