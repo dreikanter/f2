@@ -28,19 +28,25 @@ class AiFeedEvaluation
         FeedEntryUid.create!(feed: feed, uid: Uid::Resolver.from_url(url), imported_at: Time.current)
       end
       workflow = FeedRefreshWorkflow.new(feed)
-      raw = feed.loader_instance.load
-      # Reuse refresh selection without entering its persistence/publication steps.
-      entries = workflow.send(:process_feed_contents, raw)
-      selected = workflow.send(:filter_new_entries, entries)
-      posts = selected.map { |entry| feed.normalizer_instance(entry).normalize }
+      entries = selected = posts = []
+      begin
+        raw = feed.loader_instance.load
+        # Reuse refresh selection without entering its persistence/publication steps.
+        entries = workflow.send(:process_feed_contents, raw)
+        selected = workflow.send(:filter_new_entries, entries)
+        posts = selected.map { |entry| feed.normalizer_instance(entry).normalize }
+      rescue StandardError => error
+        Rails.error.report(error, context: { evaluation: true })
+        report[:error] = error.class.name
+      end
       report.merge!(
         configuration: feed.params,
         imported_urls: imported_urls,
         import_after: import_after&.iso8601,
         candidates: entries.map(&:raw_data),
-        discovered: entries.size,
-        filtered: entries.size - selected.size,
-        rejected: posts.count(&:rejected?),
+        discovered: report[:error] ? nil : entries.size,
+        filtered: report[:error] ? nil : entries.size - selected.size,
+        rejected: report[:error] ? nil : posts.count(&:rejected?),
         usable_new_posts: posts.count(&:enqueued?),
         posts: posts.map { |post| post.attributes.slice("uid", "content", "source_url", "published_at", "status", "validation_errors") }
       )
@@ -48,7 +54,8 @@ class AiFeedEvaluation
       report[:usage] = usages.usages.map { |usage| usage.attributes.slice("provider", "model", "status", "input_tokens", "output_tokens", "total_cost") }
       report[:cost_totals] = usages.totals.to_h
       report[:search_calls] = usages.usages.sum { |usage| LlmUsageDetails.new(usage).web_search_count.to_i }
-      report[:system_prompt] = feed.llm_chats.sole.messages.find_by!(role: "system").content
+      report[:system_prompt] = feed.llm_chats.first&.messages&.find_by(role: "system")&.content
+      report[:usage_availability] = "Retained attempts only; in-flight spend may be missing after a failure"
       report[:latency_seconds] = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
       raise ActiveRecord::Rollback
     end

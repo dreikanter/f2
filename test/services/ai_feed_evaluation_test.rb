@@ -4,6 +4,30 @@ require Rails.root.join("script/ai_feed_evaluation")
 class AiFeedEvaluationTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
+  test "#runner should invoke exactly one named case and emit JSON" do
+    credential = create(:ai_credential, :active)
+    settings = { "AI_EVAL_CREDENTIAL_ID" => credential.id, "AI_EVAL_MODEL" => "gpt-5-nano", "AI_EVAL_CASE" => "seeded" }
+    fetch = ENV.method(:fetch)
+    calls = []
+    AiFeedEvaluation.stub(:run, ->(**args) { calls << args; {} }) do
+      ENV.stub(:fetch, ->(key, *defaults) { settings.fetch(key) { fetch.call(key, *defaults) } }) do
+        output = capture_io { load Rails.root.join("script/evaluate_ai_feed.rb") }.first
+        assert_equal({ "mode" => "live", "case" => "seeded", "case_count" => 1, "repetitions" => 1 }, JSON.parse(output))
+      end
+    end
+    assert_equal credential, calls.sole.fetch(:credential)
+    assert_equal ["https://x.com/dhh/status/2104203632572842293"], calls.sole.fetch(:imported_urls)
+  end
+
+  test "#runner should reject unknown cases before discovery with safe output" do
+    capture_error_reports do
+      ENV.stub(:fetch, "unknown-secret-case") do
+        output = capture_io { assert_raises(SystemExit) { load Rails.root.join("script/evaluate_ai_feed.rb") } }.last
+        assert_equal({ "error" => "KeyError" }, JSON.parse(output))
+      end
+    end
+  end
+
   test "#run should seed isolated history and apply refresh date and duplicate filtering" do
     credential = create(:ai_credential, :active)
     history = create(:feed_entry_uid, uid: "https://example.com/imported")
@@ -32,10 +56,15 @@ class AiFeedEvaluationTest < ActiveSupport::TestCase
     )
     assert_no_difference ["Feed.count", "LlmChat.count", "RubyLLM::ActiveRecord::Usage.count"] do
       assert_no_enqueued_jobs do
-        error = assert_raises(Loader::Error) do
-          AiFeedEvaluation.run(credential: credential, model: "gpt-5-nano", prompt: "Find one post")
+        errors = capture_error_reports do
+          report = AiFeedEvaluation.run(credential: credential, model: "gpt-5-nano", prompt: "Find one post")
+          assert_equal "Loader::Error", report[:error]
+          assert_equal 0, report[:usable_new_posts]
+          assert_nil report[:discovered]
+          assert_equal "failed", report[:usage].sole.fetch("status")
+          assert_not_includes JSON.generate(report), "secret provider detail"
         end
-        assert_not_includes error.message, "secret provider detail"
+        assert_instance_of Loader::Error, errors.sole.error
       end
     end
   end
