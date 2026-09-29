@@ -215,7 +215,7 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
-  test "#perform should record late output without reporting a bug" do
+  test "#perform should record late output without retrying" do
     freeze_time do
       request = stub_response { travel LlmChat::TIMEOUT }
 
@@ -223,7 +223,7 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
         assert_no_publication { FeedRefreshJob.perform_now(feed.id) }
       end
 
-      assert_empty reports
+      assert_instance_of Loader::LlmLoader::ExecutionLimitExceeded, reports.sole.error
       chat = feed.llm_chats.sole
       assert chat.interrupted?
       assert_equal "deadline_exceeded", chat.error_category
@@ -236,7 +236,7 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     end
   end
 
-  test "#perform should record excess tool calls without reporting a bug" do
+  test "#perform should record excess tool calls without retrying" do
     response = completed_response
     response["output"] = Array.new(17) do |index|
       { "type" => "web_search_call", "id" => "search_#{index}", "status" => "completed" }
@@ -250,7 +250,7 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
       end
     end
 
-    assert_empty reports
+    assert_instance_of Loader::LlmLoader::ExecutionLimitExceeded, reports.sole.error
     assert_equal [["loader_errors_total", { profile: "llm", loader: "LlmLoader" }]],
                  increments.select { |name, _| name == "loader_errors_total" }
     assert_equal "failed", refresh_event.metadata.fetch("status")
