@@ -404,8 +404,8 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     feed = create(:feed, user: user, feed_profile_key: "llm", params: { "prompt" => "Old request", "max_items" => 1 },
                   ai_credential: preview.ai_credential, ai_model: preview.ai_model, search_credential: nil,
                   import_after: Time.current.beginning_of_day)
-    preview.update!(feed: feed)
     create(:feed_entry_uid, feed: feed, uid: "https://example.org/known")
+    preview.update!(feed: feed)
     response = completed_ai_response
     response["output"].last["content"].first["text"] = { items: [
       { source_url: "https://example.org/known", body: "Known" },
