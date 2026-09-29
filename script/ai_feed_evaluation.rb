@@ -28,9 +28,10 @@ class AiFeedEvaluation
       entries = selected = posts = []
       begin
         raw = feed.loader_instance.load
-        entries = feed.processor_instance(raw).process.entries.select { |entry| entry.uid.present? }
+        entries = feed.processor_instance(raw).process.entries
+        identified, unidentified = entries.partition { |entry| entry.uid.present? }
         selection = FeedEntrySelection.new(feed)
-        selected = selection.call(entries)
+        selected = selection.call(identified)
         posts = selected.map { |entry| selection.posts.fetch(entry.uid) }
         raw.complete!
       rescue StandardError => error
@@ -44,7 +45,8 @@ class AiFeedEvaluation
         imported_urls: imported_urls,
         import_after: import_after&.iso8601,
         candidates: entries.map(&:raw_data),
-        discovered: report[:error] ? nil : entries.size,
+        returned: report[:error] ? nil : entries.size,
+        selection_counts: report[:error] ? nil : selection.stats.merge(unidentified_entries: unidentified.size),
         filtered: report[:error] ? nil : selection.stats.values_at(:collapsed_duplicate_uids, :known_entries, :entries_before_threshold).sum,
         rejected: report[:error] ? nil : selection.stats[:rejected_posts],
         usable_new_posts: posts.count(&:enqueued?),

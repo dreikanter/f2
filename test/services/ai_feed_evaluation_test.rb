@@ -42,11 +42,46 @@ class AiFeedEvaluationTest < ActiveSupport::TestCase
         report = AiFeedEvaluation.run(credential: credential, model: "gpt-5-nano", prompt: "Find posts",
           max_items: 3, imported_urls: [history.uid], import_after: 1.day.ago)
         assert_equal 2, report[:filtered]
+        assert_equal 1, report[:selection_counts][:known_entries]
+        assert_equal 1, report[:selection_counts][:entries_before_threshold]
+        assert_equal report[:returned], report[:selection_counts].values.sum
         assert_equal 1, report[:usable_new_posts]
         assert_equal "https://example.com/new", report[:posts].sole.fetch("source_url")
       end
     end
     assert_equal "https://example.com/imported", history.reload.uid
+  end
+
+  test "#run should count unidentified and unusable candidates separately" do
+    credential = create(:ai_credential, :active)
+    response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
+    items = [{ source_url: "invalid", body: "Unidentified" }, { source_url: nil, body: " " }, { source_url: nil, body: "Story" }]
+    response["output"].last["content"].first["text"] = { items: items }.to_json
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+    report = AiFeedEvaluation.run(credential: credential, model: "gpt-5-nano", prompt: "Write a story")
+
+    assert_equal 3, report[:returned]
+    assert_equal items.map(&:stringify_keys), report[:candidates]
+    assert_equal 1, report[:selection_counts][:unidentified_entries]
+    assert_equal 1, report[:selection_counts][:rejected_posts]
+    assert_equal 1, report[:selection_counts][:selected_entries]
+    assert_equal report[:returned], report[:selection_counts].values.sum
+  end
+
+  test "#run should count duplicates and eligible overflow separately" do
+    credential = create(:ai_credential, :active)
+    response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
+    items = [{ source_url: "https://example.org/post", body: "First" }] * 2 + [{ source_url: nil, body: "Spare" }]
+    response["output"].last["content"].first["text"] = { items: items }.to_json
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+    report = AiFeedEvaluation.run(credential: credential, model: "gpt-5-nano", prompt: "Find a post")
+
+    assert_equal 1, report[:selection_counts][:collapsed_duplicate_uids]
+    assert_equal 1, report[:selection_counts][:overflow_entries]
+    assert_equal 1, report[:selection_counts][:selected_entries]
+    assert_equal report[:returned], report[:selection_counts].values.sum
   end
 
   test "#run should roll back failed requests without exposing provider errors" do
@@ -60,7 +95,8 @@ class AiFeedEvaluationTest < ActiveSupport::TestCase
           report = AiFeedEvaluation.run(credential: credential, model: "gpt-5-nano", prompt: "Find one post")
           assert_equal "Loader::Error", report[:error]
           assert_equal 0, report[:usable_new_posts]
-          assert_nil report[:discovered]
+          assert_nil report[:returned]
+          assert_nil report[:selection_counts]
           assert_equal "failed", report[:usage].sole.fetch("status")
           assert_not_includes JSON.generate(report), "secret provider detail"
         end
@@ -98,7 +134,7 @@ class AiFeedEvaluationTest < ActiveSupport::TestCase
         assert_match(/\A[0-9a-f]{40}\z/, report[:revision])
         assert report[:latency_seconds].positive?
         assert_equal [item.stringify_keys], report[:candidates]
-        assert_equal 1, report[:discovered]
+        assert_equal 1, report[:returned]
         assert_equal 0, report[:filtered]
         assert_equal 0, report[:rejected]
         assert_equal 40, report[:usage].sole.fetch("input_tokens")

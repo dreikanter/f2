@@ -20,6 +20,7 @@ class AiFeedEvaluationCasesTest < ActiveSupport::TestCase
             if (path = ENV["AI_EVAL_OFFLINE_REPORT"])
               File.open(path, "a") { |file| file.puts JSON.generate(report.merge(case: name, mode: "offline_fixture")) }
             end
+            assert_equal report[:returned], report[:selection_counts].values.sum
             assert_equal scenario.fetch("expected_usable"), report[:usable_new_posts]
             assert_equal scenario.fetch("expected_rejected", 0), report[:rejected]
             assert_equal scenario.fetch("expected_filtered", 0), report[:filtered]
