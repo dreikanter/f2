@@ -53,12 +53,12 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert chat.reload.succeeded?
   end
 
-  test "#process should reject the whole response before deduplication at the configured limit" do
+  test "#process should reject the whole response before deduplication at the candidate limit" do
     feed.params["max_items"] = 1
     item = { source_url: "https://example.com/post", body: "Post" }
 
     assert_raises(Processor::LlmProcessor::InvalidOutput) do
-      process({ items: [item, item] }.to_json)
+      process({ items: Array.new(4, item) }.to_json)
     end
 
     assert chat.reload.failed?
@@ -71,8 +71,8 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert_empty process('{"items":[]}').entries
   end
 
-  test "#process should accept three items by default" do
-    items = Array.new(3) do |index|
+  test "#process should accept five candidates by default" do
+    items = Array.new(5) do |index|
       { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
     end
 
@@ -80,9 +80,9 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert chat.reload.succeeded?
   end
 
-  test "#process should accept ten items when explicitly configured" do
+  test "#process should accept twelve candidates for a ten-post feed" do
     feed.update!(params: feed.params.merge("max_items" => 10))
-    items = Array.new(10) do |index|
+    items = Array.new(12) do |index|
       { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
     end
 
@@ -90,8 +90,8 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     assert chat.reload.succeeded?
   end
 
-  test "#process should reject more than three items by default" do
-    items = Array.new(3) do |index|
+  test "#process should reject more than five candidates by default" do
+    items = Array.new(5) do |index|
       { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
     end
 
@@ -113,7 +113,7 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
   test "#process should enforce the default limit when the stored response limit is too large" do
     feed.update_column(:params, feed.params.merge("max_items" => 11))
     feed.reload
-    items = Array.new(4) do |index|
+    items = Array.new(6) do |index|
       { "source_url" => "https://example.com/post/#{index}", "body" => "Post #{index}" }
     end
 

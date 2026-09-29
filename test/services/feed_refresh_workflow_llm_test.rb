@@ -110,6 +110,34 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     end
   end
 
+  test "#execute should fill a slot after a known and an unusable candidate" do
+    feed.update!(params: feed.params.merge("max_items" => 1))
+    create(:feed_entry_uid, feed: feed, uid: "https://example.com/known")
+    items = [item.merge("source_url" => "https://example.com/known"), item.merge("body" => ""), item]
+    request = stub_response(output: { items: items }.to_json)
+
+    FeedRefreshWorkflow.new(feed).execute
+
+    assert_equal "https://example.com/post", feed.posts.sole.uid
+    assert_equal 1, feed.feed_entries.count
+    assert_equal 2, FeedEntryUid.where(feed: feed).count
+    assert_requested request, times: 1
+  end
+
+  test "#perform should not import overflow when a completed generated run is retried" do
+    feed.update!(params: feed.params.merge("max_items" => 1))
+    items = [item.merge("source_url" => nil), item.merge("source_url" => nil, "body" => "Spare")]
+    request = stub_response(output: { items: items }.to_json)
+    job = FeedRefreshJob.new(feed.id)
+
+    job.perform_now
+    job.perform_now
+
+    assert_equal "llm:#{job.job_id}:0", feed.posts.sole.uid
+    assert_not FeedEntryUid.exists?(feed: feed, uid: "llm:#{job.job_id}:1")
+    assert_requested request, times: 1
+  end
+
   test "#execute should settle empty valid output without publication" do
     request = stub_response(output: '{"items":[]}')
 

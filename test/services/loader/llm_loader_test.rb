@@ -35,7 +35,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_not_includes chat.messages.first.content, feed.source_input
     assert_equal "Feed request — what to follow and how to present it:\n\nA daily roundup\n", chat.messages.second.content
     assert_equal chat.messages.first.content, payload.fetch("instructions")
-    assert_equal ["Return at most 3 items."], payload.fetch("instructions").scan(/Return at most \d+ items\./)
+    assert_equal ["Return at most 5 items."], payload.fetch("instructions").scan(/Return at most \d+ items\./)
     assert_equal "gpt-5-nano", payload.fetch("model")
     assert_equal "web_search", payload.fetch("tools").sole.fetch("type")
     assert_equal true, payload.dig("text", "format", "strict")
@@ -63,10 +63,10 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     Loader::LlmLoader.new(limited_feed).load
     Loader::LlmLoader.new(feed).load
 
-    assert_equal 1, payloads.first.dig("text", "format", "schema", "properties", "items", "maxItems")
-    assert_equal 3, payloads.last.dig("text", "format", "schema", "properties", "items", "maxItems")
-    assert_equal ["Return at most 1 item."], payloads.first.fetch("instructions").scan(/Return at most \d+ items?\./)
-    assert_equal ["Return at most 3 items."], payloads.last.fetch("instructions").scan(/Return at most \d+ items?\./)
+    assert_equal 3, payloads.first.dig("text", "format", "schema", "properties", "items", "maxItems")
+    assert_equal 5, payloads.last.dig("text", "format", "schema", "properties", "items", "maxItems")
+    assert_equal ["Return at most 3 items."], payloads.first.fetch("instructions").scan(/Return at most \d+ items?\./)
+    assert_equal ["Return at most 5 items."], payloads.last.fetch("instructions").scan(/Return at most \d+ items?\./)
     assert_equal 10, FeedProfile::UNIVERSAL_OUTPUT_SCHEMA.dig("properties", "items", "maxItems")
   end
 
@@ -85,7 +85,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     entries = feed.processor_instance(content).process.entries
 
     assert_equal original_item, entries.sole.raw_data
-    assert_equal LlmOutput::DEFAULT_MAX_ITEMS, payload.dig("text", "format", "schema", "properties", "items", "maxItems")
+    assert_equal LlmOutput::DEFAULT_MAX_ITEMS + 2, payload.dig("text", "format", "schema", "properties", "items", "maxItems")
     assert_includes feed.llm_chats.sole.messages.first.content,
                     Loader::LlmPrompts::OUTPUT_CONTRACT
     assert_requested request, times: 1
@@ -142,8 +142,8 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     Loader::LlmLoader.new(feed).load
 
     system = payload.fetch("instructions")
-    assert_equal ["Return at most 2 items."], system.scan(/Return at most \d+ items\./)
-    assert_equal 2, payload.dig("text", "format", "schema", "properties", "items", "maxItems")
+    assert_equal ["Return at most 4 items."], system.scan(/Return at most \d+ items\./)
+    assert_equal 4, payload.dig("text", "format", "schema", "properties", "items", "maxItems")
     assert_equal "Feed request — what to follow and how to present it:\n\nA daily roundup\n",
                  feed.llm_chats.sole.messages.second.content
   end
@@ -325,13 +325,13 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
-  test "#load should send the configured ten-item limit that the processor also enforces" do
+  test "#load should enforce twelve candidates for a ten-post feed" do
     feed.update!(params: feed.params.merge("max_items" => 10))
     item = {
       "body" => "A source post", "source_url" => "https://example.com/post",
       "title" => "", "supplementary" => [], "images" => [], "published_at" => ""
     }
-    items = Array.new(10) { |index| item.merge("source_url" => "https://example.com/post/#{index}") }
+    items = Array.new(12) { |index| item.merge("source_url" => "https://example.com/post/#{index}") }
     output = { "items" => items }
     response = completed_response(content: output.to_json)
     stub_request(:post, "https://api.openai.com/v1/responses").to_return do |http|

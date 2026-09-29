@@ -12,9 +12,13 @@ class LlmOutput
     JSONSchemer.schema(schema).valid?(value) ? value : DEFAULT_MAX_ITEMS
   end
 
+  def candidate_limit
+    [max_items + 2, 12].min
+  end
+
   def schema
     schema = FeedProfile::UNIVERSAL_OUTPUT_SCHEMA.deep_dup
-    schema.fetch("properties").fetch("items")["maxItems"] = max_items
+    schema.fetch("properties").fetch("items")["maxItems"] = candidate_limit
     schema
   end
 end

@@ -2,6 +2,7 @@
 
 ## 2026-09-29
 
+- AI feeds can request two spare candidates to replace known or unusable results without another API call.
 - AI feeds select usable new posts before applying the configured count.
 
 ## 2026-09-28

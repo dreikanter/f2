@@ -993,10 +993,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     create(:llm_model, model_id: "gpt-4.1")
     feed = ai_feed_with_schedule
     feed.update!(params: feed.params.merge("max_items" => 1))
-    request = stub_ai_response([
-      { "source_url" => nil, "body" => "First" },
-      { "source_url" => nil, "body" => "Second" }
-    ])
+    request = stub_ai_response(Array.new(4) { { "source_url" => nil, "body" => "Story" } })
 
     assert_no_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"] do
       assert_no_enqueued_jobs(only: FeedRefreshJob) do

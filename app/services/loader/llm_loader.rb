@@ -65,7 +65,7 @@ module Loader
     def prepare_chat(chat)
       options[:refresh_event]&.event_references&.create!(reference: chat)
       output = LlmOutput.new(feed)
-      chat.with_instructions(LlmPrompts.extraction_system(started_at: chat.started_at, max_items: output.max_items))
+      chat.with_instructions(LlmPrompts.extraction_system(started_at: chat.started_at, max_items: output.candidate_limit))
       chat.with_schema(output_schema(output))
       chat.with_provider_tools(:web_search)
       chat.ask_later(config.fetch(:prompt_template).gsub("{{input}}") { feed.source_input })

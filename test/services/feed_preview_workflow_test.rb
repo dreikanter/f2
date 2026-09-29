@@ -258,7 +258,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
         payload = JSON.parse(http.body)
         payload.fetch("model") == "gpt-5.6-luna" &&
           payload.fetch("max_tool_calls") == 16 &&
-          payload.dig("text", "format", "schema", "properties", "items", "maxItems") == 1
+          payload.dig("text", "format", "schema", "properties", "items", "maxItems") == 3
       end
       .to_return_json(body: response)
 
@@ -332,7 +332,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     preview.update!(params: preview.params.merge("max_items" => 1))
     response = completed_ai_response
     response["output"].last["content"].first["text"] = {
-      items: [{ source_url: nil, body: "First" }, { source_url: nil, body: "Second" }]
+      items: Array.new(4) { { source_url: nil, body: "Story" } }
     }.to_json
     stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
 
