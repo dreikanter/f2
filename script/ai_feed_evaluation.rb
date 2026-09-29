@@ -55,7 +55,7 @@ class AiFeedEvaluation
       report[:usage] = usages.usages.map { |usage| usage.attributes.slice("provider", "model", "status", "input_tokens", "output_tokens", "total_cost") }
       totals = usages.totals
       report[:cost_totals] = totals.to_h.merge(total_cost: totals.total_cost, incomplete: totals.incomplete?)
-      report[:tool_cost_usd] = (totals.unknown_tool_cost_count + totals.incomplete_run_count).positive? ? "Unknown: native tool charges are not priced" : 0
+      report[:tool_cost_usd] = ((totals.unknown_tool_cost_count + totals.incomplete_run_count).positive? || (report[:error] && totals.unknown_cost_count.positive?)) ? "Unknown: native tool charges are not priced" : 0
       report[:search_calls] = usages.usages.sum { |usage| LlmUsageDetails.new(usage).web_search_count.to_i }
       report[:system_prompt] = feed.llm_chats.first&.messages&.find_by(role: "system")&.content
       report[:usage_availability] = "Retained attempts only; in-flight spend may be missing after a failure"

@@ -87,7 +87,7 @@ class AiFeedEvaluationTest < ActiveSupport::TestCase
   test "#run should roll back failed requests without exposing provider errors" do
     credential = create(:ai_credential, :active)
     stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(
-      status: 401, body: { error: { message: "secret provider detail", type: "invalid_api_key" } }
+      status: 500, body: { error: { message: "secret provider detail", type: "server_error" } }
     )
     assert_no_difference ["Feed.count", "LlmChat.count", "RubyLLM::ActiveRecord::Usage.count"] do
       assert_no_enqueued_jobs do
@@ -97,6 +97,7 @@ class AiFeedEvaluationTest < ActiveSupport::TestCase
           assert_equal 0, report[:usable_new_posts]
           assert_nil report[:returned]
           assert_nil report[:selection_counts]
+          assert_includes report[:tool_cost_usd], "Unknown"
           assert_equal "failed", report[:usage].sole.fetch("status")
           assert_not_includes JSON.generate(report), "secret provider detail"
         end
