@@ -4,6 +4,10 @@ class LlmUsageDetails
     @usage = usage
   end
 
+  def tool_cost_unknown?
+    @usage.message&.[](:server_tool_calls).present?
+  end
+
   # @return [Integer, nil] search count, or nil for an unsupported provider
   def web_search_count
     case @usage.provider

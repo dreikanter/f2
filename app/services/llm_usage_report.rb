@@ -15,11 +15,11 @@ class LlmUsageReport
     thinking_tokens:    "SUM(thinking_tokens)"
   }.freeze
 
-  Totals = Data.define(:call_count, :known_cost, :unknown_cost_count,
+  Totals = Data.define(:call_count, :known_cost, :unknown_cost_count, :unknown_tool_cost_count, :incomplete_run_count,
                        :input_tokens, :output_tokens, :cache_read_tokens,
                        :cache_write_tokens, :thinking_tokens) do
     def incomplete?
-      unknown_cost_count.positive?
+      unknown_cost_count.positive? || unknown_tool_cost_count.positive? || incomplete_run_count.positive?
     end
 
     def total_cost
@@ -27,10 +27,12 @@ class LlmUsageReport
     end
 
     def event_stats
-      return {} if call_count.zero?
+      return {} if call_count.zero? && !incomplete?
 
       # Event snapshots use cents and JSON numbers; SDK costs are USD decimals.
-      { llm_calls: call_count, llm_cost_cents: total_cost && (total_cost * 100).to_f }
+      stats = { llm_calls: call_count, llm_cost_cents: total_cost && (total_cost * 100).to_f }
+      stats[:llm_incomplete_runs] = incomplete_run_count if incomplete_run_count.positive?
+      stats
     end
   end
 
@@ -54,6 +56,9 @@ class LlmUsageReport
   def initialize(chats:, period: nil)
     # A subquery keeps each usage row unique even with duplicate event references.
     @usages = RubyLLM::ActiveRecord::Usage.where(chat_type: "LlmChat", chat_id: chats.select(:id))
+    recorded = RubyLLM::ActiveRecord::Usage.where(chat_type: "LlmChat").where.not(chat_id: nil).select(:chat_id)
+    @incomplete_chats = chats.where(status: :interrupted).or(chats.overdue).or(chats.failed.where.not(id: recorded))
+    @incomplete_chats = @incomplete_chats.where(updated_at: period) if period
     @usages = @usages.where(created_at: period) if period
   end
 
@@ -63,16 +68,22 @@ class LlmUsageReport
 
   # Rolling windows end at now; attribution uses usage time, not chat creation.
   def totals_for_periods(now: Time.current)
-    PERIODS.transform_values { |period| summarize(usages.where(created_at: (now - period)..now)) }
+    PERIODS.transform_values do |period|
+      window = (now - period)..now
+      summarize(usages.where(created_at: window), incomplete_chats: @incomplete_chats.where(updated_at: window))
+    end
   end
 
   private
 
-  def summarize(scope)
+  def summarize(scope, incomplete_chats: @incomplete_chats)
     expressions = AGGREGATES.values.map { |sql| Arel.sql(sql) }
     values = scope.pick(*expressions)
     attributes = AGGREGATES.keys.zip(values).to_h
 
+    tool_messages = LlmMessage.where("server_tool_calls <> '[]'::jsonb").select(:id)
+    attributes[:unknown_tool_cost_count] = scope.where(message_type: "LlmMessage", message_id: tool_messages).count
+    attributes[:incomplete_run_count] = incomplete_chats.distinct.count(:id)
     Totals.new(**attributes)
   end
 end

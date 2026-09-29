@@ -440,7 +440,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     chat = test_feed.llm_chats.scheduled_run.sole
     assert_equal "completed", event.metadata["status"]
     assert_equal 1, event.metadata.dig("stats", "llm_calls")
-    assert_equal 0.001, event.metadata.dig("stats", "llm_cost_cents")
+    assert_nil event.metadata.dig("stats", "llm_cost_cents")
     assert_equal [chat], event.references
     assert_requested request, times: 1
   end
@@ -699,7 +699,8 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     abandoned.reload
     assert_equal "interrupted", abandoned.metadata["status"]
     assert_equal 1, abandoned.metadata.dig("stats", "llm_calls")
-    assert_equal 40, abandoned.metadata.dig("stats", "llm_cost_cents")
+    assert_nil abandoned.metadata.dig("stats", "llm_cost_cents")
+    assert_equal 1, abandoned.metadata.dig("stats", "llm_incomplete_runs")
     assert_equal [dead_chat], abandoned.references
 
     completed = Event.where(subject: test_feed, type: "feed_refresh")

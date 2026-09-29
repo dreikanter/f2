@@ -64,7 +64,8 @@ class LlmUsageListItemComponent < ListItemComponent
   def formatted_cost
     return "Unknown" if usage.total_cost.nil?
 
-    helpers.number_to_currency(usage.total_cost)
+    cost = helpers.number_to_currency(usage.total_cost)
+    LlmUsageDetails.new(usage).tool_cost_unknown? ? "#{cost} model; tool cost unknown" : cost
   end
 
   def outcome_badge

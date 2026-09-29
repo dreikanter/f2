@@ -85,6 +85,7 @@ class LlmUsageListItemComponentTest < ViewComponent::TestCase
 
     result = render_usage(usage.reload)
 
+    assert_equal "$0.03 model; tool cost unknown", result.css('[data-key="events.llm_usage.cost"]').text
     assert_nil chat.reload.ai_credential_id
     assert_equal "1,000 in · 500 out · 2 native web calls", result.css('[data-key="events.llm_usage.tokens"]').text
   end

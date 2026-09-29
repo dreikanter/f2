@@ -116,6 +116,13 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "Connection timeout"
   end
 
+  test "#call should show unknown spend when interrupted before usage was retained" do
+    event = event_with_status("interrupted")
+    event.update!(metadata: event.metadata.merge(stats: { llm_calls: 0, llm_cost_cents: nil, llm_incomplete_runs: 1 }))
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
+    assert_includes result.css('[data-key="events.llm_cost"]').text, "unknown cost"
+  end
+
   test "#call should describe an interrupted refresh" do
     result = render_inline(FeedRefreshDescriptionComponent.new(event: event_with_status("interrupted")))
 

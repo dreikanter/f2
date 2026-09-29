@@ -25,6 +25,7 @@ class AiFeedEvaluationCasesTest < ActiveSupport::TestCase
             assert_equal scenario.fetch("expected_rejected", 0), report[:rejected]
             assert_equal scenario.fetch("expected_filtered", 0), report[:filtered]
             assert_equal scenario.fetch("search_calls", 1), report[:search_calls]
+            assert_equal(scenario["search_calls"] == 0 ? 0 : 1, report[:cost_totals][:unknown_tool_cost_count])
             if scenario["expected_content"]
               assert_includes report[:posts].sole.fetch("content"), scenario["expected_content"]
             end

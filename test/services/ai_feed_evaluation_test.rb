@@ -142,6 +142,9 @@ class AiFeedEvaluationTest < ActiveSupport::TestCase
         assert_equal 1, report[:search_calls]
         assert_equal 1, report[:cost_totals].fetch(:call_count)
         assert_includes report[:tool_cost_usd], "Unknown"
+        assert report[:cost_totals][:incomplete]
+        assert_nil report[:cost_totals][:total_cost]
+        assert report[:cost_totals][:known_cost].positive?
         assert report[:system_prompt].present?
       end
     end

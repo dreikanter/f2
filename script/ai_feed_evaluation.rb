@@ -8,8 +8,7 @@ class AiFeedEvaluation
       provider: credential.provider,
       model: model,
       started_at: Time.current.iso8601,
-      time_zone: Time.zone.name,
-      tool_cost_usd: "Unknown: current usage records do not separate tool charges"
+      time_zone: Time.zone.name
     }
     Feed.transaction(requires_new: true) do
       feed = Feed.create!(
@@ -54,7 +53,9 @@ class AiFeedEvaluation
       )
       usages = LlmUsageReport.for_feed(feed)
       report[:usage] = usages.usages.map { |usage| usage.attributes.slice("provider", "model", "status", "input_tokens", "output_tokens", "total_cost") }
-      report[:cost_totals] = usages.totals.to_h
+      totals = usages.totals
+      report[:cost_totals] = totals.to_h.merge(total_cost: totals.total_cost, incomplete: totals.incomplete?)
+      report[:tool_cost_usd] = (totals.unknown_tool_cost_count + totals.incomplete_run_count).positive? ? "Unknown: native tool charges are not priced" : 0
       report[:search_calls] = usages.usages.sum { |usage| LlmUsageDetails.new(usage).web_search_count.to_i }
       report[:system_prompt] = feed.llm_chats.first&.messages&.find_by(role: "system")&.content
       report[:usage_availability] = "Retained attempts only; in-flight spend may be missing after a failure"

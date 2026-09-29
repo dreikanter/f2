@@ -26,6 +26,15 @@ class LlmUsageReportTest < ActiveSupport::TestCase
     assert_equal 5, totals.cache_write_tokens
     assert_equal 3, totals.thinking_tokens
     assert_equal({ llm_calls: 2, llm_cost_cents: 0.8 }, totals.event_stats)
+
+    message.update!(server_tool_calls: [{ type: "web_search_call", id: "search_1" }])
+    totals = LlmUsageReport.for_event(event).totals
+    assert_equal 2, totals.call_count
+    assert_equal BigDecimal("0.008"), totals.known_cost
+    assert_equal 2, totals.unknown_tool_cost_count
+    assert totals.incomplete?
+    assert_nil totals.total_cost
+    assert_nil totals.event_stats[:llm_cost_cents]
   end
 
   test "#totals should preserve known spend and mark mixed costs incomplete" do
@@ -43,6 +52,19 @@ class LlmUsageReportTest < ActiveSupport::TestCase
     assert totals.incomplete?
     assert_nil totals.total_cost
     assert_nil totals.event_stats.fetch(:llm_cost_cents)
+  end
+
+  test "#totals should retain unknown in-flight spend without inventing a call" do
+    feed = create(:feed)
+    chat = create(:llm_chat, user: feed.user, feed: feed, deadline_at: 1.second.ago)
+    chat.timeout!
+    totals = LlmUsageReport.for_feed(feed).totals
+
+    assert_equal 0, totals.call_count
+    assert_nil totals.total_cost
+    assert_equal({ llm_calls: 0, llm_cost_cents: nil, llm_incomplete_runs: 1 }, totals.event_stats)
+    chat.update_columns(updated_at: 40.days.ago)
+    assert_not LlmUsageReport.for_feed(feed).totals_for_periods[:month].incomplete?
   end
 
   test "#totals should distinguish unknown costs from free calls and empty reports" do
@@ -130,7 +152,10 @@ class LlmUsageReportTest < ActiveSupport::TestCase
     assert interrupted.reload.interrupted?
     assert_empty interrupted.ruby_llm_usages
     assert_equal 1, LlmUsageReport.for_feed(feed).totals.call_count
-    assert_equal BigDecimal("0.03"), LlmUsageReport.for_feed(feed).totals.total_cost
+    totals = LlmUsageReport.for_feed(feed).totals
+    assert_equal BigDecimal("0.03"), totals.known_cost
+    assert_nil totals.total_cost
+    assert_equal 1, totals.incomplete_run_count
     assert_empty LlmUsageReport.for_event(event).usages
     assert_empty LlmUsageReport.for_event(event).totals.event_stats
   end

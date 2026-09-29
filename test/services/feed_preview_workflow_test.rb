@@ -221,7 +221,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal 20, usage.output_tokens
     assert usage.total_cost.positive?
     assert_equal 1, event.metadata.dig("stats", "llm_calls")
-    assert_equal 0.001, event.metadata.dig("stats", "llm_cost_cents")
+    assert_nil event.metadata.dig("stats", "llm_cost_cents")
   end
 
   test "#execute should preview one news post after five native web calls" do
