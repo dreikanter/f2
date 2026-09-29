@@ -1,5 +1,7 @@
 # AI feed evaluation
 
+See the [September 29 implementation handoff](ai-implementation-handoff.md) for the reviewed PR order, final offline candidate, evidence, and live qualification commands.
+
 Run explicitly in development: `AI_EVAL_CREDENTIAL_ID=<id> AI_EVAL_MODEL=<exact-model-id> AI_EVAL_CASE=qualifying bin/rails runner script/evaluate_ai_feed.rb > /tmp/ai-feed-live.jsonl`.
 
 Choose one case from `script/ai_feed_cases.yml` (default: `qualifying`). Every invocation runs exactly one case once; there is no batch or repetition option. Failure reports contain error classes and retained usage, excluding provider error messages. Setup errors exit with status 1 and a JSON error class. Counts unavailable after pipeline failure are null.
