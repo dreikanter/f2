@@ -17,6 +17,13 @@ class LlmResult
     "llm:#{@run_id}:#{index}"
   end
 
+  def validate_active!
+    chat.timeout!
+    return true if chat.reload.running?
+
+    raise LifecycleError, "AI extraction is no longer active."
+  end
+
   def complete!
     return true if chat.complete!
 

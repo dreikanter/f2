@@ -31,7 +31,7 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     freeze_time do
       result = process({ items: items }.to_json)
 
-      assert chat.reload.succeeded?
+      assert chat.reload.running?
       assert result.recognized?
       assert_equal ["https://example.com/post/1", "https://example.com/post/2"], result.entries.map(&:uid)
       assert_equal items, result.entries.map(&:raw_data)
@@ -50,7 +50,7 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
 
     assert result.recognized?
     assert_empty result.entries
-    assert chat.reload.succeeded?
+    assert chat.reload.running?
   end
 
   test "#process should reject the whole response before deduplication at the candidate limit" do
@@ -77,7 +77,7 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     end
 
     assert_equal items, process({ items: items }.to_json).entries.map(&:raw_data)
-    assert chat.reload.succeeded?
+    assert chat.reload.running?
   end
 
   test "#process should accept twelve candidates for a ten-post feed" do
@@ -87,7 +87,7 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     end
 
     assert_equal items, process({ items: items }.to_json).entries.map(&:raw_data)
-    assert chat.reload.succeeded?
+    assert chat.reload.running?
   end
 
   test "#process should reject more than five candidates by default" do
@@ -107,7 +107,7 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
     item = { "source_url" => "https://example.com/post", "body" => "Post" }
 
     assert_equal item, process({ items: [item] }.to_json).entries.sole.raw_data
-    assert chat.reload.succeeded?
+    assert chat.reload.running?
   end
 
   test "#process should enforce the default limit when the stored response limit is too large" do
@@ -161,7 +161,7 @@ class Processor::LlmProcessorTest < ActiveSupport::TestCase
 
       assert_nil entry.published_at
       assert_equal "", entry.raw_data.fetch("published_at")
-      assert chat.reload.succeeded?
+      assert chat.reload.running?
     end
   end
 

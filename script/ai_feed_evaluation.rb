@@ -32,7 +32,10 @@ class AiFeedEvaluation
         selection = FeedEntrySelection.new(feed)
         selected = selection.call(entries)
         posts = selected.map { |entry| selection.posts.fetch(entry.uid) }
+        raw.complete!
       rescue StandardError => error
+        raw&.fail!(error)
+        posts = []
         Rails.error.report(error, context: { evaluation: true })
         report[:error] = error.class.name
       end

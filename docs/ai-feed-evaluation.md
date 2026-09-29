@@ -37,4 +37,6 @@ AI refreshes commit entries, posts, and imported identities in one transaction a
 
 AI requests allow at most `min(max_items + 2, 12)` candidates in the same bounded inference. Selection applies the final `max_items` (1–10, default 3) after rejection, deduplication, history, and date filtering. Short or empty output is valid; there is no refill request.
 
+The chat remains running through parsing and selection. Refresh completes it inside the atomic import; preview completes it before publishing preview data. Expired or interrupted chats cannot import output, including results delayed during normalization. Empty valid output succeeds; invalid JSON/schema and processing failures fail without importing.
+
 Saved-feed AI previews use the saved feed’s imported identities, import threshold, and images-only filter, with the current preview prompt/model/options. Changed saved-feed filters, deleted import markers, or a successful refresh invalidate the cached AI preview. New-feed previews have no history. Preview selection writes no entries, posts, or imported identities; separate live runs need not return the same content.

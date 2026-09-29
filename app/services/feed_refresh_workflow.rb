@@ -25,6 +25,7 @@ class FeedRefreshWorkflow
   end
 
   def on_error(error)
+    @llm_result&.fail!(error)
     Metrics.increment("feed_refresh_total", status: "error", profile: feed.feed_profile_key)
     record_error_stats(current_step: current_step)
     fail_refresh_event(error)
@@ -84,6 +85,7 @@ class FeedRefreshWorkflow
 
   def load_feed_contents(*)
     raw_data = feed.loader_instance(refresh_event: @refresh_event, run_id: @run_id).load
+    @llm_result = raw_data if raw_data.is_a?(LlmResult)
     record_stats(content_size: content_bytesize(raw_data))
     raw_data
   end
@@ -110,6 +112,7 @@ class FeedRefreshWorkflow
 
     ApplicationRecord.transaction do
       posts = persist_entries_and_posts(entries)
+      @llm_result&.complete!
       @refresh_event.update!(metadata: @refresh_event.metadata.merge("imported" => true))
       posts
     end

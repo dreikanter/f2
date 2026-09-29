@@ -1062,6 +1062,25 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_requested request, times: 2
   end
 
+  test "#execute should roll back AI output that expires during normalization" do
+    freeze_time
+    create(:llm_model, model_id: "gpt-4.1")
+    feed = ai_feed_with_schedule
+    stub_ai_response([{ "source_url" => nil, "body" => "A story" }])
+    normalize = feed.method(:normalizer_instance)
+    slow_normalizer = ->(entry) { travel_to feed.llm_chats.sole.deadline_at; normalize.call(entry) }
+
+    feed.stub(:normalizer_instance, slow_normalizer) do
+      assert_no_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"] do
+        assert_no_enqueued_jobs(only: PostPublishJob) do
+          assert_raises(LlmResult::LifecycleError) { FeedRefreshWorkflow.new(feed).execute }
+        end
+      end
+    end
+    assert feed.llm_chats.sole.interrupted?
+    assert_equal "deadline_exceeded", feed.llm_chats.sole.error_category
+  end
+
   test "#execute should accept empty AI output without publication or another refresh" do
     create(:llm_model, model_id: "gpt-4.1")
     feed = ai_feed_with_schedule
@@ -1073,6 +1092,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     end
 
     assert_empty feed.posts
+    assert feed.llm_chats.sole.succeeded?
     assert_equal schedule, feed.feed_schedule.reload.attributes
     assert_requested request, times: 1
   end

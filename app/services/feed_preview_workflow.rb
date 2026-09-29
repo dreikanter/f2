@@ -32,6 +32,7 @@ class FeedPreviewWorkflow
   end
 
   def on_error(error)
+    @llm_result&.fail!(error)
     record_error_stats(current_step: current_step)
 
     logger.error "FeedPreviewWorkflow error at #{current_step}: #{error.message}"
@@ -75,6 +76,7 @@ class FeedPreviewWorkflow
     )
 
     raw_data = loader.load
+    @llm_result = raw_data if raw_data.is_a?(LlmResult)
     record_stats(content_size: content_bytesize(raw_data))
 
     {
@@ -141,6 +143,7 @@ class FeedPreviewWorkflow
   def finalize_workflow(posts)
     record_completed_at
     FeedPreview.transaction do
+      @llm_result&.complete!
       updated = transition!(
         status: FeedPreview.statuses[:ready],
         ready_at: Time.current,

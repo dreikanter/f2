@@ -160,7 +160,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
 
       assert_equal original_item, entry.raw_data
       assert_equal Time.current, entry.published_at
-      assert feed.llm_chats.sole.succeeded?
+      assert feed.llm_chats.sole.running?
     end
     assert_requested request, times: 1
   end
@@ -291,7 +291,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
 
     assert_includes payload.fetch("instructions"), "return the transformed text with source_url null;"
     assert_equal item, entry.raw_data
-    assert feed.llm_chats.sole.succeeded?
+    assert feed.llm_chats.sole.running?
     assert_requested request, times: 1
   end
 

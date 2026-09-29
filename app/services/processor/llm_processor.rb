@@ -15,7 +15,7 @@ module Processor
         )
       end
       result = Result.new(entries: entries, recognized: true)
-      raw_data.complete!
+      raw_data.validate_active!
       result
     rescue StandardError => error
       raw_data.fail!(error)

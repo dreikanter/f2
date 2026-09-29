@@ -2,6 +2,7 @@
 
 ## 2026-09-29
 
+- AI deadlines now cover output processing, preventing late results from becoming posts.
 - Saved AI feed previews now honor imported history and feed filters using the current preview settings.
 - AI feeds can request two spare candidates to replace known or unusable results without another API call.
 - AI feeds select usable new posts before applying the configured count.
