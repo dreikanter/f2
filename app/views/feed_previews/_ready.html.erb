@@ -17,7 +17,7 @@
       <% end %>
       <% if preview.rejected_posts_count.positive? %>
         <p class="text-sm text-warning" data-key="preview.rejected">
-          <%= pluralize(preview.rejected_posts_count, "shown item") %> won't be posted. See the reasons below.
+          <%= pluralize(preview.rejected_posts_count, "item") %> won't be posted.
         </p>
       <% end %>
     </div>

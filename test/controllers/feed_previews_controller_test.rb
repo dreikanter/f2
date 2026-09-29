@@ -94,7 +94,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '[data-key="preview.success"][data-preview-done]'
-    assert_select '[data-key="preview.rejected"]', text: /1 shown item won't be posted/
+    assert_select '[data-key="preview.rejected"]', text: /1 item won't be posted/
     assert_select '[data-key="preview.rejection"] li', text: "Missing content"
     assert_select '[data-key="preview.empty"]', count: 0
     assert_not_includes response.body, "Here's what we'd post"
