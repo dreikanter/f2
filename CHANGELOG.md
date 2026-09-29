@@ -2,6 +2,7 @@
 
 ## 2026-09-29
 
+- AI previews now explain rejected model or web-search settings instead of suggesting an unchanged retry.
 - AI feeds can turn off web search for source-free writing and transformations; unsupported request settings now get a clearer error.
 - AI spend now stays unknown when native search charges are unavailable, while showing the known model estimate.
 - AI deadlines now cover output processing, preventing late results from becoming posts.

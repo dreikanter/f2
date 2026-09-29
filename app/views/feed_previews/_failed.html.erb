@@ -9,6 +9,8 @@
     <p class="font-semibold text-heading">We couldn't build a preview.</p>
     <% if preview.execution_limit_exceeded? %>
       <p class="text-body">The preview reached its time or search limit before finishing. Please try again.</p>
+    <% elsif preview.ai_configuration_rejected? %>
+      <p class="text-body">Check the AI model and web-search setting. Choose a supported model, or turn off web search for writing and text transformations.</p>
     <% else %>
       <p class="text-body">Something went wrong fetching this source. Double-check it and give it another go.</p>
     <% end %>

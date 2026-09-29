@@ -275,6 +275,25 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="preview.try-again"]:not([disabled])'
   end
 
+  test "#show should explain rejected AI settings without exposing provider details" do
+    sign_in_as(user)
+    credential = create(:ai_credential, :active, user: user)
+    preview = create(:feed_preview, user: user, feed_profile_key: "llm", params: { "prompt" => "A story" },
+                     ai_credential: credential, ai_model: "gpt-5-nano")
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(
+      status: 400, body: { error: { message: "secret provider detail", type: "invalid_request_error" } }
+    )
+    reports = capture_error_reports { FeedPreviewJob.perform_now(preview.id, preview.run_id) }
+
+    get feed_preview_path(preview)
+
+    assert_instance_of Loader::LlmLoader::ConfigurationRejected, reports.sole.error
+    assert preview.reload.ai_configuration_rejected?
+    assert_select '[data-key="preview.failed"] p', text: /Check the AI model and web-search setting/
+    assert_not_includes response.body, "secret provider detail"
+    assert_not_includes preview.data.to_json, "secret provider detail"
+  end
+
   test "#show should explain when an AI preview times out before processing" do
     sign_in_as(user)
     preview = create(:feed_preview, user: user, feed_profile_key: "llm", params: { "prompt" => "ruby news" })

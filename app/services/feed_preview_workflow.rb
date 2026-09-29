@@ -38,6 +38,7 @@ class FeedPreviewWorkflow
     logger.error "FeedPreviewWorkflow error at #{current_step}: #{error.message}"
 
     failure_data = { error_code: "ai_execution_limit" } if error.is_a?(Loader::LlmLoader::ExecutionLimitExceeded)
+    failure_data = { error_code: "ai_configuration" } if error.is_a?(Loader::LlmLoader::ConfigurationRejected)
     updated = transition!(status: FeedPreview.statuses[:failed], data: failure_data)
     @activity&.finish!(status: updated ? "failed" : "interrupted", stats: stats, error: error)
   end

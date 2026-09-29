@@ -94,6 +94,10 @@ class FeedPreview < ApplicationRecord
     settle_timeout!(run_id: run_id, status: :failed, from: [:pending, :processing], data: failure_data)
   end
 
+  def ai_configuration_rejected?
+    failed? && data&.dig("error_code") == "ai_configuration"
+  end
+
   def execution_limit_exceeded?
     failed? && data&.dig("error_code") == "ai_execution_limit"
   end

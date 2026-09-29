@@ -2,6 +2,7 @@ module Loader
   # AI extraction entry point for the shared feed pipeline.
   class LlmLoader < Base
     class ExecutionLimitExceeded < Loader::Error; end
+    class ConfigurationRejected < Loader::Error; end
 
     # @return [LlmResult] response content with its guarded extraction lifecycle
     def load
@@ -25,7 +26,7 @@ module Loader
       when Faraday::TimeoutError, LlmExecution::DeadlineExceeded
         raise ExecutionLimitExceeded, "AI request exceeded its deadline."
       when RubyLLM::UnsupportedServerToolError, RubyLLM::BadRequestError
-        raise Loader::Error, "AI settings were rejected. Check the model, web search, and structured output support."
+        raise ConfigurationRejected, "AI settings were rejected. Check the model, web search, and structured output support."
       when RubyLLM::Error, Faraday::Error
         raise Loader::Error, "AI request failed. Please try again later."
       when LlmExecution::RequestLimitExceeded, LlmExecution::ToolLimitExceeded
@@ -70,7 +71,7 @@ module Loader
       chat.with_instructions(LlmPrompts.extraction_system(started_at: chat.started_at, max_items: output.candidate_limit))
       chat.with_schema(output_schema(output))
       if feed.params.fetch("web_search", true)
-        raise Loader::Error, "Web search is unavailable. Turn it off for source-free requests." if provider.native_tools.empty?
+        raise ConfigurationRejected, "Web search is unavailable. Turn it off for source-free requests." if provider.native_tools.empty?
 
         chat.with_provider_tools(*provider.native_tools)
       end
