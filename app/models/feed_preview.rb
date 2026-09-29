@@ -106,7 +106,9 @@ class FeedPreview < ApplicationRecord
   end
 
   def rejected_posts_count
-    posts_data.count { |post| post["status"] == "rejected" }
+    return 0 unless ready?
+
+    data&.dig("stats", "rejected_posts") || posts_data.count { |post| post["status"] == "rejected" }
   end
 
   def unidentified_entries_count

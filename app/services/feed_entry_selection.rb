@@ -1,14 +1,16 @@
-# Selects first-seen identities using a feed's history and import threshold.
+# Applies feed history, date thresholds, and AI post limits.
 class FeedEntrySelection
-  attr_reader :stats
+  attr_reader :stats, :posts
 
   def initialize(feed, history_feed: feed)
     @feed = feed
     @history_feed = history_feed
     @stats = {}
+    @posts = {}
   end
 
   def call(entries)
+    entries = usable_entries(entries) if @feed.feed_profile_key == "llm"
     unique = entries.uniq(&:uid)
     @stats[:collapsed_duplicate_uids] = entries.size - unique.size
     known = if @history_feed&.persisted? && unique.any?
@@ -22,6 +24,26 @@ class FeedEntrySelection
       @feed.import_after.nil? || entry.published_at.nil? || entry.published_at > @feed.import_after
     end
     @stats[:entries_before_threshold] = new_entries.size - selected.size
+    if @feed.feed_profile_key == "llm"
+      limited = selected.first(LlmOutput.new(@feed).max_items)
+      @stats[:overflow_entries] = selected.size - limited.size
+      selected = limited
+      @posts.slice!(*selected.map(&:uid))
+    end
+    @stats[:selected_entries] = selected.size
     selected
+  end
+
+  private
+
+  def usable_entries(entries)
+    @posts = {}
+    usable = entries.select do |entry|
+      post = @feed.normalizer_instance(entry).normalize
+      @posts[entry.uid] ||= post if post.enqueued?
+      post.enqueued?
+    end
+    @stats[:rejected_posts] = entries.size - usable.size
+    usable
   end
 end

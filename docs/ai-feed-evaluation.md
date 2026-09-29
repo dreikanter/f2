@@ -23,7 +23,7 @@ The live candidate's timezone-free claimed publication time became 11:00 UTC. It
 
 Validation at the evaluated revision: 13 evaluator tests / 152 assertions pass; all 18 JavaScript tests and RuboCop pass. The full local Rails suite runs 4,297 tests with one pre-existing macOS encoded-loopback failure in `PublicUrlTest`, reproduced in the original checkout. Linux CI passes this test. There are no migrations or user-facing runtime changes.
 
-Keep the evaluator aligned with final selection limits, preview parity, and cost accounting. Preserve the fixture/live distinction, isolated history, bounded invocation, and absent publication path. Current refresh selection is reused through its private stage methods; update that call when selection gains a shared public interface. Exceptions retain only available usage, so interrupted in-flight spend may be missing. No legacy execution mode is retained.
+Keep the evaluator aligned with final selection limits, preview parity, and cost accounting. Preserve the fixture/live distinction, isolated history, bounded invocation, and absent publication path. Refresh, preview, and the evaluator share `FeedEntrySelection`; rejected and overflow candidates do not become imported history. Exceptions retain only available usage, so interrupted in-flight spend may be missing. No legacy execution mode is retained.
 
 ## Dates and source references
 

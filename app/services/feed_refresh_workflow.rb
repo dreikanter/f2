@@ -164,8 +164,8 @@ class FeedRefreshWorkflow
 
   def normalize_entries(persisted_feed_entries)
     persisted_feed_entries.map do |feed_entry|
-      normalizer = feed.normalizer_instance(feed_entry)
-      post = normalizer.normalize
+      post = @selection.posts[feed_entry.uid] || feed.normalizer_instance(feed_entry).normalize
+      post.feed_entry = feed_entry
       feed_entry.update!(status: :processed)
       post
     end
@@ -187,7 +187,7 @@ class FeedRefreshWorkflow
 
     record_stats(
       new_posts: persisted_posts.where(status: :enqueued).count,
-      rejected_posts: persisted_posts.where(status: :rejected).count
+      rejected_posts: @selection.stats.fetch(:rejected_posts) { persisted_posts.where(status: :rejected).count }
     )
 
     persisted_posts
@@ -203,7 +203,7 @@ class FeedRefreshWorkflow
 
   def finalize_workflow(posts)
     enqueued_posts_count = posts.count(&:enqueued?)
-    rejected_posts_count = posts.count(&:rejected?)
+    rejected_posts_count = stats[:rejected_posts]
 
     record_completed_at
     feed.reset_refresh_failures!

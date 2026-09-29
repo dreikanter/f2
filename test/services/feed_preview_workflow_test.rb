@@ -372,11 +372,8 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
 
     assert preview.reload.ready?
     assert feed.llm_chats.sole.succeeded?
-    assert_equal 3, preview.posts_count
-    rejected, accepted, digest = preview.posts_data
-    assert_equal "rejected", rejected["status"]
-    assert_equal ["missing_content"], rejected["validation_errors"]
-    assert_equal "", rejected["content"]
+    assert_equal 2, preview.posts_count
+    accepted, digest = preview.posts_data
     assert_equal "enqueued", accepted["status"]
     assert_empty accepted["validation_errors"]
     assert_equal "enqueued", digest["status"]

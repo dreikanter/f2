@@ -25,14 +25,13 @@ class AiFeedEvaluation
       imported_urls.each do |url|
         FeedEntryUid.create!(feed: feed, uid: Uid::Resolver.from_url(url), imported_at: Time.current)
       end
-      workflow = FeedRefreshWorkflow.new(feed)
       entries = selected = posts = []
       begin
         raw = feed.loader_instance.load
-        # Reuse refresh selection without entering its persistence/publication steps.
-        entries = workflow.send(:process_feed_contents, raw)
-        selected = workflow.send(:filter_new_entries, entries)
-        posts = selected.map { |entry| feed.normalizer_instance(entry).normalize }
+        entries = feed.processor_instance(raw).process.entries.select { |entry| entry.uid.present? }
+        selection = FeedEntrySelection.new(feed)
+        selected = selection.call(entries)
+        posts = selected.map { |entry| selection.posts.fetch(entry.uid) }
       rescue StandardError => error
         Rails.error.report(error, context: { evaluation: true })
         report[:error] = error.class.name
@@ -43,8 +42,8 @@ class AiFeedEvaluation
         import_after: import_after&.iso8601,
         candidates: entries.map(&:raw_data),
         discovered: report[:error] ? nil : entries.size,
-        filtered: report[:error] ? nil : entries.size - selected.size,
-        rejected: report[:error] ? nil : posts.count(&:rejected?),
+        filtered: report[:error] ? nil : selection.stats.values_at(:collapsed_duplicate_uids, :known_entries, :entries_before_threshold).sum,
+        rejected: report[:error] ? nil : selection.stats[:rejected_posts],
         usable_new_posts: posts.count(&:enqueued?),
         posts: posts.map { |post| post.attributes.slice("uid", "content", "source_url", "published_at", "status", "validation_errors") }
       )

@@ -89,6 +89,11 @@ class FeedPreviewWorkflow
     identified_entries, unidentified_entries = entries.partition { |entry| entry.uid.present? }
     record_stats(unidentified_entries: unidentified_entries.size) if unidentified_entries.any?
 
+    if temp_feed.feed_profile_key == "llm"
+      @selection = FeedEntrySelection.new(temp_feed)
+      identified_entries = @selection.call(identified_entries)
+      record_stats(@selection.stats)
+    end
     limited_entries = identified_entries.first(FeedPreview::PREVIEW_POSTS_LIMIT)
 
     record_stats(total_entries: entries.size, preview_entries: limited_entries.size)
@@ -111,8 +116,7 @@ class FeedPreviewWorkflow
         feed: temp_feed
       )
 
-      normalizer = temp_feed.normalizer_instance(temp_feed_entry)
-      post = normalizer.normalize
+      post = @selection&.posts&.[](entry.uid) || temp_feed.normalizer_instance(temp_feed_entry).normalize
 
       {
         status: post.status,
@@ -126,7 +130,7 @@ class FeedPreviewWorkflow
       }
     end
 
-    record_stats(normalized_posts: posts.size, rejected_posts: posts.count { |post| post[:status] == "rejected" })
+    record_stats(normalized_posts: posts.size, rejected_posts: @selection ? @selection.stats[:rejected_posts] : posts.count { |post| post[:status] == "rejected" })
     posts
   end
 

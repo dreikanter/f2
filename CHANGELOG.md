@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-29
+
+- AI feeds select usable new posts before applying the configured count.
+
 ## 2026-09-28
 
 - AI imports now save posts and import history together, so interrupted writes can be retried safely.
