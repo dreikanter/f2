@@ -63,7 +63,10 @@ class FeedPreview < ApplicationRecord
   end
 
   def self.selection_context_for(feed)
-    feed&.slice(:import_after, :images_only, :last_successful_refresh_at)
+    return unless feed
+
+    feed.slice(:import_after, :images_only, :last_successful_refresh_at)
+        .merge(imported_count: FeedEntryUid.where(feed_id: feed.id).count)
   end
 
   # @param feed_profile_key [String] the profile key

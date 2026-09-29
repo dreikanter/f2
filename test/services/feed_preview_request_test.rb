@@ -77,14 +77,20 @@ class FeedPreviewRequestTest < ActiveSupport::TestCase
   test "#create should replace a saved AI preview after feed selection context changes" do
     create(:llm_model, model_id: "sample-model")
     feed = create(:feed, user: user)
+    imported = create(:feed_entry_uid, feed: feed)
     first = request(**ai_attributes, feed_id: feed.id).create.preview
     first.update!(status: :ready, ready_at: Time.current)
+    imported.destroy!
+    after_deletion = request(**ai_attributes, feed_id: feed.id).create.preview
+    assert_not_equal first.id, after_deletion.id
+    assert_not first.current_configuration?
+    after_deletion.update!(status: :ready, ready_at: Time.current)
     feed.update!(import_after: Time.current, images_only: true, last_successful_refresh_at: Time.current)
 
     second = request(**ai_attributes, feed_id: feed.id).create.preview
 
-    assert_not_equal first.id, second.id
-    assert_not first.current_configuration?
+    assert_not_equal after_deletion.id, second.id
+    assert_not after_deletion.current_configuration?
     assert second.current_configuration?
   end
 
