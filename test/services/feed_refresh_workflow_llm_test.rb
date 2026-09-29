@@ -91,6 +91,25 @@ class FeedRefreshWorkflowLlmTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
+  test "#perform should retry when the import marker fails after assignment" do
+    stub_response(output: { items: [item] }.to_json)
+    job = FeedRefreshJob.new(feed.id)
+    failure = -> { raise ActiveRecord::StatementInvalid, "Marker failed" if metadata["imported"] }
+    Event.set_callback(:update, :before, failure)
+    begin
+      assert_no_difference ["FeedEntryUid.count", "Post.count"] do
+        assert_raises(ActiveRecord::StatementInvalid) { job.perform_now }
+      end
+    ensure
+      Event.skip_callback(:update, :before, failure)
+    end
+
+    assert_not refresh_event.metadata["imported"]
+    assert_difference "feed.posts.count", 1 do
+      job.perform_now
+    end
+  end
+
   test "#execute should settle empty valid output without publication" do
     request = stub_response(output: '{"items":[]}')
 

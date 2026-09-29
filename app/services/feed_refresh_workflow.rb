@@ -306,7 +306,7 @@ class FeedRefreshWorkflow
   end
 
   def replace_refresh_event(**attributes)
-    attributes.fetch(:metadata).merge!(run_id: @run_id, imported: @refresh_event&.metadata&.fetch("imported", false))
+    attributes.fetch(:metadata).merge!(run_id: @run_id, imported: @refresh_event&.reload&.metadata&.fetch("imported", false))
     Event.transaction do
       feed.record_successful_refresh! if attributes.dig(:metadata, :status) == "completed"
       event = Event.create!(type: "feed_refresh", subject: feed, user: feed.user, **attributes)
