@@ -29,6 +29,7 @@ class FeedPreview < ApplicationRecord
   end
 
   def current_configuration?
+    feed&.reload if feed_profile_key == "llm"
     params_digest == calculated_params_digest
   end
 
@@ -47,6 +48,7 @@ class FeedPreview < ApplicationRecord
     feed_profile_key,
     params,
     feed_id: nil,
+    selection_context: nil,
     ai_credential_id: nil,
     ai_model: nil,
     search_credential_id: nil
@@ -56,7 +58,12 @@ class FeedPreview < ApplicationRecord
     options = option_parts_for(feed_profile_key, params)
     parts << options if options.any?
     parts << ["feed", feed_id] if feed_id.present?
+    parts << ["selection", selection_context] if selection_context
     Digest::SHA256.hexdigest(parts.to_json)
+  end
+
+  def self.selection_context_for(feed)
+    feed&.slice(:import_after, :images_only, :last_successful_refresh_at)
   end
 
   # @param feed_profile_key [String] the profile key
@@ -153,6 +160,7 @@ class FeedPreview < ApplicationRecord
       feed_profile_key,
       params,
       feed_id:,
+      selection_context: feed_profile_key == "llm" ? self.class.selection_context_for(feed) : nil,
       ai_credential_id:,
       ai_model:,
       search_credential_id:

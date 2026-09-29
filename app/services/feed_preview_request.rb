@@ -66,6 +66,7 @@ class FeedPreviewRequest
         profile_key,
         preview_params,
         feed_id: feed&.id,
+        selection_context: profile_key == "llm" ? FeedPreview.selection_context_for(feed) : nil,
         ai_credential_id: ai_credential&.id,
         ai_model: ai_model,
         search_credential_id: search_credential&.id

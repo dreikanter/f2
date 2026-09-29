@@ -397,6 +397,44 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal 2, feed.llm_chats.where(status: :succeeded).count
   end
 
+  test "#execute should match refresh using saved history and the current preview configuration" do
+    freeze_time
+    preview = ai_preview
+    preview.update!(params: { "prompt" => "Current request", "max_items" => 3 })
+    feed = create(:feed, user: user, feed_profile_key: "llm", params: { "prompt" => "Old request", "max_items" => 1 },
+                  ai_credential: preview.ai_credential, ai_model: preview.ai_model, search_credential: nil,
+                  import_after: Time.current.beginning_of_day)
+    preview.update!(feed: feed)
+    create(:feed_entry_uid, feed: feed, uid: "https://example.org/known")
+    response = completed_ai_response
+    response["output"].last["content"].first["text"] = { items: [
+      { source_url: "https://example.org/known", body: "Known" },
+      { source_url: "https://example.org/old", body: "Old", published_at: 1.day.ago.iso8601 },
+      { source_url: "https://example.org/new", body: "Undated source" },
+      { source_url: nil, body: "Roundup: https://ruby-lang.org and https://python.org" },
+      { source_url: nil, body: "An original story" }
+    ] }.to_json
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+    assert_no_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"] do
+      assert_no_enqueued_jobs(only: PostPublishJob) do
+        FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
+      end
+    end
+    assert_equal ["https://example.org/new", "llm:#{AI_RUN_ID}:3", "llm:#{AI_RUN_ID}:4"], preview.reload.posts_data.pluck("uid")
+    assert_equal 1, preview.data.dig("stats", "known_entries")
+    assert_equal 1, preview.data.dig("stats", "entries_before_threshold")
+    assert_includes feed.llm_chats.sole.messages.second.content, "Current request"
+
+    feed.update!(params: preview.params)
+    FeedRefreshWorkflow.new(feed, run_id: AI_RUN_ID).execute
+
+    fields = %w[uid content source_url status]
+    expected = preview.posts_data.map { |post| post.slice(*fields) }.sort_by { |post| post["uid"] }
+    assert_equal expected, feed.posts.order(:uid).map { |post| post.attributes.slice(*fields) }
+    assert_requested request, times: 2
+  end
+
   test "#execute should skip unidentified items before applying the preview limit" do
     response = completed_ai_response
     response["output"].last["content"].first["text"] = {

@@ -51,7 +51,7 @@ class FeedPreviewWorkflow
     )
     @activity = FeedPreviewActivity.new(feed_preview) if FeedProfile.depends_on_ai?(feed_preview.feed_profile_key)
 
-    Feed.new(
+    temp_feed = Feed.new(
       params: feed_preview.params,
       feed_profile_key: feed_preview.feed_profile_key,
       user: feed_preview.user,
@@ -59,6 +59,10 @@ class FeedPreviewWorkflow
       ai_model: feed_preview.ai_model,
       search_credential: feed_preview.search_credential
     )
+    if temp_feed.feed_profile_key == "llm" && feed_preview.feed
+      temp_feed.assign_attributes(feed_preview.feed.slice(:import_after, :images_only))
+    end
+    temp_feed
   end
 
   def load_feed_contents(temp_feed)
@@ -90,7 +94,7 @@ class FeedPreviewWorkflow
     record_stats(unidentified_entries: unidentified_entries.size) if unidentified_entries.any?
 
     if temp_feed.feed_profile_key == "llm"
-      @selection = FeedEntrySelection.new(temp_feed)
+      @selection = FeedEntrySelection.new(temp_feed, history_feed: feed_preview.feed)
       identified_entries = @selection.call(identified_entries)
       record_stats(@selection.stats)
     end
