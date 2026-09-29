@@ -1,6 +1,10 @@
 module LlmProvider
   # Configures OpenAI SDK contexts and Responses requests.
   class Openai < Base
+    def native_tools
+      [:web_search]
+    end
+
     def protocol
       :responses
     end

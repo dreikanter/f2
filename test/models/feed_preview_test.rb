@@ -5,6 +5,7 @@ class FeedPreviewTest < ActiveSupport::TestCase
     original = FeedPreview.digest_for("llm", { "prompt" => "Write stories", "max_items" => 1 })
 
     assert_not_equal original, FeedPreview.digest_for("llm", { "prompt" => "Write stories", "max_items" => 2 })
+    assert_not_equal original, FeedPreview.digest_for("llm", { "prompt" => "Write stories", "max_items" => 1, "web_search" => false })
   end
 
   test ".digest_for should change when the AI profile's prompt template changes" do

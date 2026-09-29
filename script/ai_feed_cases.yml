@@ -34,6 +34,7 @@ mixed_sources:
   expected_content: "https://docs.python.org/3/tutorial/"
 generation:
   prompt: Invent a short story about an astronomer. No research is needed.
+  web_search: false
   search_calls: 0
   items:
     - {body: "The last star blinked, and the astronomer waved back.", source_url: null}
@@ -41,6 +42,7 @@ generation:
   expected_content: "The last star blinked, and the astronomer waved back."
 transformation:
   prompt: "Translate this supplied text into French: Hello, world!"
+  web_search: false
   search_calls: 0
   items:
     - {body: "Bonjour, monde !", source_url: null}

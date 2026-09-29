@@ -11,7 +11,7 @@ module Loader
 
       provider = feed.ai_credential.build_llm_provider
       chat = create_chat(provider)
-      prepare_chat(chat)
+      prepare_chat(chat, provider)
       response = chat.execute(provider: provider)
       unless response.stopped? && response.content.is_a?(String)
         raise Loader::Error, "AI response did not complete."
@@ -24,6 +24,8 @@ module Loader
       case error
       when Faraday::TimeoutError, LlmExecution::DeadlineExceeded
         raise ExecutionLimitExceeded, "AI request exceeded its deadline."
+      when RubyLLM::UnsupportedServerToolError, RubyLLM::BadRequestError
+        raise Loader::Error, "AI settings were rejected. Check the model, web search, and structured output support."
       when RubyLLM::Error, Faraday::Error
         raise Loader::Error, "AI request failed. Please try again later."
       when LlmExecution::RequestLimitExceeded, LlmExecution::ToolLimitExceeded
@@ -62,12 +64,16 @@ module Loader
       )
     end
 
-    def prepare_chat(chat)
+    def prepare_chat(chat, provider)
       options[:refresh_event]&.event_references&.create!(reference: chat)
       output = LlmOutput.new(feed)
       chat.with_instructions(LlmPrompts.extraction_system(started_at: chat.started_at, max_items: output.candidate_limit))
       chat.with_schema(output_schema(output))
-      chat.with_provider_tools(:web_search)
+      if feed.params.fetch("web_search", true)
+        raise Loader::Error, "Web search is unavailable. Turn it off for source-free requests." if provider.native_tools.empty?
+
+        chat.with_provider_tools(*provider.native_tools)
+      end
       chat.ask_later(config.fetch(:prompt_template).gsub("{{input}}") { feed.source_input })
     end
 

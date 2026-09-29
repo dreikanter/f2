@@ -82,6 +82,9 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
   test "#render should render the AI post limit with its bounds and default" do
     result = render_inline(FeedProfileOptionsComponent.new(feed: feed(feed_profile_key: "llm")))
 
+    search = result.at_css('[data-key="form.profile-option-input.llm.web_search"]')
+    assert_equal "checkbox", search["type"]
+    assert search.key?("checked")
     schema = FeedProfile.parameter_schema_for("llm").fetch("properties").fetch("max_items")
     input = result.at_css('[data-key="form.profile-option-input.llm.max_items"]')
 

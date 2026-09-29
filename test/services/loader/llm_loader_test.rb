@@ -149,10 +149,11 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
   end
 
   test "#load should pass undated original content to the processor" do
-    feed.params = { "prompt" => "Write a short story" }
+    feed.params = { "prompt" => "Write a short story", "web_search" => false }
     output = { "items" => [original_item] }
     request = stub_request(:post, "https://api.openai.com/v1/responses")
-      .to_return_json(body: completed_response(content: output.to_json))
+      .with { |http| JSON.parse(http.body).fetch("tools", []).empty? && !JSON.parse(http.body).key?("tool_choice") }
+      .to_return_json(body: completed_response(content: output.to_json).tap { |response| response["output"].select! { |part| part["type"] == "message" } })
 
     freeze_time do
       content = Loader::LlmLoader.new(feed).load
@@ -163,6 +164,28 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
       assert feed.llm_chats.sole.running?
     end
     assert_requested request, times: 1
+  end
+
+  test "#load should explain rejected capabilities without leaking provider details" do
+    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(
+      status: 400, body: { error: { message: "secret: unsupported web_search", type: "invalid_request_error" } }
+    )
+    error = assert_raises(Loader::Error) { Loader::LlmLoader.new(feed).load }
+    assert_includes error.message, "Check the model, web search, and structured output support."
+    assert_not_includes error.message, "secret"
+    assert feed.llm_chats.sole.failed?
+    assert_requested request, times: 1
+  end
+
+  test "#load should reject enabled search when the provider has no native tools" do
+    provider = credential.build_llm_provider
+    provider.stub(:native_tools, []) do
+      credential.stub(:build_llm_provider, provider) do
+        error = assert_raises(Loader::Error) { Loader::LlmLoader.new(feed).load }
+        assert_includes error.message, "Web search is unavailable."
+      end
+    end
+    assert_not_requested :post, "https://api.openai.com/v1/responses"
   end
 
   test "#load should use updated model limits and pricing after another worker refreshes the catalog" do

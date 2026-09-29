@@ -1,5 +1,5 @@
 class AiFeedEvaluation
-  def self.run(credential:, model:, prompt:, max_items: 1, imported_urls: [], import_after: nil)
+  def self.run(credential:, model:, prompt:, max_items: 1, imported_urls: [], import_after: nil, web_search: true)
     raise ArgumentError, "Development or test only" unless Rails.env.development? || Rails.env.test?
 
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -19,7 +19,7 @@ class AiFeedEvaluation
         feed_profile_key: "llm",
         state: :disabled,
         import_after: import_after,
-        params: { "prompt" => prompt, "max_items" => max_items }
+        params: { "prompt" => prompt, "max_items" => max_items, "web_search" => web_search }
       )
       imported_urls.each do |url|
         FeedEntryUid.create!(feed: feed, uid: Uid::Resolver.from_url(url), imported_at: Time.current)

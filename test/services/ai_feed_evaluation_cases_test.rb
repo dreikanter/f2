@@ -16,7 +16,7 @@ class AiFeedEvaluationCasesTest < ActiveSupport::TestCase
           assert_no_enqueued_jobs do
             report = AiFeedEvaluation.run(credential: credential, model: "gpt-5-nano", prompt: scenario.fetch("prompt"),
               max_items: scenario.fetch("max_items", 1), imported_urls: scenario.fetch("imported_urls", []),
-              import_after: Time.current.beginning_of_day)
+              import_after: Time.current.beginning_of_day, web_search: scenario.fetch("web_search", true))
             if (path = ENV["AI_EVAL_OFFLINE_REPORT"])
               File.open(path, "a") { |file| file.puts JSON.generate(report.merge(case: name, mode: "offline_fixture")) }
             end

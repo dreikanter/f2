@@ -385,7 +385,7 @@ class FeedProfile
     # Explicitly selected for requests expressed as free-form prompts.
     "llm" => {
       display_name: "AI",
-      description: "Uses AI to follow and transform web content per a free-form prompt",
+      description: "Uses AI to retrieve, transform, or create content from a free-form prompt",
       input_shape: :any,
       depends_on_ai: true,
       scheduled: true,
@@ -393,13 +393,19 @@ class FeedProfile
         "type" => "object",
         "properties" => {
           "prompt" => { "type" => "string", "minLength" => 1, "maxLength" => 2000 },
+          "web_search" => {
+            "type" => "boolean",
+            "default" => true,
+            "title" => "Allow web search",
+            "description" => "Let AI search when needed. Turn off for writing or transforming supplied text without web access."
+          },
           "max_items" => {
             "type" => "integer",
             "minimum" => 1,
             "maximum" => 10,
             "default" => LlmOutput::DEFAULT_MAX_ITEMS,
             "title" => "Maximum posts per refresh",
-            "description" => "Limit each AI response to this many posts. Leave blank for #{LlmOutput::DEFAULT_MAX_ITEMS}."
+            "description" => "Keep up to this many new, usable posts per refresh. Leave blank for #{LlmOutput::DEFAULT_MAX_ITEMS}."
           }
         },
         "required" => ["prompt"],

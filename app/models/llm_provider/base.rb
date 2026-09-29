@@ -18,6 +18,10 @@ module LlmProvider
       end
     end
 
+    def native_tools
+      []
+    end
+
     # Select the API format RubyLLM uses to send requests and read responses.
     # @abstract Subclasses select the protocol.
     # @return [Symbol, nil] protocol override, or nil for the SDK default

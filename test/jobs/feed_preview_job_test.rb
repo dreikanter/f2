@@ -53,7 +53,7 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     assert_not_requested :any, /./
   end
 
-  test "#perform should record an AI deadline without reporting a bug" do
+  test "#perform should report an AI deadline without retrying" do
     freeze_time do
       create(:llm_model, model_id: "gpt-5-nano")
       credential = create(:ai_credential, :active)
@@ -68,7 +68,7 @@ class FeedPreviewJobTest < ActiveJob::TestCase
 
       reports = capture_error_reports { FeedPreviewJob.perform_now(preview.id, RUN_ID) }
 
-      assert_empty reports
+      assert_instance_of Loader::LlmLoader::ExecutionLimitExceeded, reports.sole.error
       assert preview.reload.failed?
       assert_equal "ai_execution_limit", preview.data["error_code"]
       event = credential.user.events.where(type: "feed_preview").sole

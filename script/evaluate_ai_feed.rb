@@ -6,7 +6,7 @@ begin
   report = AiFeedEvaluation.run(
     credential: AiCredential.find(ENV.fetch("AI_EVAL_CREDENTIAL_ID")),
     model: ENV.fetch("AI_EVAL_MODEL"),
-    **scenario.slice("prompt", "max_items", "imported_urls").symbolize_keys
+    **scenario.slice("prompt", "max_items", "imported_urls", "web_search").symbolize_keys
   )
   puts JSON.generate(report.merge(mode: "live", case: name, case_count: 1, repetitions: 1))
 rescue StandardError => error
