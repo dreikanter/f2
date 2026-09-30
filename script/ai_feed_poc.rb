@@ -18,7 +18,7 @@ TEXT
 
 credential = AiCredential.first!
 abort "The first AI credential must use OpenAI." unless credential.provider == "openai"
-model = credential.default_model.presence || RubyLLM.config.default_model
+model = "gpt-6-luna"
 warn "Using OpenAI model: #{model}"
 started_at = Time.now.utc
 
