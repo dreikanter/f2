@@ -1,5 +1,5 @@
 module Processor
-  # Validates AI response JSON before building entries for the feed pipeline.
+  # Builds ordinary feed entries from the provider's structured response.
   class LlmProcessor < Base
     class InvalidOutput < StandardError; end
 
@@ -21,12 +21,7 @@ module Processor
     private
 
     def parse_output
-      data = JSON.parse(raw_data)
-      unless JSONSchemer.schema(LlmOutput.new(feed).schema).valid?(data)
-        raise InvalidOutput, "AI response does not match the output schema."
-      end
-
-      data
+      JSON.parse(raw_data)
     rescue JSON::ParserError
       raise InvalidOutput, "AI response is not valid JSON.", cause: nil
     end

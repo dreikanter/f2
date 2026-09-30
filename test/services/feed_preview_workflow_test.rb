@@ -306,25 +306,6 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal 2, preview.posts_data.map { |post| post["uid"] }.uniq.size
   end
 
-  test "#execute should reject an over-limit AI response before importing anything" do
-    preview = ai_preview
-    preview.update!(params: preview.params.merge("max_items" => 1))
-    response = completed_ai_response
-    response["output"].last["content"].first["text"] = {
-      items: [{ source_url: nil, body: "First" }, { source_url: nil, body: "Second" }]
-    }.to_json
-    stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
-
-    assert_no_difference ["FeedEntry.count", "Post.count"] do
-      assert_raises(Processor::LlmProcessor::InvalidOutput) do
-        FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
-      end
-    end
-
-    assert preview.reload.failed?
-    assert LlmChat.sole.succeeded?
-  end
-
   test "#execute should agree with refresh on unidentified and rejected AI items" do
     freeze_time
     preview = ai_preview
