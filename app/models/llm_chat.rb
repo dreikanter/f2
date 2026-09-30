@@ -27,17 +27,6 @@ class LlmChat < ApplicationRecord
   scope :expired, -> { where(created_at: ..RETENTION.ago) }
   scope :overdue, -> { running.where(deadline_at: ..Time.current) }
 
-  # Run the prepared chat, leaving success to the processor's output validation.
-  # @param provider [LlmProvider::Base] provider responsible for request configuration
-  # @return [RubyLLM::Message] final SDK response
-  def execute(provider:)
-    raise ArgumentError, "Chat must be running" unless self.class.running.exists?(id)
-
-    LlmExecution.new(chat: to_llm, provider: provider, deadline_at: deadline_at).call
-  ensure
-    timeout!
-  end
-
   # Settle expired work from either its worker or its timeout job.
   # @return [Boolean] whether this call interrupted an overdue chat
   def timeout!
@@ -46,7 +35,7 @@ class LlmChat < ApplicationRecord
     finish!(status: :interrupted, error_category: "deadline_exceeded")
   end
 
-  # @return [Boolean] whether validated output completed while the chat was active
+  # @return [Boolean] whether the response completed while the chat was active
   def complete!
     return true if finish!(status: :succeeded)
 

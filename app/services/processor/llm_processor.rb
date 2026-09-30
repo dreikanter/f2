@@ -15,18 +15,13 @@ module Processor
           raw_data: item
         )
       end
-      result = Result.new(entries: entries, recognized: true)
-      raw_data.complete!
-      result
-    rescue StandardError => error
-      raw_data.fail!(error)
-      raise
+      Result.new(entries: entries, recognized: true)
     end
 
     private
 
     def parse_output
-      data = JSON.parse(raw_data.content)
+      data = JSON.parse(raw_data)
       unless JSONSchemer.schema(LlmOutput.new(feed).schema).valid?(data)
         raise InvalidOutput, "AI response does not match the output schema."
       end
