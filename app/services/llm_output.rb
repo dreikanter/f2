@@ -1,6 +1,26 @@
-# The response bound shared by AI instructions, provider schemas, and validation.
+# Structured response requested from the AI provider.
 class LlmOutput
   DEFAULT_MAX_ITEMS = 3
+
+  SCHEMA = {
+    "type" => "object",
+    "properties" => {
+      "items" => {
+        "type" => "array",
+        "items" => {
+          "type" => "object",
+          "properties" => {
+            "body" => { "type" => "string" },
+            "source_url" => { "type" => ["string", "null"] }
+          },
+          "required" => ["body", "source_url"],
+          "additionalProperties" => false
+        }
+      }
+    },
+    "required" => ["items"],
+    "additionalProperties" => false
+  }.freeze
 
   def initialize(feed)
     @feed = feed
@@ -13,7 +33,7 @@ class LlmOutput
   end
 
   def schema
-    schema = FeedProfile::UNIVERSAL_OUTPUT_SCHEMA.deep_dup
+    schema = SCHEMA.deep_dup
     schema.fetch("properties").fetch("items")["maxItems"] = max_items
     schema
   end

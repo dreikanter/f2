@@ -2,39 +2,6 @@
 # (matcher + parameter shape + loader/processor/normalizer triple).
 #
 class FeedProfile
-  # Shared output shape for AI extraction: the `{ items: [...] }` envelope the
-  # LLM loader returns and LlmProcessor validates.
-  UNIVERSAL_OUTPUT_SCHEMA = {
-    "type" => "object",
-    "properties" => {
-      "items" => {
-        "type" => "array",
-        "maxItems" => 10,
-        "items" => {
-          "type" => "object",
-          "properties" => {
-            # The processor assigns identity from source metadata. `uid` is
-            # accepted only so a stray field from a non-strict provider
-            # doesn't fail the schema; it's ignored downstream.
-            "uid" => { "type" => "string" },
-            "title" => { "type" => "string" },
-            "body" => { "type" => "string" },
-            "supplementary" => { "type" => "array", "items" => { "type" => "string" } },
-            "images" => { "type" => "array", "items" => { "type" => "string" } },
-            # Explicit null allows content without a canonical source. Missing
-            # source metadata is malformed and must fail validation.
-            "source_url" => { "type" => ["string", "null"] },
-            "published_at" => { "type" => "string" }
-          },
-          "required" => ["body", "source_url"],
-          "additionalProperties" => false
-        }
-      }
-    },
-    "required" => ["items"],
-    "additionalProperties" => false
-  }.freeze
-
   # Shared parameter shape for URL-sourced profiles.
   URL_PARAMETER_SCHEMA = {
     "type" => "object",
@@ -405,20 +372,7 @@ class FeedProfile
         "required" => ["prompt"],
         "additionalProperties" => false
       },
-      loader: {
-        class: "Loader::LlmLoader",
-        config: {
-          # The task, output contract, and safeguards live in the system
-          # prompt (Loader::LlmPrompts). The user's own prompt is a
-          # legitimate instruction, so it travels as the user message,
-          # distinct from the untrusted web content the model fetches.
-          prompt_template: <<~PROMPT
-            Feed request — what to follow and how to present it:
-
-            {{input}}
-          PROMPT
-        }
-      },
+      loader: { class: "Loader::LlmLoader", config: {} },
       processor: { class: "Processor::LlmProcessor", config: {} },
       normalizer: { class: "Normalizer::LlmNormalizer", config: {} },
       title_extractor: nil

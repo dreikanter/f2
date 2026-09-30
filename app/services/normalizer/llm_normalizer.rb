@@ -1,6 +1,5 @@
 module Normalizer
-  # Maps AI extraction output in FeedProfile::UNIVERSAL_OUTPUT_SCHEMA format
-  # onto Post fields, applying the feed pipeline's content validation.
+  # Maps AI content onto Post fields using the feed pipeline's validation.
   class LlmNormalizer < Base
     private
 
