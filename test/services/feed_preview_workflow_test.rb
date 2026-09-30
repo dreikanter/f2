@@ -257,7 +257,6 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
       .with do |http|
         payload = JSON.parse(http.body)
         payload.fetch("model") == "gpt-5.6-luna" &&
-          payload.fetch("max_tool_calls") == 16 &&
           payload.dig("text", "format", "schema", "properties", "items", "maxItems") == 1
       end
       .to_return_json(body: response)
@@ -271,26 +270,6 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     event = Event.find_by!(type: "feed_preview", subject: credential)
     assert_equal "completed", event.metadata["status"]
     assert_equal 5, LlmUsageDetails.new(LlmChat.sole.ruby_llm_usages.sole).web_search_count
-    assert_requested request, times: 1
-  end
-
-  test "#execute should explain an exhausted AI search budget" do
-    preview = ai_preview
-    response = completed_ai_response
-    response["output"] = Array.new(16) do |index|
-      { type: "web_search_call", id: "search_#{index}", status: "completed" }
-    end
-    response["status"] = "incomplete"
-    response["incomplete_details"] = { "reason" => "max_tool_calls" }
-    request = stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
-
-    assert_raises(Loader::LlmLoader::ExecutionLimitExceeded) do
-      FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
-    end
-
-    assert preview.reload.failed?
-    assert_equal "ai_execution_limit", preview.data["error_code"]
-    assert LlmChat.sole.failed?
     assert_requested request, times: 1
   end
 
@@ -343,7 +322,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     end
 
     assert preview.reload.failed?
-    assert LlmChat.sole.failed?
+    assert LlmChat.sole.succeeded?
   end
 
   test "#execute should agree with refresh on unidentified and rejected AI items" do
@@ -444,11 +423,10 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
       preview = ai_preview
       travel preview.timeout_after
 
-      error = assert_raises(Loader::LlmLoader::ExecutionLimitExceeded) do
+      assert_raises(Loader::LlmLoader::ExecutionLimitExceeded) do
         FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
       end
 
-      assert_kind_of LlmExecution::DeadlineExceeded, error.cause
       assert preview.reload.failed?
       chat = LlmChat.sole
       assert chat.interrupted?
@@ -467,11 +445,10 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
         { body: completed_ai_response.to_json, headers: { "Content-Type" => "application/json" } }
       end
 
-      error = assert_raises(Loader::LlmLoader::ExecutionLimitExceeded) do
+      assert_raises(Loader::LlmLoader::ExecutionLimitExceeded) do
         FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
       end
 
-      assert_kind_of LlmExecution::DeadlineExceeded, error.cause
       assert preview.reload.failed?
       assert_equal "ai_execution_limit", preview.data["error_code"]
       chat = LlmChat.sole

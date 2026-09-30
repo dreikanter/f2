@@ -25,15 +25,6 @@ module LlmProvider
       raise NotImplementedError, "Subclasses must implement #protocol"
     end
 
-    # Translate execution limits into provider-specific request options.
-    # @abstract Subclasses supply the provider's options.
-    # @param tool_call_limit [Integer] maximum additional hosted-tool calls
-    # @param output_token_limit [Integer] maximum output tokens per request
-    # @return [Hash] options to merge into the SDK request configuration
-    def request_options(tool_call_limit:, output_token_limit:)
-      raise NotImplementedError, "Subclasses must implement #request_options"
-    end
-
     private
 
     attr_reader :credential_data

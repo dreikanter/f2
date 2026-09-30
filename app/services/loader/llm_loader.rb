@@ -3,7 +3,7 @@ module Loader
   class LlmLoader < Base
     class ExecutionLimitExceeded < Loader::Error; end
 
-    # @return [LlmResult] response content with its guarded extraction lifecycle
+    # @return [String] the provider's structured response
     def load
       raise Loader::Error, "An active AI credential is required." unless feed.ai_credential&.active?
       raise Loader::Error, "An AI model is required." if feed.ai_model.blank?
@@ -11,23 +11,25 @@ module Loader
 
       provider = feed.ai_credential.build_llm_provider
       chat = create_chat(provider)
+      raise ExecutionLimitExceeded, "AI request exceeded its deadline." if chat.timeout!
+
       prepare_chat(chat)
-      response = chat.execute(provider: provider)
+      response = chat.complete
       unless response.stopped? && response.content.is_a?(String)
         raise Loader::Error, "AI response did not complete."
       end
 
-      LlmResult.new(content: response.content, chat: chat)
+      raise ExecutionLimitExceeded, "AI request exceeded its deadline." unless chat.complete!
+
+      response.content
     rescue StandardError => error
       chat&.fail!(error)
 
       case error
-      when Faraday::TimeoutError, LlmExecution::DeadlineExceeded
+      when Faraday::TimeoutError
         raise ExecutionLimitExceeded, "AI request exceeded its deadline."
       when RubyLLM::Error, Faraday::Error
         raise Loader::Error, "AI request failed. Please try again later."
-      when LlmExecution::RequestLimitExceeded, LlmExecution::ToolLimitExceeded
-        raise ExecutionLimitExceeded, "AI request exceeded its execution limits."
       else
         raise
       end

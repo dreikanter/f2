@@ -17,9 +17,6 @@ class FeedRefreshJob < ApplicationJob
   rescue Loader::Error => e
     Rails.error.report(e, context: { feed_id: feed_id })
     record_loader_error(feed)
-  rescue LlmResult::LifecycleError => e
-    Rails.error.report(e, context: { feed_id: feed_id })
-    Metrics.increment("processor_errors_total", profile: feed.feed_profile_key, processor: feed.processor_class.name.demodulize)
   rescue WithAdvisoryLock::FailedToAcquireLock
     Rails.logger.info "Feed #{feed_id} is already being processed, skipping"
   end
