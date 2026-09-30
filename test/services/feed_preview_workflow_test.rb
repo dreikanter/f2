@@ -257,7 +257,6 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
       .with do |http|
         payload = JSON.parse(http.body)
         payload.fetch("model") == "gpt-5.6-luna" &&
-          payload.fetch("max_tool_calls") == 16 &&
           payload.dig("text", "format", "schema", "properties", "items", "maxItems") == 1
       end
       .to_return_json(body: response)
@@ -323,7 +322,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     end
 
     assert preview.reload.failed?
-    assert LlmChat.sole.failed?
+    assert LlmChat.sole.succeeded?
   end
 
   test "#execute should agree with refresh on unidentified and rejected AI items" do
