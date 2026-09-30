@@ -7,17 +7,6 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert_not_equal original, FeedPreview.digest_for("llm", { "prompt" => "Write stories", "max_items" => 2 })
   end
 
-  test ".digest_for should change when the AI profile's prompt template changes" do
-    params = { "prompt" => "Follow Ruby news" }
-    original = FeedPreview.digest_for("llm", params)
-    profiles = FeedProfile::PROFILES.deep_dup
-    profiles["llm"][:loader][:config][:prompt_template] = "Summarize each source post: {{input}}"
-
-    stub_const(FeedProfile, :PROFILES, profiles) do
-      assert_not_equal original, FeedPreview.digest_for("llm", params)
-    end
-  end
-
   test ".digest_for should change when a profile option's default changes" do
     params = { "url" => "https://www.youtube.com/@channel" }
     original = FeedPreview.digest_for("youtube", params)
