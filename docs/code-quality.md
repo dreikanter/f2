@@ -78,3 +78,21 @@ in #1204 and #1225–#1231. Score went 82.5 → 87.6, F-rated files 9 → 3.
 Remaining cross-file groups cluster in the loaders, the normalizers, the
 `WebSearchProvider` adapters, and a few controller pairs around email
 confirmation and sessions. None have been sized.
+
+## Test coverage
+
+SimpleCov collects coverage on every test run. Set `COVERAGE=1` to disable
+parallelism for accurate numbers; results are in `coverage/.resultset.json`.
+
+```sh
+COVERAGE=1 bin/rails test
+bundle exec cov-loupe totals
+bundle exec cov-loupe list
+bundle exec cov-loupe uncovered app/models/feed.rb
+```
+
+In the dev container, generate coverage with
+`docker compose exec -e COVERAGE=1 app bin/rails test` and run cov-loupe with
+`docker compose exec app bundle exec cov-loupe ...`.
+
+cov-loupe requires a UTF-8 locale. Set `LANG=C.UTF-8` if it reports an encoding error.

@@ -66,6 +66,20 @@ docker pull ghcr.io/dreikanter/f2-dev:latest
 
 That's it. Start a fresh session and the session-start hook brings up the stack.
 
+## Agent instructions
+
+The repository uses `AGENTS.md` for shared instructions, including
+`screenshots/AGENTS.md` for screenshot conventions. Use Claude Code v2.1.281 or
+later with the built-in `agents-md` plugin enabled. In a fresh session, confirm
+that the repository's `AGENTS.md` is loaded.
+
+By default, a `CLAUDE.md`, `.claude/CLAUDE.md`, or `CLAUDE.local.md` in the
+working directory or an ancestor prevents `AGENTS.md` from loading. If you need
+both, set **Project instructions** to `claude-md-and-agents-md` in `/config`.
+Personal `~/.claude/CLAUDE.md` does not block loading.
+
+See the [Claude Code instruction-loading documentation](https://code.claude.com/docs/en/memory#agentsmd).
+
 ## Working in a session
 
 The stack is already up (the hook ran `docker compose up -d`). Run Rails commands
