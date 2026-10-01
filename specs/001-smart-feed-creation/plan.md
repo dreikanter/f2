@@ -51,7 +51,7 @@ The work spans parent-spec phases 1, 2, 3, and 5, but is sliced here so Story 1 
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Validated against [`.specify/memory/constitution.md`](../../.specify/memory/constitution.md) v1.0.0:
+Validated against [`.specify/memory/constitution.md`](https://github.com/dreikanter/f2/blob/7c8ea650e073279d070362c30125f5c90d147175/.specify/memory/constitution.md) v1.0.0:
 
 | Principle | Compliance | Notes |
 |-----------|------------|-------|

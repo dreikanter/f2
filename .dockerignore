@@ -46,7 +46,6 @@
 # Ignore development files
 /.devcontainer
 /.claude
-/.specify
 /.editorconfig
 /.gitattributes
 /.codecov.yml
