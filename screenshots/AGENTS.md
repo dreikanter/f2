@@ -15,13 +15,13 @@ codebase changes.
 
 - **SHOT-META-01:** Give every `<name>.png` a matching `<name>.md` using this format:
 
-```
-# <name>.png
+  ```
+  # <name>.png
 
-URL: `/path` (desktop, 1280px, full page)
-State: minimal conditions to reproduce the UI state
-Shows: the one thing the screenshot demonstrates
-```
+  URL: `/path` (desktop, 1280px, full page)
+  State: minimal conditions to reproduce the UI state
+  Shows: the one thing the screenshot demonstrates
+  ```
 
 - **SHOT-META-02:** Describe only the minimal state needed to reproduce the screenshot
   (signed in or not, records present or not, which state a record is in).
