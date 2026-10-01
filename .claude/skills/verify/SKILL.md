@@ -5,7 +5,7 @@ description: Launch and drive this app in a remote Claude Code environment to ve
 
 # Verifying F2 changes at the browser surface
 
-The dev stack runs in Docker (see CLAUDE.md Tooling Notes). Everything below
+The dev stack runs in Docker (see [AGENTS.md](../../../AGENTS.md#tooling)). Everything below
 assumes the remote environment where `docker compose` is already up.
 
 ## Launch
