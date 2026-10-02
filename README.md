@@ -37,5 +37,5 @@ bin/rails test
 yarn test:javascript
 ```
 
-JavaScript tests require Node 22.15+, bundled gems, and `yarn install --frozen-lockfile`.
+JavaScript tests require bundled gems and `yarn install --frozen-lockfile`.
 They use the same Stimulus asset as the browser, provided by `stimulus-rails`.
