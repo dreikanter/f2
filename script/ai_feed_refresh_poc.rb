@@ -2,6 +2,7 @@
 
 # Temporary research script; discard after live validation.
 # bin/rails runner -e development script/ai_feed_refresh_poc.rb
+# Pass a prompt as the first argument to replace the default.
 
 abort "Run with bin/rails runner -e development." unless Rails.env.development?
 
@@ -25,7 +26,7 @@ begin
     feed_profile_key: "llm",
     params: {
       "max_items" => 2,
-      "prompt" => <<~TEXT
+      "prompt" => ARGV.first || <<~TEXT
         Find the latest stable release announcements for Ruby and Ruby on Rails.
         Return one short feed post for each, including the version, release date,
         and a link to the official announcement.
