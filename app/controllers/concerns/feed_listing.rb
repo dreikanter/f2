@@ -45,7 +45,7 @@ module FeedListing
       .posts
       .includes(:feed_entry)
       .preload(feed: :access_token)
-      .order(published_at: :desc)
+      .order(created_at: :desc, id: :desc)
       .limit(MAX_RECENT_POSTS)
   end
 end
