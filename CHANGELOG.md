@@ -4,6 +4,7 @@
 
 - New AI feeds suggest Luna when no credential default is set and the model is available.
 - Recent posts on feed pages show the newest imports first.
+- AI feeds accept homepage URLs as post sources.
 
 ## 2026-09-27
 
