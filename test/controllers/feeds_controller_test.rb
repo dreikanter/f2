@@ -908,14 +908,20 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "Recent Activity", count: 0
   end
 
-  test "#show should render a recent posts section with the feed's posts" do
-    create(:post, feed: feed)
+  test "#show should list recent posts by import time instead of source date" do
+    source_date = Time.current.beginning_of_day
+    first = create(:post, feed: feed, created_at: 3.hours.ago, published_at: source_date)
+    second = create(:post, feed: feed, created_at: 2.hours.ago, published_at: source_date)
+    latest = create(:post, feed: feed, created_at: 1.hour.ago, published_at: 1.month.ago)
     sign_in_as(user)
 
     get feed_url(feed)
 
     assert_response :success
     assert_select "h2", text: "Recent Posts", count: 1
+    assert_select 'li[id^="post_"]' do |rows|
+      assert_equal [latest, second, first].map { |post| "post_#{post.id}" }, rows.map { |row| row["id"] }
+    end
   end
 
   test "#show should not render recent posts section when feed has no posts" do
