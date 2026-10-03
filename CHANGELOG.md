@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-03
+
+- New AI feeds suggest Luna when no credential default is set and the model is available.
+
 ## 2026-09-27
 
 - Invalid feed links now ask for a URL without suggesting AI or copying the text into the AI prompt.

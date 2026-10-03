@@ -6,6 +6,7 @@ module LlmProvider
   PROVIDERS = {
     "openai" => {
       display_name: "OpenAI",
+      default_model: "gpt-6-luna",
       adapter_class: Openai,
       validator_class: AiCredentialValidator::Openai
     }.freeze

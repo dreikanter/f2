@@ -45,7 +45,7 @@ class FeedAiSettingsComponent < ViewComponent::Base
   end
 
   def default_models_by_credential
-    selectable_credentials.to_h { |credential| [credential.id.to_s, credential.default_model] }
+    selectable_credentials.to_h { |credential| [credential.id.to_s, credential.preferred_model] }
   end
 
   def selected_credential_id
