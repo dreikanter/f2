@@ -209,7 +209,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     chat = feed.llm_chats.sole
     assert chat.succeeded?
     assert ai_preview.reload.ready?
-    assert_equal "Rust async news - https://example.com/rust", ai_preview.posts_data.sole["content"]
+    assert_equal "Rust async news", ai_preview.posts_data.sole["content"]
     assert_equal "https://example.com/rust", ai_preview.posts_data.sole["source_url"]
     event = Event.find_by!(type: "feed_preview", subject: feed)
     assert_equal "completed", event.metadata["status"]
