@@ -29,6 +29,10 @@ class AiCredential < ApplicationRecord
     LlmProvider.find(provider).fetch(:display_name)
   end
 
+  def preferred_model
+    default_model.presence || LlmProvider.find(provider)[:default_model]
+  end
+
   private
 
   def default_model_listed

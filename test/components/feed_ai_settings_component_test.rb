@@ -29,11 +29,21 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
   end
 
   test "#selected_model_id should preselect the default of the user's preferred credential" do
+    create(:llm_model, model_id: "gpt-6-luna")
     create(:llm_model, model_id: "gpt-a")
     credential.update!(default_model: "gpt-a")
     user.update!(default_ai_credential: credential)
 
     assert_equal "gpt-a", component(ai_feed(ai_credential: nil)).selected_model_id
+  end
+
+  test "#selected_model_id should suggest Luna when the credential has no default" do
+    create(:llm_model, model_id: "gpt-6-luna")
+    settings = component(ai_feed(ai_credential: credential))
+
+    assert_equal "gpt-6-luna", settings.selected_model_id
+    assert_equal "gpt-6-luna", settings.default_models_by_credential.fetch(credential.id.to_s)
+    assert_nil credential.reload.default_model
   end
 
   test "#selected_model_id should keep an explicit model over the credential default" do
@@ -54,7 +64,7 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
     assert_equal "", component(ai_feed(ai_credential: credential)).selected_model_id
   end
 
-  test "#selected_model_id should leave manual selection when there is no default" do
+  test "#selected_model_id should leave manual selection when Luna is not listed" do
     create(:llm_model, model_id: "gpt-a")
 
     assert_equal "", component(ai_feed(ai_credential: credential)).selected_model_id
@@ -123,6 +133,7 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
   end
 
   test "#selected_model_id should return the saved model when it's still offered" do
+    create(:llm_model, model_id: "gpt-6-luna")
     create(:llm_model, model_id: "gpt-a", name: "Model A")
     feed = ai_feed(ai_credential: credential, ai_model: "gpt-a")
     assert_equal "gpt-a", component(feed).selected_model_id
