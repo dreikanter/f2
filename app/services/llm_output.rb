@@ -11,9 +11,17 @@ class LlmOutput
           "type" => "object",
           "properties" => {
             "body" => { "type" => "string" },
-            "source_url" => { "type" => ["string", "null"] }
+            "source_url" => { "type" => ["string", "null"] },
+            "published_at" => {
+              "type" => ["string", "null"],
+              "description" => <<~TEXT.strip
+                Original source publication date or time in ISO 8601. Use YYYY-MM-DD when
+                only a date is known; do not invent a time or timezone. Use null when
+                unknown, for original content, or for a synthesis of multiple sources.
+              TEXT
+            }
           },
-          "required" => ["body", "source_url"],
+          "required" => ["body", "source_url", "published_at"],
           "additionalProperties" => false
         }
       }
