@@ -224,52 +224,76 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal 0.001, event.metadata.dig("stats", "llm_cost_cents")
   end
 
-  test "#execute should preview one news post after five native web calls" do
+  test "#execute should preserve retrieved and original posts through the AI response contract" do
+    freeze_time
     credential = create(:ai_credential, :active, user: user)
-    prompt = "Find one hottest AI tech news post published TODAY on x.com. " \
-             "If the post text is shorter than 140 character, quote it, otherwise summarize it. " \
-             "Do not add any comments to the result post."
+    prompt = "Summarize one illustrated article and write one original short story."
     preview = create(:feed_preview, user: user, feed_profile_key: "llm", ai_credential: credential,
-                     ai_model: "gpt-5.6-luna", params: { "prompt" => prompt, "max_items" => 1 },
+                     ai_model: "gpt-6-luna", params: { "prompt" => prompt, "max_items" => 2 },
                      status: :pending, run_id: AI_RUN_ID)
     response = completed_ai_response
     response["model"] = preview.ai_model
     message = response["output"].last
     message["content"].first["text"] = {
-      items: [{
-        body: "Today's AI news",
-        source_url: "https://x.com/example/status/123",
-        title: "",
-        supplementary: [],
-        images: [],
-        published_at: Time.current.iso8601
-      }]
+      items: [
+        {
+          body: "An illustrated article: https://example.com/article",
+          source_url: "https://example.com/article",
+          images: ["https://example.com/cover.png"],
+          published_at: "2007-12-05"
+        },
+        {
+          body: "The astronomer heard the star reply.",
+          source_url: nil,
+          images: [],
+          published_at: nil
+        }
+      ]
     }.to_json
-    response["output"] = Array.new(5) do |index|
+    response["output"] = [
       {
         type: "web_search_call",
-        id: "search_#{index}",
+        id: "search_1",
         status: "completed",
-        action: { type: "search", query: "AI news today site:x.com" }
-      }
-    end + [message]
+        action: { type: "search", query: "illustrated article" }
+      },
+      message
+    ]
     request = stub_request(:post, "https://api.openai.com/v1/responses")
       .with do |http|
         payload = JSON.parse(http.body)
-        payload.fetch("model") == "gpt-5.6-luna" &&
-          payload.dig("text", "format", "schema", "properties", "items", "maxItems") == 1
+        schema = payload.fetch("text").fetch("format").fetch("schema")
+        item_schema = schema.fetch("properties").fetch("items").fetch("items")
+        assert_equal "gpt-6-luna", payload.fetch("model")
+        assert_includes payload.fetch("tools").pluck("type"), "web_search"
+        assert_equal 2, schema.dig("properties", "items", "maxItems")
+        assert_equal %w[body images published_at source_url], item_schema.fetch("required").sort
+        assert JSONSchemer.schema(schema).valid?(JSON.parse(message["content"].first["text"]))
+        true
       end
       .to_return_json(body: response)
 
     FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
 
     assert preview.reload.ready?
-    assert_equal "https://x.com/example/status/123", preview.posts_data.sole["source_url"]
-    assert_empty preview.posts_data.sole["comments"]
+    assert_equal 2, preview.posts_data.size
+    retrieved, original = preview.posts_data
+    assert_equal "An illustrated article: https://example.com/article", retrieved["content"]
+    assert_equal "https://example.com/article", retrieved["source_url"]
+    assert_equal ["https://example.com/cover.png"], retrieved["attachments"]
+    assert_equal Time.zone.local(2007, 12, 5).iso8601, retrieved["published_at"]
+    assert_equal "enqueued", retrieved["status"]
+    assert_empty retrieved["validation_errors"]
+    assert_equal "The astronomer heard the star reply.", original["content"]
+    assert_nil original["source_url"]
+    assert_empty original["attachments"]
+    assert_equal Time.current.iso8601, original["published_at"]
+    assert_equal "enqueued", original["status"]
+    assert_empty original["validation_errors"]
     assert LlmChat.sole.succeeded?
     event = Event.find_by!(type: "feed_preview", subject: credential)
     assert_equal "completed", event.metadata["status"]
-    assert_equal 5, LlmUsageDetails.new(LlmChat.sole.ruby_llm_usages.sole).web_search_count
+    assert_equal 1, LlmUsageDetails.new(LlmChat.sole.ruby_llm_usages.sole).web_search_count
     assert_requested request, times: 1
   end
 
