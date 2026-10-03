@@ -1,6 +1,35 @@
 require "test_helper"
 
 class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
+  test "#index should request a feed ID for diagnostics" do
+    sign_in_as(dev_user)
+    get development_job_job_runs_path("FeedDiagnosticsJob")
+
+    assert_response :success
+    assert_select 'input[name="feed_id"][required]'
+  end
+
+  test "#create should enqueue diagnostics for the requested feed" do
+    feed = create(:feed)
+    sign_in_as(dev_user)
+
+    assert_enqueued_with(job: FeedDiagnosticsJob, args: [feed.id]) do
+      post development_job_job_runs_path("FeedDiagnosticsJob"), params: { feed_id: feed.id }
+    end
+
+    assert_redirected_to development_job_job_runs_path("FeedDiagnosticsJob")
+  end
+
+  test "#create should require the diagnostic feed ID before creating a run" do
+    sign_in_as(dev_user)
+
+    assert_no_difference -> { JobRun.count } do
+      post development_job_job_runs_path("FeedDiagnosticsJob")
+    end
+
+    assert_response :bad_request
+  end
+
   test "#index should require dev permission" do
     sign_in_as(regular_user)
     get development_job_job_runs_path("PurgeExpiredEventsJob")

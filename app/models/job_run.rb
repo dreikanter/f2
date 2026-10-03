@@ -1,12 +1,13 @@
 class JobRun < ApplicationRecord
   # Allowlist for job names arriving in params, so a request can't enqueue an
-  # arbitrary class. Registered jobs take no arguments.
+  # arbitrary class.
   RUNNABLE_JOBS = [
     SerperCapabilityProbeJob,
     BraveCapabilityProbeJob,
     TavilyCapabilityProbeJob,
     PurgeExpiredEventsJob,
-    RefreshLlmModelsJob
+    RefreshLlmModelsJob,
+    FeedDiagnosticsJob
   ].freeze
 
   enum :status, {

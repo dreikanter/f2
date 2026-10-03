@@ -3,6 +3,7 @@
 ## 2026-10-03
 
 - New AI feeds suggest Luna when no credential default is set and the model is available.
+- Developer Tools can export feed diagnostics as a copyable report.
 
 ## 2026-09-27
 

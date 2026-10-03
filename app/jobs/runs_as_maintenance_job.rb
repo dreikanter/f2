@@ -11,6 +11,9 @@ module RunsAsMaintenanceJob
   end
 
   class_methods do
+    # Required text inputs appended to runnable_arguments by the launch form.
+    def runnable_parameters = {}
+
     # How the dev area names this job: the class name read as prose, so listings
     # and breadcrumbs don't spell out Ruby constants.
     def display_name = name.delete_suffix("Job").titleize
