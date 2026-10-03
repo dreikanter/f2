@@ -19,9 +19,18 @@ class LlmOutput
                 only a date is known; do not invent a time or timezone. Use null when
                 unknown, for original content, or for a synthesis of multiple sources.
               TEXT
+            },
+            "images" => {
+              "type" => "array",
+              "items" => { "type" => "string" },
+              "description" => <<~TEXT.strip
+                Direct image URLs found in retrieved sources, in display order. Do not
+                invent URLs or use page links. Use an empty array when no suitable image
+                is available or needed.
+              TEXT
             }
           },
-          "required" => ["body", "source_url", "published_at"],
+          "required" => ["body", "source_url", "published_at", "images"],
           "additionalProperties" => false
         }
       }
