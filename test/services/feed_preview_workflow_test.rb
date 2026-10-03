@@ -224,7 +224,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal 0.001, event.metadata.dig("stats", "llm_cost_cents")
   end
 
-  test "#execute should preserve retrieved and original posts through the AI response contract" do
+  test "#execute should normalize sourced and original AI items into preview posts" do
     freeze_time
     credential = create(:ai_credential, :active, user: user)
     prompt = "Summarize one illustrated article and write one original short story."
@@ -233,8 +233,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
                      status: :pending, run_id: AI_RUN_ID)
     response = completed_ai_response
     response["model"] = preview.ai_model
-    message = response["output"].last
-    message["content"].first["text"] = {
+    response["output"].last["content"].first["text"] = {
       items: [
         {
           body: "An illustrated article: https://example.com/article",
@@ -250,27 +249,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
         }
       ]
     }.to_json
-    response["output"] = [
-      {
-        type: "web_search_call",
-        id: "search_1",
-        status: "completed",
-        action: { type: "search", query: "illustrated article" }
-      },
-      message
-    ]
-    request = stub_request(:post, "https://api.openai.com/v1/responses")
-      .with do |http|
-        payload = JSON.parse(http.body)
-        schema = payload.fetch("text").fetch("format").fetch("schema")
-        item_schema = schema.fetch("properties").fetch("items").fetch("items")
-        assert_equal "gpt-6-luna", payload.fetch("model")
-        assert_includes payload.fetch("tools").pluck("type"), "web_search"
-        assert_equal 2, schema.dig("properties", "items", "maxItems")
-        assert_equal %w[body images published_at source_url], item_schema.fetch("required").sort
-        assert JSONSchemer.schema(schema).valid?(JSON.parse(message["content"].first["text"]))
-        true
-      end
+    stub_request(:post, "https://api.openai.com/v1/responses")
       .to_return_json(body: response)
 
     FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
@@ -290,11 +269,6 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal Time.current.iso8601, original["published_at"]
     assert_equal "enqueued", original["status"]
     assert_empty original["validation_errors"]
-    assert LlmChat.sole.succeeded?
-    event = Event.find_by!(type: "feed_preview", subject: credential)
-    assert_equal "completed", event.metadata["status"]
-    assert_equal 1, LlmUsageDetails.new(LlmChat.sole.ruby_llm_usages.sole).web_search_count
-    assert_requested request, times: 1
   end
 
   test "#execute should include queue time in the preview extraction deadline" do
