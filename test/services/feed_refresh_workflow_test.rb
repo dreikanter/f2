@@ -1030,6 +1030,36 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, feed.feed_entries.count
   end
 
+  test "#execute should publish sourced text with a URL and source-less text without one" do
+    create(:llm_model, model_id: "gpt-4.1")
+    feed = ai_feed_with_schedule
+    stub_ai_response([
+      { "source_url" => "https://example.com/post", "body" => "An article" },
+      { "source_url" => "https://example.com/", "body" => "A website" },
+      { "source_url" => nil, "body" => "A summary of several sources" }
+    ])
+    bodies = []
+    publication = stub_request(:post, "#{feed.access_token.host}/v4/posts")
+      .to_return do |request|
+        bodies << JSON.parse(request.body).dig("post", "body")
+        {
+          body: { posts: { id: SecureRandom.uuid } }.to_json,
+          headers: { "Content-Type" => "application/json" }
+        }
+      end
+
+    FeedRefreshWorkflow.new(feed).execute
+    perform_enqueued_jobs(only: PostPublishJob) { PostPublishJob.perform_now(feed.id) }
+
+    assert_equal [
+      "An article - https://example.com/post",
+      "A summary of several sources",
+      "A website - https://example.com/"
+    ].sort, bodies.sort
+    assert_equal 3, feed.posts.where(status: :published).count
+    assert_requested publication, times: 3
+  end
+
   test "#execute should allow independent same-day originals while preserving historical identities" do
     create(:llm_model, model_id: "gpt-4.1")
     feed = ai_feed_with_schedule

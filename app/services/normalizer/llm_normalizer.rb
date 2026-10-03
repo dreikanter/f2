@@ -15,9 +15,8 @@ module Normalizer
     end
 
     def normalize_content
-      body = truncate_text(raw_data["body"].to_s)
-      return body if body.blank? || source_url.blank?
-      return body if body.match?(/#{Regexp.escape(source_url)}(?=$|[\s)\]>]|[.,;!?](?:\s|$))/)
+      body = raw_data["body"].to_s
+      return body if body.blank?
 
       post_content_with_url(body, source_url)
     end

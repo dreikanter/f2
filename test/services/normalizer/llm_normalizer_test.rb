@@ -90,26 +90,29 @@ class Normalizer::LlmNormalizerTest < ActiveSupport::TestCase
 
     assert_operator post.content.length, :<=, Post::MAX_CONTENT_LENGTH
     assert_equal "enqueued", post.status
-    assert post.content.end_with?(post.source_url)
+    assert post.content.end_with?(" - #{post.source_url}")
   end
 
-  test "#normalize should keep an existing source link without duplicating it" do
+  test "#normalize should append the source URL even when the body contains a link" do
     body = "Read this: [source](https://example.com/post-1)."
     post = Normalizer::LlmNormalizer.new(feed_entry("body" => body)).normalize
 
-    assert_equal body, post.content
-  end
-
-  test "#normalize should not mistake a different URL with the same prefix for its source" do
-    post = Normalizer::LlmNormalizer.new(feed_entry("body" => "Related: https://example.com/post-12")).normalize
-
-    assert post.content.end_with?(" - https://example.com/post-1")
+    assert_equal "#{body} - https://example.com/post-1", post.content
   end
 
   test "#normalize should leave original content without a source link unchanged" do
     post = Normalizer::LlmNormalizer.new(feed_entry("body" => "An original joke", "source_url" => nil)).normalize
 
     assert_equal "An original joke", post.content
+  end
+
+  test "#normalize should truncate source-less content without adding a URL" do
+    post = Normalizer::LlmNormalizer.new(feed_entry("body" => "word " * 2000, "source_url" => nil)).normalize
+
+    assert_operator post.content.length, :<=, Post::MAX_CONTENT_LENGTH
+    assert post.content.end_with?("…")
+    assert_nil post.source_url
+    assert_equal "enqueued", post.status
   end
 
   test "#normalize should reject an images-only post whose images were all dropped as unsafe" do
