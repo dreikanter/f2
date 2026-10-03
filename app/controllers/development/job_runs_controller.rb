@@ -18,9 +18,7 @@ class Development::JobRunsController < ApplicationController
 
     # Insert the run before enqueuing so the worker can't pick the job up before
     # its JobRun exists; job_id is assigned at instantiation, ahead of enqueue.
-    arguments = job_class.runnable_arguments(current_user) +
-                job_class.runnable_parameters.keys.map { |key| params.require(key) }
-    job = job_class.new(*arguments)
+    job = job_class.new(*job_class.runnable_arguments(current_user))
     JobRun.create!(job_class: job_class.name, job_id: job.job_id)
     job.enqueue
 

@@ -7,16 +7,9 @@
       <% header.with_context_paragraph(@job_class.description) %>
     <% end %>
     <% header.with_action_button do %>
-      <%= form_with url: development_job_job_runs_path(@job_class.name), class: "flex flex-wrap items-end gap-3" do |form| %>
-        <% @job_class.runnable_parameters.each do |name, label| %>
-          <div class="space-y-1">
-            <%= form.label name, label, class: form_label_classes %>
-            <%= form.text_field name, required: true, class: input_field_classes %>
-          </div>
-        <% end %>
-        <%= form.button "Run", class: class_names(primary_button_classes(compact: true), "cursor-pointer"),
-                              data: { key: "development.job_runs.run" } %>
-      <% end %>
+      <%= button_to "Run", development_job_job_runs_path(@job_class.name),
+            class: class_names(primary_button_classes(compact: true), "cursor-pointer"),
+            data: { key: "development.job_runs.run" } %>
     <% end %>
   <% end %>
 
