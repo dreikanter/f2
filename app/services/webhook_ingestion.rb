@@ -14,12 +14,6 @@ class WebhookIngestion
   # escaping only quotes and backslashes.
   SF_STRING = /\A"(?<value>(?:[\x20-\x21\x23-\x5B\x5D-\x7E]|\\["\\])*)"\z/
 
-  # Percent-encoding during uid normalization can inflate a multibyte URL well
-  # past its schema-checked length; past this cap the uid would overflow the
-  # (feed_id, uid) btree index rows, so such a URL loses its identity role and
-  # the delivery falls back to a random uid instead of a 500.
-  MAX_URL_UID_BYTES = 2048
-
   # Caps on images/comments are load-bearing: publishing costs
   # 1 + comments + images FreeFeed POSTs against a burst capacity of 20, and
   # PostPublishJob permanently fails any post whose cost exceeds capacity.
@@ -61,7 +55,10 @@ class WebhookIngestion
   def call
     errors = validate_payload
     return invalid(errors) if errors.any?
-    return duplicate if already_ingested?
+    if (explicit_uid.present? || idempotency_key.present?) && already_ingested?
+      endpoint.touch(:last_received_at)
+      return duplicate
+    end
 
     post = normalized_post
     return invalid(post.validation_errors) if post.rejected?
@@ -73,6 +70,7 @@ class WebhookIngestion
     # Two concurrent deliveries of one uid can both pass the pre-insert check;
     # the (feed_id, uid) unique index arbitrates, and the loser gets the same
     # honest answer as the sequential case.
+    endpoint.touch(:last_received_at)
     duplicate
   end
 
@@ -186,27 +184,11 @@ class WebhookIngestion
     end
   end
 
-  # Uid precedence: explicit idempotency key (the uid field or
-  # the equivalent Idempotency-Key header; validation guarantees they agree),
-  # then the permalink normalized exactly like pull feeds', then a random uuid
-  # (each request is a new post; callers with retrying pipelines should pass a
-  # key).
-  def resolve_uid
-    return explicit_uid if explicit_uid.present?
-    return idempotency_key if idempotency_key.present?
-
-    from_url = Uid::Resolver.from_url(source_url)
-    return SecureRandom.uuid if from_url.nil? || from_url.bytesize > MAX_URL_UID_BYTES
-
-    from_url
-  end
-
   def uid
-    @uid ||= resolve_uid
+    @uid ||= explicit_uid.presence || idempotency_key.presence || SecureRandom.uuid
   end
 
   def duplicate
-    endpoint.touch(:last_received_at)
     Result.new(status: :duplicate, uid: uid, errors: [], warnings: [])
   end
 
@@ -231,7 +213,7 @@ class WebhookIngestion
     value.nil? || value > Time.current ? Time.current : value
   end
 
-  # Lenient like Uid::Resolver: an IDN/multibyte permalink is a valid source,
+  # An IDN/multibyte URL is a valid source,
   # so retry with Addressable's encoding before rejecting.
   def http_url?(url)
     uri = begin

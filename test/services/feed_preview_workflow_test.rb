@@ -314,7 +314,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     response = completed_ai_response
     response["output"].last["content"].first["text"] = {
       items: [
-        { source_url: "https://example.com/", body: "A homepage" },
+        { source_url: "not a URL", body: "An invalid source" },
         { source_url: "https://example.com/empty", body: "" },
         { source_url: "https://example.com/post", body: "A source post" },
         { source_url: nil, body: "A daily digest" }
@@ -362,7 +362,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     response = completed_ai_response
     response["output"].last["content"].first["text"] = {
       items: [
-        { source_url: "https://example.com/", body: "A homepage" },
+        { source_url: "not a URL", body: "An invalid source" },
         { source_url: "https://example.com/post", body: "A source post" }
       ]
     }.to_json
@@ -383,7 +383,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   test "#execute should complete a preview containing only unidentified AI items" do
     response = completed_ai_response
     response["output"].last["content"].first["text"] = {
-      items: [{ source_url: "https://example.com/", body: "A homepage" }]
+      items: [{ source_url: "not a URL", body: "An invalid source" }]
     }.to_json
     stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
 

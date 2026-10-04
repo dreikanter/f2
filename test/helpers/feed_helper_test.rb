@@ -213,6 +213,7 @@ class FeedHelperTest < ActionView::TestCase
 
     assert_includes snippet, "curl --request POST https://example.com/v1/posts"
     assert_includes snippet, "Authorization: Bearer secret-token"
+    assert_includes snippet, %q("uid":"post-1")
   end
 
   test "#candidate_summary should fall back to the profile display name for URL profiles" do
