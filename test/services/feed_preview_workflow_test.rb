@@ -188,6 +188,24 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
+  test "#execute should request native search and structured output with the selected limit" do
+    preview = ai_preview
+    preview.update!(params: preview.params.merge("max_items" => 2))
+    request_body = nil
+    stub_request(:post, "https://api.openai.com/v1/responses")
+      .with do |request|
+        request_body = JSON.parse(request.body)
+        true
+      end
+      .to_return_json(body: completed_ai_response)
+
+    FeedPreviewWorkflow.new(preview, run_id: AI_RUN_ID).execute
+
+    assert_includes request_body.fetch("tools").pluck("type"), "web_search"
+    assert_equal "json_schema", request_body.dig("text", "format", "type")
+    assert_equal 2, request_body.dig("text", "format", "schema", "properties", "items", "maxItems")
+  end
+
   test "#execute should attribute a saved feed preview and RubyLLM usage to its chat" do
     feed = create(:feed, user: user, feed_profile_key: "llm", params: { "prompt" => "rust async" },
                   ai_credential: ai_preview.ai_credential, ai_model: "gpt-5-nano", search_credential: nil)
