@@ -175,6 +175,9 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal user, chat.user
     assert_nil chat.feed_id
     assert_equal credential, chat.ai_credential
+    instructions = chat.messages.find_by!(role: "system").content
+    assert_includes instructions, "Put only the post text in body, without URLs."
+    assert_includes instructions, "use null for original"
     assert_equal "gpt-5-nano", chat.requested_model
     assert_equal "preview", chat.purpose
     assert preview.reload.ready?
@@ -236,7 +239,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     response["output"].last["content"].first["text"] = {
       items: [
         {
-          body: "An illustrated article: https://example.com/article",
+          body: "An illustrated article",
           source_url: "https://example.com/article",
           images: ["https://example.com/cover.png"],
           published_at: "2007-12-05"
@@ -257,7 +260,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert preview.reload.ready?
     assert_equal 2, preview.posts_data.size
     retrieved, original = preview.posts_data
-    assert_equal "An illustrated article: https://example.com/article", retrieved["content"]
+    assert_equal "An illustrated article - https://example.com/article", retrieved["content"]
     assert_equal "https://example.com/article", retrieved["source_url"]
     assert_equal ["https://example.com/cover.png"], retrieved["attachments"]
     assert_equal Time.zone.local(2007, 12, 5).iso8601, retrieved["published_at"]
