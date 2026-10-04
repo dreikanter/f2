@@ -2,6 +2,7 @@
 
 ## 2026-10-04
 
+- Feed refresh events label estimated AI spend as “AI usage” for clarity.
 - Feed refresh events distinguish empty results from no new posts and show how many entries were already imported.
 - AI posts use “content - source URL” when a source is available; original posts and multi-source summaries keep only their content.
 - Webhook posts deduplicate only by optional `uid` or `Idempotency-Key`; source links no longer determine duplicates.

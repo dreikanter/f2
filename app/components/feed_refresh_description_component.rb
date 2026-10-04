@@ -1,6 +1,6 @@
 # Describes a feed refresh by its lifecycle status, appending the
 # result and the run's AI spend when present,
-# e.g. "My Feed refreshed (2 posts) (1 entry already imported) (AI: $0.03)".
+# e.g. "My Feed refreshed (2 posts) (1 entry already imported) (AI usage: $0.03)".
 class FeedRefreshDescriptionComponent < EventDescriptionComponent
   def call
     suffixes = [posts_count_tag, already_imported_tag, spend_tag].compact
@@ -55,7 +55,7 @@ class FeedRefreshDescriptionComponent < EventDescriptionComponent
     return if cents.nil? && event.metadata.dig("stats", "llm_calls").to_i.zero?
 
     cost = cents.nil? ? "unknown cost" : helpers.number_to_currency(cents / 100.0)
-    helpers.tag.span("(AI: #{cost})",
+    helpers.tag.span("(AI usage: #{cost})",
                      class: "text-muted", data: { key: "events.llm_cost" })
   end
 end
