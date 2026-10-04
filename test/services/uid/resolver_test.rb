@@ -48,13 +48,9 @@ class Uid::ResolverTest < ActiveSupport::TestCase
     assert_nil Uid::Resolver.from_url("   ")
   end
 
-  test ".from_url should return nil for a bare homepage" do
-    assert_nil Uid::Resolver.from_url("https://example.com/")
-  end
-
-  test ".from_url should normalize homepage variants when allowed" do
-    assert_equal "https://example.com/", Uid::Resolver.from_url("http://www.example.com", allow_homepage: true)
-    assert_equal "https://example.com/", Uid::Resolver.from_url("https://example.com/", allow_homepage: true)
+  test ".from_url should normalize homepage variants" do
+    assert_equal "https://example.com/", Uid::Resolver.from_url("http://www.example.com")
+    assert_equal "https://example.com/", Uid::Resolver.from_url("https://example.com/")
   end
 
   test ".from_url should return nil for a non-HTTP URL" do

@@ -88,7 +88,7 @@ module FeedHelper
       curl --request POST #{url} \\
         --header "Authorization: Bearer #{token}" \\
         --header "Content-Type: application/json" \\
-        --data '{"content":"Hello world"}'
+        --data '{"uid":"post-1","content":"Hello world"}'
     CURL
   end
 

@@ -48,7 +48,7 @@ Only `application/json` is accepted, and each request carries at most one post.
 curl --request POST https://feeder.example/v1/posts \
   --header "Authorization: Bearer TOKEN" \
   --header "Content-Type: application/json" \
-  --data '{"content":"Hello world"}'
+  --data '{"uid":"post-1","content":"Hello world"}'
 ```
 
 Everything the payload accepts:
@@ -70,13 +70,14 @@ curl --request POST https://feeder.example/v1/posts \
 | Field | Type | Notes |
 | --- | --- | --- |
 | `content` | string | The post body. Required unless `images` is non-empty. |
-| `source_url` | string | Absolute `http(s)` URL, up to 2048 characters. Appended to the body (see below) and used as the uid seed. |
+| `source_url` | string | Absolute `http(s)` URL, up to 2048 characters. Appended to the body (see below). |
 | `images` | array of strings | Up to 8. Each must be an absolute, public `http(s)` URL; Feeder downloads them and re-uploads them to FreeFeed at publish time. Images alone are a complete post. |
 | `comments` | array of strings | Up to 8, published as comments under the post. Each is clamped to 3000 characters. |
 | `uid` | string | 1–255 characters. Your idempotency key — see [Retries and duplicates](#retries-and-duplicates). |
 | `published_at` | string | ISO 8601. Defaults to now; a future timestamp is clamped to now. Controls publish order. |
 
-Every field is optional on its own, but a payload with neither `content` nor
+Provide `uid` or `Idempotency-Key`. Other fields are optional, but a payload
+with neither `content` nor
 `images` is a `422`. Unknown fields are rejected rather than ignored, so a typo
 like `imges` comes back as a `422` instead of quietly publishing a post with no
 images.
@@ -120,20 +121,13 @@ got a `201` for never shows up.
 ## Retries and duplicates
 
 Every post gets a uid, and a uid that already exists on the feed is answered with
-`200 duplicate` — no second post, no matter how the content changed since. Where
-that uid comes from, in order:
+`200 duplicate` — no second post, no matter how the content changed since.
+Provide that identity through the `uid` field or `Idempotency-Key` header.
+Send both and they must match, or the request is a `422`. Missing identity is
+also a `422`; Feeder never derives it from `source_url` or generates it for you.
 
-1. The **`uid` field**.
-2. The **`Idempotency-Key` header**, which is just a second spelling of `uid`.
-   Send both and they must match, or the request is a `422`.
-3. **`source_url`**, normalized the way pull feeds normalize permalinks: coerced
-   to `https`, `www.` and tracking parameters stripped. One permalink, one post.
-4. A **random UUID** — a new post every time.
-
-So: **pass a `uid` if your delivery can retry.** Without one, a retry after a
-network timeout double-posts, unless `source_url` happens to be carrying the
-identity for you. Note that `source_url` only anchors identity when it's a deep
-link; a bare homepage falls back to a random uid like a missing URL would.
+Reuse the same identity for retries. Use a new identity for each intended post,
+even when its source URL is unchanged. Source URLs do not need to be unique.
 
 `Idempotency-Key` accepts both a bare value and the quoted RFC 8941 form
 (`"key-1"`), and decodes the quoted one, so the same logical key matches whether

@@ -33,7 +33,7 @@ class Api::V1::PostsControllerTest < ActionDispatch::IntegrationTest
 
   test "#create should enqueue a post from a JSON payload" do
     assert_difference ["FeedEntry.count", "Post.count"], 1 do
-      post_hook params: { content: "Hello world" }, as: :json
+      post_hook params: { content: "Hello world", uid: "post-1" }, as: :json
     end
 
     assert_response :created
@@ -44,7 +44,7 @@ class Api::V1::PostsControllerTest < ActionDispatch::IntegrationTest
 
   test "#create should reject a form-encoded payload" do
     assert_no_difference ["FeedEntry.count", "Post.count"] do
-      post_hook params: { content: "Hello world" }
+      post_hook params: { content: "Hello world", uid: "post-1" }
     end
 
     assert_response :unsupported_media_type
@@ -70,7 +70,7 @@ class Api::V1::PostsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#create should include warnings when content gets truncated" do
-    post_hook params: { content: "a" * (Post::MAX_CONTENT_LENGTH + 1) }, as: :json
+    post_hook params: { content: "a" * (Post::MAX_CONTENT_LENGTH + 1), uid: "post-1" }, as: :json
 
     assert_response :created
     assert_equal ["content_truncated"], response_json["warnings"]
@@ -107,6 +107,15 @@ class Api::V1::PostsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :created
     assert_equal "key-1", response_json["uid"]
+  end
+
+  test "#create should reject a missing identity without persisting" do
+    assert_no_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"] do
+      post_hook params: { content: "Hello", source_url: "https://example.com/a" }, as: :json
+    end
+    assert_response :unprocessable_entity
+    assert_equal "invalid", response_json["status"]
+    assert_includes response_json["errors"], "Provide uid or Idempotency-Key"
   end
 
   test "#create should reject mismatched uid and Idempotency-Key" do
@@ -184,7 +193,7 @@ class Api::V1::PostsControllerTest < ActionDispatch::IntegrationTest
   test "#create should answer feed_not_enabled for a draft feed" do
     feed.update!(state: :draft)
 
-    post_hook params: { content: "Hello" }, as: :json
+    post_hook params: { content: "Hello", uid: "post-1" }, as: :json
 
     assert_response :conflict
     assert_equal "feed_not_enabled", response_json["status"]
@@ -193,7 +202,7 @@ class Api::V1::PostsControllerTest < ActionDispatch::IntegrationTest
   test "#create should answer feed_not_enabled for a disabled feed" do
     feed.update!(state: :disabled)
 
-    post_hook params: { content: "Hello" }, as: :json
+    post_hook params: { content: "Hello", uid: "post-1" }, as: :json
 
     assert_response :conflict
   end
@@ -219,7 +228,7 @@ class Api::V1::PostsControllerTest < ActionDispatch::IntegrationTest
   test "#create should throttle a chatty endpoint with Retry-After" do
     freeze_time do
       burst = RateLimit.capacity(:webhook_ingest, :request)
-      burst.times { post_hook params: { content: "Hello" }, as: :json }
+      burst.times { post_hook params: { content: "Hello", uid: "post-1" }, as: :json }
 
       post_hook params: { content: "One too many" }, as: :json
 
@@ -230,7 +239,7 @@ class Api::V1::PostsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#create should not require an application session or CSRF token" do
-    post_hook params: { content: "Hello" }, as: :json
+    post_hook params: { content: "Hello", uid: "post-1" }, as: :json
 
     assert_response :created
   end
@@ -246,7 +255,7 @@ class Api::V1::PostsControllerTest < ActionDispatch::IntegrationTest
   test "#create should ignore the outdated-browser gate" do
     old_browser = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36"
 
-    post_hook params: { content: "Hello" }, headers: { "User-Agent" => old_browser }, as: :json
+    post_hook params: { content: "Hello", uid: "post-1" }, headers: { "User-Agent" => old_browser }, as: :json
 
     assert_response :created
     assert_equal "enqueued", response_json["status"]

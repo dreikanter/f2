@@ -19,7 +19,7 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     result = nil
 
     assert_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"], 1 do
-      result = ingest({ "content" => "Hello world" })
+      result = ingest({ "uid" => "post-1", "content" => "Hello world" })
     end
 
     assert result.enqueued?
@@ -28,7 +28,7 @@ class WebhookIngestionTest < ActiveSupport::TestCase
 
     entry = feed.feed_entries.sole
     assert_predicate entry, :processed?
-    assert_equal({ "content" => "Hello world" }, entry.raw_data)
+    assert_equal({ "uid" => "post-1", "content" => "Hello world" }, entry.raw_data)
 
     post = feed.posts.sole
     assert_predicate post, :enqueued?
@@ -37,13 +37,13 @@ class WebhookIngestionTest < ActiveSupport::TestCase
 
   test "#call should kick the publish chain on success" do
     assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
-      ingest({ "content" => "Hello world" })
+      ingest({ "uid" => "post-1", "content" => "Hello world" })
     end
   end
 
   test "#call should update endpoint counters on success" do
     freeze_time do
-      ingest({ "content" => "Hello world" })
+      ingest({ "uid" => "post-1", "content" => "Hello world" })
 
       assert_equal 1, endpoint.reload.received_count
       assert_equal Time.current, endpoint.last_received_at
@@ -52,7 +52,7 @@ class WebhookIngestionTest < ActiveSupport::TestCase
 
   test "#call should record the feed update time on successful ingestion" do
     freeze_time do
-      ingest({ "content" => "Hello world" })
+      ingest({ "uid" => "post-1", "content" => "Hello world" })
 
       assert_equal Time.current, feed.reload.last_successful_refresh_at
     end
@@ -166,19 +166,24 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     assert_includes result.errors, "Idempotency-Key must not contain null bytes"
   end
 
-  test "#call should derive the uid from source_url like pull feeds" do
-    result = ingest({ "content" => "Hello", "source_url" => "http://www.example.com/a?utm_source=x" })
-
-    assert_equal "https://example.com/a", result.uid
+  test "#call should require an explicit identity even with a source URL" do
+    [nil, "https://example.com/a", "https://example.com/"].each do |url|
+      assert_no_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"] do
+        result = ingest({ "content" => "Hello", "source_url" => url }.compact)
+        assert result.invalid?
+        assert_includes result.errors, "Provide uid or Idempotency-Key"
+      end
+    end
   end
 
-  test "#call should fall back to a random uid" do
-    first = ingest({ "content" => "Hello" })
-    second = ingest({ "content" => "Hello" })
-
-    assert first.enqueued?
-    assert second.enqueued?
-    assert_not_equal first.uid, second.uid
+  test "#call should accept distinct identities sharing an unchanged source URL" do
+    url = "http://www.example.com/?utm_source=x"
+    %w[first second].each do |key|
+      result = ingest({ "content" => "Hello", "uid" => key, "source_url" => url })
+      assert result.enqueued?
+      assert_equal key, result.uid
+    end
+    assert_equal [url, url], feed.posts.pluck(:source_url)
   end
 
   test "#call should report a duplicate uid without persisting anything" do
@@ -218,7 +223,7 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     result = nil
 
     assert_no_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"] do
-      result = ingest({ "content" => "Hello", "imges" => ["https://example.com/pic.jpg"] })
+      result = ingest({ "uid" => "post-1", "content" => "Hello", "imges" => ["https://example.com/pic.jpg"] })
     end
 
     assert result.invalid?
@@ -244,7 +249,7 @@ class WebhookIngestionTest < ActiveSupport::TestCase
   end
 
   test "#call should reject a payload without content or images" do
-    result = ingest({ "comments" => ["First"] })
+    result = ingest({ "uid" => "post-1", "comments" => ["First"] })
 
     assert result.invalid?
     assert_includes result.errors, "no_content_or_images"
@@ -253,27 +258,27 @@ class WebhookIngestionTest < ActiveSupport::TestCase
   test "#call should reject more than eight images" do
     urls = Array.new(9) { |n| "https://example.com/#{n}.jpg" }
 
-    result = ingest({ "images" => urls })
+    result = ingest({ "uid" => "post-1", "images" => urls })
 
     assert result.invalid?
   end
 
   test "#call should reject a relative source_url" do
-    result = ingest({ "content" => "Hello", "source_url" => "/relative/path" })
+    result = ingest({ "uid" => "post-1", "content" => "Hello", "source_url" => "/relative/path" })
 
     assert result.invalid?
     assert_includes result.errors, "source_url must be an absolute http(s) URL"
   end
 
   test "#call should reject a source_url no parser accepts" do
-    result = ingest({ "content" => "Hello", "source_url" => "http://[" })
+    result = ingest({ "uid" => "post-1", "content" => "Hello", "source_url" => "http://[" })
 
     assert result.invalid?
     assert_includes result.errors, "source_url must be an absolute http(s) URL"
   end
 
   test "#call should reject a non-public image URL" do
-    result = ingest({ "content" => "Hello", "images" => ["http://localhost/pic.jpg"] })
+    result = ingest({ "uid" => "post-1", "content" => "Hello", "images" => ["http://localhost/pic.jpg"] })
 
     assert result.invalid?
     assert_includes result.errors, "images/0 must be a public http(s) URL"
@@ -283,30 +288,30 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     result = nil
 
     assert_no_difference ["FeedEntry.count", "Post.count"] do
-      result = ingest({ "content" => "Hello", "source_url" => "https://example.com/#{"a" * 3000}" })
+      result = ingest({ "uid" => "post-1", "content" => "Hello", "source_url" => "https://example.com/#{"a" * 3000}" })
     end
 
     assert result.invalid?
   end
 
-  test "#call should fall back to a random uid when the normalized url overflows the index" do
+  test "#call should accept a multibyte source URL with an explicit identity" do
     url = "https://example.com/#{"я" * 1000}"
 
-    result = ingest({ "content" => "Hello", "source_url" => url })
+    result = ingest({ "uid" => "post-1", "content" => "Hello", "source_url" => url })
 
     assert result.enqueued?
-    assert_match(/\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/, result.uid)
+    assert_equal "post-1", result.uid
   end
 
   test "#call should reject a malformed published_at" do
-    result = ingest({ "content" => "Hello", "published_at" => "yesterday" })
+    result = ingest({ "uid" => "post-1", "content" => "Hello", "published_at" => "yesterday" })
 
     assert result.invalid?
     assert_includes result.errors, "published_at must be an ISO 8601 timestamp"
   end
 
   test "#call should reject a timestamp outside the supported database range" do
-    result = ingest({ "content" => "Hello", "published_at" => "0000-01-01T00:00:00Z" })
+    result = ingest({ "uid" => "post-1", "content" => "Hello", "published_at" => "0000-01-01T00:00:00Z" })
 
     assert result.invalid?
     assert_includes result.errors, "published_at must be an ISO 8601 timestamp"
@@ -317,7 +322,7 @@ class WebhookIngestionTest < ActiveSupport::TestCase
 
     result = nil
     assert_no_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"] do
-      result = ingest({ "content" => "Text without images" })
+      result = ingest({ "uid" => "post-1", "content" => "Text without images" })
     end
 
     assert result.invalid?
@@ -326,14 +331,14 @@ class WebhookIngestionTest < ActiveSupport::TestCase
   end
 
   test "#call should store published_at on the entry" do
-    ingest({ "content" => "Hello", "published_at" => "2026-07-11T12:00:00Z" })
+    ingest({ "uid" => "post-1", "content" => "Hello", "published_at" => "2026-07-11T12:00:00Z" })
 
     assert_equal Time.iso8601("2026-07-11T12:00:00Z"), feed.feed_entries.sole.published_at
   end
 
   test "#call should clamp a future published_at to now before persistence" do
     freeze_time do
-      ingest({ "content" => "Hello", "published_at" => 2.days.from_now.iso8601 })
+      ingest({ "uid" => "post-1", "content" => "Hello", "published_at" => 2.days.from_now.iso8601 })
 
       assert_equal Time.current, feed.feed_entries.sole.published_at
       assert_equal Time.current, feed.posts.sole.published_at
@@ -341,7 +346,7 @@ class WebhookIngestionTest < ActiveSupport::TestCase
   end
 
   test "#call should warn when content gets truncated" do
-    result = ingest({ "content" => "a" * (Post::MAX_CONTENT_LENGTH + 1) })
+    result = ingest({ "uid" => "post-1", "content" => "a" * (Post::MAX_CONTENT_LENGTH + 1) })
 
     assert result.enqueued?
     assert_includes result.warnings, "content_truncated"
@@ -351,20 +356,20 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     url = "https://example.com/article"
     content = "a" * (Post::MAX_CONTENT_LENGTH - url.length)
 
-    result = ingest({ "content" => content, "source_url" => url })
+    result = ingest({ "uid" => "post-1", "content" => content, "source_url" => url })
 
     assert result.enqueued?
     assert_includes result.warnings, "content_truncated"
   end
 
   test "#call should not warn when content fits" do
-    result = ingest({ "content" => "Short and sweet" })
+    result = ingest({ "uid" => "post-1", "content" => "Short and sweet" })
 
     assert_empty result.warnings
   end
 
   test "#call should keep public image URLs as attachments" do
-    result = ingest({ "content" => "Hello", "images" => ["https://example.com/pic.jpg"] })
+    result = ingest({ "uid" => "post-1", "content" => "Hello", "images" => ["https://example.com/pic.jpg"] })
 
     assert result.enqueued?
     assert_equal ["https://example.com/pic.jpg"], feed.posts.sole.attachment_urls

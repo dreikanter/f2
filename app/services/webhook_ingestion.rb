@@ -14,12 +14,6 @@ class WebhookIngestion
   # escaping only quotes and backslashes.
   SF_STRING = /\A"(?<value>(?:[\x20-\x21\x23-\x5B\x5D-\x7E]|\\["\\])*)"\z/
 
-  # Percent-encoding during uid normalization can inflate a multibyte URL well
-  # past its schema-checked length; past this cap the uid would overflow the
-  # (feed_id, uid) btree index rows, so such a URL loses its identity role and
-  # the delivery falls back to a random uid instead of a 500.
-  MAX_URL_UID_BYTES = 2048
-
   # Caps on images/comments are load-bearing: publishing costs
   # 1 + comments + images FreeFeed POSTs against a burst capacity of 20, and
   # PostPublishJob permanently fails any post whose cost exceeds capacity.
@@ -90,6 +84,7 @@ class WebhookIngestion
     return errors if errors.any?
 
     errors.concat(idempotency_key_errors)
+    errors << "Provide uid or Idempotency-Key" if explicit_uid.blank? && idempotency_key.blank?
     errors << "no_content_or_images" if content.blank? && images.empty?
     errors << "uid must not be blank" if payload.uid_given? && explicit_uid.blank?
     errors << "source_url must be an absolute http(s) URL" if source_url.present? && !http_url?(source_url)
@@ -186,23 +181,8 @@ class WebhookIngestion
     end
   end
 
-  # Uid precedence: explicit idempotency key (the uid field or
-  # the equivalent Idempotency-Key header; validation guarantees they agree),
-  # then the permalink normalized exactly like pull feeds', then a random uuid
-  # (each request is a new post; callers with retrying pipelines should pass a
-  # key).
-  def resolve_uid
-    return explicit_uid if explicit_uid.present?
-    return idempotency_key if idempotency_key.present?
-
-    from_url = Uid::Resolver.from_url(source_url)
-    return SecureRandom.uuid if from_url.nil? || from_url.bytesize > MAX_URL_UID_BYTES
-
-    from_url
-  end
-
   def uid
-    @uid ||= resolve_uid
+    @uid ||= explicit_uid.presence || idempotency_key
   end
 
   def duplicate
@@ -231,7 +211,7 @@ class WebhookIngestion
     value.nil? || value > Time.current ? Time.current : value
   end
 
-  # Lenient like Uid::Resolver: an IDN/multibyte permalink is a valid source,
+  # An IDN/multibyte URL is a valid source,
   # so retry with Addressable's encoding before rejecting.
   def http_url?(url)
     uri = begin

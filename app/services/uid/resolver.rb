@@ -1,25 +1,24 @@
 module Uid
-  # Normalizes permalink identity across AI extraction and webhook deliveries.
+  # Normalizes source URL identity for AI feed items.
   class Resolver
     TRACKING_PARAM = /\A(utm_|fbclid\z|gclid\z|mc_)/
 
-    def self.from_url(url, allow_homepage: false)
-      uri = parse_url(url, allow_homepage:)
+    def self.from_url(url)
+      uri = parse_url(url)
       uri && normalize(uri)
     end
 
     class << self
       private
 
-      def parse_url(url, allow_homepage:)
+      def parse_url(url)
         raw = url.to_s.strip
         return if raw.empty?
 
         uri = parse_http(raw)
         return unless uri.is_a?(URI::HTTP) && uri.host.present?
-        return if !allow_homepage && uri.path.delete_suffix("/").empty? && uri.query.nil?
 
-        uri.path = "/" if allow_homepage && uri.path.empty?
+        uri.path = "/" if uri.path.empty?
 
         uri
       end
