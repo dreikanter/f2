@@ -2,7 +2,6 @@
 
 ## 2026-10-04
 
-- Shorten the no-feed message when adding a feed.
 - Feed refresh events show new posts, empty results, previously imported entries, and AI usage in compact summaries separated by middle dots.
 - AI posts use “content - source URL” when a source is available; original posts and multi-source summaries keep only their content.
 - Webhook posts deduplicate only by optional `uid` or `Idempotency-Key`; source links no longer determine duplicates.
