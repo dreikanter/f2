@@ -100,6 +100,7 @@ class FeedRefreshWorkflow
     deduped_entries = collapse_duplicate_uids(processed_entries)
     uids = deduped_entries.map(&:uid)
     existing_uids = FeedEntryUid.where(feed_id: feed.id, uid: uids).pluck(:uid).to_set
+    record_stats(already_imported_entries: existing_uids.size) if existing_uids.any?
     new_entries = deduped_entries.filter { |entry| existing_uids.exclude?(entry.uid) }
     reject_entries_before_threshold(new_entries)
   end

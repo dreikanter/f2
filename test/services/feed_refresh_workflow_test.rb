@@ -196,6 +196,8 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 2, workflow.stats[:total_entries]
     assert_equal 1, workflow.stats[:new_entries]
     assert_equal 1, workflow.stats[:new_posts]
+    assert_equal 1, workflow.stats[:already_imported_entries]
+    assert_equal 1, test_feed.events.find_by!(type: "feed_refresh").metadata["stats"]["already_imported_entries"]
   end
 
   test "#execute should skip entries published at or before the import threshold" do
@@ -268,6 +270,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     workflow.send(:filter_new_entries, entries)
 
     assert_nil workflow.stats[:collapsed_duplicate_uids]
+    assert_nil workflow.stats[:already_imported_entries]
   end
 
   test "#filter_new_entries should keep entries without a published date despite the import threshold" do
@@ -1024,10 +1027,17 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     ])
 
     FeedRefreshWorkflow.new(feed).execute
-    FeedRefreshWorkflow.new(feed).execute
+    workflow = FeedRefreshWorkflow.new(feed)
+    workflow.execute
 
     assert_equal "https://example.com/post", feed.posts.sole.uid
     assert_equal 1, feed.feed_entries.count
+    assert_equal 1, workflow.stats[:already_imported_entries]
+    assert_equal 1, workflow.stats[:collapsed_duplicate_uids]
+    event = feed.events.where(type: "feed_refresh").order(:id).last
+    assert_equal "completed", event.metadata["status"]
+    assert_equal 1, event.metadata["stats"]["already_imported_entries"]
+    assert_equal 0, event.metadata["stats"]["new_posts"]
   end
 
   test "#execute should publish sourced text with a URL and source-less text without one" do

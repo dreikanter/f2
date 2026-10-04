@@ -303,7 +303,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "header p span", text: "info"
-    assert_select "header p", text: /NASA refreshed.*\(\+1 post\)/ do
+    assert_select "header p", text: /NASA refreshed\s*·\s*1 new post/ do
       assert_select "a[href=?]", feed_path(feed), text: "NASA"
     end
     assert_select '[role="alert"]', count: 0

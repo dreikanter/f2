@@ -146,6 +146,7 @@ en:
         completed_at: "Completed at"
         total_duration: "Duration"
         new_entries: "New entries"
+        already_imported_entries: "Entries already imported"
         new_posts: "New posts"
         llm_calls: "AI calls"
         llm_cost_cents: "Estimated AI spend"
