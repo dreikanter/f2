@@ -3,8 +3,8 @@
 # e.g. "My Feed refreshed · 2 new posts · 1 entry already imported · AI usage: $0.03".
 class FeedRefreshDescriptionComponent < EventDescriptionComponent
   def call
-    suffixes = [posts_count_tag, already_imported_tag, spend_tag].compact
-    suffixes.any? ? safe_join([super, *suffixes], helpers.middot) : super
+    suffixes = [result_tag, already_imported_tag, spend_tag].compact
+    safe_join([super, *suffixes], helpers.middot)
   end
 
   private
@@ -22,24 +22,28 @@ class FeedRefreshDescriptionComponent < EventDescriptionComponent
     end
   end
 
-  def posts_count_tag
+  def result_tag
+    text = result_text
+    return if text.nil?
+
+    helpers.tag.span(text, class: "text-muted", data: { key: "events.posts_count" })
+  end
+
+  def result_text
     stats = event.metadata.fetch("stats", {})
     count = stats.fetch("new_posts") do
       event.event_references.count { |reference| reference.reference_type == "Post" }
     end
+    return helpers.pluralize(count, "new post") unless count.zero?
+    return unless ["completed", nil].include?(event.metadata["status"]) && stats.key?("total_entries")
+    return if only_previously_imported_entries?(stats)
 
-    if count.zero?
-      return unless ["completed", nil].include?(event.metadata["status"]) && stats.key?("total_entries")
+    stats["total_entries"].zero? ? "no entries returned" : "no new posts"
+  end
 
-      imported = stats["already_imported_entries"].to_i
-      return if imported.positive? && stats["total_entries"] == imported + stats["collapsed_duplicate_uids"].to_i
-
-      text = stats["total_entries"].zero? ? "no entries returned" : "no new posts"
-    else
-      text = helpers.pluralize(count, "new post")
-    end
-
-    helpers.tag.span(text, class: "text-muted", data: { key: "events.posts_count" })
+  def only_previously_imported_entries?(stats)
+    imported = stats["already_imported_entries"].to_i
+    imported.positive? && stats["total_entries"] == imported + stats["collapsed_duplicate_uids"].to_i
   end
 
   def already_imported_tag

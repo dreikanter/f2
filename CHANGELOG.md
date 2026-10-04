@@ -2,9 +2,7 @@
 
 ## 2026-10-04
 
-- Feed refresh summaries use middle dots and omit redundant “no new posts” text when all entries were already imported.
-- Feed refresh events label estimated AI spend as “AI usage” for clarity.
-- Feed refresh events distinguish empty results from no new posts and show how many entries were already imported.
+- Feed refresh events show new posts, empty results, previously imported entries, and AI usage in compact summaries separated by middle dots.
 - AI posts use “content - source URL” when a source is available; original posts and multi-source summaries keep only their content.
 - Webhook posts deduplicate only by optional `uid` or `Idempotency-Key`; source links no longer determine duplicates.
 - AI feeds accept homepage URLs as post sources.
