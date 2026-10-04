@@ -195,7 +195,7 @@ class FeedIdentificationsController < ApplicationController
 
     identification_error(
       prompt: raw_url,
-      error: "We couldn't pull any posts from that link. Try a different one — or switch to “Follow with AI”, which can follow pages without a feed."
+      error: "We couldn't pull any posts from that link."
     )
   end
 

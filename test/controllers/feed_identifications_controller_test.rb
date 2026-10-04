@@ -452,7 +452,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     # No structured profile matches and detection can't select AI, so
-    # the form re-renders with the no-feed hint pointing at the AI mode.
+    # the form re-renders with the no-feed error.
     assert_includes response.body, 'data-identification-state="error"'
     assert_select "[data-key='entry.error']", text: /pull any posts/
   end
@@ -501,7 +501,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, 'data-identification-state="error"'
-    assert_includes response.body, "pull any posts"
+    assert_select "[data-key='entry.error']", text: "We couldn't pull any posts from that link."
     assert_select "textarea#entry-ai-input", text: url
   end
 
