@@ -1103,6 +1103,32 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_requested request, times: 1
   end
 
+  test "#execute should fail without saving posts when the AI response is incomplete" do
+    create(:llm_model, model_id: "gpt-4.1")
+    feed = ai_feed_with_schedule
+    response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
+    response["model"] = feed.ai_model
+    response["status"] = "incomplete"
+    response["incomplete_details"] = { "reason" => "max_output_tokens" }
+    response["output"].last["content"].first["text"] = {
+      items: [
+        {
+          body: "An original story",
+          source_url: nil,
+          published_at: nil,
+          images: []
+        }
+      ]
+    }.to_json
+    stub_request(:post, "https://api.openai.com/v1/responses").to_return_json(body: response)
+
+    assert_no_difference "Post.count" do
+      error = assert_raises(Loader::Error) { FeedRefreshWorkflow.new(feed).execute }
+      assert_equal "AI response did not complete.", error.message
+    end
+    assert_equal "failed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
+  end
+
   test "#execute should preserve unknown SDK cost in completed refresh statistics" do
     create(:llm_model, model_id: "custom-model")
     credential = create(:ai_credential, :active)
