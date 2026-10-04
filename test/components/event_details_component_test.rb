@@ -32,12 +32,20 @@ class EventDetailsComponentTest < ViewComponent::TestCase
 
   test "#call should merge metadata stats into the details list" do
     event = create(:event, type: "owned_event", subject: feed,
-                   metadata: { "stats" => { "new_posts" => 1234, "llm_cost_cents" => 250 } })
+                   metadata: {
+                     "stats" => {
+                       "new_posts" => 1234,
+                       "already_imported_entries" => 2,
+                       "llm_cost_cents" => 250
+                     }
+                   })
 
     result = render_inline(EventDetailsComponent.new(event: event))
 
     assert_equal "New posts", result.css('[data-key="events.stats.new_posts.label"]').text
     assert_equal "1,234", result.css('[data-key="events.stats.new_posts.value"]').text
+    assert_equal "Entries already imported", result.css('[data-key="events.stats.already_imported_entries.label"]').text
+    assert_equal "2", result.css('[data-key="events.stats.already_imported_entries.value"]').text
     assert_equal "Estimated AI spend", result.css('[data-key="events.stats.llm_cost_cents.label"]').text
     assert_equal "$2.50", result.css('[data-key="events.stats.llm_cost_cents.value"]').text
   end

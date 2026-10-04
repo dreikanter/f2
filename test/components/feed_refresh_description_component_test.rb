@@ -21,7 +21,7 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
     result = render_inline(FeedRefreshDescriptionComponent.new(event: refresh_event))
 
     assert_includes result.to_html, "refreshed"
-    assert_equal "(+2 posts)", result.css("[data-key='events.posts_count']").first&.text
+    assert_equal "(2 posts)", result.css("[data-key='events.posts_count']").first&.text
   end
 
   test "#call should count only post references" do
@@ -30,14 +30,73 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(FeedRefreshDescriptionComponent.new(event: refresh_event))
 
-    assert_equal "(+1 post)", result.css("[data-key='events.posts_count']").first&.text
+    assert_equal "(1 post)", result.css("[data-key='events.posts_count']").first&.text
   end
 
-  test "#call should omit the count when the refresh imported nothing" do
+  test "#call should omit the result when legacy stats are absent" do
     result = render_inline(FeedRefreshDescriptionComponent.new(event: refresh_event))
 
     assert_includes result.to_html, "refreshed"
     assert_nil result.css("[data-key='events.posts_count']").first
+    assert_empty result.css("[data-key='events.already_imported']")
+  end
+
+  def completed_event(**stats)
+    create(:event, type: "feed_refresh", subject: feed, user: user,
+                   metadata: {
+                     status: "completed",
+                     stats: stats
+                   })
+  end
+
+  test "#call should describe an empty response" do
+    event = completed_event(total_entries: 0, new_posts: 0)
+
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
+
+    assert_equal "(no entries returned)", result.css("[data-key='events.posts_count']").text
+    assert_empty result.css("[data-key='events.already_imported']")
+  end
+
+  test "#call should describe previously imported entries and retain AI spend" do
+    event = completed_event(total_entries: 2, new_posts: 0, already_imported_entries: 2,
+                            llm_calls: 1, llm_cost_cents: 3)
+
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
+
+    assert_equal "(no new posts)", result.css("[data-key='events.posts_count']").text
+    assert_equal "(2 entries already imported)", result.css("[data-key='events.already_imported']").text
+    assert_equal "(AI: $0.03)", result.css("[data-key='events.llm_cost']").text
+  end
+
+  test "#call should show new posts alongside previously imported entries" do
+    event = completed_event(total_entries: 2, new_posts: 1, already_imported_entries: 1)
+
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
+
+    assert_equal "(1 post)", result.css("[data-key='events.posts_count']").text
+    assert_equal "(1 entry already imported)", result.css("[data-key='events.already_imported']").text
+  end
+
+  test "#call should not count rejected posts as new posts" do
+    event = completed_event(total_entries: 1, new_posts: 0, rejected_posts: 1)
+    create(:event_reference, event: event, reference: create(:post, :rejected, feed: feed))
+
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
+
+    assert_equal "(no new posts)", result.css("[data-key='events.posts_count']").text
+    assert_empty result.css("[data-key='events.already_imported']")
+  end
+
+  test "#call should omit empty result descriptions for incomplete refreshes" do
+    %w[started failed interrupted cancelled].each do |status|
+      event = completed_event(total_entries: 0, new_posts: 0)
+      event.update!(metadata: event.metadata.merge("status" => status))
+
+      result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
+
+      assert_empty result.css("[data-key='events.posts_count']"), status
+    end
   end
 
   def event_with_spend(cents, **attributes)
@@ -69,7 +128,7 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
 
-    assert_equal "(+1 post)", result.css("[data-key='events.posts_count']").first&.text
+    assert_equal "(1 post)", result.css("[data-key='events.posts_count']").first&.text
     assert_equal "(AI: $0.12)", result.css("[data-key='events.llm_cost']").first&.text
   end
 

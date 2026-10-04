@@ -1,9 +1,9 @@
-# Describes a feed refresh by its lifecycle status, appending the imported
-# posts count and the run's AI spend when present,
-# e.g. "My Feed refreshed (+2 posts) (AI: $0.03)".
+# Describes a feed refresh by its lifecycle status, appending the
+# result and the run's AI spend when present,
+# e.g. "My Feed refreshed (2 posts) (1 entry already imported) (AI: $0.03)".
 class FeedRefreshDescriptionComponent < EventDescriptionComponent
   def call
-    suffixes = [posts_count_tag, spend_tag].compact
+    suffixes = [posts_count_tag, already_imported_tag, spend_tag].compact
     suffixes.any? ? safe_join([super, *suffixes], " ") : super
   end
 
@@ -23,10 +23,28 @@ class FeedRefreshDescriptionComponent < EventDescriptionComponent
   end
 
   def posts_count_tag
-    count = event.event_references.count { |reference| reference.reference_type == "Post" }
+    stats = event.metadata.fetch("stats", {})
+    count = stats.fetch("new_posts") do
+      event.event_references.count { |reference| reference.reference_type == "Post" }
+    end
+
+    if count.zero?
+      return unless ["completed", nil].include?(event.metadata["status"]) && stats.key?("total_entries")
+
+      text = stats["total_entries"].zero? ? "no entries returned" : "no new posts"
+    else
+      text = helpers.pluralize(count, "post")
+    end
+
+    helpers.tag.span("(#{text})", class: "text-muted", data: { key: "events.posts_count" })
+  end
+
+  def already_imported_tag
+    count = event.metadata.dig("stats", "already_imported_entries").to_i
     return if count.zero?
 
-    helpers.tag.span("(+#{helpers.pluralize(count, "post")})", class: "text-muted", data: { key: "events.posts_count" })
+    helpers.tag.span("(#{helpers.pluralize(count, "entry")} already imported)",
+                     class: "text-muted", data: { key: "events.already_imported" })
   end
 
   # Reads the metadata snapshot, not the referenced rows, so the log renders
