@@ -55,7 +55,10 @@ class WebhookIngestion
   def call
     errors = validate_payload
     return invalid(errors) if errors.any?
-    return duplicate if (explicit_uid.present? || idempotency_key.present?) && already_ingested?
+    if (explicit_uid.present? || idempotency_key.present?) && already_ingested?
+      endpoint.touch(:last_received_at)
+      return duplicate
+    end
 
     post = normalized_post
     return invalid(post.validation_errors) if post.rejected?
@@ -67,6 +70,7 @@ class WebhookIngestion
     # Two concurrent deliveries of one uid can both pass the pre-insert check;
     # the (feed_id, uid) unique index arbitrates, and the loser gets the same
     # honest answer as the sequential case.
+    endpoint.touch(:last_received_at)
     duplicate
   end
 
@@ -185,7 +189,6 @@ class WebhookIngestion
   end
 
   def duplicate
-    endpoint.touch(:last_received_at)
     Result.new(status: :duplicate, uid: uid, errors: [], warnings: [])
   end
 
