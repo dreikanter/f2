@@ -21,7 +21,7 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
     result = render_inline(FeedRefreshDescriptionComponent.new(event: refresh_event))
 
     assert_includes result.to_html, "refreshed"
-    assert_equal "(2 posts)", result.css("[data-key='events.posts_count']").first&.text
+    assert_equal "2 new posts", result.css("[data-key='events.posts_count']").first&.text
   end
 
   test "#call should count only post references" do
@@ -30,7 +30,7 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(FeedRefreshDescriptionComponent.new(event: refresh_event))
 
-    assert_equal "(1 post)", result.css("[data-key='events.posts_count']").first&.text
+    assert_equal "1 new post", result.css("[data-key='events.posts_count']").first&.text
   end
 
   test "#call should omit the result when legacy stats are absent" do
@@ -39,6 +39,7 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "refreshed"
     assert_nil result.css("[data-key='events.posts_count']").first
     assert_empty result.css("[data-key='events.already_imported']")
+    assert_equal "Test Feed refreshed", result.text
   end
 
   def completed_event(**stats)
@@ -54,19 +55,20 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
 
-    assert_equal "(no entries returned)", result.css("[data-key='events.posts_count']").text
+    assert_equal "no entries returned", result.css("[data-key='events.posts_count']").text
     assert_empty result.css("[data-key='events.already_imported']")
   end
 
   test "#call should describe previously imported entries and retain AI spend" do
-    event = completed_event(total_entries: 2, new_posts: 0, already_imported_entries: 2,
-                            llm_calls: 1, llm_cost_cents: 3)
+    event = completed_event(total_entries: 3, new_posts: 0, already_imported_entries: 2,
+                            collapsed_duplicate_uids: 1, llm_calls: 1, llm_cost_cents: 3)
 
     result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
 
-    assert_equal "(no new posts)", result.css("[data-key='events.posts_count']").text
-    assert_equal "(2 entries already imported)", result.css("[data-key='events.already_imported']").text
-    assert_equal "(AI usage: $0.03)", result.css("[data-key='events.llm_cost']").text
+    assert_empty result.css("[data-key='events.posts_count']")
+    assert_equal "2 entries already imported", result.css("[data-key='events.already_imported']").text
+    assert_equal "AI usage: $0.03", result.css("[data-key='events.llm_cost']").text
+    assert_equal ["Test Feed refreshed", "2 entries already imported", "AI usage: $0.03"], result.text.split("·")
   end
 
   test "#call should show new posts alongside previously imported entries" do
@@ -74,8 +76,17 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
 
-    assert_equal "(1 post)", result.css("[data-key='events.posts_count']").text
-    assert_equal "(1 entry already imported)", result.css("[data-key='events.already_imported']").text
+    assert_equal "1 new post", result.css("[data-key='events.posts_count']").text
+    assert_equal "1 entry already imported", result.css("[data-key='events.already_imported']").text
+    assert_equal ["Test Feed refreshed", "1 new post", "1 entry already imported"], result.text.split("·")
+  end
+
+  test "#call should retain the empty result when some entries were rejected" do
+    event = completed_event(total_entries: 2, new_posts: 0, already_imported_entries: 1, rejected_posts: 1)
+
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
+
+    assert_equal ["Test Feed refreshed", "no new posts", "1 entry already imported"], result.text.split("·")
   end
 
   test "#call should not count rejected posts as new posts" do
@@ -84,7 +95,7 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
 
-    assert_equal "(no new posts)", result.css("[data-key='events.posts_count']").text
+    assert_equal "no new posts", result.css("[data-key='events.posts_count']").text
     assert_empty result.css("[data-key='events.already_imported']")
   end
 
@@ -113,13 +124,13 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
   test "#call should append the estimated AI spend" do
     result = render_inline(FeedRefreshDescriptionComponent.new(event: event_with_spend(3)))
 
-    assert_equal "(AI usage: $0.03)", result.css("[data-key='events.llm_cost']").first&.text
+    assert_equal "AI usage: $0.03", result.css("[data-key='events.llm_cost']").first&.text
   end
 
   test "#call should show a zero spend when calls were made but cost nothing" do
     result = render_inline(FeedRefreshDescriptionComponent.new(event: event_with_spend(0)))
 
-    assert_equal "(AI usage: $0.00)", result.css("[data-key='events.llm_cost']").first&.text
+    assert_equal "AI usage: $0.00", result.css("[data-key='events.llm_cost']").first&.text
   end
 
   test "#call should append both the posts count and the AI spend" do
@@ -128,8 +139,8 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
 
-    assert_equal "(1 post)", result.css("[data-key='events.posts_count']").first&.text
-    assert_equal "(AI usage: $0.12)", result.css("[data-key='events.llm_cost']").first&.text
+    assert_equal "1 new post", result.css("[data-key='events.posts_count']").first&.text
+    assert_equal "AI usage: $0.12", result.css("[data-key='events.llm_cost']").first&.text
   end
 
   test "#call should omit the spend when the run made no LLM calls" do
@@ -145,7 +156,7 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
     result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
 
     assert_includes result.to_html, "couldn't refresh"
-    assert_equal "(AI usage: $0.05)", result.css("[data-key='events.llm_cost']").first&.text
+    assert_equal "AI usage: $0.05", result.css("[data-key='events.llm_cost']").first&.text
   end
 
   def event_with_status(status, **attributes)
@@ -195,6 +206,6 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
   end
   test "#call should label unknown spend when calls were made" do
     result = render_inline(FeedRefreshDescriptionComponent.new(event: event_with_spend(nil)))
-    assert_equal "(AI usage: unknown cost)", result.css("[data-key='events.llm_cost']").first&.text
+    assert_equal "AI usage: unknown cost", result.css("[data-key='events.llm_cost']").first&.text
   end
 end

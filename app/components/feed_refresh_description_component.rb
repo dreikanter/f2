@@ -1,10 +1,10 @@
 # Describes a feed refresh by its lifecycle status, appending the
 # result and the run's AI spend when present,
-# e.g. "My Feed refreshed (2 posts) (1 entry already imported) (AI usage: $0.03)".
+# e.g. "My Feed refreshed · 2 new posts · 1 entry already imported · AI usage: $0.03".
 class FeedRefreshDescriptionComponent < EventDescriptionComponent
   def call
     suffixes = [posts_count_tag, already_imported_tag, spend_tag].compact
-    suffixes.any? ? safe_join([super, *suffixes], " ") : super
+    suffixes.any? ? safe_join([super, *suffixes], helpers.middot) : super
   end
 
   private
@@ -31,19 +31,22 @@ class FeedRefreshDescriptionComponent < EventDescriptionComponent
     if count.zero?
       return unless ["completed", nil].include?(event.metadata["status"]) && stats.key?("total_entries")
 
+      imported = stats["already_imported_entries"].to_i
+      return if imported.positive? && stats["total_entries"] == imported + stats["collapsed_duplicate_uids"].to_i
+
       text = stats["total_entries"].zero? ? "no entries returned" : "no new posts"
     else
-      text = helpers.pluralize(count, "post")
+      text = helpers.pluralize(count, "new post")
     end
 
-    helpers.tag.span("(#{text})", class: "text-muted", data: { key: "events.posts_count" })
+    helpers.tag.span(text, class: "text-muted", data: { key: "events.posts_count" })
   end
 
   def already_imported_tag
     count = event.metadata.dig("stats", "already_imported_entries").to_i
     return if count.zero?
 
-    helpers.tag.span("(#{helpers.pluralize(count, "entry")} already imported)",
+    helpers.tag.span("#{helpers.pluralize(count, "entry")} already imported",
                      class: "text-muted", data: { key: "events.already_imported" })
   end
 
@@ -55,7 +58,7 @@ class FeedRefreshDescriptionComponent < EventDescriptionComponent
     return if cents.nil? && event.metadata.dig("stats", "llm_calls").to_i.zero?
 
     cost = cents.nil? ? "unknown cost" : helpers.number_to_currency(cents / 100.0)
-    helpers.tag.span("(AI usage: #{cost})",
+    helpers.tag.span("AI usage: #{cost}",
                      class: "text-muted", data: { key: "events.llm_cost" })
   end
 end
