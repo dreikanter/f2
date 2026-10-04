@@ -166,13 +166,20 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     assert_includes result.errors, "Idempotency-Key must not contain null bytes"
   end
 
-  test "#call should require an explicit identity even with a source URL" do
+  test "#call should create a fresh UUID without checking duplicates when identity is omitted" do
     [nil, "https://example.com/a", "https://example.com/"].each do |url|
-      assert_no_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"] do
-        result = ingest({ "content" => "Hello", "source_url" => url }.compact)
-        assert result.invalid?
-        assert_includes result.errors, "Provide uid or Idempotency-Key"
+      payload = { "content" => "Hello", "source_url" => url }.compact
+      results = []
+      FeedEntryUid.stub(:exists?, ->(*) { flunk "Unexpected duplicate check" }) do
+        assert_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"], 2 do
+          2.times { results << ingest(payload) }
+        end
       end
+      results.each do |result|
+        assert result.enqueued?
+        assert_match(/\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/, result.uid)
+      end
+      assert_not_equal results.first.uid, results.last.uid
     end
   end
 

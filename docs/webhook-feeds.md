@@ -76,8 +76,7 @@ curl --request POST https://feeder.example/v1/posts \
 | `uid` | string | 1–255 characters. Your idempotency key — see [Retries and duplicates](#retries-and-duplicates). |
 | `published_at` | string | ISO 8601. Defaults to now; a future timestamp is clamped to now. Controls publish order. |
 
-Provide `uid` or `Idempotency-Key`. Other fields are optional, but a payload
-with neither `content` nor
+Every field is optional on its own, but a payload with neither `content` nor
 `images` is a `422`. Unknown fields are rejected rather than ignored, so a typo
 like `imges` comes back as a `422` instead of quietly publishing a post with no
 images.
@@ -123,10 +122,12 @@ got a `201` for never shows up.
 Every post gets a uid, and a uid that already exists on the feed is answered with
 `200 duplicate` — no second post, no matter how the content changed since.
 Provide that identity through the `uid` field or `Idempotency-Key` header.
-Send both and they must match, or the request is a `422`. Missing identity is
-also a `422`; Feeder never derives it from `source_url` or generates it for you.
+Send both and they must match, or the request is a `422`. Omit both and Feeder
+generates a fresh UUID and treats each request as a new post, without checking
+for duplicates. It never derives identity from `source_url`.
 
-Reuse the same identity for retries. Use a new identity for each intended post,
+Supply a stable identity and reuse it for safe retries; without one, retries
+can create additional posts. Use a new identity for each intended post,
 even when its source URL is unchanged. Source URLs do not need to be unique.
 
 `Idempotency-Key` accepts both a bare value and the quoted RFC 8941 form

@@ -2,7 +2,7 @@
 
 ## 2026-10-04
 
-- Webhook posts require `uid` or `Idempotency-Key`; source links no longer determine duplicates.
+- Webhook posts deduplicate only by optional `uid` or `Idempotency-Key`; source links no longer determine duplicates.
 - AI feeds accept homepage URLs as post sources.
 
 ## 2026-10-03

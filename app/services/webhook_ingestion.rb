@@ -55,7 +55,7 @@ class WebhookIngestion
   def call
     errors = validate_payload
     return invalid(errors) if errors.any?
-    return duplicate if already_ingested?
+    return duplicate if (explicit_uid.present? || idempotency_key.present?) && already_ingested?
 
     post = normalized_post
     return invalid(post.validation_errors) if post.rejected?
@@ -84,7 +84,6 @@ class WebhookIngestion
     return errors if errors.any?
 
     errors.concat(idempotency_key_errors)
-    errors << "Provide uid or Idempotency-Key" if explicit_uid.blank? && idempotency_key.blank?
     errors << "no_content_or_images" if content.blank? && images.empty?
     errors << "uid must not be blank" if payload.uid_given? && explicit_uid.blank?
     errors << "source_url must be an absolute http(s) URL" if source_url.present? && !http_url?(source_url)
@@ -182,7 +181,7 @@ class WebhookIngestion
   end
 
   def uid
-    @uid ||= explicit_uid.presence || idempotency_key
+    @uid ||= explicit_uid.presence || idempotency_key.presence || SecureRandom.uuid
   end
 
   def duplicate

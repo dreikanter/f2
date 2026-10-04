@@ -109,13 +109,17 @@ class Api::V1::PostsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "key-1", response_json["uid"]
   end
 
-  test "#create should reject a missing identity without persisting" do
-    assert_no_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"] do
-      post_hook params: { content: "Hello", source_url: "https://example.com/a" }, as: :json
+  test "#create should accept repeated source URLs without an explicit identity" do
+    uids = []
+    assert_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"], 2 do
+      2.times do
+        post_hook params: { content: "Hello", source_url: "https://example.com/a" }, as: :json
+        assert_response :created
+        assert_equal "enqueued", response_json["status"]
+        uids << response_json["uid"]
+      end
     end
-    assert_response :unprocessable_entity
-    assert_equal "invalid", response_json["status"]
-    assert_includes response_json["errors"], "Provide uid or Idempotency-Key"
+    assert_not_equal uids.first, uids.last
   end
 
   test "#create should reject mismatched uid and Idempotency-Key" do
