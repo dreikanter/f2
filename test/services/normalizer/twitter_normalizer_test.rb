@@ -16,7 +16,19 @@ class Normalizer::TwitterNormalizerTest < ActiveSupport::TestCase
   end
 
   test "#normalize should append the tweet permalink to the content" do
-    assert_includes posts.first.content, "https://twitter.com/testuser/status/1001"
+    assert_includes posts.first.content, "https://x.com/testuser/status/1001"
+    assert_equal "1001", posts.first.uid
+  end
+
+  test "#normalize should reject a post without a full source URL" do
+    html = file_fixture("feeds/twitter/timeline.html").read
+      .sub("https://x.com/testuser/status/1001", "/testuser/status/1001")
+    entry = Processor::TwitterProcessor.new(feed, html).process.entries.first
+    post = Normalizer::TwitterNormalizer.new(entry).normalize
+
+    assert_equal "rejected", post.status
+    assert_includes post.validation_errors, "missing_url"
+    assert_equal "1001", post.uid
   end
 
   test "#normalize should expose photo media as attachments" do

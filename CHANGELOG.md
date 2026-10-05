@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-05
+
+- X feeds use full post links supplied by the source instead of constructing URLs; the profile is now displayed as “X”.
+
 ## 2026-10-04
 
 - Feed refresh events show new posts, empty results, previously imported entries, and AI usage in compact summaries separated by middle dots.

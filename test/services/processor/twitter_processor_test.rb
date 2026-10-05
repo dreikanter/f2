@@ -20,8 +20,64 @@ class Processor::TwitterProcessorTest < ActiveSupport::TestCase
     assert_equal %w[1001 1002 1003], entries.map(&:uid)
   end
 
-  test "#process should build the permalink from the relative path" do
-    assert_equal "https://twitter.com/testuser/status/1001", entries.first.raw_data["url"]
+  test "#process should extract full post links without changing their domains" do
+    assert_equal "https://x.com/testuser/status/1001", entries.first.raw_data["url"]
+    assert_equal "https://twitter.com/testuser/status/1002", entries.second.raw_data["url"]
+  end
+
+  test "#process should preserve an absolute JSON permalink" do
+    url = "https://twitter.com/testuser/status/1001?s=20#details"
+    html = sample_html.sub('"permalink": "/testuser/status/1001"', %("permalink": "#{url}"))
+    entry = Processor::TwitterProcessor.new(feed, html).process.entries.first
+
+    assert_equal url, entry.raw_data["url"]
+    assert_equal "1001", entry.uid
+  end
+
+  test "#process should preserve the full HTML link including its query and fragment" do
+    url = "https://x.com/testuser/status/1001?ref_src=embed&s=20#details"
+    html = sample_html.sub("https://x.com/testuser/status/1001", url.gsub("&", "&amp;"))
+    entry = Processor::TwitterProcessor.new(feed, html).process.entries.first
+
+    assert_equal url, entry.raw_data["url"]
+    assert_equal "1001", entry.uid
+  end
+
+  test "#process should find a full link when the JSON permalink is missing" do
+    html = sample_html.sub('"permalink": "/testuser/status/1001",', "")
+    entry = Processor::TwitterProcessor.new(feed, html).process.entries.first
+
+    assert_equal "https://x.com/testuser/status/1001", entry.raw_data["url"]
+  end
+
+  test "#process should not invent a domain for a relative permalink" do
+    html = sample_html.sub("https://x.com/testuser/status/1001", "/testuser/status/1001")
+    entry = Processor::TwitterProcessor.new(feed, html).process.entries.first
+
+    assert_nil entry.raw_data["url"]
+    assert_equal "1001", entry.uid
+  end
+
+  test "#process should not invent a URL from the post ID" do
+    html = sample_html.sub('"permalink": "/testuser/status/1001",', "")
+      .sub("https://x.com/testuser/status/1001", "/testuser/status/1001")
+    entry = Processor::TwitterProcessor.new(feed, html).process.entries.first
+
+    assert_nil entry.raw_data["url"]
+    assert_equal "1001", entry.uid
+  end
+
+  test "#process should ignore links to other posts and post actions" do
+    links = <<~HTML
+      <a href="https://x.com/testuser/status/10010">Another post</a>
+      <a href="https://x.com/testuser/status/1001/photo/1">Photo</a>
+      <a href="https://x.com/testuser/status/1001/retweets">Reposts</a>
+      <a href="https://x.com/intent/like?tweet_id=1001">Like</a>
+    HTML
+    html = sample_html.sub("<body>", "<body>#{links}")
+    entry = Processor::TwitterProcessor.new(feed, html).process.entries.first
+
+    assert_equal "https://x.com/testuser/status/1001", entry.raw_data["url"]
   end
 
   test "#process should parse the tweet timestamp" do

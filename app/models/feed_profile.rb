@@ -422,8 +422,8 @@ class FeedProfile
       title_extractor: "TitleExtractor::TelegramTitleExtractor"
     },
     "twitter" => {
-      display_name: "X / Twitter",
-      description: "Posts from a public X (Twitter) account",
+      display_name: "X",
+      description: "Posts from a public X account",
       input_shape: :url,
       depends_on_ai: false,
       scheduled: true,

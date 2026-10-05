@@ -18,9 +18,13 @@ module Processor
 
     private
 
+    def document
+      @document ||= Nokogiri::HTML.parse(raw_data, nil, "UTF-8")
+    end
+
     # The timeline entries array, or nil when the payload isn't a syndication page.
     def timeline
-      script = Nokogiri::HTML.parse(raw_data, nil, "UTF-8").at_css("script#__NEXT_DATA__")
+      script = document.at_css("script#__NEXT_DATA__")
       script && parse_entries(script.text)
     end
 
@@ -52,10 +56,10 @@ module Processor
     end
 
     def tweet_url(tweet)
-      permalink = tweet["permalink"].to_s
-      return "https://twitter.com#{permalink}" if permalink.start_with?("/")
-
-      permalink.presence || "https://twitter.com/i/web/status/#{tweet['id_str']}"
+      # JSON permalinks can be relative; use the page's full link in that case.
+      post_url = %r{\Ahttps?://[^/?#\s]+/(?:[^/?#]+|i/web)/status/#{Regexp.escape(tweet["id_str"])}(?:[?#]|\z)}i
+      links = document.css("a[href]").map { |link| link["href"] }
+      [tweet["permalink"], *links].compact.find { |url| url.match?(post_url) }
     end
 
     # Rebuilds readable text: expand t.co links to their targets, drop the
