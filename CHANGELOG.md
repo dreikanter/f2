@@ -2,7 +2,7 @@
 
 ## 2026-10-05
 
-- X feeds use full post links supplied by the source instead of constructing URLs; the profile is now displayed as “X (Twitter)”.
+- X (Twitter) feeds preserve full source permalinks and report missing links as refresh failures instead of guessing URLs.
 
 ## 2026-10-04
 

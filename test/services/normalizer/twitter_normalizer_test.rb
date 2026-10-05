@@ -20,17 +20,6 @@ class Normalizer::TwitterNormalizerTest < ActiveSupport::TestCase
     assert_equal "1001", posts.first.uid
   end
 
-  test "#normalize should reject a post without a full source URL" do
-    html = file_fixture("feeds/twitter/timeline.html").read
-      .sub("https://x.com/testuser/status/1001", "/testuser/status/1001")
-    entry = Processor::TwitterProcessor.new(feed, html).process.entries.first
-    post = Normalizer::TwitterNormalizer.new(entry).normalize
-
-    assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "missing_url"
-    assert_equal "1001", post.uid
-  end
-
   test "#normalize should expose photo media as attachments" do
     assert_equal ["https://pbs.twimg.com/media/photoB.jpg"], posts[1].attachment_urls
   end
