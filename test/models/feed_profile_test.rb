@@ -215,7 +215,7 @@ class FeedProfileTest < ActiveSupport::TestCase
   end
 
   test ".parameter_keys_for should return the keys a profile declares" do
-    assert_equal ["url"], FeedProfile.parameter_keys_for("rss")
+    assert_equal %w[url content_in_comments], FeedProfile.parameter_keys_for("rss")
     assert_equal ["prompt", "max_items"], FeedProfile.parameter_keys_for("llm")
     assert_equal [], FeedProfile.parameter_keys_for("webhook")
   end
@@ -232,9 +232,17 @@ class FeedProfileTest < ActiveSupport::TestCase
   end
 
   test ".options_for should return nothing for a profile declaring only its source" do
-    assert_empty FeedProfile.options_for("rss")
+    assert_empty FeedProfile.options_for("xkcd")
 
     assert_empty FeedProfile.options_for("webhook")
+  end
+
+  test ".options_for should expose the opt-in RSS comment presentation" do
+    option = FeedProfile.options_for("rss").sole
+
+    assert_equal "content_in_comments", option.name
+    assert_predicate option, :boolean?
+    assert_equal false, option.default
   end
 
   test ".options_for should expose the AI response limit" do

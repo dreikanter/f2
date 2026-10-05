@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-10-05
+- RSS feeds can publish article text as comments, one paragraph per comment, splitting long paragraphs to fit.
+
 ## 2026-10-04
 
 - Feed refresh events show new posts, empty results, previously imported entries, and AI usage in compact summaries separated by middle dots.

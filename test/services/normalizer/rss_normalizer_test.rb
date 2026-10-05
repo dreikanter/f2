@@ -271,4 +271,113 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_includes post.validation_errors, "url_too_long"
     assert_includes post.validation_errors, "no_content_or_images"
   end
+
+  test "#normalize should publish article paragraphs as ordered comments when enabled" do
+    post = normalize_article(
+      "title" => "An <em>article</em>",
+      "content" => '<p>First &amp; foremost.<br>A second line.</p><p>See <a href="https://example.com/more">details</a>.</p><p><img src="https://example.com/image.jpg"></p>',
+      "summary" => "An excerpt."
+    )
+
+    assert_equal "An article - https://example.com/article", post.content
+    assert_equal ["First & foremost.\nA second line.", "See details (https://example.com/more)."], post.comments
+    assert_equal ["https://example.com/image.jpg"], post.attachment_urls
+    assert_predicate post, :enqueued?
+  end
+
+  test "#normalize should retain the existing presentation when explicitly disabled" do
+    entry = build(:feed_entry, raw_data: {
+      "title" => "Article",
+      "content" => "<p>First paragraph.</p><p>Second paragraph.</p>",
+      "link" => "https://example.com/article"
+    })
+    entry.feed.params["content_in_comments"] = false
+
+    post = Normalizer::RssNormalizer.new(entry).normalize
+
+    assert_equal "Article\n\nFirst paragraph.\n\nSecond paragraph. - https://example.com/article", post.content
+    assert_empty post.comments
+  end
+
+  test "#normalize should fall back to summary paragraphs when content has no text" do
+    post = normalize_article(
+      "content" => "<p> </p>",
+      "summary" => "<p>First paragraph.</p><p>Second paragraph.</p>"
+    )
+
+    assert_equal ["First paragraph.", "Second paragraph."], post.comments
+  end
+
+  test "#normalize should fall back to description paragraphs" do
+    post = normalize_article("description" => "<p>Description.</p>")
+
+    assert_equal ["Description."], post.comments
+  end
+
+  test "#normalize should omit empty comments" do
+    post = normalize_article("content" => "<p> </p>")
+
+    assert_empty post.comments
+    assert_equal "Article - https://example.com/article", post.content
+  end
+
+  test "#normalize should use the source URL as body when the title is missing" do
+    post = normalize_article("title" => nil, "content" => "<p>Article text.</p>")
+
+    assert_equal "https://example.com/article", post.content
+    assert_equal ["Article text."], post.comments
+    assert_predicate post, :enqueued?
+  end
+
+  test "#normalize should retain a paragraph exactly at the comment limit" do
+    paragraph = "Ж" * Post::MAX_COMMENT_LENGTH
+
+    post = normalize_article("content" => "<p>#{paragraph}</p>")
+
+    assert_equal [paragraph], post.comments
+  end
+
+  test "#normalize should split long paragraphs at sentence boundaries and retain quotes" do
+    first = "Sample says, “This is fake.” " * 70
+    second = "fake sample " * 120 + "ending."
+
+    post = normalize_article("content" => "<p>#{first}#{second}</p><p>Next paragraph.</p>")
+
+    assert_equal [first.strip, second, "Next paragraph."], post.comments
+  end
+
+  test "#normalize should split an oversized sentence at a word boundary" do
+    first = ("samples " * 375).strip
+    second = "the remaining words."
+
+    post = normalize_article("content" => "<p>#{first} #{second}</p>")
+
+    assert_equal [first, second], post.comments
+  end
+
+  test "#normalize should split unbroken text without truncation or a comment count cap" do
+    chunk = "Ж" * Post::MAX_COMMENT_LENGTH
+
+    post = normalize_article("content" => "<p>#{chunk * 4}ending</p>")
+
+    assert_equal [chunk, chunk, chunk, chunk, "ending"], post.comments
+  end
+
+  test "#normalize should keep separate paragraphs even when they would fit together" do
+    post = normalize_article("content" => "<p>Repeat.</p><p>Repeat.</p><p>End.</p>")
+
+    assert_equal ["Repeat.", "Repeat.", "End."], post.comments
+  end
+
+  private
+
+  def normalize_article(raw_data)
+    entry = build(:feed_entry, raw_data: {
+      "title" => "Article",
+      "link" => "https://example.com/article"
+    }.merge(raw_data))
+    entry.feed.params["content_in_comments"] = true
+
+    Normalizer::RssNormalizer.new(entry).normalize
+  end
 end

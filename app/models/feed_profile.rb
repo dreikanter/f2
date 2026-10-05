@@ -31,7 +31,20 @@ class FeedProfile
       depends_on_ai: false,
       scheduled: true,
       matcher: "ProfileMatcher::RssProfileMatcher",
-      parameter_schema: URL_PARAMETER_SCHEMA,
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" },
+          "content_in_comments" => {
+            "type" => "boolean",
+            "title" => "Post article text as comments",
+            "description" => "Use the title as the post body and publish each paragraph as a comment. Long paragraphs are split to fit.",
+            "default" => false
+          }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::RssNormalizer", config: {} },
