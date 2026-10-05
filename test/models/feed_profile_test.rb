@@ -261,8 +261,8 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_equal "XKCD", FeedProfile.display_name_for("xkcd")
   end
 
-  test "#display_name_for should display X for the twitter profile" do
-    assert_equal "X", FeedProfile.display_name_for("twitter")
+  test "#display_name_for should display X (Twitter) for the twitter profile" do
+    assert_equal "X (Twitter)", FeedProfile.display_name_for("twitter")
   end
 
   test "#display_name_for should titleize unknown profile keys" do
