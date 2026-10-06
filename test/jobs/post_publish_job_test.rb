@@ -199,7 +199,7 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_no_enqueued_jobs(only: PostPublishJob)
   end
 
-  test ".perform_now should wait for all three requests of a small publication" do
+  test ".perform_now should wait for all requests within the upfront reservation limit" do
     image = "https://example.com/image.jpg"
     post = create(:post, :enqueued, feed: feed, attachment_urls: [image], comments: ["Caption"])
     stub_request(:get, image)

@@ -223,7 +223,7 @@ Two patterns cover essentially everything:
 ## Integration model
 
 FreeFeed publications needing up to three remaining POST requests reserve them
-together before sending anything. Larger publications reserve one request before
+together before sending anything. Above this limit, they reserve one request before
 each attachment upload, post creation, or comment creation. Completed operations
 are saved in `PostPublication`, so retries count only unfinished work and a
 publication can exceed the bucket's burst capacity as tokens refill.

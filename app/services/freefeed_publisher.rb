@@ -3,7 +3,7 @@
 #
 class FreefeedPublisher
   MAX_ATTACHMENTS = 20
-  SMALL_PUBLICATION_REQUESTS = 3
+  MAX_UPFRONT_REQUESTS = 3
 
   class Error < StandardError; end
   class ValidationError < Error; end
@@ -90,7 +90,7 @@ class FreefeedPublisher
     raise InterruptedPublicationError if interrupted?
 
     publication
-    reserve_small_publication
+    reserve_upfront_requests
 
     unless already_published?
       attachment_ids = upload_pending_attachments
@@ -229,10 +229,10 @@ class FreefeedPublisher
     )
   end
 
-  def reserve_small_publication
+  def reserve_upfront_requests
     @requests_reserved = false
     requests = remaining_requests
-    return unless requests.between?(1, SMALL_PUBLICATION_REQUESTS)
+    return unless requests.between?(1, MAX_UPFRONT_REQUESTS)
 
     reserve_requests(requests)
     @requests_reserved = true
@@ -246,8 +246,7 @@ class FreefeedPublisher
     1 + [attachments, 0].max + comments
   end
 
-  # Small publications reserve their remaining calls together to avoid a local
-  # throttle halfway through. Larger ones reserve each call as they progress.
+  # Requests within the upfront reservation limit are already reserved.
   def reserve_request
     reserve_requests(1) unless @requests_reserved
   end
