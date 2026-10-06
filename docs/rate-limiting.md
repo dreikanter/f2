@@ -222,40 +222,18 @@ Two patterns cover essentially everything:
 
 ## Integration model
 
-All external API interaction happens **from jobs**, so throttling becomes a
-reschedule rather than a blocked worker. The flow:
+FreeFeed publication reserves one POST request immediately before each attachment
+upload, post creation, or comment creation. Completed operations are saved in
+`PostPublication`, so a publication can exceed the bucket's burst capacity and
+resume as tokens refill.
 
-1. **Reserve the whole job's cost up front**, in one `acquire!`, *before* any
-   API call. A job computes its total cost ahead of time (for FreeFeed publish:
-   `{ post: 1 + comments + attachments }` — attachment uploads are POSTs too).
-2. **Throttled → reschedule** the job with `wait: retry_after` (+ jitter).
-   Nothing was sent, so there's no partial work.
-3. **Granted → run all calls straight through** without re-consulting the
-   limiter; capacity is already reserved. No mid-job throttling.
-4. **Real `429` → `penalize`** sets `blocked_until` for the subject; subsequent
-   `acquire!`s short-circuit until then, so jobs reschedule.
+When throttled before any remote progress, `PostPublishJob` reschedules with
+`retry_after` and jitter. After partial progress, it retains the checkpoint for
+`PublicationSchedulerJob` to resume; newer posts in that feed wait. A real `429`
+also sets the account's cooldown through `FreefeedClient` and `RateLimit.penalize`.
 
-Add a **retry cap** (max attempts / total delay) so a job can't reschedule
-forever — give up to the error reporter instead.
-
-### Why reserve up front (no resumability)
-
-Multi-call jobs (publish = attachments + post + comments) must not be throttled
-mid-sequence, because re-running from the top would duplicate work, and there's
-no resumable/draft state. Reserving the full cost atomically up front avoids
-this without resumability. **Accepted for now:** if FreeFeed itself returns a
-`429` mid-sequence (despite our local limit sitting under theirs), a partially
-published post may remain. That's a pre-existing property of non-transactional
-multi-call publishing, not introduced by the limiter.
-
-### Where it hooks into FreeFeed services
-
-- **`FreefeedClient`** — single chokepoint; the job reserves cost before driving
-  the client. The client translates a `429` into `penalize` + a throttle error.
-- **Jobs** (`PostWithdrawalJob`, `TokenValidationJob`, and the publish path) —
-  rescue the throttle error and reschedule.
-- FreeFeed cost is a request count known up front, so **no `reconcile`** is
-  needed for it (reconcile is for token/byte costs).
+Other jobs retain their own request reservations and throttle handling. FreeFeed
+request costs need no `reconcile`.
 
 ## Observability
 

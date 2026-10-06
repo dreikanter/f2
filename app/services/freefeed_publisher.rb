@@ -161,6 +161,7 @@ class FreefeedPublisher
   # app fault: skip it and publish the post with the remaining attachments.
   def upload_attachment(url)
     io, content_type = FileBuffer.new.load(url)
+    reserve_request
     client.create_attachment_from_io(io, content_type: content_type)[:id]
   rescue FreefeedClient::PayloadTooLargeError => e
     Rails.logger.warn "Skipping oversized attachment #{url} for post #{post.id}: #{e.message}"
@@ -171,6 +172,7 @@ class FreefeedPublisher
   # waiting for the response leaves a post we can't identify. Failures that prove
   # nothing was created clear the mark, so those posts still resume.
   def create_freefeed_post(attachment_ids)
+    reserve_request
     publication.update!(post_create_started_at: Time.current)
 
     client.create_post(
@@ -218,10 +220,16 @@ class FreefeedPublisher
   end
 
   def create_comment(comment_text)
+    reserve_request
     client.create_comment(
       post_id: post.freefeed_post_id,
       body: Post.clamp_comment(comment_text)
     )
+  end
+
+  # Reserve only the next operation; completed work is already checkpointed.
+  def reserve_request
+    RateLimit.acquire!(:freefeed, subject: post.feed.access_token.rate_limit_subject, cost: { post: 1 })
   end
 
   def update_post_with_freefeed_id(freefeed_post_id)

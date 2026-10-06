@@ -199,39 +199,77 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_no_enqueued_jobs(only: PostPublishJob)
   end
 
-  test ".perform_now should count the post, its comments, and its attachments in the reserved cost" do
-    create(:post, :enqueued, feed: feed, comments: ["a", "b"], attachment_urls: ["u1", "u2", "u3"])
-    subject = access_token.rate_limit_subject
-
-    freeze_time do
-      # Leave 5 POST tokens, one short of this post's true cost of 6
-      # (1 post + 2 comments + 3 attachments). A run that counted only the post
-      # would publish; counting the extras throttles it before any HTTP call.
-      drain_freefeed(subject, :post, remaining: 5)
-
-      assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
-        PostPublishJob.perform_now(feed.id)
-      end
+  test ".perform_now should reserve each attachment, post, and comment as it is sent" do
+    images = %w[https://example.com/one.jpg https://example.com/two.jpg https://example.com/three.jpg]
+    post = create(:post, :enqueued, feed: feed, comments: ["a", "b"], attachment_urls: images)
+    delivered_comments = []
+    stub_request(:get, %r{https://example.com/(one|two|three)\.jpg})
+      .to_return(status: 200, body: "image_data", headers: { "Content-Type" => "image/jpeg" })
+    stub_request(:post, "#{access_token.host}/v1/attachments")
+      .to_return(status: 201, body: { attachments: { id: "attachment" } }.to_json)
+    stub_publish_success
+    stub_request(:post, "#{access_token.host}/v4/comments").to_return do |request|
+      delivered_comments << JSON.parse(request.body).dig("comment", "body")
+      { status: 201, body: { comments: { id: SecureRandom.uuid } }.to_json }
     end
 
-    assert_equal "enqueued", feed.posts.first.reload.status
-    assert_not_requested :post, "#{access_token.host}/v4/posts"
+    freeze_time do
+      drain_freefeed(access_token.rate_limit_subject, :post, remaining: 5)
+
+      assert_no_enqueued_jobs(only: PostPublishJob) { PostPublishJob.perform_now(feed.id) }
+
+      assert_predicate post.reload, :published?
+      assert_equal 3, post.post_publication.attachments_processed_count
+      assert_equal 1, post.post_publication.comments_published_count
+      assert_equal ["a"], delivered_comments
+
+      travel(2.seconds)
+      PostPublishJob.perform_now(feed.id)
+    end
+
+    assert_nil post.reload.post_publication
+    assert_equal ["a", "b"], delivered_comments
+    assert_requested :post, "#{access_token.host}/v1/attachments", times: 3
+    assert_requested :post, "#{access_token.host}/v4/posts", times: 1
   end
 
-  test ".perform_now should fail an oversized post and advance the chain" do
-    oversized = create(:post, :enqueued, feed: feed, published_at: 2.hours.ago,
-                                         attachment_urls: Array.new(60) { |i| "https://example.com/#{i}.jpg" })
-    subject = access_token.rate_limit_subject
+  test ".perform_now should resume a large comment set over multiple refills before newer posts" do
+    comments = Array.new(45) { |index| "Paragraph #{index + 1}." }
+    post = create(:post, :enqueued, feed: feed, published_at: 2.hours.ago, comments: comments)
+    newer = create(:post, :enqueued, feed: feed, published_at: 1.hour.ago)
+    delivered_comments = []
+    stub_publish_success
+    stub_request(:post, "#{access_token.host}/v4/comments").to_return do |request|
+      delivered_comments << JSON.parse(request.body).dig("comment", "body")
+      { status: 201, body: { comments: { id: SecureRandom.uuid } }.to_json }
+    end
 
     freeze_time do
-      assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
-        PostPublishJob.perform_now(feed.id)
-      end
+      assert_no_enqueued_jobs(only: PostPublishJob) { PostPublishJob.perform_now(feed.id) }
 
-      assert_equal "failed", oversized.reload.status
-      assert_equal RateLimit.capacity(:freefeed, :post), freefeed_tokens_left(subject, :post),
-        "an impossible post must be rejected before reserving any capacity"
+      assert_predicate post.reload, :published?
+      assert_equal 19, post.post_publication.comments_published_count
+      assert_equal comments.first(19), delivered_comments
+      assert_predicate newer.reload, :enqueued?
+
+      travel(40.seconds)
+      perform_enqueued_jobs(only: PostPublishJob) { PublicationSchedulerJob.perform_now }
+
+      assert_equal 39, post.reload.post_publication.comments_published_count
+      assert_equal comments.first(39), delivered_comments
+      assert_predicate newer.reload, :enqueued?
+
+      travel(14.seconds)
+      perform_enqueued_jobs(only: PostPublishJob) { PublicationSchedulerJob.perform_now }
+
+      assert_equal 0, freefeed_tokens_left(access_token.rate_limit_subject, :post)
     end
+
+    assert_nil post.reload.post_publication
+    assert_equal comments, delivered_comments
+    assert_predicate newer.reload, :published?
+    assert_requested :post, "#{access_token.host}/v4/posts", times: 2
+    assert_equal 2, FeedMetric.where(feed: feed).sum(:published_posts_count)
   end
 
   test ".perform_now should reschedule and keep the post enqueued when throttled" do
@@ -313,7 +351,7 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_equal "ff-post-1", post.freefeed_post_id
     # The post is created exactly once and never re-created on the retry chain.
     assert_requested :post, "#{access_token.host}/v4/posts", times: 1
-    # Comment creation stops at the throttled comment; the rest are dropped.
+    # Comment creation pauses at the throttled comment until the scheduler resumes it.
     assert_requested :post, "#{access_token.host}/v4/comments", times: 1
     assert_empty reported, "a handled mid-comment throttle must not be reported as a fault"
 

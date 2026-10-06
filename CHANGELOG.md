@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-10-06
+- Posts with many comments or attachments pause and resume as publishing capacity becomes available instead of failing.
+
 ## 2026-10-04
 
 - Feed refresh events show new posts, empty results, previously imported entries, and AI usage in compact summaries separated by middle dots.
