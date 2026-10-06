@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-10-07
+- Small publications wait for capacity to send up to three remaining requests together.
+
 ## 2026-10-06
 - Posts with many comments or attachments pause and resume as publishing capacity becomes available instead of failing.
 

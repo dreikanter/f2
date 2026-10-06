@@ -222,10 +222,11 @@ Two patterns cover essentially everything:
 
 ## Integration model
 
-FreeFeed publication reserves one POST request immediately before each attachment
-upload, post creation, or comment creation. Completed operations are saved in
-`PostPublication`, so a publication can exceed the bucket's burst capacity and
-resume as tokens refill.
+FreeFeed publications needing up to three remaining POST requests reserve them
+together before sending anything. Larger publications reserve one request before
+each attachment upload, post creation, or comment creation. Completed operations
+are saved in `PostPublication`, so retries count only unfinished work and a
+publication can exceed the bucket's burst capacity as tokens refill.
 
 When throttled before any remote progress, `PostPublishJob` reschedules with
 `retry_after` and jitter. After partial progress, it retains the checkpoint for

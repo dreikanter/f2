@@ -3,6 +3,7 @@
 #
 class FreefeedPublisher
   MAX_ATTACHMENTS = 20
+  SMALL_PUBLICATION_REQUESTS = 3
 
   class Error < StandardError; end
   class ValidationError < Error; end
@@ -89,6 +90,7 @@ class FreefeedPublisher
     raise InterruptedPublicationError if interrupted?
 
     publication
+    reserve_small_publication
 
     unless already_published?
       attachment_ids = upload_pending_attachments
@@ -227,9 +229,31 @@ class FreefeedPublisher
     )
   end
 
-  # Reserve only the next operation; completed work is already checkpointed.
+  def reserve_small_publication
+    @requests_reserved = false
+    requests = remaining_requests
+    return unless requests.between?(1, SMALL_PUBLICATION_REQUESTS)
+
+    reserve_requests(requests)
+    @requests_reserved = true
+  end
+
+  def remaining_requests
+    comments = [post.comments.count(&:present?) - publication.comments_published_count, 0].max
+    return comments if already_published?
+
+    attachments = [post.attachment_urls.size, MAX_ATTACHMENTS].min - publication.attachments_processed_count
+    1 + [attachments, 0].max + comments
+  end
+
+  # Small publications reserve their remaining calls together to avoid a local
+  # throttle halfway through. Larger ones reserve each call as they progress.
   def reserve_request
-    RateLimit.acquire!(:freefeed, subject: post.feed.access_token.rate_limit_subject, cost: { post: 1 })
+    reserve_requests(1) unless @requests_reserved
+  end
+
+  def reserve_requests(count)
+    RateLimit.acquire!(:freefeed, subject: post.feed.access_token.rate_limit_subject, cost: { post: count })
   end
 
   def update_post_with_freefeed_id(freefeed_post_id)

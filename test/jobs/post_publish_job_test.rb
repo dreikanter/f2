@@ -199,6 +199,98 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_no_enqueued_jobs(only: PostPublishJob)
   end
 
+  test ".perform_now should wait for all three requests of a small publication" do
+    image = "https://example.com/image.jpg"
+    post = create(:post, :enqueued, feed: feed, attachment_urls: [image], comments: ["Caption"])
+    stub_request(:get, image)
+      .to_return(status: 200, body: "image_data", headers: { "Content-Type" => "image/jpeg" })
+    stub_request(:post, "#{access_token.host}/v1/attachments")
+      .to_return(status: 201, body: { attachments: { id: "attachment" } }.to_json)
+    stub_publish_success
+    stub_request(:post, "#{access_token.host}/v4/comments")
+      .to_return(status: 201, body: { comments: { id: "comment" } }.to_json)
+
+    freeze_time do
+      drain_freefeed(access_token.rate_limit_subject, :post, remaining: 2)
+
+      assert_enqueued_with(job: PostPublishJob, args: [feed.id]) { PostPublishJob.perform_now(feed.id) }
+
+      assert_predicate post.reload, :enqueued?
+      assert_not_requested :get, image
+      assert_not_requested :post, "#{access_token.host}/v1/attachments"
+      assert_not_requested :post, "#{access_token.host}/v4/posts"
+      assert_not_requested :post, "#{access_token.host}/v4/comments"
+
+      travel(2.seconds)
+      PostPublishJob.perform_now(feed.id)
+
+      assert_predicate post.reload, :published?
+      assert_nil post.post_publication
+      assert_equal 0, freefeed_tokens_left(access_token.rate_limit_subject, :post)
+    end
+
+    assert_requested :post, "#{access_token.host}/v1/attachments", times: 1
+    assert_requested :post, "#{access_token.host}/v4/posts", times: 1
+    assert_requested :post, "#{access_token.host}/v4/comments", times: 1
+  end
+
+  test ".perform_now should publish incrementally when four requests remain" do
+    post = create(:post, :enqueued, feed: feed, comments: %w[first second third])
+    delivered_comments = []
+    stub_publish_success
+    stub_request(:post, "#{access_token.host}/v4/comments").to_return do |request|
+      delivered_comments << JSON.parse(request.body).dig("comment", "body")
+      { status: 201, body: { comments: { id: SecureRandom.uuid } }.to_json }
+    end
+
+    freeze_time do
+      drain_freefeed(access_token.rate_limit_subject, :post, remaining: 3)
+
+      assert_no_enqueued_jobs(only: PostPublishJob) { PostPublishJob.perform_now(feed.id) }
+
+      assert_predicate post.reload, :published?
+      assert_equal 2, post.post_publication.comments_published_count
+      assert_equal %w[first second], delivered_comments
+
+      travel(2.seconds)
+      PostPublishJob.perform_now(feed.id)
+    end
+
+    assert_nil post.reload.post_publication
+    assert_equal %w[first second third], delivered_comments
+    assert_requested :post, "#{access_token.host}/v4/posts", times: 1
+  end
+
+  test ".perform_now should reserve only the three remaining comments on resume" do
+    comments = Array.new(20) { |index| "Paragraph #{index + 1}." }
+    images = Array.new(20) { |index| "https://example.com/#{index}.jpg" }
+    post = create(:post, :published, feed: feed, comments: comments, attachment_urls: images)
+    post.create_post_publication!(comments_published_count: 17, attachments_processed_count: 20)
+    delivered_comments = []
+    stub_request(:post, "#{access_token.host}/v4/comments").to_return do |request|
+      delivered_comments << JSON.parse(request.body).dig("comment", "body")
+      { status: 201, body: { comments: { id: SecureRandom.uuid } }.to_json }
+    end
+
+    freeze_time do
+      drain_freefeed(access_token.rate_limit_subject, :post, remaining: 2)
+      PostPublishJob.perform_now(feed.id)
+
+      assert_equal 17, post.reload.post_publication.comments_published_count
+      assert_empty delivered_comments
+
+      travel(2.seconds)
+      PostPublishJob.perform_now(feed.id)
+
+      assert_nil post.reload.post_publication
+      assert_equal comments.last(3), delivered_comments
+      assert_equal 0, freefeed_tokens_left(access_token.rate_limit_subject, :post)
+    end
+
+    assert_not_requested :post, "#{access_token.host}/v1/attachments"
+    assert_not_requested :post, "#{access_token.host}/v4/posts"
+  end
+
   test ".perform_now should reserve each attachment, post, and comment as it is sent" do
     images = %w[https://example.com/one.jpg https://example.com/two.jpg https://example.com/three.jpg]
     post = create(:post, :enqueued, feed: feed, comments: ["a", "b"], attachment_urls: images)
