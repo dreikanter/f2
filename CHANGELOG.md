@@ -1,10 +1,8 @@
 # Changelog
 
 ## 2026-10-07
-- Publications needing up to three remaining requests wait for capacity to send them together.
 
-## 2026-10-06
-- Posts with many comments or attachments pause and resume as publishing capacity becomes available instead of failing.
+- Posts with many comments or attachments now pause and resume automatically when FreeFeed limits publishing.
 
 ## 2026-10-04
 
