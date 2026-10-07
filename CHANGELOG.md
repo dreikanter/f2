@@ -2,6 +2,7 @@
 
 ## 2026-10-07
 
+- RSS feeds can limit how many comments are added to each post when publishing article text as comments.
 - Posts with many comments or attachments now pause and resume automatically when FreeFeed limits publishing.
 
 ## 2026-10-05

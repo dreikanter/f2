@@ -40,6 +40,12 @@ class FeedProfile
             "title" => "Post article text as comments",
             "description" => "Use the title as the post body and publish each paragraph as a comment. Long paragraphs are split to fit.",
             "default" => false
+          },
+          "max_comments" => {
+            "type" => "integer",
+            "title" => "Maximum comments per post",
+            "description" => "When posting article text as comments, keep only the first comments up to this limit. Leave blank for all comments.",
+            "minimum" => 1
           }
         },
         "required" => ["url"],

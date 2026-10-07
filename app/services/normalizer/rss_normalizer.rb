@@ -58,7 +58,9 @@ module Normalizer
     def normalize_comments
       return [] unless content_in_comments?
 
-      body_text.to_s.split("\n\n").compact_blank.flat_map { |paragraph| split_comment(paragraph) }
+      comments = body_text.to_s.split("\n\n").compact_blank.flat_map { |paragraph| split_comment(paragraph) }
+      limit = feed_entry.feed.params["max_comments"].presence
+      limit ? comments.first(limit) : comments
     end
 
     def body_text
