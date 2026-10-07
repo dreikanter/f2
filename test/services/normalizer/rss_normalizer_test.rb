@@ -292,6 +292,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
       "link" => "https://example.com/article"
     })
     entry.feed.params["content_in_comments"] = false
+    entry.feed.params["max_comments"] = 1
 
     post = Normalizer::RssNormalizer.new(entry).normalize
 
@@ -369,14 +370,37 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_equal ["Repeat.", "Repeat.", "End."], post.comments
   end
 
+  test "#normalize should keep only the first comments up to the configured limit" do
+    post = normalize_article({ "content" => "<p>First.</p><p>Second.</p><p>Third.</p>" }, 2)
+
+    assert_equal ["First.", "Second."], post.comments
+    assert_equal "Article - https://example.com/article", post.content
+    assert_predicate post, :enqueued?
+  end
+
+  test "#normalize should count split paragraphs toward the comment limit" do
+    chunk = "Ж" * Post::MAX_COMMENT_LENGTH
+
+    post = normalize_article({ "content" => "<p>#{chunk}Remainder.</p><p>Next paragraph.</p>" }, 1)
+
+    assert_equal [chunk], post.comments
+  end
+
+  test "#normalize should retain all comments below the configured limit" do
+    post = normalize_article({ "content" => "<p>First.</p><p>Second.</p>" }, 3)
+
+    assert_equal ["First.", "Second."], post.comments
+  end
+
   private
 
-  def normalize_article(raw_data)
+  def normalize_article(raw_data, max_comments = nil)
     entry = build(:feed_entry, raw_data: {
       "title" => "Article",
       "link" => "https://example.com/article"
     }.merge(raw_data))
     entry.feed.params["content_in_comments"] = true
+    entry.feed.params["max_comments"] = max_comments if max_comments
 
     Normalizer::RssNormalizer.new(entry).normalize
   end

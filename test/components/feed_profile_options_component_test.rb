@@ -92,6 +92,19 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
     assert_equal schema.fetch("default").to_s, input["value"]
   end
 
+  test "#render should render an optional RSS comment limit" do
+    result = render_inline(FeedProfileOptionsComponent.new(feed: feed(feed_profile_key: "rss")))
+    input = result.at_css('[data-key="form.profile-option-input.rss.max_comments"]')
+
+    assert_equal "number", input["type"]
+    assert_equal "1", input["min"]
+    assert_equal "1", input["step"]
+    assert_nil input["required"]
+    assert_nil input["max"]
+    assert_predicate input["value"], :blank?
+    assert_includes labels(result), "Maximum comments per post"
+  end
+
   test "#render should render integer options with inclusive bounds and profile-specific labels" do
     result = render_typed
     input = result.at_css('[data-key="form.profile-option-input.rss.count"]')
