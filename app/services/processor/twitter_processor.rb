@@ -55,10 +55,17 @@ module Processor
 
     def tweet_url(tweet)
       permalink = tweet["permalink"]
-      return permalink if permalink.is_a?(String) && PublicUrl.safe?(permalink)
+      if permalink.is_a?(String)
+        permalink = permalink.strip
+        # Syndication still supplies relative paths; keep the existing fallback.
+        if permalink.start_with?("/") && !permalink.start_with?("//")
+          permalink = "https://twitter.com#{permalink}"
+        end
+        return permalink if PublicUrl.safe?(permalink)
+      end
 
       # Fail before the workflow records UIDs, so these posts remain retryable.
-      raise InvalidPermalink, "X (Twitter) did not provide a valid full permalink for post #{tweet['id_str']}."
+      raise InvalidPermalink, "X (Twitter) did not provide a valid permalink for post #{tweet['id_str']}."
     end
 
     # Rebuilds readable text: expand t.co links to their targets, drop the

@@ -1,8 +1,8 @@
 # Changelog
 
-## 2026-10-05
+## 2026-10-07
 
-- X (Twitter) feeds preserve full source permalinks and report missing links as refresh failures instead of guessing URLs.
+- X (Twitter) feeds preserve full source permalinks, continue accepting relative links, and leave posts retryable when links are missing or invalid.
 
 ## 2026-10-04
 

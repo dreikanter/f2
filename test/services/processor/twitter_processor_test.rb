@@ -34,15 +34,27 @@ class Processor::TwitterProcessorTest < ActiveSupport::TestCase
     assert_equal "1001", entry.uid
   end
 
-  test "#process should fail on a relative permalink even when HTML has a matching link" do
-    html = sample_html.sub("https://x.com/testuser/status/1001", "/testuser/status/1001")
-      .sub("<body>", '<body><a href="https://x.com/testuser/status/1001">Post</a>')
+  test "#process should accept relative permalinks from a captured syndication response" do
+    html = file_fixture("feeds/twitter/captured_timeline.html").read
+    entry = Processor::TwitterProcessor.new(feed, html).process.entries.sole
 
-    error = assert_raises(Processor::TwitterProcessor::InvalidPermalink) do
+    assert_equal "1286742600309805056", entry.uid
+    assert_equal "https://twitter.com/lizandmollie/status/1286742600309805056", entry.raw_data["url"]
+  end
+
+  test "#process should strip whitespace from relative permalinks" do
+    html = sample_html.sub("https://x.com/testuser/status/1001", " /testuser/status/1001 ")
+    entry = Processor::TwitterProcessor.new(feed, html).process.entries.first
+
+    assert_equal "https://twitter.com/testuser/status/1001", entry.raw_data["url"]
+  end
+
+  test "#process should reject a protocol-relative permalink" do
+    html = sample_html.sub("https://x.com/testuser/status/1001", "//example.org/testuser/status/1001")
+
+    assert_raises(Processor::TwitterProcessor::InvalidPermalink) do
       Processor::TwitterProcessor.new(feed, html).process
     end
-
-    assert_equal "X (Twitter) did not provide a valid full permalink for post 1001.", error.message
   end
 
   test "#process should fail when the source permalink is missing" do

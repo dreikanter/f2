@@ -81,6 +81,21 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_includes comments.first, "A beginner-friendly introduction"
   end
 
+  test "#execute should preview captured X posts with relative permalinks" do
+    preview = create(:feed_preview, user: user, feed_profile_key: "twitter",
+                     params: { "url" => "lizandmollie" }, status: :pending, run_id: RUN_ID)
+    stub_request(:get, "https://syndication.twitter.com/srv/timeline-profile/screen-name/lizandmollie")
+      .to_return(status: 200, body: file_fixture("feeds/twitter/captured_timeline.html").read)
+
+    FeedPreviewWorkflow.new(preview, run_id: RUN_ID).execute
+
+    assert preview.reload.ready?
+    post = preview.posts_data.sole
+    assert_equal "enqueued", post["status"]
+    assert_equal "1286742600309805056", post["uid"]
+    assert_equal "https://twitter.com/lizandmollie/status/1286742600309805056", post["source_url"]
+  end
+
   test "#execute should record the stats reported to preview readers" do
     body = rss_body
     stub_request(:get, FEED_URL)
