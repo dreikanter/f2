@@ -180,7 +180,8 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
       profile_keys: %w[youtube rss]
     ))
 
-    assert_equal 1, result.css('[data-profile-key="youtube"]').size, "rss declares no options"
+    assert_equal 1, result.css('[data-profile-key="youtube"]').size
+    assert_equal 1, result.css('[data-profile-key="rss"]').size
     assert_not result.css('[data-profile-key="youtube"]').first.attributes.key?("hidden")
   end
 
@@ -204,7 +205,7 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
   end
 
   test "#render? should be false for a profile declaring no options" do
-    subject = FeedProfileOptionsComponent.new(feed: feed)
+    subject = FeedProfileOptionsComponent.new(feed: feed(feed_profile_key: "xkcd"))
 
     assert_not subject.render?
   end
