@@ -3,6 +3,7 @@
 #
 class FreefeedPublisher
   MAX_ATTACHMENTS = 20
+  MAX_UPFRONT_REQUESTS = 3
 
   class Error < StandardError; end
   class ValidationError < Error; end
@@ -89,9 +90,23 @@ class FreefeedPublisher
     raise InterruptedPublicationError if interrupted?
 
     publication
+    requests = remaining_requests
 
+    if requests <= MAX_UPFRONT_REQUESTS
+      reserve_requests(requests) if requests.positive?
+      publish_remaining
+    else
+      publish_remaining { reserve_requests(1) }
+    end
+  rescue FreefeedClient::UnauthorizedError
+    raise # propagate so the workflow can disable the token and related feeds
+  rescue FreefeedClient::Error => e
+    raise PublishError, "Failed to publish to FreeFeed: #{e.message}"
+  end
+
+  def publish_remaining(&before_request)
     unless already_published?
-      attachment_ids = upload_pending_attachments
+      attachment_ids = upload_pending_attachments(&before_request)
 
       # An attachment-only post whose uploads were all skipped (oversized) would
       # go out with no body and nothing attached, which FreeFeed rejects. The
@@ -100,15 +115,11 @@ class FreefeedPublisher
         raise SourceContentError, "No attachment survived upload for a post with no content"
       end
 
-      freefeed_post = create_freefeed_post(attachment_ids)
+      freefeed_post = create_freefeed_post(attachment_ids, &before_request)
       update_post_with_freefeed_id(freefeed_post[:id])
     end
 
-    publish_pending_comments
-  rescue FreefeedClient::UnauthorizedError
-    raise # propagate so the workflow can disable the token and related feeds
-  rescue FreefeedClient::Error => e
-    raise PublishError, "Failed to publish to FreeFeed: #{e.message}"
+    publish_pending_comments(&before_request)
   end
 
   def publication
@@ -132,13 +143,13 @@ class FreefeedPublisher
     post.freefeed_post_id.present?
   end
 
-  def upload_pending_attachments
+  def upload_pending_attachments(&before_request)
     urls = post.attachment_urls
     skipped = urls.size - MAX_ATTACHMENTS
     Rails.logger.warn "#{skipped}/#{urls.size} attachments skipped: FreeFeed limit (post #{post.id})" if skipped.positive?
 
     urls.first(MAX_ATTACHMENTS).drop(publication.attachments_processed_count).each do |url|
-      attachment_id = upload_attachment(url)
+      attachment_id = upload_attachment(url, &before_request)
       attachment_ids = publication.uploaded_attachment_ids.dup
       attachment_ids << attachment_id if attachment_id
 
@@ -161,6 +172,7 @@ class FreefeedPublisher
   # app fault: skip it and publish the post with the remaining attachments.
   def upload_attachment(url)
     io, content_type = FileBuffer.new.load(url)
+    yield if block_given?
     client.create_attachment_from_io(io, content_type: content_type)[:id]
   rescue FreefeedClient::PayloadTooLargeError => e
     Rails.logger.warn "Skipping oversized attachment #{url} for post #{post.id}: #{e.message}"
@@ -171,6 +183,7 @@ class FreefeedPublisher
   # waiting for the response leaves a post we can't identify. Failures that prove
   # nothing was created clear the mark, so those posts still resume.
   def create_freefeed_post(attachment_ids)
+    yield if block_given?
     publication.update!(post_create_started_at: Time.current)
 
     client.create_post(
@@ -201,11 +214,11 @@ class FreefeedPublisher
     publication.update!(post_create_started_at: nil)
   end
 
-  def publish_pending_comments
+  def publish_pending_comments(&before_request)
     comments = post.comments.filter_map(&:presence)
 
     comments.drop(publication.comments_published_count).each do |comment_text|
-      create_comment(comment_text)
+      create_comment(comment_text, &before_request)
       publication.increment!(:comments_published_count)
     end
 
@@ -218,10 +231,23 @@ class FreefeedPublisher
   end
 
   def create_comment(comment_text)
+    yield if block_given?
     client.create_comment(
       post_id: post.freefeed_post_id,
       body: Post.clamp_comment(comment_text)
     )
+  end
+
+  def remaining_requests
+    comments = [post.comments.count(&:present?) - publication.comments_published_count, 0].max
+    return comments if already_published?
+
+    attachments = [post.attachment_urls.size, MAX_ATTACHMENTS].min - publication.attachments_processed_count
+    1 + [attachments, 0].max + comments
+  end
+
+  def reserve_requests(count)
+    RateLimit.acquire!(:freefeed, subject: post.feed.access_token.rate_limit_subject, cost: { post: count })
   end
 
   def update_post_with_freefeed_id(freefeed_post_id)

@@ -206,7 +206,17 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
       .with(body: { comment: { body: "Source caption", postId: "gallery-post" } }.to_json)
       .to_return(status: 201, body: { comments: { id: "caption-comment" } }.to_json)
 
-    FreefeedPublisher.new(post).publish
+    freeze_time do
+      assert_raises(RateLimit::Throttled) { FreefeedPublisher.new(post).publish }
+
+      assert_nil post.reload.freefeed_post_id
+      assert_equal 20, post.post_publication.attachments_processed_count
+      assert_nil post.post_publication.post_create_started_at
+      assert_not_requested post_request
+
+      travel(4.seconds)
+      FreefeedPublisher.new(post).resume
+    end
 
     assert_equal images.first(20).map { |url| URI(url).path }, downloaded_paths
     assert_requested :post, "#{access_token.host}/v1/attachments", times: 20

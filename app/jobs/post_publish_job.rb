@@ -48,12 +48,6 @@ class PostPublishJob < ApplicationJob
     publisher = FreefeedPublisher.new(post)
     return fail_interrupted(feed, post) if publisher.interrupted?
 
-    posts = post_cost(post)
-    return reject_oversized(feed, post, posts) unless within_capacity?(posts)
-
-    result = RateLimit.acquire(:freefeed, subject: feed.access_token.rate_limit_subject, cost: { post: posts })
-    return reschedule_for_rate_limit(result.retry_after) unless result.allowed?
-
     post.post_publication ? publisher.resume : publisher.publish
     count_published(post) unless was_published
     schedule_next(feed)
@@ -136,34 +130,6 @@ class PostPublishJob < ApplicationJob
     else
       Rails.logger.error "Failed to publish post #{post.id}: #{error.message}"
     end
-    schedule_next(feed)
-  end
-
-  # Every FreeFeed POST still required by this sequential publication.
-  def post_cost(post)
-    publication = post.post_publication
-    comments = post.comments.count(&:present?)
-    return 1 + comments + post.attachment_urls.size unless publication
-
-    remaining_attachments = post.attachment_urls.size - publication.attachments_processed_count
-    remaining_comments = comments - publication.comments_published_count
-    remote_post = post.freefeed_post_id.present? ? 0 : 1
-
-    remote_post + [remaining_attachments, 0].max + [remaining_comments, 0].max
-  end
-
-  def within_capacity?(posts)
-    capacity = RateLimit.capacity(:freefeed, :post)
-    capacity.nil? || posts <= capacity
-  end
-
-  # A post needing more POSTs than the bucket can ever hold would throttle
-  # forever and block the queue, so fail it and move on.
-  def reject_oversized(feed, post, posts)
-    post.post_publication&.destroy!
-    post.update!(status: :failed)
-    Metrics.increment("posts_published_total", status: "rejected")
-    Rails.logger.error "Post #{post.id} needs #{posts} POSTs, over the FreeFeed limit; marking failed"
     schedule_next(feed)
   end
 

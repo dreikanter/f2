@@ -1,6 +1,11 @@
 # Changelog
 
+## 2026-10-07
+
+- Posts with many comments or attachments now pause and resume automatically when FreeFeed limits publishing.
+
 ## 2026-10-05
+
 - RSS feeds can publish article text as comments, one paragraph per comment, splitting long paragraphs to fit.
 
 ## 2026-10-04

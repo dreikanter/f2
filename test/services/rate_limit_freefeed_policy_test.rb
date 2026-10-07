@@ -17,6 +17,11 @@ class RateLimitFreefeedPolicyTest < ActiveSupport::TestCase
     assert_equal 60, limit.window
   end
 
+  test ".capacity should accommodate upfront publication requests" do
+    assert_operator RateLimit.capacity(:freefeed, :post), :>=, FreefeedPublisher::MAX_UPFRONT_REQUESTS,
+      "FreeFeed POST capacity must cover the maximum upfront publication reservation"
+  end
+
   test "freefeed policy should limit gets below FreeFeed's GET ceiling" do
     limit = limit_for(:get)
 
