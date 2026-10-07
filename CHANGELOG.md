@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-07
+
+- Posts with many comments or attachments now pause and resume automatically when FreeFeed limits publishing.
+
 ## 2026-10-04
 
 - Feed refresh events show new posts, empty results, previously imported entries, and AI usage in compact summaries separated by middle dots.

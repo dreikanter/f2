@@ -103,7 +103,7 @@ class PostCommentDeliveryTest < ActiveJob::TestCase
       end
     end
 
-    allow_rate_limit do
+    freeze_time do
       assert_no_enqueued_jobs(only: PostPublishJob) do
         PostPublishJob.perform_now(feed.id)
       end
@@ -113,6 +113,11 @@ class PostCommentDeliveryTest < ActiveJob::TestCase
       assert_equal 1, publication.comments_published_count
       assert_predicate second.reload, :enqueued?, "newer posts must wait behind the throttled comment"
 
+      travel((30 + FreefeedClient::RETRY_AFTER_BUFFER - 1).seconds)
+      PostPublishJob.perform_now(feed.id)
+      assert_equal 1, comment_attempts["second comment"], "the server cooldown must prevent an early retry"
+
+      travel(1.second)
       perform_enqueued_jobs(only: PostPublishJob) do
         PublicationSchedulerJob.perform_now
       end

@@ -163,16 +163,9 @@ params):
 | `content` | string | Post body. Required unless `images` is non-empty (mirrors the pipeline's no-content-no-images rule). Truncated to FreeFeed's 3000-grapheme limit rather than rejected — length never fails a request; a `content_truncated` warning is returned instead. |
 | `source_url` | string | Optional. Appended to the body via the house `post_content_with_url` convention (same "link + commentary" shape as pull feeds) and used as the uid seed (§4). Must be an absolute http(s) URL. |
 | `images` | array of strings | Optional, max 8. Each must be an absolute, public http(s) URL — checked with `PublicUrl.safe?` at ingress so an unsafe URL is an explicit 422, and filtered again at the normalizer choke point (defense in depth). Downloaded and re-uploaded to FreeFeed at publish time by the existing `FileBuffer` path. |
-| `comments` | array of strings | Optional, max 8. Published as FreeFeed comments after the post, with the existing best-effort semantics (a mid-publish throttle can drop trailing comments; never duplicates). Clamped to 3000 chars each. |
+| `comments` | array of strings | Optional, max 8. Published as FreeFeed comments after the post. Clamped to 3000 chars each. |
 | `uid` | string | Optional idempotency key, ≤ 255 chars. See §4. |
 | `published_at` | string | Optional ISO-8601; defaults to now; future values clamped to now (existing `Normalizer::Base` behavior). Controls publish order within the FIFO chain. |
-
-The **caps on `images` and `comments` are load-bearing**, not taste: publishing costs
-`1 + comments + images` FreeFeed POSTs against a burst capacity of 20 (see
-`config/initializers/rate_limits.rb`), and `PostPublishJob` permanently fails any post whose
-cost exceeds capacity. `1 + 8 + 8 = 17` keeps every accepted webhook post publishable. Rejecting
-oversized payloads at ingress (422) is strictly friendlier than accepting them and letting the
-publisher fail them silently later.
 
 **Responses** — JSON in all cases, so scripts can branch on them:
 
