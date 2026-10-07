@@ -34,12 +34,12 @@ class Processor::TwitterProcessorTest < ActiveSupport::TestCase
     assert_equal "1001", entry.uid
   end
 
-  test "#process should accept relative permalinks from a captured syndication response" do
+  test "#process should accept relative permalinks from an anonymized syndication response" do
     html = file_fixture("feeds/twitter/captured_timeline.html").read
     entry = Processor::TwitterProcessor.new(feed, html).process.entries.sole
 
-    assert_equal "1286742600309805056", entry.uid
-    assert_equal "https://twitter.com/lizandmollie/status/1286742600309805056", entry.raw_data["url"]
+    assert_equal "1004", entry.uid
+    assert_equal "https://twitter.com/testuser/status/1004", entry.raw_data["url"]
   end
 
   test "#process should strip whitespace from relative permalinks" do
