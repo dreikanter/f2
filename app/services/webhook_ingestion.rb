@@ -14,10 +14,9 @@ class WebhookIngestion
   # escaping only quotes and backslashes.
   SF_STRING = /\A"(?<value>(?:[\x20-\x21\x23-\x5B\x5D-\x7E]|\\["\\])*)"\z/
 
-  # Caps on images/comments are load-bearing: publishing costs
-  # 1 + comments + images FreeFeed POSTs against a burst capacity of 20, and
-  # PostPublishJob permanently fails any post whose cost exceeds capacity.
-  # 1 + 8 + 8 = 17 keeps every accepted delivery publishable.
+  # Cap images/comments to bound upload work and FreeFeed writes per delivery.
+  # Publication can resume across rate-limit windows; burst capacity is not
+  # a limit on the total number of requests in a publication.
   PAYLOAD_SCHEMA = {
     "type" => "object",
     "properties" => {

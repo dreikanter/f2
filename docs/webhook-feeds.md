@@ -153,8 +153,8 @@ the account's FreeFeed publish budget, so it fails closed — if the limiter's
 storage is unavailable, the endpoint throttles rather than waving traffic
 through.
 
-The image and comment caps are load-bearing rather than arbitrary. Publishing
-one post costs `1 + comments + images` FreeFeed writes against a burst capacity
-of 20, and a post whose cost exceeds that capacity can never publish.
-`1 + 8 + 8 = 17` keeps every accepted delivery publishable, so rejecting an
-oversized payload at ingress beats accepting it and failing it silently later.
+The image and comment caps bound upload work and FreeFeed writes per webhook
+delivery. With eight of each, a publication needs at most `1 + 8 + 8 = 17`
+FreeFeed writes. These are webhook input limits, independent of burst capacity:
+publication saves its progress and resumes as rate-limit capacity becomes
+available, so larger publications from other feed profiles can also complete.
