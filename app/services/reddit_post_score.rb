@@ -1,7 +1,7 @@
 class RedditPostScore
   class UnavailableError < StandardError; end
 
-  MAX_ATTEMPTS = 10
+  MAX_ATTEMPTS = 3
   POST_PATH = %r{\A/(?:r/[a-z0-9_.]+/)?comments/([a-z0-9]+)(?:[/?#]|\z)}i
 
   def initialize(instances: nil)

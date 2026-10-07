@@ -90,6 +90,21 @@ class RedditPostScoreTest < ActiveSupport::TestCase
     assert_not_requested :get, "#{SECOND}/comments/92dd8/"
   end
 
+  test "#call should try at most three instances" do
+    third = "https://third.example"
+    fourth = "https://fourth.example"
+    stub_request(:get, POST_URL).to_return(status: 503)
+    stub_request(:get, "#{SECOND}/comments/92dd8/").to_return(status: 503)
+    stub_request(:get, "#{third}/comments/92dd8/").to_return(status: 503)
+    stub_request(:get, "#{fourth}/comments/92dd8/").to_return(body: post_page)
+
+    assert_raises(RedditPostScore::UnavailableError) do
+      score(instances: [FIRST, SECOND, third, fourth])
+    end
+    assert_requested :get, "#{third}/comments/92dd8/"
+    assert_not_requested :get, "#{fourth}/comments/92dd8/"
+  end
+
   test "#call should raise when no instances are available" do
     assert_raises(RedditPostScore::UnavailableError) { score(instances: []) }
     assert_not_requested :get, /./
