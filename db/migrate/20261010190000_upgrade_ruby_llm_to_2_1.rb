@@ -12,22 +12,18 @@ class UpgradeRubyLlmTo21 < ActiveRecord::Migration[8.2]
     add_column :ruby_llm_tool_calls, :mcp_state, :jsonb
     add_column :ruby_llm_tool_calls, :mcp_result, :jsonb
     add_column :ruby_llm_usages, :server_tool_use, :jsonb
-    change_column_null :ruby_llm_usages, :chat_type, true
-    change_column_null :ruby_llm_usages, :chat_id, true
     add_reference :ruby_llm_usages, :owner, polymorphic: true, type: :uuid
 
+    # Keep relaxed constraints on rollback to preserve usage recorded by 2.1.
     reversible do |direction|
       direction.up do
+        change_column_null :ruby_llm_usages, :chat_type, true
+        change_column_null :ruby_llm_usages, :chat_id, true
         operations = check_constraints(:ruby_llm_usages).find { |constraint| constraint.expression.include?("operation") }
         remove_check_constraint :ruby_llm_usages, name: operations.name
         add_check_constraint :ruby_llm_usages,
           "operation IN ('chat', 'embedding', 'moderation', 'image', 'speech', 'transcription', 'ocr', 'rerank', 'judgment', 'video', 'research')",
           name: "ruby_llm_usages_operation_check"
-      end
-      direction.down do
-        remove_check_constraint :ruby_llm_usages, name: "ruby_llm_usages_operation_check"
-        add_check_constraint :ruby_llm_usages,
-          "operation IN ('chat', 'embedding', 'moderation', 'image', 'speech', 'transcription', 'ocr', 'rerank')"
       end
     end
 
