@@ -45,23 +45,22 @@ class PostWithdrawalJobTest < ActiveJob::TestCase
     assert_equal "test_post_123", post.reload.freefeed_post_id, "the post id must survive a throttled withdrawal"
   end
 
-  test ".perform_now should report and stop when throttle retries are exhausted" do
+  test "#perform should stop without reporting a bug when throttle retries are exhausted" do
     post = create(:post, :published, feed: feed, freefeed_post_id: "test_post_123")
     subject = access_token.rate_limit_subject
     job = PostWithdrawalJob.new(feed.id, "test_post_123", post.id)
     job.executions = RateLimited::MAX_ATTEMPTS
 
-    reported = []
     freeze_time do
       drain_freefeed(subject, :delete, remaining: 0)
 
-      Rails.error.stub(:report, ->(error, **) { reported << error }) do
+      reports = capture_error_reports do
         assert_no_enqueued_jobs(only: PostWithdrawalJob) { job.perform_now }
       end
+
+      assert_empty reports
     end
 
-    assert_equal 1, reported.size
-    assert_instance_of RateLimit::Throttled, reported.first
     assert_equal "test_post_123", post.reload.freefeed_post_id
   end
 

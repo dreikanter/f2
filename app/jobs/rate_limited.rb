@@ -3,11 +3,10 @@
 # Throttling is control flow, not failure: "no capacity now, come back later".
 # Jobs call the non-raising RateLimit.acquire and, when denied, defer via
 # reschedule_for_rate_limit. A real mid-call 429 still raises RateLimit::Throttled;
-# jobs rescue it locally and route it through the same helper. Handled inside
-# `perform`, a deferral never reaches the error reporter; only a give-up does.
+# jobs rescue it locally and route it through the same helper.
 #
-# Reschedules wait retry_after (plus jitter), up to MAX_ATTEMPTS, then report
-# once and stop.
+# Reschedules wait retry_after (plus jitter), up to MAX_ATTEMPTS, then log
+# and run the job's cleanup hook.
 module RateLimited
   MAX_ATTEMPTS = 10
   JITTER_SECONDS = 5
@@ -21,7 +20,7 @@ module RateLimited
   private
 
   # Defer this run because there's no capacity. Reschedules with backoff until
-  # the attempt cap, then reports the throttle once and invokes the cleanup hook.
+  # the attempt cap, then logs the throttle and invokes the cleanup hook.
   def reschedule_for_rate_limit(retry_after)
     @rate_limited = true
 
@@ -29,7 +28,7 @@ module RateLimited
       retry_job(wait: retry_after + rand(0.0..JITTER_SECONDS))
     else
       error = RateLimit::Throttled.new(retry_after: retry_after)
-      Rails.error.report(error, context: { job: self.class.name, arguments: arguments })
+      Rails.logger.warn "#{self.class.name} exhausted rate-limit retries (job #{job_id}): #{error.message}"
       on_rate_limit_exhausted(error)
     end
   end

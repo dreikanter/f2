@@ -380,24 +380,30 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_not_requested :post, "#{access_token.host}/v4/posts"
   end
 
-  test ".perform_now should report and keep the post enqueued when throttle retries are exhausted" do
+  test "#perform should leave exhausted throttle retries for the scheduler without reporting a bug" do
     post = create(:post, :enqueued, feed: feed)
     subject = access_token.rate_limit_subject
     job = PostPublishJob.new(feed.id)
     job.executions = RateLimited::MAX_ATTEMPTS
+    stub_publish_success
 
-    reported = []
     freeze_time do
       drain_freefeed(subject, :post, remaining: 0)
 
-      Rails.error.stub(:report, ->(error, **) { reported << error }) do
+      reports = capture_error_reports do
         assert_no_enqueued_jobs(only: PostPublishJob) { job.perform_now }
       end
+
+      assert_empty reports
+      assert_predicate post.reload, :enqueued?
+      assert_not_requested :post, "#{access_token.host}/v4/posts"
+
+      travel 1.minute
+      perform_enqueued_jobs(only: PostPublishJob) { PublicationSchedulerJob.perform_now }
     end
 
-    assert_equal 1, reported.size
-    assert_instance_of RateLimit::Throttled, reported.first
-    assert_equal "enqueued", post.reload.status, "the post must stay enqueued for a later run to pick up"
+    assert_predicate post.reload, :published?
+    assert_requested :post, "#{access_token.host}/v4/posts", times: 1
   end
 
   test ".perform_now should reschedule without failing when FreeFeed throttles mid-publish" do
