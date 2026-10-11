@@ -75,7 +75,8 @@ class PostDetailsComponent < ViewComponent::Base
     StatListItemComponent.new(
       label: "Validation Errors",
       value: errors_html,
-      key: "post.validation_errors"
+      key: "post.validation_errors",
+      truncate: false
     )
   end
 
