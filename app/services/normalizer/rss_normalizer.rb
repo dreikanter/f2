@@ -5,6 +5,7 @@ module Normalizer
 
     # Where an entry's text may live, best source first.
     CONTENT_FIELDS = %w[content summary description].freeze
+    TRUNCATION_SUFFIX = " [...]".freeze
 
     private
 
@@ -63,8 +64,7 @@ module Normalizer
       return comments if limit.nil? || comments.size <= limit
 
       comments = comments.first(limit)
-      suffix = " [...]"
-      comments[-1] = comments.last.truncate(Post::MAX_COMMENT_LENGTH - suffix.length, separator: /\s/, omission: "…") + suffix
+      comments[-1] = comments.last.truncate(Post::MAX_COMMENT_LENGTH - TRUNCATION_SUFFIX.length, separator: /\s/, omission: "…") + TRUNCATION_SUFFIX
       comments
     end
 
