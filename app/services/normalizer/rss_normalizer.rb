@@ -60,7 +60,7 @@ module Normalizer
 
       comments = split_comment(body_text.to_s)
       limit = feed_entry.feed.params["max_comments"].presence
-      limit ? comments.first(limit) : comments
+      limit ? comments.first([limit, comments.length].min) : comments
     end
 
     def body_text
