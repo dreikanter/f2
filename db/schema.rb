@@ -354,7 +354,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_11_130000) do
   create_table "ruby_llm_mcp_credentials", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.string "owner_type"
     t.uuid "owner_id"
-    t.decimal "web_search_cost", precision: 16, scale: 10, default: "0.0"
     t.string "key", null: false
     t.text "data"
     t.datetime "created_at", null: false
@@ -443,6 +442,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_11_130000) do
     t.jsonb "server_tool_use"
     t.string "owner_type"
     t.uuid "owner_id"
+    t.decimal "web_search_cost", precision: 16, scale: 10, default: "0.0"
     t.index ["chat_type", "chat_id"], name: "index_ruby_llm_usages_on_chat_type_and_chat_id"
     t.index ["message_type", "message_id"], name: "index_ruby_llm_usages_on_message_type_and_message_id"
     t.index ["owner_type", "owner_id"], name: "index_ruby_llm_usages_on_owner"
