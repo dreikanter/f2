@@ -44,6 +44,7 @@ class AiFeedEvaluationTest < ActiveSupport::TestCase
         assert_equal 2, report[:filtered]
         assert_equal 1, report[:usable_new_posts]
         assert_equal "https://example.com/new", report[:posts].sole.fetch("source_url")
+        assert_equal 0, report[:search_calls]
       end
     end
     assert_equal "https://example.com/imported", history.reload.uid
@@ -81,6 +82,7 @@ class AiFeedEvaluationTest < ActiveSupport::TestCase
       published_at: ""
     }
     response["output"].last["content"].first["text"] = { items: [item] }.to_json
+    response["tool_usage"] = { "web_search" => { "num_requests" => 3 } }
     request = stub_request(:post, "https://api.openai.com/v1/responses")
       .with(headers: { "Authorization" => "Bearer evaluation-test-key" })
       .to_return_json(body: response)
@@ -103,7 +105,7 @@ class AiFeedEvaluationTest < ActiveSupport::TestCase
         assert_equal 0, report[:rejected]
         assert_equal 40, report[:usage].sole.fetch("input_tokens")
         assert_equal "gpt-5-nano", report[:usage].sole.fetch("model")
-        assert_equal 1, report[:search_calls]
+        assert_equal 3, report[:search_calls]
         assert_equal 1, report[:cost_totals].fetch(:call_count)
         assert_includes report[:tool_cost_usd], "Unknown"
         assert_includes report[:source_verification], "Unavailable"
