@@ -79,6 +79,9 @@ class PostPublishJob < ApplicationJob
     # Source content is gone (e.g. an attachment URL returns 404). Expected external
     # condition: fail the post and move on, but don't page error tracking.
     fail_post(feed, post, e)
+  rescue FreefeedPublisher::AttachmentUploadError => e
+    # Keep the checkpoint for the publication scheduler to resume after recovery.
+    Rails.logger.warn "Publication paused for post #{post.id}: #{e.message}"
   rescue => e
     # Poison post: mark it failed and move on so the queue isn't blocked.
     fail_post(feed, post, e, report: true)

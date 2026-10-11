@@ -6,6 +6,7 @@ class FreefeedClient
   include SubscriberStatistics
 
   class Error < StandardError; end
+  class ServerError < Error; end
   class UnauthorizedError < Error; end
   class InvalidTokenError < UnauthorizedError; end
   # The token is valid but isn't allowed to perform this action; for example, it lost
@@ -211,6 +212,8 @@ class FreefeedClient
       raise PayloadTooLargeError, parse_error(response) || "Payload too large"
     when 429
       handle_too_many_requests(response)
+    when 500..599
+      raise ServerError, "HTTP #{response.status}: #{response.body}"
     else
       raise Error, "HTTP #{response.status}: #{response.body}"
     end
