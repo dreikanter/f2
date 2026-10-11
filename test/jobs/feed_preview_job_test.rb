@@ -78,15 +78,17 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     end
   end
 
-  test "#perform should mark the preview failed and not retry when the loader fails" do
+  test "#perform should settle a source HTTP error without reporting a bug or retrying" do
     preview = create(:feed_preview, feed_profile_key: "rss",
                      params: { "url" => "https://example.com/feed.xml" }, run_id: RUN_ID)
 
     stub_request(:get, "https://example.com/feed.xml").to_return(status: 500)
 
-    reports = capture_error_reports { FeedPreviewJob.perform_now(preview.id, RUN_ID) }
+    reports = capture_error_reports do
+      assert_no_enqueued_jobs(only: FeedPreviewJob) { FeedPreviewJob.perform_now(preview.id, RUN_ID) }
+    end
 
-    assert_kind_of Loader::Error, reports.sole.error
+    assert_empty reports
     assert preview.reload.failed?
   end
 

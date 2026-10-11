@@ -12,7 +12,9 @@ class FeedRefreshJob < ApplicationJob
     Feed.with_advisory_lock!("feed_refresh_#{feed.id}", timeout_seconds: 0) do
       FeedRefreshWorkflow.new(feed).execute
     end
-  rescue Loader::LlmLoader::ExecutionLimitExceeded, Loader::HttpBase::TransportError
+  rescue Loader::LlmLoader::ExecutionLimitExceeded,
+         Loader::HttpBase::TransportError,
+         Loader::HttpBase::ResponseError
     record_loader_error(feed)
   rescue Loader::Error => e
     Rails.error.report(e, context: { feed_id: feed_id })

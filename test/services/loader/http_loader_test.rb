@@ -28,7 +28,7 @@ class Loader::HttpLoaderTest < ActiveSupport::TestCase
 
     loader = Loader::HttpLoader.new(feed, { http_client: mock_client })
 
-    error = assert_raises(Loader::Error) do
+    error = assert_raises(Loader::HttpBase::ResponseError) do
       loader.load
     end
 

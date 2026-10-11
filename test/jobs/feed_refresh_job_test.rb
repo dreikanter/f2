@@ -32,8 +32,48 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     assert incremented
   end
 
-  test "#perform should report an ordinary loader failure once with feed context" do
+  test "#perform should record a missing source without reporting a bug" do
     request = stub_request(:get, feed.url).to_return(status: 404)
+
+    reports = capture_error_reports { FeedRefreshJob.perform_now(feed.id) }
+
+    assert_empty reports
+    event = feed.events.find_by!(type: "feed_refresh")
+    assert_equal "failed", event.metadata["status"]
+    assert_equal "HTTP 404", event.message
+    assert_equal 1, feed.reload.consecutive_failures
+    assert_requested request, times: 1
+  end
+
+  test "#perform should record source throttling without reporting a bug or retrying immediately" do
+    request = stub_request(:get, feed.url).to_return(status: 429)
+
+    reports = capture_error_reports do
+      assert_no_enqueued_jobs(only: FeedRefreshJob) { FeedRefreshJob.perform_now(feed.id) }
+    end
+
+    assert_empty reports
+    event = feed.events.find_by!(type: "feed_refresh")
+    assert_equal "failed", event.metadata["status"]
+    assert_equal "HTTP 429", event.message
+    assert_requested request, times: 1
+  end
+
+  test "#perform should record a missing YouTube feed without reporting a bug" do
+    url = "https://www.youtube.com/feeds/videos.xml?channel_id=UC123"
+    feed = create(:feed, feed_profile_key: "youtube", params: { "url" => url })
+    request = stub_request(:get, url).to_return(status: 404)
+
+    reports = capture_error_reports { FeedRefreshJob.perform_now(feed.id) }
+
+    assert_empty reports
+    assert_equal "HTTP 404", feed.events.find_by!(type: "feed_refresh").message
+    assert_equal 1, feed.reload.consecutive_failures
+    assert_requested request, times: 1
+  end
+
+  test "#perform should still report other loader failures once with feed context" do
+    request = stub_request(:get, feed.url).to_return(status: 302, headers: { "Location" => feed.url })
 
     reports = capture_error_reports { FeedRefreshJob.perform_now(feed.id) }
 
@@ -43,7 +83,7 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     assert report.handled?
     assert_equal "failed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
     assert_equal 1, feed.reload.consecutive_failures
-    assert_requested request, times: 1
+    assert_requested request, times: 4
   end
 
   test "#perform should record a connection failure without reporting a bug or retrying" do
