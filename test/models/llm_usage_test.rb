@@ -16,7 +16,7 @@ class LlmUsageTest < ActiveSupport::TestCase
   test "#estimated_cost should include fixed search content blocks for gpt-4.1-mini" do
     model = create(:llm_model, model_id: "gpt-4.1-mini", pricing: { text_tokens: { standard: { input_per_million: 0.4 } } })
     RubyLLM.models.load_from_store
-    usage = create(:ruby_llm_usage, model: model.model_id, server_tool_use: { "web_search_requests" => 2 })
+    usage = create(:ruby_llm_usage, chat: nil, model: model.model_id, server_tool_use: { "web_search_requests" => 2 })
 
     assert_equal BigDecimal("0.0264"), usage.reload.web_search_cost
     assert_equal BigDecimal("0.0564"), usage.estimated_cost
@@ -30,7 +30,7 @@ class LlmUsageTest < ActiveSupport::TestCase
     model = create(:llm_model, model_id: "gpt-4o-mini-2024-07-18",
                               pricing: { text_tokens: { standard: { input_per_million: 0.15 } } })
     RubyLLM.models.load_from_store
-    usage = create(:ruby_llm_usage, model: model.model_id, server_tool_use: { "web_search_requests" => 1 })
+    usage = create(:ruby_llm_usage, chat: nil, model: model.model_id, server_tool_use: { "web_search_requests" => 1 })
 
     assert_equal BigDecimal("0.0112"), usage.reload.web_search_cost
   end
@@ -38,7 +38,7 @@ class LlmUsageTest < ActiveSupport::TestCase
   test "#estimated_cost should remain unknown when fixed search content pricing is missing" do
     model = create(:llm_model, model_id: "gpt-4.1-mini")
     RubyLLM.models.load_from_store
-    usage = create(:ruby_llm_usage, model: model.model_id, server_tool_use: { "web_search_requests" => 2 })
+    usage = create(:ruby_llm_usage, chat: nil, model: model.model_id, server_tool_use: { "web_search_requests" => 2 })
 
     assert_nil usage.reload.web_search_cost
     assert_nil usage.estimated_cost
