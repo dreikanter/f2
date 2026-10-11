@@ -63,7 +63,7 @@ module Normalizer
       return comments if limit.nil? || comments.size <= limit
 
       comments = comments.first(limit)
-      suffix = "\n\n[Text truncated]"
+      suffix = "\n\n[...]"
       comments[-1] = comments.last.truncate(Post::MAX_COMMENT_LENGTH - suffix.length, separator: /\s/, omission: "…") + suffix
       comments
     end
