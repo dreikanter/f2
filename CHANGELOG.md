@@ -2,6 +2,7 @@
 
 ## 2026-10-11
 
+- Estimated AI spend includes OpenAI's native web search charges.
 - AI usage shows provider-reported native web search counts instead of counting response events.
 
 ## 2026-10-07

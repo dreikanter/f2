@@ -1,5 +1,5 @@
 FactoryBot.define do
-  factory :ruby_llm_usage, class: "RubyLLM::ActiveRecord::Usage" do
+  factory :ruby_llm_usage, class: "LlmUsage" do
     association :chat, factory: :llm_chat
     operation { "chat" }
     provider { "openai" }

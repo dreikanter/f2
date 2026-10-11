@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_10_10_190000) do
+ActiveRecord::Schema[8.2].define(version: 2026_10_11_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -354,6 +354,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_10_190000) do
   create_table "ruby_llm_mcp_credentials", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.string "owner_type"
     t.uuid "owner_id"
+    t.decimal "web_search_cost", precision: 16, scale: 10, default: "0.0"
     t.string "key", null: false
     t.text "data"
     t.datetime "created_at", null: false

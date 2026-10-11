@@ -10,22 +10,24 @@ class LlmUsageReportTest < ActiveSupport::TestCase
     other_event = create(:event, user: feed.user, subject: feed, type: "feed_refresh")
     other_event.event_references.create!(reference: chat)
     create(:ruby_llm_usage, chat: chat, message: message, total_cost: "0.004",
-                            input_tokens: 10, output_tokens: 3, cache_read_tokens: 2, thinking_tokens: 1)
+                            input_tokens: 10, output_tokens: 3, cache_read_tokens: 2, thinking_tokens: 1,
+                            server_tool_use: { "web_search_requests" => 2 })
     create(:ruby_llm_usage, chat: chat, message: message, status: "failed", total_cost: "0.004",
-                            input_tokens: 20, output_tokens: 4, cache_write_tokens: 5, thinking_tokens: 2)
+                            input_tokens: 20, output_tokens: 4, cache_write_tokens: 5, thinking_tokens: 2,
+                            server_tool_use: { "web_search_requests" => 1 })
     create(:ruby_llm_usage, chat: create(:llm_chat, user: feed.user, feed: feed), total_cost: 9)
 
     totals = LlmUsageReport.for_event(event).totals
 
     assert_equal 2, totals.call_count
     assert_equal totals, LlmUsageReport.new(chats: feed.llm_chats.joins(:event_references)).totals
-    assert_equal BigDecimal("0.008"), totals.total_cost
+    assert_equal BigDecimal("0.038"), totals.total_cost
     assert_equal 30, totals.input_tokens
     assert_equal 7, totals.output_tokens
     assert_equal 2, totals.cache_read_tokens
     assert_equal 5, totals.cache_write_tokens
     assert_equal 3, totals.thinking_tokens
-    assert_equal({ llm_calls: 2, llm_cost_cents: 0.8 }, totals.event_stats)
+    assert_equal({ llm_calls: 2, llm_cost_cents: 3.8 }, totals.event_stats)
   end
 
   test "#totals should preserve known spend and mark mixed costs incomplete" do

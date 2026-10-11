@@ -10,8 +10,7 @@ class AiFeedEvaluation
       started_at: Time.current.iso8601,
       time_zone: Time.zone.name,
       window: "Unavailable: current contract expresses dates only in the prompt",
-      source_verification: "Unavailable: current loader does not verify source facts",
-      tool_cost_usd: "Unknown: current usage records do not separate tool charges"
+      source_verification: "Unavailable: current loader does not verify source facts"
     }
     Feed.transaction(requires_new: true) do
       feed = Feed.create!(
@@ -51,8 +50,13 @@ class AiFeedEvaluation
         posts: posts.map { |post| post.attributes.slice("uid", "content", "source_url", "published_at", "status", "validation_errors") }
       )
       usages = LlmUsageReport.for_feed(feed)
-      report[:usage] = usages.usages.map { |usage| usage.attributes.slice("provider", "model", "status", "input_tokens", "output_tokens", "total_cost") }
+      report[:usage] = usages.usages.map do |usage|
+        usage.attributes.slice("provider", "model", "status", "input_tokens", "output_tokens", "web_search_cost")
+          .merge("total_cost" => usage.estimated_cost)
+      end
       report[:cost_totals] = usages.totals.to_h
+      search_costs = usages.usages.map(&:web_search_cost)
+      report[:tool_cost_usd] = search_costs.sum unless search_costs.any?(&:nil?)
       report[:search_calls] = usages.usages.sum { |usage| usage.tokens.server_tool_use.to_h.fetch("web_search_requests", 0) }
       report[:system_prompt] = feed.llm_chats.first&.messages&.find_by(role: "system")&.content
       report[:usage_availability] = "Retained attempts only; in-flight spend may be missing after a failure"

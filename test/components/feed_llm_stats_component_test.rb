@@ -10,7 +10,8 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
     @feed_with_usages ||= create(:feed).tap do |current_feed|
       refresh = create(:llm_chat, feed: current_feed, user: current_feed.user)
       preview = create(:llm_chat, feed: current_feed, user: current_feed.user, purpose: :preview)
-      create(:ruby_llm_usage, chat: refresh, total_cost: "0.25", input_tokens: 10_000, output_tokens: 5_000)
+      create(:ruby_llm_usage, chat: refresh, total_cost: "0.25", input_tokens: 10_000, output_tokens: 5_000,
+                              server_tool_use: { "web_search_requests" => 2 })
       create(:ruby_llm_usage, chat: preview, total_cost: "0.15", input_tokens: 8_000, output_tokens: 2_000)
       credential = create(:search_credential, :active, user: current_feed.user)
       refresh_event = create(:event, type: "feed_refresh", subject: current_feed, user: current_feed.user)
@@ -38,7 +39,7 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
 
     value = result.css('[data-key="llm_stats.estimated_spend.value"]').first
     assert_not_nil value
-    assert_equal "$0.40", value.text.strip
+    assert_equal "$0.42", value.text.strip
   end
 
   test "#render should sum fractional preview and scheduled costs before formatting and preserve unknown totals" do
@@ -77,7 +78,7 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
     result = render_stats(feed_with_usages)
 
     assert_equal "2", result.css('[data-key="llm_stats.ai_calls.value"]').first.text.strip
-    assert_equal "$0.40", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
+    assert_equal "$0.42", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
     assert_equal "2", result.css('[data-key="llm_stats.search_calls.value"]').first.text.strip
     assert_equal "$0.00200", result.css('[data-key="llm_stats.search_estimated_spend.value"]').first.text.strip
   end

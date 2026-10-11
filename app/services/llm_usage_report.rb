@@ -6,8 +6,8 @@ class LlmUsageReport
 
   AGGREGATES = {
     call_count:         "COUNT(*)",
-    known_cost:         "COALESCE(SUM(total_cost), 0)",
-    unknown_cost_count: "COUNT(*) - COUNT(total_cost)",
+    known_cost:         "COALESCE(SUM(total_cost), 0) + COALESCE(SUM(web_search_cost), 0)",
+    unknown_cost_count: "COUNT(*) - COUNT(total_cost + web_search_cost)",
     input_tokens:       "SUM(input_tokens)",
     output_tokens:      "SUM(output_tokens)",
     cache_read_tokens:  "SUM(cache_read_tokens)",
@@ -53,7 +53,7 @@ class LlmUsageReport
   # @param period [Range<Time>, nil] usage timestamps to include
   def initialize(chats:, period: nil)
     # A subquery keeps each usage row unique even with duplicate event references.
-    @usages = RubyLLM::ActiveRecord::Usage.where(chat_type: "LlmChat", chat_id: chats.select(:id))
+    @usages = LlmUsage.where(chat_type: "LlmChat", chat_id: chats.select(:id))
     @usages = @usages.where(created_at: period) if period
   end
 
