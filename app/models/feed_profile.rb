@@ -46,7 +46,7 @@ class FeedProfile
             "title" => "Maximum comments per post",
             "description" => "When posting article text as comments, keep only the first comments up to this limit. Leave blank for all comments.",
             "minimum" => 1,
-            "maximum" => 100
+            "maximum" => 20
           }
         },
         "required" => ["url"],
