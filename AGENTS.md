@@ -48,6 +48,9 @@ Feeder reposts content from external sources to the FreeFeed social network.
 - **CODE-04:** Preserve useful YARD `@param` and `@return` annotations without filler descriptions.
 - **CODE-05:** Report handled exceptions through `Rails.error` with relevant
   context, using `Rails.error.report` or `Rails.error.handle`.
+- **CODE-06:** Separate multiline statements from adjacent statements in the same
+  block with one blank line. Do not add blank lines immediately after the block
+  opener or before its closer.
 
 ## User interface
 
