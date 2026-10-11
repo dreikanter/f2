@@ -100,7 +100,7 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
     assert_equal "1", input["min"]
     assert_equal "1", input["step"]
     assert_nil input["required"]
-    assert_nil input["max"]
+    assert_equal "100", input["max"]
     assert_predicate input["value"], :blank?
     assert_includes labels(result), "Maximum comments per post"
   end
