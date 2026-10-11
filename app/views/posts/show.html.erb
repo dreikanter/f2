@@ -11,6 +11,17 @@
         key: "post.status_badge"
       ) %>
     <% end %>
+    <% if @post.published? && @post.freefeed_post_url.present? %>
+      <% header.with_action_button do %>
+        <%= link_to @post.freefeed_post_url,
+                    target: "_blank",
+                    rel: "noopener",
+                    class: class_names(secondary_button_classes(compact: true), "gap-2"),
+                    data: { key: "post.open" } do %>
+          Open <%= icon("external-link", css_class: "size-4") %>
+        <% end %>
+      <% end %>
+    <% end %>
     <% header.with_action_button do %>
       <% items = [{ label: "Source", href: feed_entry_path(@post.feed_entry), data: { key: "post.source" } }] %>
       <% if policy(@post).destroy? %>
