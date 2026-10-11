@@ -385,7 +385,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
 
     post = normalize_article({ "content" => "<p>#{chunk}</p>" * 3 }, 2)
 
-    suffix = "\n\n[...]"
+    suffix = " [...]"
     expected_tail = ("Ж" * (Post::MAX_COMMENT_LENGTH - suffix.length - 1)) + "…#{suffix}"
 
     assert_equal [chunk, expected_tail], post.comments
@@ -399,7 +399,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
 
     post = normalize_article({ "content" => "<p>#{chunk}Remainder.</p><p>Next paragraph.</p>" }, 1)
 
-    suffix = "\n\n[...]"
+    suffix = " [...]"
     expected = ("Ж" * (Post::MAX_COMMENT_LENGTH - suffix.length - 1)) + "…#{suffix}"
 
     assert_equal [expected], post.comments
@@ -413,7 +413,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
 
     post = normalize_article({ "content" => "<p>#{first}</p><p>#{second}</p><p>#{third}</p>" }, 2)
 
-    assert_equal [first, "#{second}\n\n[...]"], post.comments
+    assert_equal [first, "#{second} [...]"], post.comments
   end
 
   test "#normalize should not mark the last comment when the content fits the limit" do
