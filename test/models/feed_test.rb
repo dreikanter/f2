@@ -130,7 +130,7 @@ class FeedTest < ActiveSupport::TestCase
   test "#save should accept the maximum RSS comment limit" do
     feed = build(:feed, feed_profile_key: "rss", params: {
       "url" => "https://example.com/feed.xml",
-      "max_comments" => 100
+      "max_comments" => 20
     })
 
     assert feed.valid?, feed.errors.full_messages.inspect
@@ -139,7 +139,7 @@ class FeedTest < ActiveSupport::TestCase
   test "#save should reject RSS comment limits above the maximum" do
     feed = build(:feed, feed_profile_key: "rss", params: {
       "url" => "https://example.com/feed.xml",
-      "max_comments" => 101
+      "max_comments" => 21
     })
 
     assert_not feed.valid?
