@@ -5,7 +5,12 @@ class LlmUsage < RubyLLM::ActiveRecord::Usage
   # Standard Responses web_search, not the differently priced preview tool.
   # https://developers.openai.com/api/docs/pricing#tools
   SEARCH_REQUEST_COST = BigDecimal("0.01")
-  FIXED_SEARCH_CONTENT_MODELS = /\Agpt-(?:4o|4\.1)-mini(?:-\d{4}-\d{2}-\d{2})?\z/
+  FIXED_SEARCH_CONTENT_MODELS = %w[
+    gpt-4o-mini
+    gpt-4o-mini-2024-07-18
+    gpt-4.1-mini
+    gpt-4.1-mini-2025-04-14
+  ].freeze
 
   before_create :record_search_cost
 
@@ -26,7 +31,7 @@ class LlmUsage < RubyLLM::ActiveRecord::Usage
   end
 
   def search_request_cost
-    return SEARCH_REQUEST_COST unless model.match?(FIXED_SEARCH_CONTENT_MODELS)
+    return SEARCH_REQUEST_COST unless FIXED_SEARCH_CONTENT_MODELS.include?(model)
 
     price = RubyLLM.models.find(model, provider: :openai).price(:input)
     SEARCH_REQUEST_COST + BigDecimal(price.to_s) * 8_000 / 1_000_000 if price

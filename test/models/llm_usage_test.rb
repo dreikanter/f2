@@ -45,6 +45,14 @@ class LlmUsageTest < ActiveSupport::TestCase
     assert_equal BigDecimal("0.03"), usage.total_cost
   end
 
+  test "#estimated_cost should not infer fixed content pricing from an unlisted model name" do
+    usage = create(:ruby_llm_usage, chat: nil, model: "gpt-4.1-mini-2099-01-01",
+                                   server_tool_use: { "web_search_requests" => 1 })
+
+    assert_equal BigDecimal("0.01"), usage.reload.web_search_cost
+    assert_equal BigDecimal("0.04"), usage.estimated_cost
+  end
+
   test "#estimated_cost should retain search spend when token costs are unknown" do
     usage = create(:ruby_llm_usage, total_cost: nil, status: "cancelled", server_tool_use: { "web_search_requests" => 2 })
 
