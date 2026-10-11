@@ -272,7 +272,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_includes post.validation_errors, "no_content_or_images"
   end
 
-  test "#normalize should publish article paragraphs as ordered comments when enabled" do
+  test "#normalize should preserve article paragraphs within comments when enabled" do
     post = normalize_article(
       "title" => "An <em>article</em>",
       "content" => '<p>First &amp; foremost.<br>A second line.</p><p>See <a href="https://example.com/more">details</a>.</p><p><img src="https://example.com/image.jpg"></p>',
@@ -280,7 +280,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     )
 
     assert_equal "An article - https://example.com/article", post.content
-    assert_equal ["First & foremost.\nA second line.", "See details (https://example.com/more)."], post.comments
+    assert_equal ["First & foremost.\nA second line.\n\nSee details (https://example.com/more)."], post.comments
     assert_equal ["https://example.com/image.jpg"], post.attachment_urls
     assert_predicate post, :enqueued?
   end
@@ -306,7 +306,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
       "summary" => "<p>First paragraph.</p><p>Second paragraph.</p>"
     )
 
-    assert_equal ["First paragraph.", "Second paragraph."], post.comments
+    assert_equal ["First paragraph.\n\nSecond paragraph."], post.comments
   end
 
   test "#normalize should fall back to description paragraphs" do
@@ -342,9 +342,9 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     first = "Sample says, “This is fake.” " * 70
     second = "fake sample " * 120 + "ending."
 
-    post = normalize_article("content" => "<p>#{first}#{second}</p><p>Next paragraph.</p>")
+    post = normalize_article("content" => "<p>#{first}#{second}</p>")
 
-    assert_equal [first.strip, second, "Next paragraph."], post.comments
+    assert_equal [first.strip, second], post.comments
   end
 
   test "#normalize should split an oversized sentence at a word boundary" do
@@ -364,21 +364,33 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_equal [chunk, chunk, chunk, chunk, "ending"], post.comments
   end
 
-  test "#normalize should keep separate paragraphs even when they would fit together" do
+  test "#normalize should preserve paragraph breaks when all text fits one comment" do
     post = normalize_article("content" => "<p>Repeat.</p><p>Repeat.</p><p>End.</p>")
 
-    assert_equal ["Repeat.", "Repeat.", "End."], post.comments
+    assert_equal ["Repeat.\n\nRepeat.\n\nEnd."], post.comments
   end
 
-  test "#normalize should keep only the first comments up to the configured limit" do
-    post = normalize_article({ "content" => "<p>First.</p><p>Second.</p><p>Third.</p>" }, 2)
+  test "#normalize should pack paragraphs up to the comment size limit" do
+    first = "A" * 900
+    second = "B" * 1700
+    third = "C" * 1500
 
-    assert_equal ["First.", "Second."], post.comments
+    post = normalize_article("content" => "<p>#{first}</p><p>#{second}</p><p>#{third}</p>")
+
+    assert_equal ["#{first}\n\n#{second}", third], post.comments
+  end
+
+  test "#normalize should keep only the first size-limited comments up to the configured limit" do
+    chunk = "Ж" * Post::MAX_COMMENT_LENGTH
+
+    post = normalize_article({ "content" => "<p>#{chunk}</p>" * 3 }, 2)
+
+    assert_equal [chunk, chunk], post.comments
     assert_equal "Article - https://example.com/article", post.content
     assert_predicate post, :enqueued?
   end
 
-  test "#normalize should count split paragraphs toward the comment limit" do
+  test "#normalize should count an oversized paragraph toward the comment limit" do
     chunk = "Ж" * Post::MAX_COMMENT_LENGTH
 
     post = normalize_article({ "content" => "<p>#{chunk}Remainder.</p><p>Next paragraph.</p>" }, 1)
@@ -386,10 +398,10 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_equal [chunk], post.comments
   end
 
-  test "#normalize should retain all comments below the configured limit" do
+  test "#normalize should retain packed paragraphs below the configured limit" do
     post = normalize_article({ "content" => "<p>First.</p><p>Second.</p>" }, 3)
 
-    assert_equal ["First.", "Second."], post.comments
+    assert_equal ["First.\n\nSecond."], post.comments
   end
 
   private
