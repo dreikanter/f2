@@ -1,5 +1,7 @@
 # Adds application-priced native searches to the SDK's frozen token costs.
 class LlmUsage < RubyLLM::ActiveRecord::Usage
+  self.implicit_order_column = "id"
+
   # Standard Responses web_search, not the differently priced preview tool.
   # https://developers.openai.com/api/docs/pricing#tools
   SEARCH_REQUEST_COST = BigDecimal("0.01")
