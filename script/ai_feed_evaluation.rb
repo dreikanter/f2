@@ -53,7 +53,7 @@ class AiFeedEvaluation
       usages = LlmUsageReport.for_feed(feed)
       report[:usage] = usages.usages.map { |usage| usage.attributes.slice("provider", "model", "status", "input_tokens", "output_tokens", "total_cost") }
       report[:cost_totals] = usages.totals.to_h
-      report[:search_calls] = usages.usages.sum { |usage| LlmUsageDetails.new(usage).web_search_count.to_i }
+      report[:search_calls] = usages.usages.sum { |usage| usage.tokens.server_tool_use.to_h.fetch("web_search_requests", 0) }
       report[:system_prompt] = feed.llm_chats.first&.messages&.find_by(role: "system")&.content
       report[:usage_availability] = "Retained attempts only; in-flight spend may be missing after a failure"
       report[:latency_seconds] = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
