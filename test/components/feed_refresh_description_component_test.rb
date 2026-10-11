@@ -14,7 +14,7 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
     @refresh_event ||= Event.create!(type: "feed_refresh", level: :info, subject: feed, user: user, message: "", metadata: {})
   end
 
-  test "#call should append the imported posts count" do
+  test "#call should append the new posts count" do
     create(:event_reference, event: refresh_event, reference: create(:post, feed: feed))
     create(:event_reference, event: refresh_event, reference: create(:post, feed: feed))
 
@@ -59,26 +59,34 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
     assert_empty result.css("[data-key='events.already_imported']")
   end
 
-  test "#call should describe previously imported entries and retain AI spend" do
+  test "#call should show only the refresh status when all entries were already imported" do
+    event = completed_event(total_entries: 15, new_posts: 0, already_imported_entries: 15)
+
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
+
+    assert_equal "Test Feed refreshed", result.text
+  end
+
+  test "#call should omit already imported counts but retain AI spend" do
     event = completed_event(total_entries: 3, new_posts: 0, already_imported_entries: 2,
                             collapsed_duplicate_uids: 1, llm_calls: 1, llm_cost_cents: 3)
 
     result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
 
     assert_empty result.css("[data-key='events.posts_count']")
-    assert_equal "2 entries already imported", result.css("[data-key='events.already_imported']").text
+    assert_empty result.css("[data-key='events.already_imported']")
     assert_equal "AI usage: $0.03", result.css("[data-key='events.llm_cost']").text
-    assert_equal ["Test Feed refreshed", "2 entries already imported", "AI usage: $0.03"], result.text.split("·")
+    assert_equal ["Test Feed refreshed", "AI usage: $0.03"], result.text.split("·")
   end
 
-  test "#call should show new posts alongside previously imported entries" do
+  test "#call should show new posts without mentioning previously imported entries" do
     event = completed_event(total_entries: 2, new_posts: 1, already_imported_entries: 1)
 
     result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
 
     assert_equal "1 new post", result.css("[data-key='events.posts_count']").text
-    assert_equal "1 entry already imported", result.css("[data-key='events.already_imported']").text
-    assert_equal ["Test Feed refreshed", "1 new post", "1 entry already imported"], result.text.split("·")
+    assert_empty result.css("[data-key='events.already_imported']")
+    assert_equal ["Test Feed refreshed", "1 new post"], result.text.split("·")
   end
 
   test "#call should retain the empty result when some entries were rejected" do
@@ -86,7 +94,7 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
 
-    assert_equal ["Test Feed refreshed", "no new posts", "1 entry already imported"], result.text.split("·")
+    assert_equal ["Test Feed refreshed", "no new posts"], result.text.split("·")
   end
 
   test "#call should not count rejected posts as new posts" do

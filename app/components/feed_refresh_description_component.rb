@@ -1,9 +1,9 @@
 # Describes a feed refresh by its lifecycle status, appending the
 # result and the run's AI spend when present,
-# e.g. "My Feed refreshed · 2 new posts · 1 entry already imported · AI usage: $0.03".
+# e.g. "My Feed refreshed · 2 new posts · AI usage: $0.03".
 class FeedRefreshDescriptionComponent < EventDescriptionComponent
   def call
-    suffixes = [result_tag, already_imported_tag, spend_tag].compact
+    suffixes = [result_tag, spend_tag].compact
     safe_join([super, *suffixes], helpers.middot)
   end
 
@@ -44,14 +44,6 @@ class FeedRefreshDescriptionComponent < EventDescriptionComponent
   def only_previously_imported_entries?(stats)
     imported = stats["already_imported_entries"].to_i
     imported.positive? && stats["total_entries"] == imported + stats["collapsed_duplicate_uids"].to_i
-  end
-
-  def already_imported_tag
-    count = event.metadata.dig("stats", "already_imported_entries").to_i
-    return if count.zero?
-
-    helpers.tag.span("#{helpers.pluralize(count, "entry")} already imported",
-                     class: "text-muted", data: { key: "events.already_imported" })
   end
 
   # Reads the metadata snapshot, not the referenced rows, so the log renders
