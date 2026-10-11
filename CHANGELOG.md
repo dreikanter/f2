@@ -2,6 +2,7 @@
 
 ## 2026-10-11
 
+- Feed refresh summaries no longer show already imported entry counts.
 - AI usage shows provider-reported native web search counts instead of counting response events.
 
 ## 2026-10-07
