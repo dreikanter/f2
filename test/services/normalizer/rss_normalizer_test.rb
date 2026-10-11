@@ -385,7 +385,11 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
 
     post = normalize_article({ "content" => "<p>#{chunk}</p>" * 3 }, 2)
 
-    assert_equal [chunk, chunk], post.comments
+    suffix = "\n\n[Text truncated]"
+    expected_tail = ("Ж" * (Post::MAX_COMMENT_LENGTH - suffix.length - 1)) + "…#{suffix}"
+
+    assert_equal [chunk, expected_tail], post.comments
+    assert_equal Post::MAX_COMMENT_LENGTH, post.comments.last.length
     assert_equal "Article - https://example.com/article", post.content
     assert_predicate post, :enqueued?
   end
@@ -395,7 +399,29 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
 
     post = normalize_article({ "content" => "<p>#{chunk}Remainder.</p><p>Next paragraph.</p>" }, 1)
 
-    assert_equal [chunk], post.comments
+    suffix = "\n\n[Text truncated]"
+    expected = ("Ж" * (Post::MAX_COMMENT_LENGTH - suffix.length - 1)) + "…#{suffix}"
+
+    assert_equal [expected], post.comments
+    assert_equal Post::MAX_COMMENT_LENGTH, post.comments.first.length
+  end
+
+  test "#normalize should add a notice without trimming a short final comment" do
+    first = "A" * 2800
+    second = "B" * 2800
+    third = "C" * 2800
+
+    post = normalize_article({ "content" => "<p>#{first}</p><p>#{second}</p><p>#{third}</p>" }, 2)
+
+    assert_equal [first, "#{second}\n\n[Text truncated]"], post.comments
+  end
+
+  test "#normalize should not mark the last comment when the content fits the limit" do
+    chunk = "Ж" * Post::MAX_COMMENT_LENGTH
+
+    post = normalize_article({ "content" => "<p>#{chunk}</p>" * 2 }, 2)
+
+    assert_equal [chunk, chunk], post.comments
   end
 
   test "#normalize should handle an oversized stored comment limit" do
