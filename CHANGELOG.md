@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-11
+
+- AI usage shows provider-reported native web search counts instead of counting response events.
+
 ## 2026-10-07
 
 - Posts with many comments or attachments now pause and resume automatically when FreeFeed limits publishing.
