@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_26_230000) do
+ActiveRecord::Schema[8.2].define(version: 2026_10_10_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -255,6 +255,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_26_230000) do
     t.string "finish_reason"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "cache_ttl"
     t.index ["llm_chat_id"], name: "index_llm_messages_on_llm_chat_id"
   end
 
@@ -350,6 +351,17 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_26_230000) do
     t.index ["status"], name: "index_ruby_llm_batches_on_status"
   end
 
+  create_table "ruby_llm_mcp_credentials", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.string "owner_type"
+    t.uuid "owner_id"
+    t.string "key", null: false
+    t.text "data"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_ruby_llm_mcp_credentials_on_key", unique: true
+    t.index ["owner_type", "owner_id"], name: "index_ruby_llm_mcp_credentials_on_owner"
+  end
+
   create_table "ruby_llm_models", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.string "model_id", null: false
     t.string "name", null: false
@@ -373,6 +385,17 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_26_230000) do
     t.index ["provider"], name: "index_ruby_llm_models_on_provider"
   end
 
+  create_table "ruby_llm_provider_files", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.string "blob_key", null: false
+    t.string "provider", null: false
+    t.string "account", null: false
+    t.text "file_id", null: false
+    t.datetime "expires_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["blob_key", "provider", "account"], name: "index_ruby_llm_provider_files_uniqueness", unique: true
+  end
+
   create_table "ruby_llm_tool_calls", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.string "message_type", null: false
     t.uuid "message_id", null: false
@@ -386,6 +409,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_26_230000) do
     t.jsonb "arguments", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "mcp_state"
+    t.jsonb "mcp_result"
     t.index ["message_type", "message_id"], name: "index_ruby_llm_tool_calls_on_message_type_and_message_id"
     t.index ["name"], name: "index_ruby_llm_tool_calls_on_name"
     t.index ["result_type", "result_id"], name: "index_ruby_llm_tool_calls_on_result_type_and_result_id"
@@ -393,8 +418,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_26_230000) do
   end
 
   create_table "ruby_llm_usages", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
-    t.string "chat_type", null: false
-    t.uuid "chat_id", null: false
+    t.string "chat_type"
+    t.uuid "chat_id"
     t.string "message_type"
     t.uuid "message_id"
     t.string "operation", null: false
@@ -414,10 +439,14 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_26_230000) do
     t.decimal "total_cost", precision: 16, scale: 10
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "server_tool_use"
+    t.string "owner_type"
+    t.uuid "owner_id"
     t.index ["chat_type", "chat_id"], name: "index_ruby_llm_usages_on_chat_type_and_chat_id"
     t.index ["message_type", "message_id"], name: "index_ruby_llm_usages_on_message_type_and_message_id"
+    t.index ["owner_type", "owner_id"], name: "index_ruby_llm_usages_on_owner"
     t.index ["status"], name: "index_ruby_llm_usages_on_status"
-    t.check_constraint "operation::text = ANY (ARRAY['chat'::character varying, 'embedding'::character varying, 'moderation'::character varying, 'image'::character varying, 'speech'::character varying, 'transcription'::character varying, 'ocr'::character varying, 'rerank'::character varying]::text[])"
+    t.check_constraint "operation::text = ANY (ARRAY['chat'::character varying, 'embedding'::character varying, 'moderation'::character varying, 'image'::character varying, 'speech'::character varying, 'transcription'::character varying, 'ocr'::character varying, 'rerank'::character varying, 'judgment'::character varying, 'video'::character varying, 'research'::character varying]::text[])", name: "ruby_llm_usages_operation_check"
     t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'succeeded'::character varying, 'failed'::character varying, 'cancelled'::character varying]::text[])"
   end
 

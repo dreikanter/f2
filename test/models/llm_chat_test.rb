@@ -18,6 +18,7 @@ class LlmChatTest < ActiveSupport::TestCase
       usage: { input_tokens: 20, output_tokens: 10 }
     }
     response = JSON.parse(file_fixture("llm_transcripts/completed.json").read)
+    response["tool_usage"] = { "web_search" => { "num_requests" => 2 } }
     request = stub_request(:post, "https://api.openai.com/v1/responses")
       .to_return_json(body: tool_response)
       .then.to_return_json(body: response)
@@ -47,7 +48,27 @@ class LlmChatTest < ActiveSupport::TestCase
     assert_equal response.fetch("output"), messages.last[:raw_content]
     assert_equal "stop", messages.last[:finish_reason]
     assert_equal 2, history.ruby_llm_usages.count
+    assert_equal({ "web_search_requests" => 2 }, history.ruby_llm_usages.last.server_tool_use)
     assert_requested request, times: 2
+  end
+
+  test "#messages should retain a cache boundary lifetime when reloaded" do
+    chat = create(:llm_chat)
+    message = chat.messages.create!(role: "user", content: "Reusable context")
+    message.cache_until_here(ttl: "1h")
+
+    restored = LlmChat.find(chat.id).messages.sole.to_llm
+    assert restored.cache_until_here?
+    assert_equal "1h", restored.cache_ttl
+  end
+
+  test "#ruby_llm_usages should allow an owned judgment without a chat" do
+    owner = create(:user)
+    usage = create(:ruby_llm_usage, chat: nil, owner: owner, operation: "judgment")
+
+    assert_nil usage.reload.chat
+    assert_equal owner, usage.owner
+    assert_equal "judgment", usage.to_entry.operation.to_s
   end
 
   test "#create! should schedule interruption at the capped deadline" do
