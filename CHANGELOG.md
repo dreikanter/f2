@@ -2,7 +2,7 @@
 
 ## 2026-10-07
 
-- RSS article text is grouped into size-limited comments instead of one per paragraph, with an optional limit on comment count.
+- RSS article text is grouped into size-limited comments instead of one per paragraph, with an optional limit on comment count and a notice when text is omitted.
 - Posts with many comments or attachments now pause and resume automatically when FreeFeed limits publishing.
 
 ## 2026-10-05
