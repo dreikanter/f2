@@ -5,6 +5,9 @@ class LlmChat < ApplicationRecord
 
   acts_as_chat message_class: "LlmMessage", messages_foreign_key: :llm_chat_id
 
+  has_many :ruby_llm_usages, -> { chronological }, as: :chat,
+                           class_name: "LlmUsage", inverse_of: :chat, dependent: :destroy
+
   belongs_to :user
   belongs_to :feed, optional: true
   belongs_to :ai_credential, optional: true

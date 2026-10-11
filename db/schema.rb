@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_10_10_190000) do
+ActiveRecord::Schema[8.2].define(version: 2026_10_11_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -442,6 +442,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_10_190000) do
     t.jsonb "server_tool_use"
     t.string "owner_type"
     t.uuid "owner_id"
+    t.decimal "web_search_cost", precision: 16, scale: 10, default: "0.0"
     t.index ["chat_type", "chat_id"], name: "index_ruby_llm_usages_on_chat_type_and_chat_id"
     t.index ["message_type", "message_id"], name: "index_ruby_llm_usages_on_message_type_and_message_id"
     t.index ["owner_type", "owner_id"], name: "index_ruby_llm_usages_on_owner"

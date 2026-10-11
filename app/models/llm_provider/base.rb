@@ -25,6 +25,12 @@ module LlmProvider
       raise NotImplementedError, "Subclasses must implement #protocol"
     end
 
+    # Additional search charges beyond the SDK's recorded cost.
+    # Providers override this when the SDK excludes their search fees.
+    def search_cost(model:, searches:)
+      0
+    end
+
     private
 
     attr_reader :credential_data

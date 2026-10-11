@@ -49,6 +49,9 @@ class LlmChatTest < ActiveSupport::TestCase
     assert_equal "stop", messages.last[:finish_reason]
     assert_equal 2, history.ruby_llm_usages.count
     assert_equal({ "web_search_requests" => 2 }, history.ruby_llm_usages.last.server_tool_use)
+    assert_instance_of LlmUsage, history.ruby_llm_usages.last
+    assert_equal BigDecimal("0.02"), history.ruby_llm_usages.last.web_search_cost
+    assert_equal history.ruby_llm_usages.last.total_cost + BigDecimal("0.02"), history.ruby_llm_usages.last.estimated_cost
     assert_requested request, times: 2
   end
 

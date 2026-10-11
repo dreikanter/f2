@@ -83,6 +83,7 @@ class LlmUsageListItemComponentTest < ViewComponent::TestCase
 
     assert_nil chat.reload.ai_credential_id
     assert_equal "1,000 in · 500 out · 3 native web searches", result.css('[data-key="events.llm_usage.tokens"]').text
+    assert_equal "$0.06", result.css('[data-key="events.llm_usage.cost"]').text
   end
 
   test "#render should show normalized search counts from another provider without a message" do

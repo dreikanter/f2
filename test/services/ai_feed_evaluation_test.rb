@@ -107,7 +107,8 @@ class AiFeedEvaluationTest < ActiveSupport::TestCase
         assert_equal "gpt-5-nano", report[:usage].sole.fetch("model")
         assert_equal 3, report[:search_calls]
         assert_equal 1, report[:cost_totals].fetch(:call_count)
-        assert_includes report[:tool_cost_usd], "Unknown"
+        assert_equal BigDecimal("0.03"), report[:tool_cost_usd]
+        assert_equal BigDecimal("0.03"), report[:usage].sole.fetch("web_search_cost")
         assert_includes report[:source_verification], "Unavailable"
         assert report[:system_prompt].present?
       end
