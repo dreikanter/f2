@@ -398,6 +398,12 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_equal [chunk], post.comments
   end
 
+  test "#normalize should handle an oversized stored comment limit" do
+    post = normalize_article({ "content" => "<p>First.</p><p>Second.</p>" }, 10**20)
+
+    assert_equal ["First.\n\nSecond."], post.comments
+  end
+
   test "#normalize should retain packed paragraphs below the configured limit" do
     post = normalize_article({ "content" => "<p>First.</p><p>Second.</p>" }, 3)
 
