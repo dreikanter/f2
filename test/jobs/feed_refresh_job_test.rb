@@ -46,6 +46,38 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     assert_requested request, times: 1
   end
 
+  test "#perform should record invalid source content without reporting a bug or retrying" do
+    post = create(:post, :published, feed: feed)
+    request = stub_request(:get, feed.url)
+      .to_return(status: 200, body: "<html><body>Temporarily unavailable</body></html>")
+
+    reports = capture_error_reports do
+      assert_no_difference ["Post.count", "FeedEntry.count"] do
+        assert_no_enqueued_jobs(only: FeedRefreshJob) { FeedRefreshJob.perform_now(feed.id) }
+      end
+    end
+
+    assert_empty reports
+    event = feed.events.find_by!(type: "feed_refresh")
+    assert_equal "failed", event.metadata["status"]
+    assert_equal "process_feed_contents", event.metadata.dig("error", "stage")
+    assert_equal "Feedjira::NoParserAvailable", event.metadata.dig("error", "class")
+    assert_equal 1, feed.reload.consecutive_failures
+    assert_predicate post.reload, :published?
+    assert_requested request, times: 1
+  end
+
+  test "#perform should still complete a valid empty RSS feed" do
+    stub_request(:get, feed.url)
+      .to_return(body: '<rss version="2.0"><channel><title>Empty feed</title></channel></rss>')
+
+    FeedRefreshJob.perform_now(feed.id)
+
+    assert_equal "completed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
+    assert_equal 0, feed.reload.consecutive_failures
+    assert_empty feed.posts
+  end
+
   test "#perform should record a connection failure without reporting a bug or retrying" do
     request = stub_request(:get, feed.url).to_raise(SocketError.new("Name resolution failed"))
 

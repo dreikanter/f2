@@ -13,6 +13,8 @@ class FeedPreviewJob < ApplicationJob
     FeedPreviewWorkflow.new(feed_preview, run_id: run_id).execute
   rescue Loader::LlmLoader::ExecutionLimitExceeded, Loader::HttpBase::TransportError
     nil
+  rescue Feedjira::NoParserAvailable => e
+    Rails.logger.warn "Feed preview #{feed_preview_id} received unsupported feed content: #{e.message}"
   rescue => e
     # The workflow already transitioned the preview to :failed. Do not re-raise:
     # retrying would reset status back to :processing (via initialize_workflow),

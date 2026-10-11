@@ -90,6 +90,21 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     assert preview.reload.failed?
   end
 
+  test "#perform should settle invalid source content without reporting a bug or retrying" do
+    url = "https://example.com/feed.xml"
+    preview = create(:feed_preview, feed_profile_key: "rss", params: { "url" => url }, run_id: RUN_ID)
+    request = stub_request(:get, url)
+      .to_return(status: 200, body: "<html><body>Temporarily unavailable</body></html>")
+
+    reports = capture_error_reports do
+      assert_no_enqueued_jobs(only: FeedPreviewJob) { FeedPreviewJob.perform_now(preview.id, RUN_ID) }
+    end
+
+    assert_empty reports
+    assert_predicate preview.reload, :failed?
+    assert_requested request, times: 1
+  end
+
   test "#perform should settle an HTTP timeout without reporting a bug or retrying" do
     url = "https://example.com/feed.xml"
     preview = create(:feed_preview, feed_profile_key: "rss", params: { "url" => url }, run_id: RUN_ID)
