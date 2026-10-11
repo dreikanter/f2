@@ -60,7 +60,12 @@ module Normalizer
 
       comments = split_comment(body_text.to_s)
       limit = feed_entry.feed.params["max_comments"].presence
-      limit ? comments.first([limit, comments.length].min) : comments
+      return comments if limit.nil? || comments.size <= limit
+
+      comments = comments.first(limit)
+      suffix = "\n\n[Text truncated]"
+      comments[-1] = comments.last.truncate(Post::MAX_COMMENT_LENGTH - suffix.length, separator: /\s/, omission: "…") + suffix
+      comments
     end
 
     def body_text
