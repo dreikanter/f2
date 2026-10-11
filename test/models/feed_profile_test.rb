@@ -215,7 +215,7 @@ class FeedProfileTest < ActiveSupport::TestCase
   end
 
   test ".parameter_keys_for should return the keys a profile declares" do
-    assert_equal %w[url content_in_comments], FeedProfile.parameter_keys_for("rss")
+    assert_equal %w[url content_in_comments max_comments], FeedProfile.parameter_keys_for("rss")
     assert_equal ["prompt", "max_items"], FeedProfile.parameter_keys_for("llm")
     assert_equal [], FeedProfile.parameter_keys_for("webhook")
   end
@@ -238,7 +238,7 @@ class FeedProfileTest < ActiveSupport::TestCase
   end
 
   test ".options_for should expose the opt-in RSS comment presentation" do
-    option = FeedProfile.options_for("rss").sole
+    option = FeedProfile.options_for("rss").find { |option| option.name == "content_in_comments" }
 
     assert_equal "content_in_comments", option.name
     assert_predicate option, :boolean?

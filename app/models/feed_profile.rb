@@ -38,8 +38,15 @@ class FeedProfile
           "content_in_comments" => {
             "type" => "boolean",
             "title" => "Post article text as comments",
-            "description" => "Use the title as the post body and publish each paragraph as a comment. Long paragraphs are split to fit.",
+            "description" => "Use the title as the post body and split article text into size-limited comments, preserving paragraph breaks.",
             "default" => false
+          },
+          "max_comments" => {
+            "type" => "integer",
+            "title" => "Maximum comments per post",
+            "description" => "Keep up to this many comments, marking omitted text in the last one. Leave blank for all comments.",
+            "minimum" => 1,
+            "maximum" => 20
           }
         },
         "required" => ["url"],

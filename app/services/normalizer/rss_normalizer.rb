@@ -5,6 +5,7 @@ module Normalizer
 
     # Where an entry's text may live, best source first.
     CONTENT_FIELDS = %w[content summary description].freeze
+    TRUNCATION_SUFFIX = " [...]".freeze
 
     private
 
@@ -58,7 +59,13 @@ module Normalizer
     def normalize_comments
       return [] unless content_in_comments?
 
-      body_text.to_s.split("\n\n").compact_blank.flat_map { |paragraph| split_comment(paragraph) }
+      comments = split_comment(body_text.to_s)
+      limit = feed_entry.feed.params["max_comments"].presence
+      return comments if limit.nil? || comments.size <= limit
+
+      comments = comments.first(limit)
+      comments[-1] = comments.last.truncate(Post::MAX_COMMENT_LENGTH - TRUNCATION_SUFFIX.length, separator: /\s/, omission: "…") + TRUNCATION_SUFFIX
+      comments
     end
 
     def body_text

@@ -116,6 +116,56 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal 1, feed.reload.params["max_items"]
   end
 
+  test "#save should persist the RSS comment limit as an integer" do
+    feed = build(:feed, feed_profile_key: "rss", params: {
+      "url" => "https://example.com/feed.xml",
+      "content_in_comments" => true,
+      "max_comments" => "2"
+    })
+
+    assert feed.save, feed.errors.full_messages.inspect
+    assert_equal 2, feed.reload.params["max_comments"]
+  end
+
+  test "#save should accept the maximum RSS comment limit" do
+    feed = build(:feed, feed_profile_key: "rss", params: {
+      "url" => "https://example.com/feed.xml",
+      "max_comments" => 20
+    })
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "#save should reject RSS comment limits above the maximum" do
+    feed = build(:feed, feed_profile_key: "rss", params: {
+      "url" => "https://example.com/feed.xml",
+      "max_comments" => 21
+    })
+
+    assert_not feed.valid?
+    assert_includes feed.errors.attribute_names, :params
+  end
+
+  test "#save should reject oversized RSS comment limits" do
+    feed = build(:feed, feed_profile_key: "rss", params: {
+      "url" => "https://example.com/feed.xml",
+      "max_comments" => 10**20
+    })
+
+    assert_not feed.valid?
+    assert_includes feed.errors.attribute_names, :params
+  end
+
+  test "#save should clear the RSS comment limit when left blank" do
+    feed = create(:feed, feed_profile_key: "rss", params: {
+      "url" => "https://example.com/feed.xml",
+      "max_comments" => 2
+    })
+
+    assert feed.update(params: feed.params.merge("max_comments" => "")), feed.errors.full_messages.inspect
+    assert_not feed.reload.params.key?("max_comments")
+  end
+
   test "#save should accept the maximum AI response limit" do
     feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "Write a story", "max_items" => 10 })
 
