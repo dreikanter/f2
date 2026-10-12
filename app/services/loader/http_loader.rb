@@ -4,7 +4,7 @@ module Loader
       response = http_get(feed_url)
 
       unless response.success?
-        raise Loader::Error, "HTTP #{response.status}"
+        raise ResponseError, "HTTP #{response.status}"
       end
 
       response.body

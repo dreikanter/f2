@@ -1,6 +1,7 @@
 module Loader
   class HttpBase < Base
     class TransportError < Loader::Error; end
+    class ResponseError < Loader::Error; end
 
     DEFAULT_MAX_REDIRECTS = 3
 

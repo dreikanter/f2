@@ -93,7 +93,7 @@ class Loader::YoutubeLoaderTest < ActiveSupport::TestCase
 
     loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
 
-    error = assert_raises(Loader::Error) { loader.load }
+    error = assert_raises(Loader::HttpBase::ResponseError) { loader.load }
     assert_match(/no regular uploads/, error.message)
   end
 
@@ -103,7 +103,7 @@ class Loader::YoutubeLoaderTest < ActiveSupport::TestCase
 
     loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
 
-    error = assert_raises(Loader::Error) { loader.load }
+    error = assert_raises(Loader::HttpBase::ResponseError) { loader.load }
     assert_equal "HTTP 404", error.message
   end
 
@@ -170,7 +170,7 @@ class Loader::YoutubeLoaderTest < ActiveSupport::TestCase
 
     loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
 
-    error = assert_raises(Loader::Error) { loader.load }
+    error = assert_raises(Loader::HttpBase::ResponseError) { loader.load }
     assert_equal "HTTP 404", error.message
   end
 
@@ -180,7 +180,7 @@ class Loader::YoutubeLoaderTest < ActiveSupport::TestCase
 
     loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
 
-    error = assert_raises(Loader::Error) { loader.load }
+    error = assert_raises(Loader::HttpBase::ResponseError) { loader.load }
     assert_equal "HTTP 403", error.message
   end
 

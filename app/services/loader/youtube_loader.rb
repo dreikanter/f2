@@ -18,8 +18,8 @@ module Loader
 
     def load
       response = http_get(feed_url)
-      raise Loader::Error, NO_LONG_FORM_MESSAGE if response.status == 404 && long_form_playlist?
-      raise Loader::Error, "HTTP #{response.status}" unless response.success?
+      raise ResponseError, NO_LONG_FORM_MESSAGE if response.status == 404 && long_form_playlist?
+      raise ResponseError, "HTTP #{response.status}" unless response.success?
       response.body
     end
 
@@ -79,7 +79,7 @@ module Loader
 
     def fetch_feed_url_from_html(url)
       response = http_get(url)
-      raise Loader::Error, "HTTP #{response.status}" unless response.success?
+      raise ResponseError, "HTTP #{response.status}" unless response.success?
 
       extract_feed_url(response.body) or raise Loader::Error, "Could not find YouTube RSS feed link"
     end
