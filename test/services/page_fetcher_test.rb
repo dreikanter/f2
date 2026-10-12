@@ -29,7 +29,10 @@ class PageFetcherTest < ActiveSupport::TestCase
 
     assert_nil fetcher.fetch(PAGE_URL)
 
-    assert_equal({ source: "sample", url: PAGE_URL, status: 503, message: "HTTP 503" }, fetcher.failures.sole)
+    assert_equal({ source: "sample", url: PAGE_URL, status: 503, message: "HTTP 503" },
+                 fetcher.failures.sole.slice(:source, :url, :status, :message))
+    assert fetcher.failures.sole[:retryable]
+    assert_not fetcher.failures.sole[:required]
     assert_requested :get, PAGE_URL, times: 1
   end
 
@@ -75,5 +78,25 @@ class PageFetcherTest < ActiveSupport::TestCase
     stub_request(:get, PAGE_URL).to_raise(ArgumentError.new("unexpected error"))
 
     assert_raises(ArgumentError) { PageFetcher.new.fetch(PAGE_URL) }
+  end
+
+  test "#fetch should mark a required rate-limited page as retryable" do
+    stub_request(:get, PAGE_URL).to_return(status: 429)
+    fetcher = PageFetcher.new
+
+    assert_nil fetcher.fetch(PAGE_URL, required: true)
+
+    assert fetcher.failures.sole[:required]
+    assert fetcher.failures.sole[:retryable]
+  end
+
+  test "#fetch should not retry a missing required page" do
+    stub_request(:get, PAGE_URL).to_return(status: 404)
+    fetcher = PageFetcher.new
+
+    assert_nil fetcher.fetch(PAGE_URL, required: true)
+
+    assert fetcher.failures.sole[:required]
+    assert_not fetcher.failures.sole[:retryable]
   end
 end

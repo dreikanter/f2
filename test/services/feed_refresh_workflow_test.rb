@@ -51,7 +51,6 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       :filter_new_entries,
       :persist_entries,
       :normalize_entries,
-      :persist_posts,
       :enqueue_publication,
       :finalize_workflow
     ]
@@ -148,7 +147,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     # Create existing entry and mark it as imported
-    create(:feed_entry, feed: test_feed, uid: "existing-entry-123")
+    create(:feed_entry, feed: test_feed, uid: "existing-entry-123", status: :processed)
     create(:feed_entry_uid, feed: test_feed, uid: "existing-entry-123")
 
     sample_rss = <<~RSS
@@ -509,6 +508,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     normalizer = Object.new
     normalizer.define_singleton_method(:normalize) { raise "normalization failed" }
     normalizer.define_singleton_method(:page_fetch_failures) { [] }
+    normalizer.define_singleton_method(:awaiting_content?) { false }
 
     test_feed.stub(:normalizer_instance, normalizer) do
       assert_raises(StandardError) { workflow.execute }
@@ -1074,7 +1074,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   test "#execute should allow independent same-day originals while preserving historical identities" do
     create(:llm_model, model_id: "gpt-4.1")
     feed = ai_feed_with_schedule
-    historical = create(:feed_entry, feed: feed, uid: "digest:2026-07-07")
+    historical = create(:feed_entry, feed: feed, uid: "digest:2026-07-07", status: :processed)
     create(:feed_entry_uid, feed: feed, uid: historical.uid)
     request = stub_ai_response([{ "source_url" => nil, "body" => "A story" }])
 

@@ -59,7 +59,7 @@ module Normalizer
     def page
       return @page if defined?(@page)
 
-      @page = page_fetcher.fetch(page_url)
+      @page = page_fetcher.fetch(page_url, required: true)
     end
   end
 end
