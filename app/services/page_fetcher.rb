@@ -14,6 +14,12 @@ class PageFetcher
     details = context.merge(url: url).map { |key, value| "#{key}=#{value}" }.join(" ")
     Rails.logger.warn("Page fetch failed (HTTP #{response.status}) [#{details}]")
     nil
+  rescue HttpClient::TimeoutError, HttpClient::ConnectionError => e
+    Rails.logger.warn(
+      message: "Page fetch failed",
+      payload: context.merge(url: url, error_class: e.class.name)
+    )
+    nil
   rescue HttpClient::Error => e
     Rails.error.report(e, severity: :warning, context: context.merge(url: url))
     nil

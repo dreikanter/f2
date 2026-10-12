@@ -38,8 +38,26 @@ class PageFetcherTest < ActiveSupport::TestCase
     assert_requested :get, PAGE_URL, times: 1
   end
 
-  test "#fetch should report network failures with context and return nil" do
+  test "#fetch should return nil for connection failures without reporting a bug" do
     stub_request(:get, PAGE_URL).to_raise(Faraday::ConnectionFailed.new("connection refused"))
+
+    reports = capture_error_reports { assert_nil PageFetcher.new.fetch(PAGE_URL) }
+
+    assert_empty reports
+    assert_requested :get, PAGE_URL, times: 1
+  end
+
+  test "#fetch should return nil for timeouts without reporting a bug" do
+    stub_request(:get, PAGE_URL).to_timeout
+
+    reports = capture_error_reports { assert_nil PageFetcher.new.fetch(PAGE_URL) }
+
+    assert_empty reports
+    assert_requested :get, PAGE_URL, times: 1
+  end
+
+  test "#fetch should still report other HTTP client errors with context" do
+    stub_request(:get, PAGE_URL).to_raise(HttpClient::TooManyRedirectsError.new("Too many redirects"))
     context = { source: "sample" }
     reported = []
 
@@ -49,7 +67,7 @@ class PageFetcherTest < ActiveSupport::TestCase
 
     assert_equal 1, reported.size
     error, options = reported.first
-    assert_kind_of HttpClient::ConnectionError, error
+    assert_kind_of HttpClient::TooManyRedirectsError, error
     assert_equal :warning, options[:severity]
     assert_equal({ source: "sample", url: PAGE_URL }, options[:context])
     assert_requested :get, PAGE_URL, times: 1
