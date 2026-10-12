@@ -176,12 +176,31 @@ class FeedRefreshWorkflow
   end
 
   def normalize_entries(persisted_feed_entries)
-    persisted_feed_entries.map do |feed_entry|
-      normalizer = feed.normalizer_instance(feed_entry)
-      post = normalizer.normalize
-      feed_entry.update!(status: :processed)
-      post
+    persisted_feed_entries.map { |feed_entry| normalize_entry(feed_entry) }
+  end
+
+  def normalize_entry(feed_entry)
+    normalizer = feed.normalizer_instance(feed_entry)
+    post = normalizer.normalize
+    feed_entry.update!(status: :processed)
+    post
+  ensure
+    record_page_fetch_failures(normalizer, post) if normalizer
+  end
+
+  def record_page_fetch_failures(normalizer, post)
+    failures = normalizer.page_fetch_failures
+    return if failures.empty?
+
+    outcome = post ? (post.rejected? ? "rejected" : "fallback") : "failed"
+    failures.each do |failure|
+      @refresh_event.append_detail!(
+        stage: :normalize_entries,
+        message: "Supplementary page unavailable",
+        stats: failure.merge(outcome: outcome)
+      )
     end
+    record_stats(page_fetch_failures: stats.fetch(:page_fetch_failures, 0) + failures.size)
   end
 
   def persist_posts(posts)
@@ -250,7 +269,8 @@ class FeedRefreshWorkflow
     record_llm_usage_stats
     record_web_search_stats(search_event_ids)
 
-    event = replace_refresh_event(level: :info, metadata: { status: "completed", stats: stats })
+    level = stats[:page_fetch_failures].to_i.positive? ? :warning : :info
+    event = replace_refresh_event(level: level, metadata: { status: "completed", stats: stats })
 
     @refresh_completed = true
     reference_posts(event, posts)
@@ -289,6 +309,10 @@ class FeedRefreshWorkflow
   def replace_refresh_event(**attributes)
     Event.transaction do
       feed.record_successful_refresh! if attributes.dig(:metadata, :status) == "completed"
+      if @refresh_event
+        attributes[:metadata] = @refresh_event.metadata.slice("details").merge(attributes.fetch(:metadata))
+      end
+
       event = Event.create!(type: "feed_refresh", subject: feed, user: feed.user, **attributes)
       if @refresh_event
         @refresh_event.event_references.update_all(event_id: event.id, updated_at: Time.current)
