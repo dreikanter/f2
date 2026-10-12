@@ -2,6 +2,7 @@
 
 ## 2026-10-12
 
+- Feed refreshes retry entries awaiting required pages and preserve posts saved before another entry fails.
 - Feed refresh events show details when supplementary pages could not be loaded.
 
 ## 2026-10-11

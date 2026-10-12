@@ -20,14 +20,15 @@ class FeedRefreshWorkflowPageFetchTest < ActiveSupport::TestCase
     RSS
   end
 
-  test "#execute should retain a rejected post's page failure in the completed event" do
+  test "#execute should retain a deferred entry's page failure in the completed event" do
     stub_feed
     stub_request(:get, PAGE_URL).to_raise(Faraday::TimeoutError)
 
     reports = capture_error_reports { FeedRefreshWorkflow.new(feed).execute }
 
     assert_empty reports
-    assert feed.posts.sole.rejected?
+    assert_empty feed.posts
+    assert feed.feed_entries.sole.pending?
     event = feed.events.where(type: "feed_refresh").sole
     assert_equal "completed", event.metadata["status"]
     assert event.warning?
@@ -37,7 +38,7 @@ class FeedRefreshWorkflowPageFetchTest < ActiveSupport::TestCase
     assert_equal "comic-1", detail.dig("stats", "uid")
     assert_equal PAGE_URL, detail.dig("stats", "url")
     assert_equal "HttpClient::TimeoutError", detail.dig("stats", "error_class")
-    assert_equal "rejected", detail.dig("stats", "outcome")
+    assert_equal "deferred", detail.dig("stats", "outcome")
   end
 
   test "#execute should record optional page failures while enqueueing the main content" do
@@ -58,10 +59,11 @@ class FeedRefreshWorkflowPageFetchTest < ActiveSupport::TestCase
   end
 
   test "#execute should preserve page diagnostics when the refresh later fails" do
+    feed.update!(feed_profile_key: "smbc")
     stub_feed
     stub_request(:get, PAGE_URL).to_return(status: 503)
 
-    Post.stub(:insert_all, ->(*) { raise ActiveRecord::StatementInvalid, "write failed" }) do
+    feed.stub(:refresh_post_stats!, -> { raise ActiveRecord::StatementInvalid, "write failed" }) do
       assert_raises(ActiveRecord::StatementInvalid) { FeedRefreshWorkflow.new(feed).execute }
     end
 
@@ -69,5 +71,8 @@ class FeedRefreshWorkflowPageFetchTest < ActiveSupport::TestCase
     assert_equal "failed", event.metadata["status"]
     assert_equal "write failed", event.metadata.dig("error", "message")
     assert_equal 503, event.details.sole.dig("stats", "status")
+    assert_empty feed.posts
+    assert feed.feed_entries.sole.pending?
+    assert_empty event.references
   end
 end

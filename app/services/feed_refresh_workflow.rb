@@ -9,7 +9,6 @@ class FeedRefreshWorkflow
   step :filter_new_entries
   step :persist_entries
   step :normalize_entries
-  step :persist_posts
   step :enqueue_publication
   step :finalize_workflow
 
@@ -26,6 +25,13 @@ class FeedRefreshWorkflow
   end
 
   def on_error(error)
+    if @refresh_event && !@refresh_completed
+      posts = refresh_posts
+      record_post_stats(posts)
+      record_feed_metrics(posts)
+      enqueue_publication(posts) if current_step == :normalize_entries
+    end
+
     Metrics.increment("feed_refresh_total", status: "error", profile: feed.feed_profile_key)
     record_error_stats(current_step: current_step)
     fail_refresh_event(error)
@@ -175,14 +181,31 @@ class FeedRefreshWorkflow
     }
   end
 
-  def normalize_entries(persisted_feed_entries)
-    persisted_feed_entries.map { |feed_entry| normalize_entry(feed_entry) }
+  def normalize_entries(*)
+    # A recorded UID prevents re-importing raw data, not resuming unfinished work.
+    feed.feed_entries.pending.order(:published_at, :id).each { |entry| normalize_entry(entry) }
+
+    posts = refresh_posts
+    record_post_stats(posts)
+    posts
   end
 
   def normalize_entry(feed_entry)
     normalizer = feed.normalizer_instance(feed_entry)
     post = normalizer.normalize
-    feed_entry.update!(status: :processed)
+
+    if normalizer.awaiting_content?
+      record_stats(deferred_entries: stats.fetch(:deferred_entries, 0) + 1)
+      return
+    end
+
+    ApplicationRecord.transaction do
+      # Normalizers already validate publication content. Rejected posts may
+      # intentionally lack attributes required by the model's save validations.
+      post.save!(validate: false)
+      feed_entry.update!(status: :processed)
+      @refresh_event.event_references.create!(reference: post)
+    end
     post
   ensure
     record_page_fetch_failures(normalizer, post) if normalizer
@@ -192,7 +215,14 @@ class FeedRefreshWorkflow
     failures = normalizer.page_fetch_failures
     return if failures.empty?
 
-    outcome = post ? (post.rejected? ? "rejected" : "fallback") : "failed"
+    outcome = if normalizer.awaiting_content?
+      "deferred"
+    elsif post&.persisted?
+      post.rejected? ? "rejected" : "fallback"
+    else
+      "failed"
+    end
+
     failures.each do |failure|
       @refresh_event.append_detail!(
         stage: :normalize_entries,
@@ -203,33 +233,23 @@ class FeedRefreshWorkflow
     record_stats(page_fetch_failures: stats.fetch(:page_fetch_failures, 0) + failures.size)
   end
 
-  def persist_posts(posts)
-    current_time = Time.current
-
-    posts_data = posts.map do |post|
-      post.slice(:feed_id, :feed_entry_id, :uid, :content, :source_url, :published_at, :attachment_urls, :comments, :validation_errors, :status)
-          .merge(created_at: current_time, updated_at: current_time)
-    end
-
-    Post.insert_all(posts_data) if posts_data.any?
-    feed.refresh_post_stats!
-
-    new_uids = posts.map(&:uid)
-    persisted_posts = feed.posts.where(uid: new_uids).order(:published_at)
-
+  def record_post_stats(posts)
     record_stats(
-      new_posts: persisted_posts.where(status: :enqueued).count,
-      rejected_posts: persisted_posts.where(status: :rejected).count
+      new_posts: posts.where(status: :enqueued).count,
+      rejected_posts: posts.where(status: :rejected).count
     )
+  end
 
-    persisted_posts
+  def refresh_posts
+    post_ids = @refresh_event.event_references.where(reference_type: "Post").pluck(:reference_id)
+    feed.posts.where(id: post_ids).order(:published_at)
   end
 
   # Hands publishing off to the async FIFO chain (see PostPublishJob) instead of
   # publishing inline. Kicking it on every refresh also restarts a chain that
   # may have stalled, so it doubles as the chain's watchdog.
   def enqueue_publication(persisted_posts)
-    PostPublishJob.perform_later(feed.id) if persisted_posts.any?(&:enqueued?)
+    PostPublishJob.perform_later(feed.id) if feed.posts.enqueued.exists?
     persisted_posts
   end
 
@@ -240,21 +260,23 @@ class FeedRefreshWorkflow
     record_completed_at
     feed.reset_refresh_failures!
     Metrics.increment("feed_refresh_total", status: "ok", profile: feed.feed_profile_key)
-    complete_refresh_event(posts)
-
-    posts_count = posts.count { |p| p.enqueued? || p.published? }
-    FeedMetric.record(
-      feed: feed,
-      date: Date.current,
-      posts_count: posts_count,
-      invalid_posts_count: rejected_posts_count
-    )
+    complete_refresh_event
+    record_feed_metrics(posts)
 
     Rails.logger.info "Feed refresh completed for feed #{feed.id}: " \
                       "#{enqueued_posts_count} queued for publishing, " \
                       "#{rejected_posts_count} rejected"
 
     posts
+  end
+
+  def record_feed_metrics(posts)
+    FeedMetric.record(
+      feed: feed,
+      date: Date.current,
+      posts_count: posts.count { |post| post.enqueued? || post.published? },
+      invalid_posts_count: posts.count(&:rejected?)
+    )
   end
 
   def record_duration(step_name)
@@ -264,32 +286,15 @@ class FeedRefreshWorkflow
   end
 
   # A fresh terminal id makes cursor-based event polling discover the outcome.
-  def complete_refresh_event(posts)
+  def complete_refresh_event
     search_event_ids = run_web_search_event_ids
     record_llm_usage_stats
     record_web_search_stats(search_event_ids)
 
     level = stats[:page_fetch_failures].to_i.positive? ? :warning : :info
-    event = replace_refresh_event(level: level, metadata: { status: "completed", stats: stats })
+    replace_refresh_event(level: level, metadata: { status: "completed", stats: stats })
 
     @refresh_completed = true
-    reference_posts(event, posts)
-  end
-
-  def reference_posts(event, posts)
-    return if posts.empty?
-
-    references_data = posts.map do |post|
-      {
-        event_id: event.id,
-        reference_type: "Post",
-        reference_id: post.id,
-        created_at: event.created_at,
-        updated_at: event.created_at
-      }
-    end
-
-    EventReference.insert_all(references_data)
   end
 
   def record_llm_usage_stats

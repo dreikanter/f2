@@ -1,7 +1,7 @@
 require "test_helper"
 
 class FeedRefreshWorkflowCounterTest < ActiveSupport::TestCase
-  test "#execute should update the imported posts counter after bulk insert" do
+  test "#execute should update the imported posts counter after saving posts" do
     feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
     published_at = 1.hour.ago
     rss = <<~RSS

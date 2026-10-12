@@ -22,12 +22,17 @@ module Normalizer
       # Not ActiveModel messages: these are the reasons a normalized post is
       # held back, including deliberate skips like a bonus panel.
       post.validation_errors = validate_content
+      post.validation_errors << "page_unavailable" if page_fetch_failures.any? { |failure| failure[:required] }
       post.status = post.validation_errors.empty? ? :enqueued : :rejected
       post
     end
 
     def page_fetch_failures
       page_fetcher.failures
+    end
+
+    def awaiting_content?
+      page_fetch_failures.any? { |failure| failure[:required] && failure[:retryable] }
     end
 
     private

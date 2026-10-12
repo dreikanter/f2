@@ -49,7 +49,7 @@ module Normalizer
       next_url = raw_data["link"]
 
       while next_url && pages.size < MAX_PAGES
-        html = page_fetcher.fetch(next_url)
+        html = page_fetcher.fetch(next_url, required: true)
         break if html.nil?
 
         page = Nokogiri::HTML(html)

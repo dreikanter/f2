@@ -51,7 +51,7 @@ module Normalizer
       return @page if defined?(@page)
 
       url = raw_data["link"]
-      @page = page_fetcher.fetch(url)
+      @page = page_fetcher.fetch(url, required: true)
     end
 
     def webtoons?
