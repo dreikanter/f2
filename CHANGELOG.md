@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-12
+
+- Feed refresh events show details when supplementary pages could not be loaded.
+
 ## 2026-10-11
 
 - Estimated AI spend includes OpenAI's native web search charges.

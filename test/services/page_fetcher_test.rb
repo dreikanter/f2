@@ -23,23 +23,39 @@ class PageFetcherTest < ActiveSupport::TestCase
     assert_not_requested :get, /./
   end
 
-  test "#fetch should warn with context and return nil for an HTTP failure" do
+  test "#fetch should retain HTTP failure details with context" do
     stub_request(:get, PAGE_URL).to_return(status: 503, body: "Service unavailable")
-    warnings = []
+    fetcher = PageFetcher.new(context: { source: "sample" })
 
-    Rails.logger.stub(:warn, ->(message) { warnings << message }) do
-      assert_nil PageFetcher.new(context: { source: "sample" }).fetch(PAGE_URL)
-    end
+    assert_nil fetcher.fetch(PAGE_URL)
 
-    assert_equal 1, warnings.size
-    assert_includes warnings.first, "HTTP 503"
-    assert_includes warnings.first, "source=sample"
-    assert_includes warnings.first, "url=#{PAGE_URL}"
+    assert_equal({ source: "sample", url: PAGE_URL, status: 503, message: "HTTP 503" }, fetcher.failures.sole)
     assert_requested :get, PAGE_URL, times: 1
   end
 
-  test "#fetch should report network failures with context and return nil" do
+  test "#fetch should return nil for connection failures without reporting a bug" do
     stub_request(:get, PAGE_URL).to_raise(Faraday::ConnectionFailed.new("connection refused"))
+    fetcher = PageFetcher.new
+
+    reports = capture_error_reports { assert_nil fetcher.fetch(PAGE_URL) }
+
+    assert_empty reports
+    assert_equal "HttpClient::ConnectionError", fetcher.failures.sole[:error_class]
+    assert_includes fetcher.failures.sole[:message], "connection refused"
+    assert_requested :get, PAGE_URL, times: 1
+  end
+
+  test "#fetch should return nil for timeouts without reporting a bug" do
+    stub_request(:get, PAGE_URL).to_timeout
+
+    reports = capture_error_reports { assert_nil PageFetcher.new.fetch(PAGE_URL) }
+
+    assert_empty reports
+    assert_requested :get, PAGE_URL, times: 1
+  end
+
+  test "#fetch should still report other HTTP client errors with context" do
+    stub_request(:get, PAGE_URL).to_raise(HttpClient::TooManyRedirectsError.new("Too many redirects"))
     context = { source: "sample" }
     reported = []
 
@@ -49,7 +65,7 @@ class PageFetcherTest < ActiveSupport::TestCase
 
     assert_equal 1, reported.size
     error, options = reported.first
-    assert_kind_of HttpClient::ConnectionError, error
+    assert_kind_of HttpClient::TooManyRedirectsError, error
     assert_equal :warning, options[:severity]
     assert_equal({ source: "sample", url: PAGE_URL }, options[:context])
     assert_requested :get, PAGE_URL, times: 1

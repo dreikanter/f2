@@ -26,6 +26,10 @@ module Normalizer
       post
     end
 
+    def page_fetch_failures
+      page_fetcher.failures
+    end
+
     private
 
     attr_reader :feed_entry
