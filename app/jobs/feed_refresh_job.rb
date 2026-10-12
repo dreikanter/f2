@@ -19,6 +19,8 @@ class FeedRefreshJob < ApplicationJob
   rescue Loader::Error => e
     Rails.error.report(e, context: { feed_id: feed_id })
     record_loader_error(feed)
+  rescue Feedjira::NoParserAvailable => e
+    Rails.logger.warn "Feed #{feed_id} returned unsupported feed content: #{e.message}"
   rescue WithAdvisoryLock::FailedToAcquireLock
     Rails.logger.info "Feed #{feed_id} is already being processed, skipping"
   end
