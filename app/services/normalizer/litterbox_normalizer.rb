@@ -1,5 +1,7 @@
 module Normalizer
   class LitterboxNormalizer < RssNormalizer
+    include PageFetching
+
     private
 
     def normalize_content
@@ -58,11 +60,11 @@ module Normalizer
     end
 
     def fetch_article_page
-      @article_page ||= page_fetcher.fetch(source_url)
+      @article_page ||= fetch_page(source_url)
     end
 
     def bonus_panel_image_url
-      page = page_fetcher.fetch(bonus_panel_url)
+      page = fetch_page(bonus_panel_url)
       return nil if page.nil?
 
       doc = Nokogiri::HTML(page)

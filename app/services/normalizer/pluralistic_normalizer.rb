@@ -1,5 +1,7 @@
 module Normalizer
   class PluralisticNormalizer < RssNormalizer
+    include PageFetching
+
     # WordPress Photon CDN host, anchored so "evil-i0.wp.com" and
     # "i0.wp.com.evil.com" cannot match.
     PHOTON_HOST_PATTERN = /\Ai\d+\.wp\.com\z/
@@ -22,7 +24,7 @@ module Normalizer
 
     def cover_image_url
       url = raw_data["link"] || ""
-      page = page_fetcher.fetch(url)
+      page = fetch_page(url)
       return nil if page.nil?
 
       doc = Nokogiri::HTML(page)

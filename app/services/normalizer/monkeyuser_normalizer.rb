@@ -1,5 +1,7 @@
 module Normalizer
   class MonkeyuserNormalizer < RssNormalizer
+    include PageFetching
+
     private
 
     def content
@@ -59,7 +61,7 @@ module Normalizer
     def page
       return @page if defined?(@page)
 
-      @page = page_fetcher.fetch(page_url)
+      @page = fetch_page(page_url)
     end
   end
 end
