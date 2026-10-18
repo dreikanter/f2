@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-18
+
+- Supplementary page download failures appear as separate events linked to the feed refresh.
+
 ## 2026-10-11
 
 - Posts resume attachment uploads after temporary FreeFeed server failures.

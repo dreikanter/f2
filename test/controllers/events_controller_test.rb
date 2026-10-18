@@ -24,6 +24,22 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
+  test "#show should link related events in both directions without exposing other users" do
+    sign_in_as user
+    refresh = create(:event, type: "feed_refresh", user: user)
+    failure = create(:event, type: "page_download_failed", level: :warning, user: user)
+    hidden = create(:event, user: other_user)
+    refresh.event_references.create!(reference: failure)
+    refresh.event_references.create!(reference: hidden)
+
+    get event_path(refresh)
+    assert_select '[data-key="events.related"] a[href=?]', event_path(failure)
+    assert_select '[data-key="events.related"] a[href=?]', event_path(hidden), count: 0
+
+    get event_path(failure)
+    assert_select '[data-key="events.related"] a[href=?]', event_path(refresh)
+  end
+
   def user
     @user ||= regular_user
   end

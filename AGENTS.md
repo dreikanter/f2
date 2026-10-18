@@ -46,8 +46,9 @@ Feeder reposts content from external sources to the FreeFeed social network.
   constraints. Remove obsolete history and obvious narration; retain references
   or boundary explanations when they explain a lasting constraint or workaround.
 - **CODE-04:** Preserve useful YARD `@param` and `@return` annotations without filler descriptions.
-- **CODE-05:** Report handled exceptions through `Rails.error` with relevant
-  context, using `Rails.error.report` or `Rails.error.handle`.
+- **CODE-05:** Report unexpected handled exceptions through `Rails.error` with
+  relevant context, using `Rails.error.report` or `Rails.error.handle`. Record
+  expected external failures in logs and user-visible events instead.
 - **CODE-06:** Separate multiline statements from adjacent statements in the same
   block with one blank line. Do not add blank lines immediately after the block
   opener or before its closer.

@@ -4,6 +4,22 @@ class Event < ApplicationRecord
   # Events without an explicit expiration are kept this long, then purged.
   DEFAULT_RETENTION = 1.month
 
+  class Context < ActiveSupport::CurrentAttributes
+    attribute :source
+  end
+
+  def self.with_context(event, &block)
+    Context.set(source: event, &block)
+  end
+
+  def self.record!(**attributes)
+    transaction do
+      event = create!(**attributes)
+      Context.source&.event_references&.create!(reference: event)
+      event
+    end
+  end
+
   belongs_to :user, optional: true
   belongs_to :subject, polymorphic: true, optional: true
 

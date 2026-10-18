@@ -57,20 +57,31 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
     assert_requested :get, PAGE_URL, times: 1
   end
 
-  test "#normalize should report a network error once with entry context" do
+  test "#normalize should still report unexpected download errors" do
+    stub_request(:get, PAGE_URL).to_raise(HttpClient::TooManyRedirectsError.new("Too many redirects"))
+
+    reports = capture_error_reports do
+      post = Normalizer::BuniNormalizer.new(feed_entry(0)).normalize
+      assert post.rejected?
+    end
+
+    assert_equal 1, reports.size
+  end
+
+  test "#normalize should record an unavailable page without reporting a network failure" do
     stub_request(:get, PAGE_URL).to_raise(Faraday::ConnectionFailed.new("connection refused"))
     entry = feed_entry(0)
-    reported = []
-    Rails.error.stub(:report, ->(error, **options) { reported << [error, options] }) do
+
+    reports = capture_error_reports do
       post = Normalizer::BuniNormalizer.new(entry).normalize
       assert_equal "rejected", post.status
       assert_includes post.validation_errors, "missing_images"
     end
 
-    assert_equal 1, reported.size
-    _, options = reported.first
-    assert_equal({ normalizer: "Normalizer::BuniNormalizer", feed_id: entry.feed.id,
-                   uid: entry.uid, url: PAGE_URL }, options[:context])
+    assert_empty reports
+    event = entry.feed.events.where(type: "page_download_failed").sole
+    assert_equal PAGE_URL, event.metadata.dig("stats", "url")
+    assert_equal entry.uid, event.metadata.dig("stats", "uid")
     assert_requested :get, PAGE_URL, times: 1
   end
 
