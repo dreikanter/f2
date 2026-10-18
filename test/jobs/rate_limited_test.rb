@@ -52,17 +52,16 @@ class RateLimitedTest < ActiveJob::TestCase
     assert_equal ["throttled"], statuses
   end
 
-  test "#reschedule_for_rate_limit reports a throttle once the attempt cap is reached" do
+  test "#reschedule_for_rate_limit should stop without reporting a bug at the attempt cap" do
     job = ThrottledJob.new
     job.executions = RateLimited::MAX_ATTEMPTS
 
-    reported = []
-    Rails.error.stub(:report, ->(error, **) { reported << error }) do
+    reports = capture_error_reports do
       assert_no_enqueued_jobs { job.perform_now }
     end
 
-    assert_equal 1, reported.size
-    assert_instance_of RateLimit::Throttled, reported.first
+    assert_empty reports
+    assert_predicate job, :rate_limited?
   end
 
   test "#reschedule_for_rate_limit invokes on_rate_limit_exhausted once the attempt cap is reached" do
@@ -70,9 +69,7 @@ class RateLimitedTest < ActiveJob::TestCase
     job = HookJob.new
     job.executions = RateLimited::MAX_ATTEMPTS
 
-    Rails.error.stub(:report, ->(*, **) { }) do
-      assert_no_enqueued_jobs { job.perform_now }
-    end
+    assert_no_enqueued_jobs { job.perform_now }
 
     assert_instance_of RateLimit::Throttled, HookJob.exhausted_with
   end
