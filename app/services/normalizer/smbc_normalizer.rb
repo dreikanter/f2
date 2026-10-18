@@ -1,5 +1,7 @@
 module Normalizer
   class SmbcNormalizer < RssNormalizer
+    include PageFetching
+
     TITLE_PREFIX = /\ASaturday Morning Breakfast Cereal - /
     HOVERTEXT_PREFIX = /\AHovertext:\s*/
 
@@ -45,7 +47,7 @@ module Normalizer
     def page
       return @page if defined?(@page)
 
-      @page = page_fetcher.fetch(raw_data["link"])
+      @page = fetch_page(raw_data["link"])
     end
   end
 end

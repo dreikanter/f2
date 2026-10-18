@@ -1,5 +1,7 @@
 module Normalizer
   class TomorrowsNormalizer < RssNormalizer
+    include PageFetching
+
     PROFILE_KEY = "tomorrows"
     MAX_COMMENTS = 4
 
@@ -30,7 +32,7 @@ module Normalizer
 
     def story_text
       url = raw_data["link"] || ""
-      page = page_fetcher.fetch(url)
+      page = fetch_page(url)
       if page
         extract_story_from_page(page, url)
       else

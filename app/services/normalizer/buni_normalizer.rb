@@ -1,5 +1,7 @@
 module Normalizer
   class BuniNormalizer < RssNormalizer
+    include PageFetching
+
     WEBTOONS_DOMAIN = "webtoons.com"
 
     private
@@ -51,7 +53,7 @@ module Normalizer
       return @page if defined?(@page)
 
       url = raw_data["link"]
-      @page = page_fetcher.fetch(url)
+      @page = fetch_page(url)
     end
 
     def webtoons?

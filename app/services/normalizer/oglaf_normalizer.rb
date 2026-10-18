@@ -3,6 +3,8 @@ module Normalizer
   # thumbnail, so the normalizer crawls the story pages via link[rel=next]
   # and collects the full-size strip image from each page.
   class OglafNormalizer < RssNormalizer
+    include PageFetching
+
     SITE_URL = "https://www.oglaf.com"
 
     # Hard limit by Freefeed API
@@ -49,7 +51,7 @@ module Normalizer
       next_url = raw_data["link"]
 
       while next_url && pages.size < MAX_PAGES
-        html = page_fetcher.fetch(next_url)
+        html = fetch_page(next_url)
         break if html.nil?
 
         page = Nokogiri::HTML(html)

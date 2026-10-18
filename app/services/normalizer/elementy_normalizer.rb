@@ -1,5 +1,7 @@
 module Normalizer
   class ElementyNormalizer < RssNormalizer
+    include PageFetching
+
     BASE_URL = "https://elementy.ru"
 
     private
@@ -19,7 +21,7 @@ module Normalizer
 
     def normalize_attachment_urls
       url = raw_data["link"]
-      page = page_fetcher.fetch(url)
+      page = fetch_page(url)
       return [] if page.nil?
 
       doc = Nokogiri::HTML(page)

@@ -1,5 +1,7 @@
 module Normalizer
   class NextbigfutureNormalizer < RssNormalizer
+    include PageFetching
+
     private
 
     def normalize_content
@@ -26,7 +28,7 @@ module Normalizer
       link = raw_data["link"] || raw_data["url"]
       return nil if link.blank?
 
-      html = page_fetcher.fetch(link)
+      html = fetch_page(link)
       return nil if html.blank?
 
       doc = Nokogiri::HTML(html)
