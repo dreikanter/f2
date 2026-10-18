@@ -55,7 +55,7 @@ class FeedRefreshWorkflow
 
   # Existing references retain partial spend from a process that died.
   def interrupt_abandoned_event(event)
-    search_event_ids = event.event_references.where(reference_type: "Event").pluck(:reference_id)
+    search_event_ids = WebSearchUsage.referenced_by(event).pluck(:id)
     stats_updates = LlmUsageReport.for_event(event).totals.event_stats.stringify_keys
     metadata = event.metadata.merge("status" => "interrupted")
 
@@ -176,11 +176,13 @@ class FeedRefreshWorkflow
   end
 
   def normalize_entries(persisted_feed_entries)
-    persisted_feed_entries.map do |feed_entry|
-      normalizer = feed.normalizer_instance(feed_entry)
-      post = normalizer.normalize
-      feed_entry.update!(status: :processed)
-      post
+    Event.with_context(@refresh_event) do
+      persisted_feed_entries.map do |feed_entry|
+        normalizer = feed.normalizer_instance(feed_entry)
+        post = normalizer.normalize
+        feed_entry.update!(status: :processed)
+        post
+      end
     end
   end
 
@@ -279,7 +281,7 @@ class FeedRefreshWorkflow
   end
 
   def run_web_search_event_ids
-    @refresh_event.event_references.where(reference_type: "Event").pluck(:reference_id)
+    WebSearchUsage.referenced_by(@refresh_event).pluck(:id)
   end
 
   def record_web_search_stats(search_event_ids)

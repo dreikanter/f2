@@ -287,4 +287,33 @@ class EventTest < ActiveSupport::TestCase
     assert_equal :error, Event.new(level: :error).alert_variant
     assert_equal :info, Event.new(level: :debug).alert_variant
   end
+
+  test ".record! should link events without changing source metadata" do
+    source = create(:event)
+    metadata = source.metadata.deep_dup
+
+    child = Event.with_context(source) { Event.record!(type: "child") }
+
+    assert_equal [child], source.references
+    assert_equal metadata, source.reload.metadata
+  end
+
+  test ".with_context should restore nested context after an exception" do
+    outer = create(:event)
+    inner = create(:event)
+    child = nil
+
+    Event.with_context(outer) do
+      assert_raises(RuntimeError) do
+        Event.with_context(inner) { raise "failed" }
+      end
+      child = Event.record!(type: "child")
+    end
+    unrelated = Event.record!(type: "unrelated")
+
+    assert_equal [child], outer.references
+    assert_empty inner.references
+    assert_empty unrelated.incoming_event_references
+    assert_empty Event::Context.attributes.compact
+  end
 end

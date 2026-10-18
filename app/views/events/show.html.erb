@@ -34,6 +34,8 @@
 
   <%= render "events/details", event: @event %>
 
+  <%= render "events/related_events", events: @related_events, admin: false %>
+
   <% if @referenced_posts.any? %>
     <section class="space-y-4" data-key="events.imported_posts">
       <%= h2 "Posts" %>

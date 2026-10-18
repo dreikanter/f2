@@ -3,56 +3,41 @@ require "test_helper"
 class PageFetcherTest < ActiveSupport::TestCase
   PAGE_URL = "https://example.com/article"
 
-  test "#fetch should return the successful response body" do
-    stub_request(:get, PAGE_URL).to_return(status: 200, body: "<html>Sample article</html>")
-
-    assert_equal "<html>Sample article</html>", PageFetcher.new.fetch(PAGE_URL)
+  test "#fetch should return successful response bodies including empty ones" do
+    ["<html>Sample article</html>", ""].each do |body|
+      stub_request(:get, PAGE_URL).to_return(status: 200, body: body)
+      assert_equal body, PageFetcher.new.fetch(PAGE_URL)
+    end
   end
 
-  test "#fetch should preserve an empty successful response" do
-    stub_request(:get, PAGE_URL).to_return(status: 204, body: "")
-
-    assert_equal "", PageFetcher.new.fetch(PAGE_URL)
-  end
-
-  test "#fetch should skip blank URLs without requesting a page" do
-    fetcher = PageFetcher.new
-
-    [nil, "", " "].each { |url| assert_nil fetcher.fetch(url) }
+  test "#fetch should skip blank URLs" do
+    [nil, "", " "].each { |url| assert_nil PageFetcher.new.fetch(url) }
 
     assert_not_requested :get, /./
   end
 
-  test "#fetch should warn with context and return nil for an HTTP failure" do
-    stub_request(:get, PAGE_URL).to_return(status: 503, body: "Service unavailable")
-    warnings = []
+  test "#fetch should raise HTTP failure details without tracking them" do
+    stub_request(:get, PAGE_URL).to_return(status: 503)
 
-    Rails.logger.stub(:warn, ->(message) { warnings << message }) do
-      assert_nil PageFetcher.new(context: { source: "sample" }).fetch(PAGE_URL)
+    assert_no_difference "Event.count" do
+      error = assert_raises(PageFetcher::Error) { PageFetcher.new.fetch(PAGE_URL) }
+      assert_equal({ url: PAGE_URL, status: 503 }, error.details)
+      assert_equal "HTTP 503", error.message
     end
-
-    assert_equal 1, warnings.size
-    assert_includes warnings.first, "HTTP 503"
-    assert_includes warnings.first, "source=sample"
-    assert_includes warnings.first, "url=#{PAGE_URL}"
-    assert_requested :get, PAGE_URL, times: 1
   end
 
-  test "#fetch should report network failures with context and return nil" do
+  test "#fetch should preserve network error details and cause" do
     stub_request(:get, PAGE_URL).to_raise(Faraday::ConnectionFailed.new("connection refused"))
-    context = { source: "sample" }
-    reported = []
 
-    Rails.error.stub(:report, ->(error, **options) { reported << [error, options] }) do
-      assert_nil PageFetcher.new(context: context).fetch(PAGE_URL)
+    reports = capture_error_reports do
+      error = assert_raises(PageFetcher::Error) { PageFetcher.new.fetch(PAGE_URL) }
+      assert_equal PAGE_URL, error.url
+      assert_kind_of HttpClient::ConnectionError, error.original_error
+      assert_same error.original_error, error.cause
+      assert_includes error.message, "connection refused"
     end
 
-    assert_equal 1, reported.size
-    error, options = reported.first
-    assert_kind_of HttpClient::ConnectionError, error
-    assert_equal :warning, options[:severity]
-    assert_equal({ source: "sample", url: PAGE_URL }, options[:context])
-    assert_requested :get, PAGE_URL, times: 1
+    assert_empty reports
   end
 
   test "#fetch should let unexpected errors propagate" do
