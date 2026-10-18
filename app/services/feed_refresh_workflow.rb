@@ -177,7 +177,12 @@ class FeedRefreshWorkflow
 
   def normalize_entries(persisted_feed_entries)
     persisted_feed_entries.map do |feed_entry|
-      normalizer = feed.normalizer_instance(feed_entry, event: @refresh_event)
+      recorder = PageDownloadFailureRecorder.new(
+        event: @refresh_event,
+        context: { feed_id: feed.id, uid: feed_entry.uid }
+      )
+
+      normalizer = feed.normalizer_instance(feed_entry, page_fetcher: OptionalPageFetcher.new(on_error: recorder))
       post = normalizer.normalize
       feed_entry.update!(status: :processed)
       post

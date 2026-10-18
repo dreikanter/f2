@@ -28,6 +28,16 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
     assert_matches_snapshot(post.normalized_attributes, snapshot: "#{fixture_dir}/normalized.json")
   end
 
+  test "#normalize should use an injected page fetcher without event context" do
+    fetcher = Minitest::Mock.new
+    fetcher.expect(:fetch, file_fixture("#{fixture_dir}/page.html").read, [PAGE_URL])
+
+    post = Normalizer::BuniNormalizer.new(feed_entry(0), page_fetcher: fetcher).normalize
+
+    assert_equal ["https://www.bunicomic.com/wp-content/uploads/2026/06/2026-06-10-Buni.jpg"], post.attachment_urls
+    fetcher.verify
+  end
+
   test "#normalize should attach the full-size comic image from the page" do
     stub_comic_page
     entry = feed_entry(0)
