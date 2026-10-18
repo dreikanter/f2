@@ -117,6 +117,43 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_empty reported, "an expected attachment 404 must not be reported as a fault"
   end
 
+  test "#perform should resume attachment uploads after a FreeFeed server failure without reporting a bug" do
+    first_url = "https://example.com/first.jpg"
+    second_url = "https://example.com/second.jpg"
+    post = create(:post, :enqueued, feed: feed, attachment_urls: [first_url, second_url])
+    image = file_fixture("test_image.jpg").read
+    stub_request(:get, first_url).to_return(body: image, headers: { "Content-Type" => "image/jpeg" })
+    stub_request(:get, second_url).to_return(body: image, headers: { "Content-Type" => "image/jpeg" })
+    upload = stub_request(:post, "#{access_token.host}/v1/attachments").to_return(
+      { status: 201, body: { attachments: { id: "attachment-1" } }.to_json },
+      { status: 500, body: { err: "getaddrinfo EAI_AGAIN storage.example.com" }.to_json },
+      { status: 201, body: { attachments: { id: "attachment-2" } }.to_json }
+    )
+    publication = stub_request(:post, "#{access_token.host}/v4/posts")
+      .with { |request| JSON.parse(request.body).dig("post", "attachments") == ["attachment-1", "attachment-2"] }
+      .to_return(status: 201, body: { posts: { id: "published-post" } }.to_json)
+
+    reports = capture_error_reports do
+      assert_no_enqueued_jobs(only: PostPublishJob) { PostPublishJob.perform_now(feed.id) }
+    end
+
+    assert_empty reports
+    assert_predicate post.reload, :enqueued?
+    assert_equal 1, post.post_publication.attachments_processed_count
+    assert_equal ["attachment-1"], post.post_publication.uploaded_attachment_ids
+    assert_nil post.post_publication.post_create_started_at
+    assert_not_requested publication
+
+    perform_enqueued_jobs(only: PostPublishJob) { PublicationSchedulerJob.perform_now }
+
+    assert_predicate post.reload, :published?
+    assert_nil post.post_publication
+    assert_requested publication, times: 1
+    assert_requested upload, times: 3
+    assert_requested :get, first_url, times: 1
+    assert_requested :get, second_url, times: 2
+  end
+
   test ".perform_now should publish a post whose comment exceeds the length limit without wedging" do
     # A post that slipped into the queue (via bulk insert) with an over-long
     # comment must not wedge the chain: marking it published, and the fallback

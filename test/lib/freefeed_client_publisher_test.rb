@@ -36,6 +36,18 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     assert_equal "Unsupported attachment", error.message
   end
 
+  test "#create_attachment_from_io should distinguish a server failure from other API errors" do
+    stub_request(:post, "#{@host}/v1/attachments")
+      .to_return(status: 500, body: { err: "getaddrinfo EAI_AGAIN storage.example.com" }.to_json)
+
+    error = assert_raises(FreefeedClient::ServerError) do
+      @client.create_attachment_from_io(StringIO.new("sample attachment"), content_type: "text/plain")
+    end
+
+    assert_match(/HTTP 500/, error.message)
+    assert_match(/EAI_AGAIN/, error.message)
+  end
+
   test "#create_attachment_from_io should preserve the server's payload-too-large message" do
     stub_request(:post, "#{@host}/v1/attachments")
       .to_return(status: 413, body: { err: "File exceeds the 10 MB upload limit" }.to_json)

@@ -8,6 +8,7 @@ class FreefeedPublisher
   class Error < StandardError; end
   class ValidationError < Error; end
   class PublishError < Error; end
+  class AttachmentUploadError < PublishError; end
   class CommentPublishError < PublishError; end
 
   # Source content couldn't be fetched (e.g. an attachment URL returns 404). An
@@ -164,6 +165,8 @@ class FreefeedPublisher
     raise
   rescue FileBuffer::Error => e
     raise SourceContentError, "Failed to upload attachments: #{e.message}"
+  rescue FreefeedClient::ServerError => e
+    raise AttachmentUploadError, "Failed to upload attachments: #{e.message}"
   rescue => e
     raise PublishError, "Failed to upload attachments: #{e.message}"
   end
