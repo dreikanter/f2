@@ -275,8 +275,8 @@ class Feed < ApplicationRecord
 
   # @param feed_entry [FeedEntry] the entry to normalize
   # @return [Normalizer::Base] the entry's normalizer
-  def normalizer_instance(feed_entry)
-    normalizer_class.new(feed_entry)
+  def normalizer_instance(feed_entry, event: nil)
+    normalizer_class.new(feed_entry, event: event)
   end
 
   def record_successful_refresh!

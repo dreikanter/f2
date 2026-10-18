@@ -6,8 +6,9 @@ module Normalizer
     include HtmlTextUtils
 
     # @param feed_entry [FeedEntry] the feed entry to normalize
-    def initialize(feed_entry)
+    def initialize(feed_entry, event: nil)
       @feed_entry = feed_entry
+      @event = event
     end
 
     # Raises if the subclass produced a Post missing dedup or ordering
@@ -26,19 +27,21 @@ module Normalizer
       post
     end
 
-    def page_fetch_failures
-      page_fetcher.failures
-    end
-
     private
 
     attr_reader :feed_entry
     delegate :raw_data, to: :feed_entry
 
     def page_fetcher
-      @page_fetcher ||= PageFetcher.new(context: {
-        normalizer: self.class.name, feed_id: feed_entry.feed_id, uid: feed_entry.uid
-      })
+      @page_fetcher ||= PageFetcher.new(
+        event: @event,
+        subject: feed_entry.feed,
+        context: {
+          normalizer: self.class.name,
+          feed_id: feed_entry.feed_id,
+          uid: feed_entry.uid
+        }
+      )
     end
 
     def build_post

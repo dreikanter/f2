@@ -1,0 +1,14 @@
+<%# locals: (events:, admin: false) %>
+<% if events.any? %>
+  <section class="space-y-4" data-key="events.related">
+    <%= h2 "Related events" %>
+    <ul class="space-y-2">
+      <% events.each do |related_event| %>
+        <li>
+          <%= link_to "Event #{short_ref(related_event.id)}", admin ? admin_event_path(related_event) : event_path(related_event), class: text_link_classes %>
+          <%= render (admin ? Admin::EventDescriptionComponent : EventDescriptionComponent).for(related_event) %>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+<% end %>

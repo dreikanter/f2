@@ -508,7 +508,6 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     # Make normalization fail at the collaborator boundary
     normalizer = Object.new
     normalizer.define_singleton_method(:normalize) { raise "normalization failed" }
-    normalizer.define_singleton_method(:page_fetch_failures) { [] }
 
     test_feed.stub(:normalizer_instance, normalizer) do
       assert_raises(StandardError) { workflow.execute }

@@ -24,6 +24,19 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
+  test "#show should link related events in both directions" do
+    sign_in_as user
+    refresh = create(:event, type: "feed_refresh", user: user)
+    failure = create(:event, type: "page_download_failed", level: :warning, user: user)
+    refresh.event_references.create!(reference: failure)
+
+    get event_path(refresh)
+    assert_select '[data-key="events.related"] a[href=?]', event_path(failure)
+
+    get event_path(failure)
+    assert_select '[data-key="events.related"] a[href=?]', event_path(refresh)
+  end
+
   def user
     @user ||= regular_user
   end

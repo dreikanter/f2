@@ -1,8 +1,8 @@
 # Changelog
 
-## 2026-10-12
+## 2026-10-18
 
-- Feed refresh events show details when supplementary pages could not be loaded.
+- Supplementary page download failures appear as separate events linked to the feed refresh.
 
 ## 2026-10-11
 

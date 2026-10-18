@@ -1,9 +1,8 @@
 class PageFetcher
-  attr_reader :failures
-
-  def initialize(context: {})
+  def initialize(context: {}, event: nil, subject: nil)
     @context = context
-    @failures = []
+    @event = event
+    @subject = subject
   end
 
   # @param url [String, nil] supplementary page URL
@@ -19,10 +18,7 @@ class PageFetcher
     record_failure(url, status: response.status, message: "HTTP #{response.status}")
     nil
   rescue HttpClient::TimeoutError, HttpClient::ConnectionError => e
-    Rails.logger.warn(
-      message: "Page fetch failed",
-      payload: context.merge(url: url, error_class: e.class.name)
-    )
+    Rails.logger.warn(message: "Page fetch failed", payload: context.merge(url: url, error_class: e.class.name))
     record_failure(url, error_class: e.class.name, message: e.message)
     nil
   rescue HttpClient::Error => e
@@ -33,9 +29,21 @@ class PageFetcher
 
   private
 
-  attr_reader :context
+  attr_reader :context, :event, :subject
 
-  def record_failure(url, **details)
-    failures << context.merge(url: url, **details)
+  def record_failure(url, message:, **details)
+    return unless subject&.persisted? || event
+
+    Event.transaction do
+      failure = Event.create!(
+        type: "page_download_failed",
+        level: :warning,
+        subject: subject || event.subject,
+        user: subject&.user || event&.user,
+        message: message,
+        metadata: { stats: context.merge(url: url, **details) }
+      )
+      event&.event_references&.create!(reference: failure)
+    end
   end
 end
