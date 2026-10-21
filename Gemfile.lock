@@ -6,7 +6,7 @@ GIT
 
 GIT
   remote: https://github.com/rails/rails.git
-  revision: 3cc3a3c11fe64edeb176c165c5cd5c9231e2ae11
+  revision: 3f0b675158e8284241bb1213c00375bc1fb9c52f
   branch: main
   specs:
     actioncable (8.2.0.alpha)
@@ -238,14 +238,14 @@ GEM
       activesupport (>= 6.1)
     hana (1.3.7)
     hashdiff (1.2.1)
-    herb (0.11.0-aarch64-linux-gnu)
-    herb (0.11.0-aarch64-linux-musl)
-    herb (0.11.0-arm-linux-gnu)
-    herb (0.11.0-arm-linux-musl)
-    herb (0.11.0-arm64-darwin)
-    herb (0.11.0-x86_64-darwin)
-    herb (0.11.0-x86_64-linux-gnu)
-    herb (0.11.0-x86_64-linux-musl)
+    herb (0.11.1-aarch64-linux-gnu)
+    herb (0.11.1-aarch64-linux-musl)
+    herb (0.11.1-arm-linux-gnu)
+    herb (0.11.1-arm-linux-musl)
+    herb (0.11.1-arm64-darwin)
+    herb (0.11.1-x86_64-darwin)
+    herb (0.11.1-x86_64-linux-gnu)
+    herb (0.11.1-x86_64-linux-musl)
     highline (3.0.1)
     honeybadger (6.9.3)
       logger
