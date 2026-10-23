@@ -1,9 +1,9 @@
 # Claude Code remote environment (prebuilt dev container)
 
-Claude Code on the web runs each session in a fresh Anthropic-managed VM. The base
-image ships Ruby 3.1–3.3 only, but this project needs Ruby 4.0.6, so installing the
-toolchain from scratch every session is slow. Instead we keep a **prebuilt dev
-image** in GitHub Container Registry (GHCR) and run Rails inside it.
+Claude Code on the web runs each session in a fresh Anthropic-managed VM.
+Installing the project's toolchain from scratch every session is slow. Instead we
+keep a **prebuilt dev image** in GitHub Container Registry (GHCR) and run Rails
+inside it. The required Ruby version is recorded in [`.ruby-version`](../.ruby-version).
 
 Replacing the VM's base image isn't supported, but Docker is available and **pulled
 images are saved in the cached environment snapshot**, so each new session has the
@@ -14,7 +14,7 @@ reinstalling dependencies each time.
 
 | Piece | Where | Role |
 | :--- | :--- | :--- |
-| `Dockerfile.dev` | repo | Defines the dev image: Ruby 4.0.6 + gems + Node + yarn modules. |
+| `Dockerfile.dev` | repo | Defines the dev image: Ruby + gems + Node + yarn modules. |
 | `.github/workflows/build-dev-image.yml` | repo | Builds the image and pushes it to `ghcr.io/dreikanter/f2-dev` on dependency changes (or on demand). |
 | `compose.yaml` | repo | The dev stack: `app` (the image) + `db` (postgres:18). |
 | Environment **setup script** | Claude web UI | Starts dockerd and `docker pull`s the image. Its result is cached into the environment snapshot. |
