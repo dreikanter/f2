@@ -1,19 +1,4 @@
 <%# locals: (feed:) %>
 <%= render PageHeaderComponent.new(title: feed.display_name) do |header| %>
   <% header.with_breadcrumb(label: "Feeds", url: admin_feeds_path) %>
-  <% header.with_context_paragraph do %>
-    <%= render feed_status_badge(feed) %>
-  <% end %>
-  <% if feed.user %>
-    <% header.with_context_paragraph do %>
-      Owner:
-      <%= link_to feed.user.email_address, admin_user_path(feed.user), class: text_link_classes %>
-    <% end %>
-  <% end %>
-  <% if feed.target_group.present? %>
-    <% header.with_context_paragraph do %>
-      Target group:
-      <%= feed_target_group_link(feed) %>
-    <% end %>
-  <% end %>
 <% end %>
