@@ -34,6 +34,17 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='configuration.mailer_from.value'] code", text: "noreply@example.com"
   end
 
+  test "should show email delivery configuration in integrations" do
+    sign_in_as(dev_user)
+
+    get development_system_status_path
+
+    assert_response :success
+    assert_select "[data-key='integration.email.label']", text: "Email"
+    assert_select "[data-key='integration.email.value']", text: "Test mode; emails are not sent"
+    assert_select "p", text: /Server access and delivery have not been verified/
+  end
+
   test "should list every optional integration with its effective state" do
     sign_in_as(dev_user)
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-23
+
+- System Status shows email delivery configuration, including missing settings and local or disabled delivery.
+
 ## 2026-10-11
 
 - Posts resume attachment uploads after temporary FreeFeed server failures.
