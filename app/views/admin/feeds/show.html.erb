@@ -3,6 +3,8 @@
 <div class="space-y-10">
   <%= render "header", feed: @feed %>
 
+  <%= render Admin::FeedDetailsComponent.new(feed: @feed) %>
+
   <% if @recent_posts.any? %>
     <section class="space-y-4">
       <%= h2 "Stats" %>

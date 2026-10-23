@@ -44,6 +44,11 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", feed.display_name
+    assert_select "dl [data-key='feed_details.owner.value'] a[href=?]", admin_user_path(feed.user), text: feed.user.email_address
+    assert_select "dl [data-key='feed_details.profile.value']", text: "RSS Feed (rss)"
+    assert_select "dl [data-key='feed_details.last_success.value']", text: "Never"
+    assert_select "[data-key='feed_details.status.value']", text: "Disabled", count: 1
+    assert_select "a[href=?]", feed.target_group_url, count: 1
   end
 
   test "should show another user's feed posts without owner-only links" do
