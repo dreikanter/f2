@@ -72,6 +72,19 @@ Feeder reposts content from external sources to the FreeFeed social network.
 - **TOOL-05:** For accurate coverage, run tests with `COVERAGE=1` to disable parallelism.
   See [docs/code-quality.md](docs/code-quality.md#test-coverage) for inspection commands.
 
+## Screenshots
+
+- **SCREENSHOT-01:** Before capturing or publishing screenshots, read
+  [screenshots/AGENTS.md](screenshots/AGENTS.md), even when the image will stay
+  outside that directory. Follow its capture, delivery, and GitHub workflow.
+- **SCREENSHOT-02:** A request to share a screenshot does not mean it should stay
+  committed in the PR. Keep captures outside the tracked tree unless reference
+  images were requested; use the documented temporary upload fallback when needed.
+- **SCREENSHOT-03:** GitHub descriptions and comments both support Markdown image
+  embeds. Check attachment upload and image embedding separately before declaring
+  screenshot publication unavailable. Verify the image URL and the requested
+  destination, then return a link the user can open.
+
 ## Design records
 
 - **SPEC-01:** Treat specs in `specs/` as design and rationale records that may span
