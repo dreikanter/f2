@@ -3,6 +3,56 @@ require "test_helper"
 class SystemStatusHelperTest < ActionView::TestCase
   include ApplicationHelper
 
+  test "#email_delivery_status should show configured Resend without exposing its key" do
+    with_email_delivery(:resend) do
+      Resend.stub(:api_key, "secret-api-key") do
+        assert_equal "Resend configured", email_delivery_status
+      end
+    end
+  end
+
+  test "#email_delivery_status should identify a missing Resend key" do
+    with_email_delivery(:resend) do
+      Resend.stub(:api_key, " ") do
+        assert_equal "Resend not configured: missing API key", email_delivery_status
+      end
+    end
+  end
+
+  test "#email_delivery_status should identify a missing sender" do
+    with_email_delivery(:resend) do
+      Resend.stub(:api_key, "secret-api-key") do
+        ApplicationMailer.stub(:default_params, { from: nil }) do
+          assert_equal "Resend not configured: missing From address", email_delivery_status
+        end
+      end
+    end
+  end
+
+  test "#email_delivery_status should prioritize disabled delivery" do
+    with_email_delivery(:resend, enabled: false) do
+      assert_equal "Disabled", email_delivery_status
+    end
+  end
+
+  test "#email_delivery_status should explain local file delivery" do
+    with_email_delivery(:file) do
+      assert_equal "Saved to files; emails are not sent", email_delivery_status
+    end
+  end
+
+  test "#email_delivery_status should explain test delivery" do
+    with_email_delivery(:test) do
+      assert_equal "Test mode; emails are not sent", email_delivery_status
+    end
+  end
+
+  test "#email_delivery_status should avoid claiming unsupported methods are configured" do
+    with_email_delivery(:smtp) do
+      assert_equal "Smtp delivery; configuration not checked", email_delivery_status
+    end
+  end
+
   test "#environment_badge should render production as danger" do
     result = environment_badge("production")
 
@@ -43,5 +93,13 @@ class SystemStatusHelperTest < ActionView::TestCase
     result = revision_commit_link("0123456", nil)
 
     assert_includes result, "#{Feeder::GITHUB_REPO_URL}/commit/0123456"
+  end
+
+  private
+
+  def with_email_delivery(method, enabled: true, &block)
+    ApplicationMailer.stub(:perform_deliveries, enabled) do
+      ApplicationMailer.stub(:delivery_method, method, &block)
+    end
   end
 end

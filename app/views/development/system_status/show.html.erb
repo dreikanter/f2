@@ -17,8 +17,14 @@
 
   <section class="space-y-4">
     <%= h2 "Integrations" %>
-    <p class="text-body">Optional services this deploy talks to.</p>
+    <p class="text-body">Services this deploy talks to.</p>
     <%= render(DescriptionListComponent.new) do |list| %>
+      <% list.with_item(StatListItemComponent.new(
+        label: "Email",
+        value: email_delivery_status,
+        key: "integration.email",
+        truncate: false
+      )) %>
       <% @integrations.each do |name, enabled| %>
         <% list.with_item(StatListItemComponent.new(
           label: name.to_s.humanize,
@@ -28,6 +34,7 @@
         )) %>
       <% end %>
     <% end %>
+    <p class="text-muted text-sm">Email status reflects this deploy's configuration. Server access and delivery have not been verified.</p>
   </section>
 
   <section class="space-y-4">

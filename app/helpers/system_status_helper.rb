@@ -11,6 +11,25 @@ module SystemStatusHelper
     render BadgeComponent.new(text: env, color: ENVIRONMENT_BADGE_COLORS.fetch(env.to_s, :neutral))
   end
 
+  def email_delivery_status
+    return "Disabled" unless ApplicationMailer.perform_deliveries
+
+    case ApplicationMailer.delivery_method
+    when :resend
+      missing = []
+      missing << "API key" if Resend.api_key.blank?
+      missing << "From address" if ApplicationMailer.default_params[:from].blank?
+
+      missing.empty? ? "Resend configured" : "Resend not configured: missing #{missing.join(" and ")}"
+    when :file
+      "Saved to files; emails are not sent"
+    when :test
+      "Test mode; emails are not sent"
+    else
+      "#{ApplicationMailer.delivery_method.to_s.humanize} delivery; configuration not checked"
+    end
+  end
+
   # GitHub resolves short hashes in commit URLs, so a missing full revision
   # doesn't block linking.
   def revision_commit_link(revision_short, revision)
