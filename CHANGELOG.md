@@ -2,6 +2,7 @@
 
 ## 2026-10-23
 
+- System Status now includes Ruby, Bundler, Rails, operating system, and PostgreSQL versions under Deployment Details.
 - System Status shows email delivery configuration, including missing settings and local or disabled delivery.
 
 ## 2026-10-11

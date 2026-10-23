@@ -38,7 +38,7 @@
   </section>
 
   <section class="space-y-4">
-    <%= h2 "Deployed Version" %>
+    <%= h2 "Deployment Details" %>
     <%= render(DescriptionListComponent.new) do |list| %>
       <% list.with_item(StatListItemComponent.new(
         label: "Revision",
@@ -55,6 +55,20 @@
         value: environment_badge,
         key: "release.environment"
       )) %>
+      <% {
+        ruby: "Ruby",
+        bundler: "Bundler",
+        rails: "Rails",
+        operating_system: "Operating system",
+        postgresql: "PostgreSQL"
+      }.each do |key, label| %>
+        <% list.with_item(StatListItemComponent.new(
+          label: label,
+          value: tag.code(@runtime_versions[key]),
+          key: "release.#{key}",
+          truncate: false
+        )) %>
+      <% end %>
     <% end %>
   </section>
 

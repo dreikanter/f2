@@ -90,9 +90,37 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
+    assert_select "h2", text: "Deployment Details"
+    assert_select "h2", text: "Deployed Version", count: 0
     assert_select "[data-key='release.revision.value'] a[href='#{Feeder::GITHUB_REPO_URL}/commit/0123456789abcdef'] code", text: "0123456"
     assert_select "[data-key='release.deployed_at.value'] code", text: /9 May 2026, 12:34/
     assert_select "[data-key='release.environment.value'] span", text: Rails.env
+  end
+
+  test "should show runtime versions in deployment details" do
+    versions = {
+      ruby: "4.0.9",
+      bundler: "4.0.3",
+      rails: "8.2.0.alpha",
+      operating_system: "Debian GNU/Linux 13 (trixie)",
+      postgresql: "18.6 (Debian 18.6-1.pgdg13+2)"
+    }
+
+    RuntimeVersions.stub(:new, -> { Struct.new(:call).new(versions) }) do
+      sign_in_as(dev_user)
+
+      get development_system_status_path
+    end
+
+    assert_response :success
+    assert_select "section", text: /Deployment Details/ do
+      versions.each do |key, version|
+        assert_select "[data-key='release.#{key}.value'] code", text: version
+      end
+
+      assert_select "[data-key='release.postgresql.label']", text: "PostgreSQL"
+      assert_select "[data-key='release.operating_system.label']", text: "Operating system"
+    end
   end
 
   private
