@@ -10,7 +10,12 @@
     </section>
   <% end %>
 
-  <%= render "live_content" %>
+  <%= render "live_content",
+             feed: @feed,
+             recent_events: @recent_events,
+             recent_posts: @recent_posts,
+             llm_usage_totals: @llm_usage_totals,
+             refresh_in_progress: @refresh_in_progress %>
 
 </div>
 

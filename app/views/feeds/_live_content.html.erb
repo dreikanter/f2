@@ -1,17 +1,18 @@
+<%# locals: (feed:, recent_events:, recent_posts:, llm_usage_totals:, refresh_in_progress:) %>
 <%# The polling host owns its cursor and reconnects after a new event replaces it. %>
-<% polling_data = if @feed.scheduled? && (@feed.enabled? || @refresh_in_progress)
+<% polling_data = if feed.scheduled? && (feed.enabled? || refresh_in_progress)
                     {
                       controller: "polling",
-                      polling_endpoint_value: feed_path(@feed, format: :turbo_stream),
+                      polling_endpoint_value: feed_path(feed, format: :turbo_stream),
                       polling_interval_value: 5_000,
                       polling_initial_delay_value: 5_000,
                       polling_max_polls_value: 0,
                       polling_indicate_busy_value: false,
-                      last_event_id: @recent_events.first&.id || "0"
+                      last_event_id: recent_events.first&.id || "0"
                     }
                   end %>
 <%= tag.div id: "feed-live-content", class: "space-y-10", data: polling_data do %>
-  <% if @refresh_in_progress %>
+  <% if refresh_in_progress %>
     <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3"
          role="status" data-key="feed.refreshing">
       <%= render SpinnerComponent.new %>
@@ -19,32 +20,32 @@
     </div>
   <% end %>
 
-  <% unless @feed.draft? %>
+  <% unless feed.draft? %>
     <section class="space-y-4">
       <%= h2 "Stats" %>
-      <%= render FeedStatsComponent.new(feed: @feed) %>
-      <%= render PostsHeatmapComponent.new(feed: @feed) %>
+      <%= render FeedStatsComponent.new(feed: feed) %>
+      <%= render PostsHeatmapComponent.new(feed: feed) %>
     </section>
   <% end %>
 
-  <% if @llm_usage_totals.call_count.positive? %>
+  <% if llm_usage_totals.call_count.positive? %>
     <section class="space-y-4">
       <%= h2 "AI Usage" %>
-      <%= render FeedLlmStatsComponent.new(feed: @feed, totals: @llm_usage_totals) %>
+      <%= render FeedLlmStatsComponent.new(feed: feed, totals: llm_usage_totals) %>
     </section>
   <% end %>
 
-  <% if @recent_events.any? %>
+  <% if recent_events.any? %>
     <section class="space-y-4">
       <%= h2 "Recent Activity" %>
-      <%= render EventsListComponent.new(events: @recent_events, view_all_url: events_path(filter: { subject_type: "Feed", subject_id: @feed.id })) %>
+      <%= render EventsListComponent.new(events: recent_events, view_all_url: events_path(filter: { subject_type: "Feed", subject_id: feed.id })) %>
     </section>
   <% end %>
 
-  <% if @recent_posts.any? %>
+  <% if recent_posts.any? %>
     <section class="space-y-4">
       <%= h2 "Recent Posts" %>
-      <%= render PostsListComponent.new(posts: @recent_posts, show_feed: false, view_all_url: posts_path(feed_id: @feed.id)) %>
+      <%= render PostsListComponent.new(posts: recent_posts, show_feed: false, view_all_url: posts_path(feed_id: feed.id)) %>
     </section>
   <% end %>
 <% end %>

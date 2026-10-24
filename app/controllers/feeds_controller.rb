@@ -81,7 +81,17 @@ class FeedsController < ApplicationController
     respond_to do |format|
       format.html
       format.turbo_stream do
-        render turbo_stream: turbo_stream.replace("feed-live-content", partial: "feeds/live_content")
+        render turbo_stream: turbo_stream.replace(
+          "feed-live-content",
+          partial: "feeds/live_content",
+          locals: {
+            feed: @feed,
+            recent_events: @recent_events,
+            recent_posts: @recent_posts,
+            llm_usage_totals: @llm_usage_totals,
+            refresh_in_progress: @refresh_in_progress
+          }
+        )
       end
     end
   end
