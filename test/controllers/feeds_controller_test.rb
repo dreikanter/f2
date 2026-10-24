@@ -1528,15 +1528,28 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
                                   feed_profile_key: "rss",
                                   params: { "url" => "http://example.com/feed.xml" })
 
-    patch feed_url(draft), params: {
-      feed: { name: "Promoted Feed" },
-      enable_feed: "1"
-    }
+    assert_enqueued_with(job: FeedRefreshJob, args: [draft.id]) do
+      patch feed_url(draft), params: {
+        feed: { name: "Promoted Feed" },
+        enable_feed: "1"
+      }
+    end
 
     assert_redirected_to feed_path(draft)
     draft.reload
     assert_predicate draft, :enabled?
     assert_equal "Promoted Feed", draft.name
+  end
+
+  test "#update should refresh a disabled feed when it is re-enabled" do
+    sign_in_as(user)
+    disabled = create(:feed, :disabled, user: user, access_token: access_token)
+
+    assert_enqueued_with(job: FeedRefreshJob, args: [disabled.id]) do
+      patch feed_url(disabled), params: { feed: { name: disabled.name }, enable_feed: "1" }
+    end
+
+    assert_predicate disabled.reload, :enabled?
   end
 
   test "#update should keep a disabled feed disabled when enable-validation fails" do

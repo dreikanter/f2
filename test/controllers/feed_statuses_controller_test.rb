@@ -12,7 +12,9 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
   test "#update should enable feed when conditions are met" do
     sign_in_as(user)
 
-    patch feed_status_path(feed), params: { status: "enabled" }
+    assert_enqueued_with(job: FeedRefreshJob, args: [feed.id]) do
+      patch feed_status_path(feed), params: { status: "enabled" }
+    end
 
     assert_redirected_to feed
     follow_redirect!
@@ -26,10 +28,23 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     draft = create(:feed, :draft, user: user)
 
-    patch feed_status_path(draft), params: { status: "enabled" }
+    assert_enqueued_with(job: FeedRefreshJob, args: [draft.id]) do
+      patch feed_status_path(draft), params: { status: "enabled" }
+    end
 
     assert_redirected_to draft
     assert_equal "enabled", draft.reload.state
+  end
+
+  test "#update should not refresh a webhook feed when enabled" do
+    sign_in_as(user)
+    webhook = create(:feed, :webhook, :draft, user: user)
+
+    assert_no_enqueued_jobs(only: FeedRefreshJob) do
+      patch feed_status_path(webhook), params: { status: "enabled" }
+    end
+
+    assert_predicate webhook.reload, :enabled?
   end
 
   test "#update should disable feed" do

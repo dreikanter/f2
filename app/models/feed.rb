@@ -54,6 +54,7 @@ class Feed < ApplicationRecord
   attr_accessor :source_verified
 
   after_update :create_schedule_on_enable
+  after_update_commit :enqueue_refresh_on_enable
   before_save :clear_subscribers_count_on_destination_change
   before_validation :compose_import_after_from_parts
   before_validation :drop_params_foreign_to_profile
@@ -508,6 +509,13 @@ class Feed < ApplicationRecord
       # model never traps an unrelated edit.
       errors.add(:ai_model, "This model isn't available anymore. Pick another one.")
     end
+  end
+
+  # Wait for the enabling transaction to commit and its schedule to exist.
+  def enqueue_refresh_on_enable
+    return unless saved_change_to_state? && enabled? && scheduled?
+
+    FeedRefreshJob.perform_later(id)
   end
 
   def create_schedule_on_enable
