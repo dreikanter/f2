@@ -69,7 +69,7 @@ class FeedsController < ApplicationController
 
     # A feed refresh replaces its started event with a new completion event.
     # Re-render only when that latest event changes, not on every poll.
-    if request.format.turbo_stream? && params[:after_id] == (@recent_events.first&.id || "0")
+    if request.format.turbo_stream? && params[:after_id].to_s == @recent_events.first&.id.to_s
       return head :ok
     end
 

@@ -9,7 +9,7 @@
                       polling_initial_delay_value: 5_000,
                       polling_max_polls_value: 0,
                       polling_indicate_busy_value: false,
-                      last_event_id: recent_events.first&.id || "0"
+                      last_event_id: recent_events.first&.id
                     }
                   end %>
 <%= tag.div id: "feed-live-content", class: "space-y-10", data: polling_data do %>

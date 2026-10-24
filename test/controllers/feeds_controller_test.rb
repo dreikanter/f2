@@ -662,7 +662,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       assert_select "[data-key='feed.refreshing']", count: 0
     end
     assert_select "#feed-live-content[data-polling-endpoint-value=?]", feed_path(enabled, format: :turbo_stream)
-    assert_select "#feed-live-content[data-last-event-id='0']"
+    assert_select "#feed-live-content[data-last-event-id]", count: 0
   end
 
   test "#show should keep polling across disabled and draft states, but not for webhooks" do
@@ -686,14 +686,15 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     disabled = create(:feed, :disabled, user: user)
 
     get feed_url(disabled)
-    assert_select "#feed-live-content[data-controller='polling'][data-last-event-id='0']"
+    assert_select "#feed-live-content[data-controller='polling']"
+    assert_select "#feed-live-content[data-last-event-id]", count: 0
 
     assert_enqueued_with(job: FeedRefreshJob, args: [disabled.id]) do
       patch feed_status_path(disabled), params: { status: "enabled" }, as: :turbo_stream
     end
 
     assert_response :success
-    get feed_path(disabled, format: :turbo_stream), params: { after_id: "0" }
+    get feed_path(disabled, format: :turbo_stream)
 
     assert_response :success
     assert_select "turbo-stream[action='replace'][target='feed-live-content']" do
@@ -751,13 +752,13 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     enabled = create(:feed, :enabled, user: user)
 
-    get feed_path(enabled, format: :turbo_stream), params: { after_id: "0" }
+    get feed_path(enabled, format: :turbo_stream)
     assert_response :success
     assert_empty response.body
 
     started = create(:event, type: "feed_refresh", user: user, subject: enabled,
                             metadata: { "status" => "started" })
-    get feed_path(enabled, format: :turbo_stream), params: { after_id: "0" }
+    get feed_path(enabled, format: :turbo_stream)
 
     assert_response :success
     assert_select "[data-key='feed.refreshing']", text: /Refreshing feed/
