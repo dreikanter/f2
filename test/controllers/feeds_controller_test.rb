@@ -651,6 +651,95 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{edit_feed_path(feed)}']", text: "Edit"
   end
 
+  test "#show should poll the live content of enabled scheduled feeds" do
+    sign_in_as(user)
+    enabled = create(:feed, :enabled, user: user)
+
+    get feed_url(enabled)
+
+    assert_response :success
+    assert_select "#feed-live-content[data-controller='polling']" do
+      assert_select "[data-key='feed.refreshing']", count: 0
+    end
+    assert_select "#feed-live-content[data-polling-endpoint-value=?]", feed_path(enabled, format: :turbo_stream)
+    assert_select "#feed-live-content[data-last-event-id='0']"
+  end
+
+  test "#show should not poll drafts or webhook feeds" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, user: user)
+    webhook = create(:feed, :webhook, :enabled, user: user)
+
+    get feed_url(draft)
+    assert_select "#feed-live-content[data-controller='polling']", count: 0
+
+    get feed_url(webhook)
+    assert_select "#feed-live-content[data-controller='polling']", count: 0
+  end
+
+  test "#show should indicate when a feed refresh is running" do
+    sign_in_as(user)
+    enabled = create(:feed, :enabled, user: user)
+    started = create(:event, type: "feed_refresh", user: user, subject: enabled,
+                            metadata: { "status" => "started" })
+
+    get feed_url(enabled)
+
+    assert_response :success
+    assert_select "#feed-live-content[data-last-event-id=?]", started.id
+    assert_select "[data-key='feed.refreshing'][role='status']", text: /Refreshing feed/
+  end
+
+  test "#show should stream updated events and posts after refresh completes" do
+    sign_in_as(user)
+    enabled = create(:feed, :enabled, user: user)
+    started = create(:event, type: "feed_refresh", user: user, subject: enabled,
+                            metadata: { "status" => "started" })
+
+    started.destroy!
+    post = create(:post, :enqueued, feed: enabled, content: "Newly imported story")
+    completed = create(:event, type: "feed_refresh", user: user, subject: enabled,
+                              metadata: { "status" => "completed", "stats" => { "new_posts" => 1 } })
+
+    get feed_path(enabled, format: :turbo_stream), params: { after_id: started.id }
+
+    assert_response :success
+    assert_select "turbo-stream[action='replace'][target='feed-live-content']" do
+      assert_select "#feed-live-content[data-last-event-id=?]", completed.id
+      assert_select "[data-event-id=?]", completed.id
+      assert_select "a[href=?]", post_path(post), text: /Newly imported story/
+      assert_select "[data-key='feed.refreshing']", count: 0
+    end
+  end
+
+  test "#show should not redraw unchanged live content" do
+    sign_in_as(user)
+    enabled = create(:feed, :enabled, user: user)
+    event = create(:event, type: "feed_refresh", user: user, subject: enabled)
+
+    get feed_path(enabled, format: :turbo_stream), params: { after_id: event.id }
+
+    assert_response :success
+    assert_empty response.body
+  end
+
+  test "#show should discover the first event after an initially empty page" do
+    sign_in_as(user)
+    enabled = create(:feed, :enabled, user: user)
+
+    get feed_path(enabled, format: :turbo_stream), params: { after_id: "0" }
+    assert_response :success
+    assert_empty response.body
+
+    started = create(:event, type: "feed_refresh", user: user, subject: enabled,
+                            metadata: { "status" => "started" })
+    get feed_path(enabled, format: :turbo_stream), params: { after_id: "0" }
+
+    assert_response :success
+    assert_select "[data-key='feed.refreshing']", text: /Refreshing feed/
+    assert_select "#feed-live-content[data-last-event-id=?]", started.id
+  end
+
   test "#show should gather feed actions in the header menu" do
     sign_in_as(user)
     enabled = create(:feed, :enabled, user: user, access_token: access_token, target_group: "testgroup")

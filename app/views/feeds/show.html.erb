@@ -10,34 +10,8 @@
     </section>
   <% end %>
 
-  <% unless @feed.draft? %>
-    <section class="space-y-4">
-      <%= h2 "Stats" %>
-      <%= render FeedStatsComponent.new(feed: @feed) %>
-      <%= render PostsHeatmapComponent.new(feed: @feed) %>
-    </section>
-  <% end %>
+  <%= render "live_content" %>
 
-  <% if @llm_usage_totals.call_count.positive? %>
-    <section class="space-y-4">
-      <%= h2 "AI Usage" %>
-      <%= render FeedLlmStatsComponent.new(feed: @feed, totals: @llm_usage_totals) %>
-    </section>
-  <% end %>
-
-  <% if @recent_events.any? %>
-    <section class="space-y-4">
-      <%= h2 "Recent Activity" %>
-      <%= render EventsListComponent.new(events: @recent_events, view_all_url: events_path(filter: { subject_type: "Feed", subject_id: @feed.id })) %>
-    </section>
-  <% end %>
-
-  <% if @recent_posts.any? %>
-    <section class="space-y-4">
-      <%= h2 "Recent Posts" %>
-      <%= render PostsListComponent.new(posts: @recent_posts, show_feed: false, view_all_url: posts_path(feed_id: @feed.id)) %>
-    </section>
-  <% end %>
 </div>
 
 <% if @feed.target_group.present? %>
