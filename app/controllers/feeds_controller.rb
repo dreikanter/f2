@@ -65,9 +65,35 @@ class FeedsController < ApplicationController
   def show
     @feed = load_feed
     authorize @feed
+    @recent_events = recent_events(@feed).to_a
+
+    # A feed refresh replaces its started event with a new completion event.
+    # Re-render only when that latest event changes, not on every poll.
+    if request.format.turbo_stream? && params[:after_id].to_s == @recent_events.first&.id.to_s
+      return head :ok
+    end
+
     @recent_posts = recent_posts(@feed)
-    @recent_events = recent_events(@feed)
+    @refresh_in_progress = @feed.events.user_relevant.where(type: "feed_refresh")
+                                 .where("metadata ->> 'status' = 'started'").exists?
     @llm_usage_totals = LlmUsageReport.for_feed(@feed, period: LlmUsageReport::STATS_PERIOD.ago..Time.current).totals
+
+    respond_to do |format|
+      format.html
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace(
+          "feed-live-content",
+          partial: "feeds/live_content",
+          locals: {
+            feed: @feed,
+            recent_events: @recent_events,
+            recent_posts: @recent_posts,
+            llm_usage_totals: @llm_usage_totals,
+            refresh_in_progress: @refresh_in_progress
+          }
+        )
+      end
+    end
   end
 
   def edit
