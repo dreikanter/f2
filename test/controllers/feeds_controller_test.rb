@@ -665,16 +665,40 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#feed-live-content[data-last-event-id='0']"
   end
 
-  test "#show should not poll drafts or webhook feeds" do
+  test "#show should keep polling across disabled and draft states, but not for webhooks" do
     sign_in_as(user)
     draft = create(:feed, :draft, user: user)
+    disabled = create(:feed, :disabled, user: user)
     webhook = create(:feed, :webhook, :enabled, user: user)
 
     get feed_url(draft)
-    assert_select "#feed-live-content[data-controller='polling']", count: 0
+    assert_select "#feed-live-content[data-controller='polling']"
+
+    get feed_url(disabled)
+    assert_select "#feed-live-content[data-controller='polling']"
 
     get feed_url(webhook)
     assert_select "#feed-live-content[data-controller='polling']", count: 0
+  end
+
+  test "#show should pick up enablement without a page reload" do
+    sign_in_as(user)
+    disabled = create(:feed, :disabled, user: user)
+
+    get feed_url(disabled)
+    assert_select "#feed-live-content[data-controller='polling'][data-last-event-id='0']"
+
+    assert_enqueued_with(job: FeedRefreshJob, args: [disabled.id]) do
+      patch feed_status_path(disabled), params: { status: "enabled" }, as: :turbo_stream
+    end
+
+    assert_response :success
+    get feed_path(disabled, format: :turbo_stream), params: { after_id: "0" }
+
+    assert_response :success
+    assert_select "turbo-stream[action='replace'][target='feed-live-content']" do
+      assert_select "[data-event-type='feed_enabled']"
+    end
   end
 
   test "#show should indicate when a feed refresh is running" do

@@ -1,6 +1,7 @@
 <%# locals: (feed:, recent_events:, recent_posts:, llm_usage_totals:, refresh_in_progress:) %>
 <%# The polling host owns its cursor and reconnects after a new event replaces it. %>
-<% polling_data = if feed.scheduled? && (feed.enabled? || refresh_in_progress)
+<%# Keep polling while disabled: the Turbo enable action updates only the header. %>
+<% polling_data = if feed.scheduled?
                     {
                       controller: "polling",
                       polling_endpoint_value: feed_path(feed, format: :turbo_stream),
