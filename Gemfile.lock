@@ -6,7 +6,7 @@ GIT
 
 GIT
   remote: https://github.com/rails/rails.git
-  revision: dc5becef35578e8f198e00e7866607cb6dfff0f8
+  revision: a5729329606f01fde4bca7bf6351657c6076396c
   branch: main
   specs:
     actioncable (8.2.0.alpha)
@@ -261,7 +261,7 @@ GEM
       actionpack (>= 6.0.0)
       activesupport (>= 6.0.0)
       railties (>= 6.0.0)
-    io-console (0.9.4)
+    io-console (0.9.5)
     irb (1.18.0)
       pp (>= 0.6.0)
       prism (>= 1.3.0)
