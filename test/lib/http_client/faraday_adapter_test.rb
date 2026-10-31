@@ -89,6 +89,16 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_includes error.message, "Connection failed"
   end
 
+  test "#get should classify TLS failures and preserve their cause" do
+    tls_error = Faraday::SSLError.new("certificate verify failed")
+    stub_request(:get, "https://example.com/tls-error").to_raise(tls_error)
+
+    error = assert_raises(HttpClient::SSLError) { client.get("https://example.com/tls-error") }
+
+    assert_same tls_error, error.cause
+    assert_includes error.message, "certificate verify failed"
+  end
+
   test "#get should raise TimeoutError on request timeouts" do
     stub_request(:get, "https://example.com/timeout")
       .to_raise(Timeout::Error.new("execution expired"))

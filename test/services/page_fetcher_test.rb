@@ -6,58 +6,112 @@ class PageFetcherTest < ActiveSupport::TestCase
   test "#fetch should return the successful response body" do
     stub_request(:get, PAGE_URL).to_return(status: 200, body: "<html>Sample article</html>")
 
-    assert_equal "<html>Sample article</html>", PageFetcher.new.fetch(PAGE_URL)
+    result = PageFetcher.new.fetch(PAGE_URL)
+
+    assert_equal "<html>Sample article</html>", result.body
+    assert_nil result.failure
   end
 
   test "#fetch should preserve an empty successful response" do
     stub_request(:get, PAGE_URL).to_return(status: 204, body: "")
 
-    assert_equal "", PageFetcher.new.fetch(PAGE_URL)
+    result = PageFetcher.new.fetch(PAGE_URL)
+
+    assert_equal "", result.body
+    assert_nil result.failure
   end
 
   test "#fetch should skip blank URLs without requesting a page" do
-    fetcher = PageFetcher.new
-
-    [nil, "", " "].each { |url| assert_nil fetcher.fetch(url) }
+    [nil, "", " "].each do |url|
+      result = PageFetcher.new.fetch(url)
+      assert_nil result.body
+      assert_nil result.failure
+    end
 
     assert_not_requested :get, /./
   end
 
-  test "#fetch should warn with context and return nil for an HTTP failure" do
+  test "#fetch should return HTTP failure details without logging or reporting" do
     stub_request(:get, PAGE_URL).to_return(status: 503, body: "Service unavailable")
     warnings = []
+    result = nil
 
-    Rails.logger.stub(:warn, ->(message) { warnings << message }) do
-      assert_nil PageFetcher.new(context: { source: "sample" }).fetch(PAGE_URL)
+    reports = capture_error_reports do
+      Rails.logger.stub(:warn, ->(message) { warnings << message }) do
+        result = PageFetcher.new.fetch(PAGE_URL)
+      end
     end
 
-    assert_equal 1, warnings.size
-    assert_includes warnings.first, "HTTP 503"
-    assert_includes warnings.first, "source=sample"
-    assert_includes warnings.first, "url=#{PAGE_URL}"
+    assert_nil result.body
+    assert_equal({ url: PAGE_URL, status: 503, message: "HTTP 503" }, result.failure)
+    assert_empty warnings
+    assert_empty reports
     assert_requested :get, PAGE_URL, times: 1
   end
 
-  test "#fetch should report network failures with context and return nil" do
+  test "#fetch should return connection failure details without reporting" do
     stub_request(:get, PAGE_URL).to_raise(Faraday::ConnectionFailed.new("connection refused"))
-    context = { source: "sample" }
-    reported = []
+    result = nil
 
-    Rails.error.stub(:report, ->(error, **options) { reported << [error, options] }) do
-      assert_nil PageFetcher.new(context: context).fetch(PAGE_URL)
-    end
+    reports = capture_error_reports { result = PageFetcher.new.fetch(PAGE_URL) }
 
-    assert_equal 1, reported.size
-    error, options = reported.first
-    assert_kind_of HttpClient::ConnectionError, error
-    assert_equal :warning, options[:severity]
-    assert_equal({ source: "sample", url: PAGE_URL }, options[:context])
+    assert_empty reports
+    assert_nil result.body
+    assert_equal "HttpClient::ConnectionError", result.failure[:error_class]
+    assert_includes result.failure[:message], "connection refused"
+    assert_equal PAGE_URL, result.failure[:url]
     assert_requested :get, PAGE_URL, times: 1
   end
 
-  test "#fetch should let unexpected errors propagate" do
-    stub_request(:get, PAGE_URL).to_raise(ArgumentError.new("unexpected error"))
+  test "#fetch should return timeout details without reporting" do
+    stub_request(:get, PAGE_URL).to_raise(Faraday::TimeoutError.new("request timed out"))
+    result = nil
 
-    assert_raises(ArgumentError) { PageFetcher.new.fetch(PAGE_URL) }
+    reports = capture_error_reports { result = PageFetcher.new.fetch(PAGE_URL) }
+
+    assert_empty reports
+    assert_nil result.body
+    assert_equal "HttpClient::TimeoutError", result.failure[:error_class]
+    assert_requested :get, PAGE_URL, times: 1
+  end
+
+  test "#fetch should return TLS failure details without reporting" do
+    stub_request(:get, PAGE_URL).to_raise(Faraday::SSLError.new("certificate verify failed"))
+    result = nil
+
+    reports = capture_error_reports { result = PageFetcher.new.fetch(PAGE_URL) }
+
+    assert_empty reports
+    assert_nil result.body
+    assert_equal "HttpClient::SSLError", result.failure[:error_class]
+    assert_equal PAGE_URL, result.failure[:url]
+    assert_includes result.failure[:message], "certificate verify failed"
+    assert_requested :get, PAGE_URL, times: 1
+  end
+
+  test "#fetch should treat redirect loops and blocked URLs as external failures" do
+    [HttpClient::TooManyRedirectsError, HttpClient::BlockedUrlError].each do |error_class|
+      stub_request(:get, PAGE_URL).to_raise(error_class.new("Page unavailable"))
+      result = nil
+
+      reports = capture_error_reports { result = PageFetcher.new.fetch(PAGE_URL) }
+
+      assert_empty reports
+      assert_nil result.body
+      assert_equal({ url: PAGE_URL, error_class: error_class.name, message: "Page unavailable" }, result.failure)
+    end
+  end
+
+  test "#fetch should propagate unexpected errors without reporting them" do
+    [HttpClient::Error, ArgumentError].each do |error_class|
+      error = error_class.new("unexpected error")
+      stub_request(:get, PAGE_URL).to_raise(error)
+
+      reports = capture_error_reports do
+        assert_same error, assert_raises(error_class) { PageFetcher.new.fetch(PAGE_URL) }
+      end
+
+      assert_empty reports
+    end
   end
 end

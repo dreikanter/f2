@@ -5,6 +5,59 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     @feed ||= create(:feed, feed_profile_key: "rss")
   end
 
+  test "#perform should leave unexpected page errors to the outer error boundary" do
+    feed = create(:feed, feed_profile_key: "buni")
+    page_url = "https://example.com/comic"
+    stub_request(:get, feed.url).to_return(body: <<~RSS)
+      <rss version="2.0"><channel><title>Comics</title><item>
+        <guid>comic-1</guid><title>Comic</title><link>#{page_url}</link>
+      </item></channel></rss>
+    RSS
+    error = HttpClient::Error.new("unexpected client failure")
+    stub_request(:get, page_url).to_raise(error)
+
+    reports = capture_error_reports do
+      assert_same error, assert_raises(HttpClient::Error) {
+        Rails.error.record { FeedRefreshJob.perform_now(feed.id) }
+      }
+    end
+
+    assert_same error, reports.sole.error
+    assert_not reports.sole.handled?
+    assert_equal feed.id, reports.sole.context[:feed_id]
+    event = feed.events.find_by!(type: "feed_refresh")
+    assert_equal "failed", event.metadata["status"]
+    assert_equal "normalize_entries", event.metadata.dig("error", "stage")
+  end
+
+  test "#perform should preserve the whole batch when an optional page has a TLS failure" do
+    feed = create(:feed, feed_profile_key: "smbc")
+    stub_request(:get, feed.url).to_return(body: <<~RSS)
+      <rss version="2.0"><channel><title>Comics</title>
+        <item>
+          <guid>first</guid><title>First</title><link>https://example.com/first</link>
+          <pubDate>#{2.hours.ago.rfc822}</pubDate>
+        </item>
+        <item>
+          <guid>second</guid><title>Second</title><link>https://example.com/second</link>
+          <pubDate>#{1.hour.ago.rfc822}</pubDate>
+        </item>
+      </channel></rss>
+    RSS
+    stub_request(:get, "https://example.com/first").to_return(body: "<html></html>")
+    stub_request(:get, "https://example.com/second").to_raise(Faraday::SSLError.new("certificate has expired"))
+
+    reports = capture_error_reports do
+      assert_enqueued_with(job: PostPublishJob, args: [feed.id]) { FeedRefreshJob.perform_now(feed.id) }
+    end
+
+    assert_empty reports
+    assert_equal %w[first second], feed.posts.enqueued.order(:uid).pluck(:uid)
+    assert_equal %w[first second], feed.feed_entries.processed.order(:uid).pluck(:uid)
+    assert_equal 2, FeedEntryUid.where(feed: feed).count
+    assert_equal "completed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
+  end
+
   test "#perform should ignore a missing feed" do
     assert_nothing_raised do
       FeedRefreshJob.perform_now(-1)
