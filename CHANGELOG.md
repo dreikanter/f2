@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-01
+
+- Daily import counts include all refreshes in the same day.
+
 ## 2026-10-31
 
 - Feed refresh events show details when supplementary pages could not be loaded.
