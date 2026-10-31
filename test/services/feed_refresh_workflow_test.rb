@@ -51,7 +51,6 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       :filter_new_entries,
       :persist_entries,
       :normalize_entries,
-      :persist_posts,
       :enqueue_publication,
       :finalize_workflow
     ]
@@ -148,7 +147,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     # Create existing entry and mark it as imported
-    create(:feed_entry, feed: test_feed, uid: "existing-entry-123")
+    create(:feed_entry, feed: test_feed, uid: "existing-entry-123", status: :processed)
     create(:feed_entry_uid, feed: test_feed, uid: "existing-entry-123")
 
     sample_rss = <<~RSS
@@ -653,8 +652,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
     WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
 
-    FeedMetric.stub(:record, proc { raise ActiveRecord::StatementInvalid.new("Database error") }) do
-      assert_raises(ActiveRecord::StatementInvalid) { FeedRefreshWorkflow.new(test_feed).execute }
+    workflow = FeedRefreshWorkflow.new(test_feed)
+    after_step = ->(*) { raise "after completion" if workflow.current_step == :finalize_workflow }
+
+    workflow.stub(:after_step, after_step) do
+      assert_raises(RuntimeError) { workflow.execute }
     end
 
     event = Event.find_by(subject: test_feed, type: "feed_refresh")
@@ -974,7 +976,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       workflow2.execute
 
       metric.reload
-      assert_equal 1, metric.posts_count, "Metric should reflect only new posts from second refresh"
+      assert_equal 2, metric.posts_count, "Metric should include both refreshes"
     end
   end
 
@@ -1074,7 +1076,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   test "#execute should allow independent same-day originals while preserving historical identities" do
     create(:llm_model, model_id: "gpt-4.1")
     feed = ai_feed_with_schedule
-    historical = create(:feed_entry, feed: feed, uid: "digest:2026-07-07")
+    historical = create(:feed_entry, feed: feed, uid: "digest:2026-07-07", status: :processed)
     create(:feed_entry_uid, feed: feed, uid: historical.uid)
     request = stub_ai_response([{ "source_url" => nil, "body" => "A story" }])
 

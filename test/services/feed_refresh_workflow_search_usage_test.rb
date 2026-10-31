@@ -36,7 +36,7 @@ class FeedRefreshWorkflowSearchUsageTest < ActiveSupport::TestCase
     searches = record_searches(started, 2)
     reference_ids = started.event_references.pluck(:id).sort
 
-    workflow_with(started).send(:complete_refresh_event, [])
+    workflow_with(started).send(:complete_refresh_event)
 
     terminal = feed.events.where(type: "feed_refresh").sole
     assert_equal "completed", terminal.metadata.fetch("status")
