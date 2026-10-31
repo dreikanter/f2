@@ -1,25 +1,26 @@
 class PageFetcher
-  def initialize(context: {})
-    @context = context
-  end
+  Result = Data.define(:body, :failure)
 
+  # Expected external failures are data. Unexpected errors propagate to the
+  # caller's error boundary; fetching never logs or reports them itself.
+  #
   # @param url [String, nil] supplementary page URL
-  # @return [String, nil] response body, or nil when unavailable
+  # @return [Result] response body or failure details
   def fetch(url)
-    return nil if url.blank?
+    return Result.new(body: nil, failure: nil) if url.blank?
 
     response = HttpClient.build.get(url)
-    return response.body if response.success?
+    return Result.new(body: response.body, failure: nil) if response.success?
 
-    details = context.merge(url: url).map { |key, value| "#{key}=#{value}" }.join(" ")
-    Rails.logger.warn("Page fetch failed (HTTP #{response.status}) [#{details}]")
-    nil
-  rescue HttpClient::Error => e
-    Rails.error.report(e, severity: :warning, context: context.merge(url: url))
-    nil
+    failure(url, status: response.status, message: "HTTP #{response.status}")
+  rescue HttpClient::TimeoutError, HttpClient::ConnectionError, HttpClient::SSLError,
+         HttpClient::TooManyRedirectsError, HttpClient::BlockedUrlError => e
+    failure(url, error_class: e.class.name, message: e.message)
   end
 
   private
 
-  attr_reader :context
+  def failure(url, **details)
+    Result.new(body: nil, failure: { url: url, **details })
+  end
 end

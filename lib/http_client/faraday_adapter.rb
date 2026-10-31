@@ -58,6 +58,8 @@ module HttpClient
       raise ConnectionError, "Connection failed: #{e.message}"
     rescue Faraday::FollowRedirects::RedirectLimitReached => e
       raise TooManyRedirectsError, "Too many redirects: #{e.message}"
+    rescue Faraday::SSLError => e
+      raise SSLError, "TLS connection failed: #{e.message}"
     rescue Faraday::Error => e
       raise Error, "HTTP error: #{e.message}"
     end

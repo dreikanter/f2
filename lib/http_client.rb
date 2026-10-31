@@ -26,6 +26,7 @@ module HttpClient
   class Error < StandardError; end
   class ConnectionError < Error; end
   class TimeoutError < Error; end
+  class SSLError < Error; end
   class TooManyRedirectsError < Error; end
   # Raised in public-only mode when the initial URL or any redirect hop is not a
   # public host (SSRF guard; see FaradayAdapter#ensure_public_url!).

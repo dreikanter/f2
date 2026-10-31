@@ -66,7 +66,7 @@ class Normalizer::LitterboxNormalizerTest < ActiveSupport::TestCase
 
   test "#normalize should handle bonus page fetch failure gracefully" do
     stub_request(:get, "https://litterbox.example/sample-comic-one-bonus/")
-      .to_raise(HttpClient::Error)
+      .to_raise(HttpClient::ConnectionError)
 
     entry = feed_entry(0)
     post = Normalizer::LitterboxNormalizer.new(entry).normalize
@@ -164,7 +164,7 @@ class Normalizer::LitterboxNormalizerTest < ActiveSupport::TestCase
 
   test "#normalize should preserve every RSS image if the article fetch fails" do
     entry = sample_entries.find { |item| item.raw_data["title"] == "Sample Gallery" }
-    stub_request(:get, entry.raw_data["link"]).to_raise(HttpClient::Error)
+    stub_request(:get, entry.raw_data["link"]).to_raise(HttpClient::ConnectionError)
     stub_request(:get, "https://litterbox.example/sample-gallery-bonus/").to_return(status: 404)
 
     post = Normalizer::LitterboxNormalizer.new(entry).normalize
