@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-31
+
+- Feed refresh events show details when supplementary pages could not be loaded.
+
 ## 2026-10-23
 
 - Admin feed pages show configuration, credentials status, and scheduling diagnostics in a details list.

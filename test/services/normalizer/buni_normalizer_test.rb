@@ -57,20 +57,17 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
     assert_requested :get, PAGE_URL, times: 1
   end
 
-  test "#normalize should report a network error once with entry context" do
+  test "#normalize should reject an unavailable comic without reporting a network failure" do
     stub_request(:get, PAGE_URL).to_raise(Faraday::ConnectionFailed.new("connection refused"))
     entry = feed_entry(0)
-    reported = []
-    Rails.error.stub(:report, ->(error, **options) { reported << [error, options] }) do
+
+    reports = capture_error_reports do
       post = Normalizer::BuniNormalizer.new(entry).normalize
       assert_equal "rejected", post.status
       assert_includes post.validation_errors, "missing_images"
     end
 
-    assert_equal 1, reported.size
-    _, options = reported.first
-    assert_equal({ normalizer: "Normalizer::BuniNormalizer", feed_id: entry.feed.id,
-                   uid: entry.uid, url: PAGE_URL }, options[:context])
+    assert_empty reports
     assert_requested :get, PAGE_URL, times: 1
   end
 

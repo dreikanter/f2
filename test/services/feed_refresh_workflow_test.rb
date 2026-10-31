@@ -510,7 +510,8 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     normalizer.define_singleton_method(:normalize) { raise "normalization failed" }
 
     test_feed.stub(:normalizer_instance, normalizer) do
-      assert_raises(StandardError) { workflow.execute }
+      error = assert_raises(RuntimeError) { workflow.execute }
+      assert_equal "normalization failed", error.message
     end
 
     # Should fail during normalize step
