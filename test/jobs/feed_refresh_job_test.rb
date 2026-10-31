@@ -79,11 +79,14 @@ class FeedRefreshJobTest < ActiveJob::TestCase
 
     report = reports.sole
     assert_kind_of Loader::Error, report.error
-    assert_equal feed.id, report.context[:feed_id]
-    assert_equal feed.user_id, report.context[:feed_owner_id]
-    assert_equal feed.user.name, report.context[:feed_owner_label]
-    assert_equal "candy.freefeed.net", report.context[:freefeed_instance]
-    assert_equal feed.target_group, report.context[:target_group]
+    assert_equal({
+      feed_id: feed.id,
+      feed_owner_id: feed.user_id,
+      feed_owner_label: feed.user.name,
+      freefeed_instance: "candy.freefeed.net",
+      target_group: feed.target_group
+    }, report.context.except(:job, :rails))
+
     assert report.handled?
     assert_equal "failed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
     assert_equal 1, feed.reload.consecutive_failures
@@ -91,42 +94,50 @@ class FeedRefreshJobTest < ActiveJob::TestCase
   end
 
   test "#perform should enrich errors reported inside the workflow" do
-    workflow = FeedRefreshWorkflow.new(feed)
-    error = RuntimeError.new("Entry normalization failed")
+    feed = create(:feed, feed_profile_key: "pluralistic")
+    entry_url = "https://pluralistic.net/2026/06/11/lapsarianism/"
+    stub_request(:get, feed.url).to_return(body: file_fixture("feeds/pluralistic/feed.xml").read)
+    stub_request(:get, entry_url).to_return(body: "<html><body>No image</body></html>")
+    stub_request(:get, "https://pluralistic.net/2026/06/10/fair-use/")
+      .to_return(body: file_fixture("feeds/pluralistic/page.html").read)
 
-    reports = capture_error_reports do
-      FeedRefreshWorkflow.stub(:new, workflow) do
-        workflow.stub(:execute, -> { Rails.error.report(error, context: { entry_uid: "entry-123" }) }) do
-          FeedRefreshJob.perform_now(feed.id)
-        end
-      end
-    end
+    reports = capture_error_reports { FeedRefreshJob.perform_now(feed.id) }
 
     context = reports.sole.context
     assert_equal feed.id, context[:feed_id]
     assert_equal feed.user_id, context[:feed_owner_id]
-    assert_equal "entry-123", context[:entry_uid]
+    assert_equal "pluralistic", context[:profile]
+    assert_equal "https://pluralistic.net/?p=12899", context[:entry_uid]
+    assert_equal entry_url, context[:entry_url]
+    assert_equal "completed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
   end
 
   test "#perform should retain context for an unhandled error reported outside the job" do
-    workflow = FeedRefreshWorkflow.new(feed)
-    error = RuntimeError.new("Unexpected workflow failure")
+    feed = create(:feed, feed_profile_key: "json_feed")
+    stub_request(:get, feed.url).to_return(body: "invalid JSON")
 
     reports = capture_error_reports do
-      FeedRefreshWorkflow.stub(:new, workflow) do
-        workflow.stub(:execute, -> { raise error }) do
-          assert_raises(RuntimeError) do
-            Rails.error.record { FeedRefreshJob.perform_now(feed.id) }
-          end
-        end
+      assert_raises(JSON::ParserError) do
+        Rails.error.record { FeedRefreshJob.perform_now(feed.id) }
       end
     end
 
     report = reports.sole
-    assert_same error, report.error
+    assert_kind_of JSON::ParserError, report.error
     assert_not report.handled?
     assert_equal feed.id, report.context[:feed_id]
     assert_equal feed.user_id, report.context[:feed_owner_id]
+    assert_equal "failed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
+  end
+
+  test "#perform should fall back to the owner's masked email when the name is blank" do
+    owner = create(:user, name: "", email_address: "alice@example.com")
+    feed = create(:feed, user: owner)
+    stub_request(:get, feed.url).to_return(status: 302, headers: { "Location" => feed.url })
+
+    reports = capture_error_reports { FeedRefreshJob.perform_now(feed.id) }
+
+    assert_equal "a...e@example.com", reports.sole.context[:feed_owner_label]
   end
 
   test "#perform should isolate feed context between job executions" do
@@ -134,8 +145,9 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     stub_request(:get, feed.url).to_return(status: 302, headers: { "Location" => feed.url })
 
     reports = capture_error_reports do
-      [feed, other_feed].each do |current_feed|
-        Rails.application.executor.wrap { FeedRefreshJob.perform_now(current_feed.id) }
+      perform_enqueued_jobs(only: FeedRefreshJob) do
+        FeedRefreshJob.perform_later(feed.id)
+        FeedRefreshJob.perform_later(other_feed.id)
       end
 
       Rails.error.report(RuntimeError.new("Unrelated failure"))
@@ -146,9 +158,9 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     assert_equal "candy.freefeed.net", first.context[:freefeed_instance]
     assert_equal other_feed.id, second.context[:feed_id]
     assert_equal other_feed.user_id, second.context[:feed_owner_id]
-    assert_nil second.context[:freefeed_instance]
-    assert_nil second.context[:target_group]
-    assert_empty unrelated.context.slice(*FeedErrorContext.for(feed).keys)
+    assert_not second.context.key?(:freefeed_instance)
+    assert_not second.context.key?(:target_group)
+    assert_empty unrelated.context.slice(:feed_id, :feed_owner_id, :feed_owner_label, :freefeed_instance, :target_group)
   end
 
   test "#perform should record invalid source content without reporting a bug or retrying" do

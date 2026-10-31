@@ -1,10 +1,11 @@
 class UpdateFeedSubscribersCountJob < ApplicationJob
   include RateLimited
+  include SetsFeedErrorContext
 
   queue_as :default
 
   def perform(feed)
-    Rails.error.set_context(**FeedErrorContext.for(feed))
+    set_feed_error_context(feed)
 
     return unless feed.enabled? && feed.access_token&.active? && feed.target_group.present?
 

@@ -1,4 +1,6 @@
 class FeedRefreshJob < ApplicationJob
+  include SetsFeedErrorContext
+
   queue_as :default
 
   # @param feed_id [Integer] ID of the feed to refresh
@@ -6,7 +8,7 @@ class FeedRefreshJob < ApplicationJob
     feed = Feed.find_by(id: feed_id)
     return unless feed
 
-    Rails.error.set_context(**FeedErrorContext.for(feed))
+    set_feed_error_context(feed)
 
     # Webhook feeds have no loader to run; drop stray kicks.
     return if feed.feed_profile_key == "webhook"

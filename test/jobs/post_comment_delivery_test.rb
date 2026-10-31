@@ -145,9 +145,7 @@ class PostCommentDeliveryTest < ActiveJob::TestCase
     stub_request(:post, "#{access_token.host}/v4/comments").to_return(status: 500)
 
     reports = capture_error_reports do
-      allow_rate_limit do
-        perform_enqueued_jobs(only: PostPublishJob) { PostPublishJob.perform_now(feed.id) }
-      end
+      perform_enqueued_jobs(only: PostPublishJob) { PostPublishJob.perform_now(feed.id) }
     end
 
     first.reload

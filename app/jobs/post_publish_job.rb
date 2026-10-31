@@ -11,6 +11,7 @@
 # feeds that were disabled and later re-enabled.
 class PostPublishJob < ApplicationJob
   include RateLimited
+  include SetsFeedErrorContext
 
   queue_as :default
 
@@ -18,7 +19,7 @@ class PostPublishJob < ApplicationJob
     feed = Feed.find_by(id: feed_id)
     return unless feed
 
-    Rails.error.set_context(**FeedErrorContext.for(feed))
+    set_feed_error_context(feed)
 
     # Stop the chain if the feed was disabled after it was kicked. Disabling a
     # feed pauses publishing, including posts already enqueued.

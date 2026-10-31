@@ -1,5 +1,6 @@
 class PostWithdrawalJob < ApplicationJob
   include RateLimited
+  include SetsFeedErrorContext
 
   queue_as :default
 
@@ -9,7 +10,7 @@ class PostWithdrawalJob < ApplicationJob
     feed = Feed.find_by(id: feed_id)
     return unless feed
 
-    Rails.error.set_context(**FeedErrorContext.for(feed))
+    set_feed_error_context(feed)
 
     access_token = feed.access_token
     return unless access_token&.active?
