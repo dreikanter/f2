@@ -9,6 +9,8 @@ class PostWithdrawalJob < ApplicationJob
     feed = Feed.find_by(id: feed_id)
     return unless feed
 
+    Rails.error.set_context(**FeedErrorContext.for(feed))
+
     access_token = feed.access_token
     return unless access_token&.active?
 

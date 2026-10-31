@@ -129,7 +129,7 @@ class PostCommentDeliveryTest < ActiveJob::TestCase
     assert_equal 2, comment_attempts["second comment"], "the interrupted comment should be retried"
   end
 
-  test "an ordinary comment error should keep the post published, notify the user, and continue" do
+  test "#perform should report a comment error with context, keep the post published, and continue" do
     first = create(:post, :enqueued, feed: feed, published_at: 2.hours.ago, comments: ["comment"])
     second = create(:post, :enqueued, feed: feed, published_at: 1.hour.ago)
     post_number = 0
@@ -144,9 +144,8 @@ class PostCommentDeliveryTest < ActiveJob::TestCase
     end
     stub_request(:post, "#{access_token.host}/v4/comments").to_return(status: 500)
 
-    reported = []
-    allow_rate_limit do
-      Rails.error.stub(:report, ->(error, **) { reported << error }) do
+    reports = capture_error_reports do
+      allow_rate_limit do
         perform_enqueued_jobs(only: PostPublishJob) { PostPublishJob.perform_now(feed.id) }
       end
     end
@@ -161,7 +160,13 @@ class PostCommentDeliveryTest < ActiveJob::TestCase
     assert_predicate event, :error?
     assert_equal first.id, event.metadata["post_id"]
     assert_equal first.freefeed_post_id, event.metadata["freefeed_post_id"]
-    assert_equal 1, reported.size
+    context = reports.sole.context
+    assert_equal feed.id, context[:feed_id]
+    assert_equal feed.user_id, context[:feed_owner_id]
+    assert_equal first.id, context[:post_id]
+    assert_equal first.freefeed_post_id, context[:freefeed_post_id]
+    assert_not context.key?(:post)
+    assert_not context.key?(:feed)
   end
 
   test "withdrawing a post with pending comments prevents it from being resumed" do

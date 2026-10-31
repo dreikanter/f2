@@ -5,6 +5,8 @@ class WithdrawAllPostsJob < ApplicationJob
     feed = Feed.find_by(id: feed_id)
     return unless feed
 
+    Rails.error.set_context(**FeedErrorContext.for(feed))
+
     user = User.find_by(id: user_id)
     return unless user
 

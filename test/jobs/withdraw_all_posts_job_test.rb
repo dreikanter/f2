@@ -31,6 +31,20 @@ class WithdrawAllPostsJobTest < ActiveJob::TestCase
     end
   end
 
+  test "#perform should report the feed owner when a different user requests withdrawal" do
+    actor = create(:user)
+    post = create(:post, :published, feed: feed, freefeed_post_id: "test_post_123")
+    stub_request(:delete, "#{access_token.host}/v4/posts/test_post_123").to_return(status: 500)
+
+    reports = capture_error_reports { WithdrawAllPostsJob.perform_now(feed.id, actor.id) }
+
+    context = reports.sole.context
+    assert_equal feed.id, context[:feed_id]
+    assert_equal user.id, context[:feed_owner_id]
+    assert_equal user.name, context[:feed_owner_label]
+    assert_equal post.id, context[:post_id]
+  end
+
   test ".perform_now should exit gracefully if user not found" do
     assert_nothing_raised do
       WithdrawAllPostsJob.perform_now(feed.id, 999999)

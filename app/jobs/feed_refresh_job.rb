@@ -6,6 +6,8 @@ class FeedRefreshJob < ApplicationJob
     feed = Feed.find_by(id: feed_id)
     return unless feed
 
+    Rails.error.set_context(**FeedErrorContext.for(feed))
+
     # Webhook feeds have no loader to run; drop stray kicks.
     return if feed.feed_profile_key == "webhook"
 

@@ -4,6 +4,8 @@ class UpdateFeedSubscribersCountJob < ApplicationJob
   queue_as :default
 
   def perform(feed)
+    Rails.error.set_context(**FeedErrorContext.for(feed))
+
     return unless feed.enabled? && feed.access_token&.active? && feed.target_group.present?
 
     # Statistics sit behind read-users-info, and a token can never gain a scope

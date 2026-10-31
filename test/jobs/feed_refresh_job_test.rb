@@ -80,10 +80,75 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     report = reports.sole
     assert_kind_of Loader::Error, report.error
     assert_equal feed.id, report.context[:feed_id]
+    assert_equal feed.user_id, report.context[:feed_owner_id]
+    assert_equal feed.user.name, report.context[:feed_owner_label]
+    assert_equal "candy.freefeed.net", report.context[:freefeed_instance]
+    assert_equal feed.target_group, report.context[:target_group]
     assert report.handled?
     assert_equal "failed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
     assert_equal 1, feed.reload.consecutive_failures
     assert_requested request, times: 4
+  end
+
+  test "#perform should enrich errors reported inside the workflow" do
+    workflow = FeedRefreshWorkflow.new(feed)
+    error = RuntimeError.new("Entry normalization failed")
+
+    reports = capture_error_reports do
+      FeedRefreshWorkflow.stub(:new, workflow) do
+        workflow.stub(:execute, -> { Rails.error.report(error, context: { entry_uid: "entry-123" }) }) do
+          FeedRefreshJob.perform_now(feed.id)
+        end
+      end
+    end
+
+    context = reports.sole.context
+    assert_equal feed.id, context[:feed_id]
+    assert_equal feed.user_id, context[:feed_owner_id]
+    assert_equal "entry-123", context[:entry_uid]
+  end
+
+  test "#perform should retain context for an unhandled error reported outside the job" do
+    workflow = FeedRefreshWorkflow.new(feed)
+    error = RuntimeError.new("Unexpected workflow failure")
+
+    reports = capture_error_reports do
+      FeedRefreshWorkflow.stub(:new, workflow) do
+        workflow.stub(:execute, -> { raise error }) do
+          assert_raises(RuntimeError) do
+            Rails.error.record { FeedRefreshJob.perform_now(feed.id) }
+          end
+        end
+      end
+    end
+
+    report = reports.sole
+    assert_same error, report.error
+    assert_not report.handled?
+    assert_equal feed.id, report.context[:feed_id]
+    assert_equal feed.user_id, report.context[:feed_owner_id]
+  end
+
+  test "#perform should isolate feed context between job executions" do
+    other_feed = create(:feed, :without_access_token)
+    stub_request(:get, feed.url).to_return(status: 302, headers: { "Location" => feed.url })
+
+    reports = capture_error_reports do
+      [feed, other_feed].each do |current_feed|
+        Rails.application.executor.wrap { FeedRefreshJob.perform_now(current_feed.id) }
+      end
+
+      Rails.error.report(RuntimeError.new("Unrelated failure"))
+    end
+
+    first, second, unrelated = reports
+    assert_equal 3, reports.size
+    assert_equal "candy.freefeed.net", first.context[:freefeed_instance]
+    assert_equal other_feed.id, second.context[:feed_id]
+    assert_equal other_feed.user_id, second.context[:feed_owner_id]
+    assert_nil second.context[:freefeed_instance]
+    assert_nil second.context[:target_group]
+    assert_empty unrelated.context.slice(*FeedErrorContext.for(feed).keys)
   end
 
   test "#perform should record invalid source content without reporting a bug or retrying" do
