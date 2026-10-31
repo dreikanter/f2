@@ -247,7 +247,7 @@ GEM
     herb (0.11.1-x86_64-linux-gnu)
     herb (0.11.1-x86_64-linux-musl)
     highline (3.0.1)
-    honeybadger (6.9.3)
+    honeybadger (6.10.0)
       logger
       ostruct
     httparty (0.24.3)
