@@ -506,11 +506,12 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     WebMock.stub_request(:get, test_feed.url).to_return(body: sample_rss, status: 200)
 
     # Make normalization fail at the collaborator boundary
-    normalizer = Object.new
+    normalizer = Normalizer::RssNormalizer.new(build(:feed_entry, feed: test_feed))
     normalizer.define_singleton_method(:normalize) { raise "normalization failed" }
 
     test_feed.stub(:normalizer_instance, normalizer) do
-      assert_raises(StandardError) { workflow.execute }
+      error = assert_raises(RuntimeError) { workflow.execute }
+      assert_equal "normalization failed", error.message
     end
 
     # Should fail during normalize step

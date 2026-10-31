@@ -26,6 +26,11 @@ module Normalizer
       post
     end
 
+    # @return [Array<Diagnostic>] warnings available even if normalization raises
+    def diagnostics
+      [].freeze
+    end
+
     private
 
     attr_reader :feed_entry

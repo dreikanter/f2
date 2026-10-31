@@ -28,6 +28,23 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
     assert_matches_snapshot(post.normalized_attributes, snapshot: "#{fixture_dir}/normalized.json")
   end
 
+  test "#diagnostics should expose snapshots without exposing page-fetch state" do
+    stub_request(:get, PAGE_URL).to_return(status: 404)
+    normalizer = Normalizer::BuniNormalizer.new(feed_entry(0))
+    before = normalizer.diagnostics
+
+    normalizer.normalize
+    diagnostics = normalizer.diagnostics
+
+    assert_empty before
+    assert_equal 404, diagnostics.sole.details[:status]
+    assert_raises(FrozenError) { diagnostics.clear }
+    assert_raises(FrozenError) { diagnostics.sole.details[:status] = 200 }
+    diagnostics.sole.details[:url].replace("https://example.com/changed")
+    assert_equal PAGE_URL, normalizer.diagnostics.sole.details[:url]
+    assert_not normalizer.respond_to?(:page_fetch_failures)
+  end
+
   test "#normalize should attach the full-size comic image from the page" do
     stub_comic_page
     entry = feed_entry(0)
