@@ -95,11 +95,23 @@ class FeedRefreshJobTest < ActiveJob::TestCase
 
   test "#perform should enrich errors reported inside the workflow" do
     feed = create(:feed, feed_profile_key: "pluralistic")
-    entry_url = "https://pluralistic.net/2026/06/11/lapsarianism/"
-    stub_request(:get, feed.url).to_return(body: file_fixture("feeds/pluralistic/feed.xml").read)
-    stub_request(:get, entry_url).to_return(body: "<html><body>No image</body></html>")
-    stub_request(:get, "https://pluralistic.net/2026/06/10/fair-use/")
-      .to_return(body: file_fixture("feeds/pluralistic/page.html").read)
+    entry_url = "https://example.com/test-entry"
+    rss = <<~XML
+      <rss version="2.0">
+        <channel>
+          <title>Test feed</title>
+          <item>
+            <title>Test entry title</title>
+            <link>#{entry_url}</link>
+            <guid isPermaLink="false">test-entry-123</guid>
+            <pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate>
+          </item>
+        </channel>
+      </rss>
+    XML
+
+    stub_request(:get, feed.url).to_return(body: rss)
+    stub_request(:get, entry_url).to_return(body: "<html><body>Test page without an image</body></html>")
 
     reports = capture_error_reports { FeedRefreshJob.perform_now(feed.id) }
 
@@ -107,7 +119,7 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     assert_equal feed.id, context[:feed_id]
     assert_equal feed.user_id, context[:feed_owner_id]
     assert_equal "pluralistic", context[:profile]
-    assert_equal "https://pluralistic.net/?p=12899", context[:entry_uid]
+    assert_equal "test-entry-123", context[:entry_uid]
     assert_equal entry_url, context[:entry_url]
     assert_equal "completed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
   end
@@ -131,13 +143,13 @@ class FeedRefreshJobTest < ActiveJob::TestCase
   end
 
   test "#perform should fall back to the owner's masked email when the name is blank" do
-    owner = create(:user, name: "", email_address: "alice@example.com")
+    owner = create(:user, name: "", email_address: "test-owner@example.com")
     feed = create(:feed, user: owner)
     stub_request(:get, feed.url).to_return(status: 302, headers: { "Location" => feed.url })
 
     reports = capture_error_reports { FeedRefreshJob.perform_now(feed.id) }
 
-    assert_equal "a...e@example.com", reports.sole.context[:feed_owner_label]
+    assert_equal "t...r@example.com", reports.sole.context[:feed_owner_label]
   end
 
   test "#perform should isolate feed context between job executions" do
