@@ -43,7 +43,7 @@ class PageFetcherTest < ActiveSupport::TestCase
     end
 
     assert_nil result.body
-    assert_equal({ url: PAGE_URL, status: 503, message: "HTTP 503" }, result.failure)
+    assert_equal({ url: PAGE_URL, status: 503, message: "HTTP 503", retryable: true }, result.failure)
     assert_empty warnings
     assert_empty reports
     assert_requested :get, PAGE_URL, times: 1
@@ -58,6 +58,7 @@ class PageFetcherTest < ActiveSupport::TestCase
     assert_empty reports
     assert_nil result.body
     assert_equal "HttpClient::ConnectionError", result.failure[:error_class]
+    assert result.failure[:retryable]
     assert_includes result.failure[:message], "connection refused"
     assert_equal PAGE_URL, result.failure[:url]
     assert_requested :get, PAGE_URL, times: 1
@@ -72,6 +73,7 @@ class PageFetcherTest < ActiveSupport::TestCase
     assert_empty reports
     assert_nil result.body
     assert_equal "HttpClient::TimeoutError", result.failure[:error_class]
+    assert result.failure[:retryable]
     assert_requested :get, PAGE_URL, times: 1
   end
 
@@ -84,6 +86,7 @@ class PageFetcherTest < ActiveSupport::TestCase
     assert_empty reports
     assert_nil result.body
     assert_equal "HttpClient::SSLError", result.failure[:error_class]
+    assert result.failure[:retryable]
     assert_equal PAGE_URL, result.failure[:url]
     assert_includes result.failure[:message], "certificate verify failed"
     assert_requested :get, PAGE_URL, times: 1
@@ -98,7 +101,8 @@ class PageFetcherTest < ActiveSupport::TestCase
 
       assert_empty reports
       assert_nil result.body
-      assert_equal({ url: PAGE_URL, error_class: error_class.name, message: "Page unavailable" }, result.failure)
+      assert_equal({ url: PAGE_URL, error_class: error_class.name, message: "Page unavailable", retryable: false },
+                   result.failure)
     end
   end
 
@@ -112,6 +116,22 @@ class PageFetcherTest < ActiveSupport::TestCase
       end
 
       assert_empty reports
+    end
+  end
+
+  test "#fetch should mark temporary HTTP failures as retryable" do
+    [408, 429, 500, 503, 599].each do |status|
+      stub_request(:get, PAGE_URL).to_return(status: status)
+
+      assert PageFetcher.new.fetch(PAGE_URL).failure[:retryable], "HTTP #{status}"
+    end
+  end
+
+  test "#fetch should not retry permanent HTTP failures" do
+    [401, 403, 404, 410, 422].each do |status|
+      stub_request(:get, PAGE_URL).to_return(status: status)
+
+      assert_not PageFetcher.new.fetch(PAGE_URL).failure[:retryable], "HTTP #{status}"
     end
   end
 end

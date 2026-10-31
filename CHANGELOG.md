@@ -2,6 +2,7 @@
 
 ## 2026-10-31
 
+- Feed refreshes retry entries awaiting required pages, even after they leave the source feed.
 - Feed refreshes preserve saved posts and daily import totals across partial failures.
 - Feed refresh events show details when supplementary pages could not be loaded.
 

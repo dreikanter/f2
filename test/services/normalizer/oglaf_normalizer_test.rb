@@ -38,27 +38,32 @@ class Normalizer::OglafNormalizerTest < ActiveSupport::TestCase
     assert_equal ["Sample image title", "Another sample image title"], post.comments
   end
 
-  test "#normalize should keep collected pages when a page fetch fails" do
+  test "#normalize should defer an incomplete story when a page fetch fails" do
     stub_request(:get, "https://www.oglaf.com/sample/")
       .to_return(status: 200, body: file_fixture("#{fixture_dir}/page.html").read)
     stub_request(:get, "https://www.oglaf.com/sample/2/").to_return(status: 500)
     entry = feed_entry(0)
 
-    post = Normalizer::OglafNormalizer.new(entry).normalize
+    normalizer = Normalizer::OglafNormalizer.new(entry)
+    post = normalizer.normalize
 
     assert_equal ["https://media.oglaf.com/comic/sample1.jpg"], post.attachment_urls
     assert_equal ["Sample image title"], post.comments
+    assert post.rejected?
+    assert normalizer.deferred?
   end
 
-  test "#normalize should return no attachments when the first page fetch raises a network error" do
+  test "#normalize should defer the story when the first page fetch raises a network error" do
     stub_request(:get, "https://www.oglaf.com/sample/")
       .to_raise(Faraday::ConnectionFailed.new("connection refused"))
     entry = feed_entry(0)
 
-    post = Normalizer::OglafNormalizer.new(entry).normalize
+    normalizer = Normalizer::OglafNormalizer.new(entry)
+    post = normalizer.normalize
 
     assert_empty post.attachment_urls
-    assert_equal "enqueued", post.status
+    assert post.rejected?
+    assert normalizer.deferred?
   end
 
   test "#normalize should stop following pages when the next-page URL is malformed" do
