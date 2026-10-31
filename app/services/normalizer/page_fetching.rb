@@ -4,10 +4,20 @@ module Normalizer
       page_fetcher.failures
     end
 
+    def awaiting_content?
+      page_fetch_failures.any? { |failure| failure[:required] && failure[:retryable] }
+    end
+
     private
 
-    def fetch_page(url)
-      page_fetcher.fetch(url)
+    def validate_content
+      errors = super
+      errors << "page_unavailable" if page_fetch_failures.any? { |failure| failure[:required] }
+      errors
+    end
+
+    def fetch_page(url, required: false)
+      page_fetcher.fetch(url, required: required)
     end
 
     def page_fetcher

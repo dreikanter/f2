@@ -180,12 +180,17 @@ class FeedRefreshWorkflow
     record_stats(new_posts: 0, rejected_posts: 0)
 
     # A recorded UID prevents re-importing raw data, not resuming unfinished work.
-    feed.feed_entries.pending.order(:published_at, :id).map { |entry| normalize_entry(entry) }
+    feed.feed_entries.pending.order(:published_at, :id).filter_map { |entry| normalize_entry(entry) }
   end
 
   def normalize_entry(feed_entry)
     normalizer = feed.normalizer_instance(feed_entry)
     post = normalizer.normalize
+
+    if normalizer.is_a?(Normalizer::PageFetching) && normalizer.awaiting_content?
+      record_stats(deferred_entries: stats.fetch(:deferred_entries, 0) + 1)
+      return
+    end
 
     ApplicationRecord.transaction do
       # Normalizers already validate publication content. Rejected posts may
@@ -208,7 +213,9 @@ class FeedRefreshWorkflow
     failures = normalizer.page_fetch_failures
     return if failures.empty?
 
-    outcome = if post&.persisted?
+    outcome = if normalizer.awaiting_content?
+      "deferred"
+    elsif post&.persisted?
       post.rejected? ? "rejected" : "fallback"
     else
       "failed"

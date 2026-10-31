@@ -20,6 +20,27 @@ class FeedRefreshWorkflowPageFetchTest < ActiveSupport::TestCase
     RSS
   end
 
+  test "#execute should retain a deferred entry's page failure in the completed event" do
+    stub_feed
+    stub_request(:get, PAGE_URL).to_raise(Faraday::TimeoutError)
+
+    reports = capture_error_reports { FeedRefreshWorkflow.new(feed).execute }
+
+    assert_empty reports
+    assert_empty feed.posts
+    assert feed.feed_entries.sole.pending?
+    event = feed.events.where(type: "feed_refresh").sole
+    assert_equal "completed", event.metadata["status"]
+    assert event.warning?
+    assert_equal 1, event.metadata.dig("stats", "page_fetch_failures")
+    detail = event.details.sole
+    assert_equal "normalize_entries", detail["stage"]
+    assert_equal "comic-1", detail.dig("stats", "uid")
+    assert_equal PAGE_URL, detail.dig("stats", "url")
+    assert_equal "HttpClient::TimeoutError", detail.dig("stats", "error_class")
+    assert_equal "deferred", detail.dig("stats", "outcome")
+  end
+
   test "#execute should retain a rejected post's page failure in the completed event" do
     stub_feed
     stub_request(:get, PAGE_URL).to_return(status: 404)
