@@ -11,12 +11,15 @@
 # feeds that were disabled and later re-enabled.
 class PostPublishJob < ApplicationJob
   include RateLimited
+  include SetsFeedErrorContext
 
   queue_as :default
 
   def perform(feed_id)
     feed = Feed.find_by(id: feed_id)
     return unless feed
+
+    set_feed_error_context(feed)
 
     # Stop the chain if the feed was disabled after it was kicked. Disabling a
     # feed pauses publishing, including posts already enqueued.
@@ -103,7 +106,7 @@ class PostPublishJob < ApplicationJob
       message: error.message,
       metadata: { post_id: post.id, freefeed_post_id: post.freefeed_post_id }
     )
-    Rails.error.report(error, context: { post: post.attributes, feed: feed.attributes })
+    Rails.error.report(error, context: { post_id: post.id, freefeed_post_id: post.freefeed_post_id })
     schedule_next(feed)
   end
 
@@ -129,7 +132,7 @@ class PostPublishJob < ApplicationJob
     post.update!(status: :failed)
     Metrics.increment("posts_published_total", status: "failed")
     if report
-      Rails.error.report(error, context: { post: post.attributes, feed: feed.attributes })
+      Rails.error.report(error, context: { post_id: post.id, freefeed_post_id: post.freefeed_post_id })
     else
       Rails.logger.error "Failed to publish post #{post.id}: #{error.message}"
     end

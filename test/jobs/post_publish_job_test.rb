@@ -57,22 +57,25 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_equal 1, metric.published_posts_count
   end
 
-  test ".perform_now should mark a failing post as failed, report it, and continue" do
+  test "#perform should mark a failing post as failed, report its context, and continue" do
     post = create(:post, :enqueued, feed: feed)
     stub_request(:post, "#{access_token.host}/v4/posts").to_return(status: 500)
 
-    reported = []
-    assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
-      Rails.error.stub(:report, ->(err, **kwargs) { reported << [err, kwargs] }) do
+    reports = capture_error_reports do
+      assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
         PostPublishJob.perform_now(feed.id)
       end
     end
 
     assert_equal "failed", post.reload.status
-    assert_equal 1, reported.size
-    _error, kwargs = reported.first
-    assert_equal post.id, kwargs.dig(:context, :post)["id"]
-    assert_equal feed.id, kwargs.dig(:context, :feed)["id"]
+    context = reports.sole.context
+    assert_equal post.id, context[:post_id]
+    assert_equal feed.id, context[:feed_id]
+    assert_equal feed.user_id, context[:feed_owner_id]
+    assert_equal "candy.freefeed.net", context[:freefeed_instance]
+    assert_equal "group", context[:target_group]
+    assert_not context.key?(:post)
+    assert_not context.key?(:feed)
   end
 
   test ".perform_now should fail an interrupted post without republishing or reserving capacity" do
