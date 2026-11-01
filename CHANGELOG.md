@@ -2,6 +2,7 @@
 
 ## 2026-11-01
 
+- Feed refreshes restart pending publication even when no new posts arrive or normalization fails.
 - Daily import counts include all refreshes in the same day.
 
 ## 2026-10-31
