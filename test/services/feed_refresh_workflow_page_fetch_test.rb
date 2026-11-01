@@ -58,10 +58,11 @@ class FeedRefreshWorkflowPageFetchTest < ActiveSupport::TestCase
   end
 
   test "#execute should preserve page diagnostics when the refresh later fails" do
+    feed.update!(feed_profile_key: "smbc")
     stub_feed
     stub_request(:get, PAGE_URL).to_return(status: 503)
 
-    Post.stub(:insert_all, ->(*) { raise ActiveRecord::StatementInvalid, "write failed" }) do
+    feed.stub(:refresh_post_stats!, -> { raise ActiveRecord::StatementInvalid, "write failed" }) do
       assert_raises(ActiveRecord::StatementInvalid) { FeedRefreshWorkflow.new(feed).execute }
     end
 
@@ -69,5 +70,8 @@ class FeedRefreshWorkflowPageFetchTest < ActiveSupport::TestCase
     assert_equal "failed", event.metadata["status"]
     assert_equal "write failed", event.metadata.dig("error", "message")
     assert_equal 503, event.details.sole.dig("stats", "status")
+    assert_empty feed.posts
+    assert feed.feed_entries.sole.pending?
+    assert_empty event.references
   end
 end
