@@ -48,12 +48,14 @@ class Normalizer::MonkeyuserNormalizerTest < ActiveSupport::TestCase
     stub_request(:get, "https://www.monkeyuser.com/2025/sample-one/").to_return(status: 500)
     entry = feed_entry(0)
 
-    post = Normalizer::MonkeyuserNormalizer.new(entry).normalize
+    normalizer = Normalizer::MonkeyuserNormalizer.new(entry)
+    post = normalizer.normalize
 
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "missing_images"
     assert_empty post.attachment_urls
     assert_empty post.comments
+    assert normalizer.deferred?
   end
 
   test "#normalize should reject the post when the comic page fetch raises a network error" do

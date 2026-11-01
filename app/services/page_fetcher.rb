@@ -12,10 +12,12 @@ class PageFetcher
     response = HttpClient.build.get(url)
     return Result.new(body: response.body, failure: nil) if response.success?
 
-    failure(url, status: response.status, message: "HTTP #{response.status}")
-  rescue HttpClient::TimeoutError, HttpClient::ConnectionError, HttpClient::SSLError,
-         HttpClient::TooManyRedirectsError, HttpClient::BlockedUrlError => e
-    failure(url, error_class: e.class.name, message: e.message)
+    failure(url, status: response.status, message: "HTTP #{response.status}",
+                 retryable: [408, 429].include?(response.status) || (500..599).cover?(response.status))
+  rescue HttpClient::TimeoutError, HttpClient::ConnectionError, HttpClient::SSLError => e
+    failure(url, error_class: e.class.name, message: e.message, retryable: true)
+  rescue HttpClient::TooManyRedirectsError, HttpClient::BlockedUrlError => e
+    failure(url, error_class: e.class.name, message: e.message, retryable: false)
   end
 
   private
