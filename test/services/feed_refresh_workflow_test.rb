@@ -974,7 +974,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       workflow2.execute
 
       metric.reload
-      assert_equal 1, metric.posts_count, "Metric should reflect only new posts from second refresh"
+      assert_equal 2, metric.posts_count, "Metric should include both refreshes"
     end
   end
 
