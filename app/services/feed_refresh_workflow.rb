@@ -26,6 +26,8 @@ class FeedRefreshWorkflow
   end
 
   def on_error(error)
+    enqueue_publication if current_step == :normalize_entries
+
     Metrics.increment("feed_refresh_total", status: "error", profile: feed.feed_profile_key)
     record_error_stats(current_step: current_step)
     fail_refresh_event(error)
@@ -229,8 +231,8 @@ class FeedRefreshWorkflow
   # Hands publishing off to the async FIFO chain (see PostPublishJob) instead of
   # publishing inline. Kicking it on every refresh also restarts a chain that
   # may have stalled, so it doubles as the chain's watchdog.
-  def enqueue_publication(persisted_posts)
-    PostPublishJob.perform_later(feed.id) if persisted_posts.any?(&:enqueued?)
+  def enqueue_publication(persisted_posts = nil)
+    PostPublishJob.perform_later(feed.id) if feed.posts.enqueued.exists?
     persisted_posts
   end
 
