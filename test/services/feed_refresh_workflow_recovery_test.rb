@@ -46,7 +46,7 @@ class FeedRefreshWorkflowRecoveryTest < ActiveSupport::TestCase
     assert_equal 2, FeedEntryUid.where(feed: feed).count
     first_event = feed.events.where(type: "feed_refresh").sole
     assert_equal 1, first_event.metadata.dig("stats", "deferred_entries")
-    assert_equal "deferred", first_event.details.sole.dig("stats", "outcome")
+    assert_equal %w[deferred imported], first_event.referenced_events.order(:id).map { |attempt| attempt.metadata.dig("stats", "outcome") }
 
     stub_feed
     stub_comic("unavailable")
@@ -59,7 +59,7 @@ class FeedRefreshWorkflowRecoveryTest < ActiveSupport::TestCase
     assert_empty feed.feed_entries.pending
     assert_equal 2, FeedEntryUid.where(feed: feed).count
     recovered_event = feed.events.where(type: "feed_refresh").order(:id).last
-    assert_equal ["unavailable"], recovered_event.references.map(&:uid)
+    assert_equal ["unavailable"], recovered_event.references.grep(Post).map(&:uid)
     assert_equal 1, recovered_event.metadata.dig("stats", "new_posts")
 
     # Existing posts may still be awaiting publication, so refresh also restarts
@@ -87,7 +87,7 @@ class FeedRefreshWorkflowRecoveryTest < ActiveSupport::TestCase
     event = feed.events.where(type: "feed_refresh").sole
     assert_equal "completed", event.metadata["status"]
     assert event.warning?
-    assert_equal 503, event.details.sole.dig("stats", "status")
+    assert_equal 503, event.referenced_events.sole.metadata.dig("stats", "diagnostics").sole.dig("details", "status")
   end
 
   test "#execute should retry required content after a TLS failure clears" do
@@ -101,8 +101,8 @@ class FeedRefreshWorkflowRecoveryTest < ActiveSupport::TestCase
     assert feed.feed_entries.sole.pending?
     event = feed.events.where(type: "feed_refresh").sole
     assert_equal "completed", event.metadata["status"]
-    assert_equal "HttpClient::SSLError", event.details.sole.dig("stats", "error_class")
-    assert_equal "deferred", event.details.sole.dig("stats", "outcome")
+    assert_equal "HttpClient::SSLError", event.referenced_events.sole.metadata.dig("stats", "diagnostics").sole.dig("details", "error_class")
+    assert_equal "deferred", event.referenced_events.sole.metadata.dig("stats", "outcome")
 
     stub_feed
     stub_comic("unavailable")
@@ -142,7 +142,7 @@ class FeedRefreshWorkflowRecoveryTest < ActiveSupport::TestCase
     event = feed.events.where(type: "feed_refresh").sole
     assert_equal "failed", event.metadata["status"]
     assert_equal "unexpected failure", event.metadata.dig("error", "message")
-    assert_equal [feed.posts.sole], event.references
+    assert_equal [feed.posts.sole], event.references.grep(Post)
     assert_equal 1, event.metadata.dig("stats", "new_posts")
     assert_equal 1, feed.reload.imported_posts_count
     metric = FeedMetric.find_by!(feed: feed, date: Date.current)
@@ -160,6 +160,29 @@ class FeedRefreshWorkflowRecoveryTest < ActiveSupport::TestCase
     assert_requested :get, page_url("first"), times: 1
     assert_requested :get, page_url("broken"), times: 2
     assert_requested :get, page_url("last"), times: 1
+  end
+
+  test "#execute should track imported deferred and failed attempts in the same refresh" do
+    stub_feed("available", "unavailable", "broken")
+    stub_comic("available")
+    stub_request(:get, page_url("unavailable")).to_return(status: 503)
+    stub_request(:get, page_url("broken")).to_raise(ArgumentError.new("unexpected failure"))
+
+    assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
+      assert_raises(ArgumentError) { FeedRefreshWorkflow.new(feed).execute }
+    end
+
+    refresh = feed.events.where(type: "feed_refresh").sole
+    attempts = refresh.referenced_events.order(:id)
+    assert_equal %w[imported deferred failed], attempts.map { |attempt| attempt.metadata.dig("stats", "outcome") }
+    assert_equal %w[info warning error], attempts.pluck(:level)
+    assert_equal [feed.posts.sole], attempts.first.references
+    assert_empty attempts.second.references
+    assert_empty attempts.third.references
+    assert_equal "failed", refresh.metadata["status"]
+    assert_equal 1, refresh.metadata.dig("stats", "new_posts")
+    assert_equal 1, refresh.metadata.dig("stats", "deferred_entries")
+    assert_equal %w[broken unavailable], feed.feed_entries.pending.order(:uid).pluck(:uid)
   end
 
   test "#execute should count rejected posts saved before another normalizer fails" do
@@ -213,7 +236,7 @@ class FeedRefreshWorkflowRecoveryTest < ActiveSupport::TestCase
     event = feed.events.where(type: "feed_refresh").sole
     assert_equal "failed", event.metadata["status"]
     assert_equal "metrics failed", event.metadata.dig("error", "message")
-    assert_empty event.references
+    assert_empty event.references.grep(Post)
 
     FeedRefreshWorkflow.new(feed).execute
 

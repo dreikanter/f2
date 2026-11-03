@@ -13,6 +13,8 @@ class Event < ApplicationRecord
            class_name: "EventReference",
            dependent: :delete_all
 
+  has_many :referenced_events, through: :event_references, source: :reference, source_type: "Event"
+
   enum :level, { debug: 0, info: 1, warning: 2, error: 3 }
 
   validates :type, presence: true
@@ -30,7 +32,7 @@ class Event < ApplicationRecord
     where("(expires_at IS NULL OR expires_at >= :now) AND (expires_at IS NOT NULL OR created_at >= :cutoff)",
           now: Time.current, cutoff: DEFAULT_RETENTION.ago)
   }
-  scope :user_relevant, -> { where.not(level: :debug).not_expired }
+  scope :user_relevant, -> { where.not(level: :debug).where.not(type: "entry_normalization").not_expired }
 
   def details
     metadata.fetch("details", [])

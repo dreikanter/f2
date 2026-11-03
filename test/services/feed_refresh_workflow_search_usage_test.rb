@@ -34,6 +34,7 @@ class FeedRefreshWorkflowSearchUsageTest < ActiveSupport::TestCase
   test "#complete_refresh_event should transfer search references to the terminal refresh event" do
     started = started_event
     searches = record_searches(started, 2)
+    started.event_references.create!(reference: create(:event, type: "entry_normalization"))
     reference_ids = started.event_references.pluck(:id).sort
 
     workflow_with(started).send(:complete_refresh_event)
@@ -50,6 +51,7 @@ class FeedRefreshWorkflowSearchUsageTest < ActiveSupport::TestCase
   test "#fail_refresh_event should transfer search references to the terminal refresh event" do
     started = started_event
     searches = record_searches(started, 3)
+    started.event_references.create!(reference: create(:event, type: "entry_normalization"))
     reference_ids = started.event_references.pluck(:id).sort
 
     workflow_with(started).send(:fail_refresh_event, StandardError.new("boom"))
@@ -66,6 +68,7 @@ class FeedRefreshWorkflowSearchUsageTest < ActiveSupport::TestCase
   test "#interrupt_abandoned_event should retain search references and add the search count" do
     event = started_event
     searches = record_searches(event, 2)
+    event.event_references.create!(reference: create(:event, type: "entry_normalization"))
 
     workflow_with(event).send(:interrupt_abandoned_event, event)
 

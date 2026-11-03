@@ -10,6 +10,9 @@ module EventDisplay
 
   def load_event(event)
     @event = event
+    outgoing_ids = event.event_references.where(reference_type: "Event").select(:reference_id)
+    incoming_ids = event.incoming_event_references.select(:event_id)
+    @related_events = related_events_scope.where(id: outgoing_ids).or(related_events_scope.where(id: incoming_ids)).includes(:subject).recent
     @referenced_posts = referenced_posts(event).limit(MAX_REFERENCED_POSTS)
     @referenced_llm_usages = referenced_llm_usages(event)
     @referenced_web_searches = referenced_web_searches(event)

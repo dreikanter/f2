@@ -56,7 +56,7 @@ class FeedRefreshWorkflow
 
   # Existing references retain partial spend from a process that died.
   def interrupt_abandoned_event(event)
-    search_event_ids = event.event_references.where(reference_type: "Event").pluck(:reference_id)
+    search_event_ids = WebSearchUsage.referenced_by(event).pluck(:id)
     stats_updates = LlmUsageReport.for_event(event).totals.event_stats.stringify_keys
     metadata = event.metadata.merge("status" => "interrupted")
 
@@ -184,17 +184,23 @@ class FeedRefreshWorkflow
   end
 
   def normalize_entry(feed_entry)
+    outcome = "failed"
     normalizer = feed.normalizer_instance(feed_entry)
     post = normalizer.normalize
 
     if normalizer.deferred?
+      outcome = "deferred"
       record_stats(deferred_entries: stats.fetch(:deferred_entries, 0) + 1)
       return
     end
 
     persist_post(feed_entry, post)
+    outcome = post.rejected? ? "rejected" : "imported"
+    post
+  rescue StandardError => error
+    raise
   ensure
-    record_normalization_diagnostics(normalizer, post) if normalizer
+    record_normalization_event(feed_entry, normalizer, post, outcome, error)
   end
 
   def persist_post(feed_entry, post)
@@ -213,27 +219,29 @@ class FeedRefreshWorkflow
     post
   end
 
-  def record_normalization_diagnostics(normalizer, post)
-    diagnostics = normalizer.diagnostics
-    return if diagnostics.empty?
+  def record_normalization_event(entry, normalizer, post, outcome, error)
+    diagnostics = normalizer&.diagnostics || []
+    level = diagnostics.any? ? :warning : :info
+    level = :error if error
 
-    outcome = if normalizer.deferred?
-      "deferred"
-    elsif post&.persisted?
-      post.rejected? ? "rejected" : "fallback"
-    else
-      "failed"
-    end
+    event = @refresh_event.referenced_events.create!(
+      type: "entry_normalization",
+      level: level,
+      subject: feed,
+      user: feed.user,
+      message: error&.message || outcome.humanize,
+      metadata: {
+        stats: {
+          uid: entry.uid,
+          normalizer: normalizer&.class&.name,
+          outcome: outcome,
+          diagnostics: diagnostics.map(&:to_h)
+        },
+        error: error && { class: error.class.name, message: error.message, backtrace: error.backtrace }
+      }
+    )
 
-    diagnostics.each do |diagnostic|
-      @refresh_event.append_detail!(
-        stage: :normalize_entries,
-        message: diagnostic.message,
-        stats: diagnostic.details.merge(outcome: outcome)
-      )
-    end
-
-    record_stats(normalization_warnings: stats.fetch(:normalization_warnings, 0) + diagnostics.size)
+    event.event_references.create!(reference: post) if outcome.in?(%w[imported rejected])
   end
 
   # Hands publishing off to the async FIFO chain (see PostPublishJob) instead of
@@ -281,7 +289,7 @@ class FeedRefreshWorkflow
     record_llm_usage_stats
     record_web_search_stats(search_event_ids)
 
-    level = stats[:normalization_warnings].to_i.positive? ? :warning : :info
+    level = @refresh_event.referenced_events.warning.exists? ? :warning : :info
     replace_refresh_event(level: level, metadata: { status: "completed", stats: stats })
 
     @refresh_completed = true
@@ -294,7 +302,7 @@ class FeedRefreshWorkflow
   end
 
   def run_web_search_event_ids
-    @refresh_event.event_references.where(reference_type: "Event").pluck(:reference_id)
+    WebSearchUsage.referenced_by(@refresh_event).pluck(:id)
   end
 
   def record_web_search_stats(search_event_ids)
@@ -304,10 +312,6 @@ class FeedRefreshWorkflow
   def replace_refresh_event(**attributes)
     Event.transaction do
       feed.record_successful_refresh! if attributes.dig(:metadata, :status) == "completed"
-      if @refresh_event
-        attributes[:metadata] = @refresh_event.metadata.slice("details").merge(attributes.fetch(:metadata))
-      end
-
       event = Event.create!(type: "feed_refresh", subject: feed, user: feed.user, **attributes)
       if @refresh_event
         @refresh_event.event_references.update_all(event_id: event.id, updated_at: Time.current)

@@ -32,13 +32,13 @@ class FeedRefreshWorkflowPageFetchTest < ActiveSupport::TestCase
     event = feed.events.where(type: "feed_refresh").sole
     assert_equal "completed", event.metadata["status"]
     assert event.warning?
-    assert_equal 1, event.metadata.dig("stats", "normalization_warnings")
-    detail = event.details.sole
-    assert_equal "normalize_entries", detail["stage"]
-    assert_equal "comic-1", detail.dig("stats", "uid")
-    assert_equal PAGE_URL, detail.dig("stats", "url")
-    assert_equal "HttpClient::TimeoutError", detail.dig("stats", "error_class")
-    assert_equal "deferred", detail.dig("stats", "outcome")
+    assert_empty event.details
+    attempt = event.referenced_events.sole
+    detail = attempt.metadata.dig("stats", "diagnostics").sole.fetch("details")
+    assert_equal "comic-1", detail["uid"]
+    assert_equal PAGE_URL, detail["url"]
+    assert_equal "HttpClient::TimeoutError", detail["error_class"]
+    assert_equal "deferred", attempt.metadata.dig("stats", "outcome")
   end
 
   test "#execute should retain a rejected post's page failure in the completed event" do
@@ -52,13 +52,13 @@ class FeedRefreshWorkflowPageFetchTest < ActiveSupport::TestCase
     event = feed.events.where(type: "feed_refresh").sole
     assert_equal "completed", event.metadata["status"]
     assert event.warning?
-    assert_equal 1, event.metadata.dig("stats", "normalization_warnings")
-    detail = event.details.sole
-    assert_equal "normalize_entries", detail["stage"]
-    assert_equal "comic-1", detail.dig("stats", "uid")
-    assert_equal PAGE_URL, detail.dig("stats", "url")
-    assert_equal 404, detail.dig("stats", "status")
-    assert_equal "rejected", detail.dig("stats", "outcome")
+    assert_empty event.details
+    attempt = event.referenced_events.sole
+    detail = attempt.metadata.dig("stats", "diagnostics").sole.fetch("details")
+    assert_equal "comic-1", detail["uid"]
+    assert_equal PAGE_URL, detail["url"]
+    assert_equal 404, detail["status"]
+    assert_equal "rejected", attempt.metadata.dig("stats", "outcome")
   end
 
   test "#execute should record optional page failures while enqueueing the main content" do
@@ -73,9 +73,9 @@ class FeedRefreshWorkflowPageFetchTest < ActiveSupport::TestCase
     assert feed.posts.sole.enqueued?
     event = feed.events.where(type: "feed_refresh").sole
     assert event.warning?
-    assert_equal 503, event.details.sole.dig("stats", "status")
-    assert_equal "fallback", event.details.sole.dig("stats", "outcome")
-    assert_equal [feed.posts.sole], event.references
+    assert_equal 503, event.referenced_events.sole.metadata.dig("stats", "diagnostics").sole.dig("details", "status")
+    assert_equal "imported", event.referenced_events.sole.metadata.dig("stats", "outcome")
+    assert_equal [feed.posts.sole], event.references.grep(Post)
   end
 
   test "#execute should preserve page diagnostics when the refresh later fails" do
@@ -90,9 +90,9 @@ class FeedRefreshWorkflowPageFetchTest < ActiveSupport::TestCase
     event = feed.events.where(type: "feed_refresh").sole
     assert_equal "failed", event.metadata["status"]
     assert_equal "write failed", event.metadata.dig("error", "message")
-    assert_equal 503, event.details.sole.dig("stats", "status")
+    assert_equal 503, event.referenced_events.sole.metadata.dig("stats", "diagnostics").sole.dig("details", "status")
     assert_empty feed.posts
     assert feed.feed_entries.sole.pending?
-    assert_empty event.references
+    assert_empty event.references.grep(Post)
   end
 end
