@@ -258,6 +258,19 @@ class EventTest < ActiveSupport::TestCase
     assert_not_includes relevant_events, grandchild
   end
 
+  test "#top_level should compose with explicit and default expiry scopes" do
+    expired = create(:event, created_at: 2.months.ago)
+    active = create(:event, created_at: 2.months.ago, expires_at: 1.day.from_now)
+    child = create(:event)
+    active.event_references.create!(reference: child)
+
+    assert_includes Event.expired.top_level, expired
+    assert_not_includes Event.expired.top_level, active
+    assert_includes Event.not_expired.top_level, active
+    assert_not_includes Event.not_expired.top_level, expired
+    assert_not_includes Event.not_expired.top_level, child
+  end
+
   test "#user_relevant should exclude debug level events" do
     debug_event = Event.create!(type: "debug_event", level: :debug)
     info_event = Event.create!(type: "info_event", level: :info)

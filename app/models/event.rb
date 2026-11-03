@@ -25,14 +25,14 @@ class Event < ApplicationRecord
   # never set one, once it ages past DEFAULT_RETENTION. This is what the purge
   # job deletes.
   scope :expired, -> {
-    where("expires_at < :now OR (expires_at IS NULL AND created_at < :cutoff)",
+    where("events.expires_at < :now OR (events.expires_at IS NULL AND events.created_at < :cutoff)",
           now: Time.current, cutoff: DEFAULT_RETENTION.ago)
   }
   scope :not_expired, -> {
-    where("(expires_at IS NULL OR expires_at >= :now) AND (expires_at IS NOT NULL OR created_at >= :cutoff)",
+    where("(events.expires_at IS NULL OR events.expires_at >= :now) AND (events.expires_at IS NOT NULL OR events.created_at >= :cutoff)",
           now: Time.current, cutoff: DEFAULT_RETENTION.ago)
   }
-  scope :top_level, -> { where.not(id: EventReference.where(reference_type: "Event").select(:reference_id)) }
+  scope :top_level, -> { where.missing(:incoming_event_references) }
   scope :user_relevant, -> { where.not(level: :debug).not_expired.top_level }
 
   def details

@@ -20,7 +20,7 @@ module EventStreaming
 
   def new_events?
     scope = events_scope
-    scope = scope.where("id > ?", after_id) if after_id
+    scope = scope.where("events.id > ?", after_id) if after_id
     scope.exists?
   end
 
