@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-03
+
+- Feed refresh events link to individual entry normalization attempts and their diagnostics.
+
 ## 2026-11-01
 
 - Feed refreshes retry entries whose required supplementary pages are temporarily unavailable.

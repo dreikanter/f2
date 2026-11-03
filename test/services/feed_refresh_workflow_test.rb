@@ -138,7 +138,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     # Verify each new post is referenced by the refresh event
     references = events.first.event_references
-    assert_equal 2, references.count
+    assert_equal 2, references.where(reference_type: "Post").count
     assert_equal Post.where(feed: test_feed).order(:id).pluck(:id),
                  references.where(reference_type: "Post").order(:reference_id).pluck(:reference_id).sort
   end

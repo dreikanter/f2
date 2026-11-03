@@ -135,6 +135,15 @@ class EventsHelperTest < ActionView::TestCase
     assert_equal "$0.00", format_stat_value("llm_cost_cents", 0)
   end
 
+  test "#format_stat_value should render structured diagnostics as escaped JSON" do
+    [{ message: "<script>unsafe</script>" }, [{ status: 503 }]].each do |value|
+      fragment = Nokogiri::HTML.fragment(format_stat_value("diagnostics", value))
+
+      assert_equal JSON.pretty_generate(value), fragment.at_css("pre").text
+      assert_nil fragment.at_css("script")
+    end
+  end
+
   test "#format_stat_value should return value as-is for other keys" do
     assert_equal "foo", format_stat_value("some_key", "foo")
   end

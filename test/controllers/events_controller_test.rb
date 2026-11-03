@@ -24,6 +24,46 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
+  test "#show should expose related attempts to their owner without adding them to the activity feed" do
+    sign_in_as user
+    refresh = create(:event, type: "feed_refresh", user: user)
+    attempt = create(:event, type: "entry_normalization", level: :warning, user: user, metadata: {
+      stats: {
+        uid: "entry-1",
+        outcome: "deferred",
+        diagnostics: [{ message: "<script>unsafe</script>", details: { status: 503 } }]
+      }
+    })
+
+    hidden = create(:event, user: other_user)
+    debug = create(:event, user: user, level: :debug)
+    expired = create(:event, user: user, expires_at: 1.day.ago)
+    [attempt, hidden, debug, expired].each { |event| refresh.event_references.create!(reference: event) }
+
+    get events_path
+    assert_select '[data-event-type="feed_refresh"]', count: 1
+    assert_select '[data-event-type="entry_normalization"]', count: 0
+
+    get events_path(format: :turbo_stream), params: { force: true }
+    assert_select '[data-event-type="entry_normalization"]', count: 0
+
+    get event_path(refresh)
+    assert_response :success
+    assert_select '[data-key="events.related"] a[href=?]', event_path(attempt)
+    [hidden, debug, expired].each do |event|
+      assert_select '[data-key="events.related"] a[href=?]', event_path(event), count: 0
+    end
+
+    get event_path(attempt)
+    assert_response :success
+    assert_select '[data-key="events.related"] a[href=?]', event_path(refresh)
+    assert_select '[data-key="events.stats.diagnostics.value"] pre', text: /503/
+    assert_select '[data-key="events.stats.diagnostics.value"] script', count: 0
+
+    get event_path(hidden)
+    assert_response :not_found
+  end
+
   def user
     @user ||= regular_user
   end
@@ -489,7 +529,8 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
       create(:event_reference, event: refresh, reference: create(:post, feed: feed))
     end
 
-    queries = count_queries(/\bevent_references\b/) do
+    # Count reference loads by parent, excluding the top-level events join.
+    queries = count_queries(/FROM "event_references" WHERE "event_references"\."event_id"/) do
       get events_path(format: :turbo_stream), params: { after_id: 0 }
     end
 

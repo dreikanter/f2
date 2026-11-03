@@ -45,6 +45,8 @@ module EventsHelper
       format_event_duration(value.to_f)
     elsif key.end_with?("_cents")
       value.nil? ? "Unknown" : number_to_currency(value.to_f / 100.0)
+    elsif value.is_a?(Array) || value.is_a?(Hash)
+      tag.pre(JSON.pretty_generate(value), class: "whitespace-pre-wrap break-words")
     elsif value.is_a?(Integer)
       number_with_delimiter(value)
     else

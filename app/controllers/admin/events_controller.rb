@@ -39,6 +39,10 @@ class Admin::EventsController < ApplicationController
     apply_filters(policy_scope(Event))
   end
 
+  def related_events_scope
+    policy_scope(Event)
+  end
+
   # The admin log navigates within the filter the operator is looking at.
   alias_method :navigable_events, :events_scope
 

@@ -25,6 +25,21 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select 'a[data-key="admin.event.user"][href=?]', admin_user_path(regular_user)
   end
 
+  test "#show should link related events regardless of the timeline filter" do
+    sign_in_as admin_user
+    refresh = create(:event, type: "feed_refresh", user: regular_user)
+    attempt = create(:event, type: "entry_normalization", user: regular_user)
+    refresh.event_references.create!(reference: attempt)
+
+    get admin_event_path(refresh), params: { filter: { type: ["feed_refresh"] } }
+    assert_response :success
+    assert_select '[data-key="events.related"] a[href=?]', admin_event_path(attempt)
+
+    get admin_event_path(attempt), params: { filter: { type: ["entry_normalization"] } }
+    assert_response :success
+    assert_select '[data-key="events.related"] a[href=?]', admin_event_path(refresh)
+  end
+
   test "#show should render details for an admin-only event" do
     sign_in_as admin_user
     event = create(:event, level: :debug, user: regular_user, message: "No feed found")
