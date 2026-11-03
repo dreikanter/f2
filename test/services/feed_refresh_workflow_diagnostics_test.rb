@@ -50,6 +50,28 @@ class FeedRefreshWorkflowDiagnosticsTest < ActiveSupport::TestCase
     assert_equal "failed", event.details.sole.dig("stats", "outcome")
   end
 
+  test "#execute should defer and resume an entry without page fetching" do
+    stub_feed
+    deferred_normalizer = Class.new(WarningNormalizer) do
+      def deferred? = true
+    end
+
+    feed.stub(:normalizer_class, deferred_normalizer) do
+      assert_empty FeedRefreshWorkflow.new(feed).execute
+    end
+
+    assert_empty feed.posts
+    assert feed.feed_entries.sole.pending?
+    event = feed.events.where(type: "feed_refresh").sole
+    assert_equal 1, event.metadata.dig("stats", "deferred_entries")
+    assert_equal "deferred", event.details.sole.dig("stats", "outcome")
+
+    feed.stub(:normalizer_class, WarningNormalizer) { FeedRefreshWorkflow.new(feed).execute }
+
+    assert feed.posts.sole.enqueued?
+    assert feed.feed_entries.sole.processed?
+  end
+
   test "#execute should preserve errors raised while constructing the normalizer" do
     stub_feed
 

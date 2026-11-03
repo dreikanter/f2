@@ -61,7 +61,7 @@ module Normalizer
     def page
       return @page if defined?(@page)
 
-      @page = fetch_page(page_url)
+      @page = fetch_page(page_url, required: true)
     end
   end
 end

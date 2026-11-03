@@ -32,6 +32,100 @@ class FeedRefreshWorkflowRecoveryTest < ActiveSupport::TestCase
     HTML
   end
 
+  test "#execute should continue the batch and retry a pending entry outside the next source response" do
+    stub_feed("unavailable", "available")
+    stub_request(:get, page_url("unavailable")).to_raise(Faraday::ConnectionFailed.new("connection refused"))
+    stub_comic("available")
+
+    assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
+      FeedRefreshWorkflow.new(feed).execute
+    end
+
+    assert_equal ["available"], feed.posts.pluck(:uid)
+    assert_equal ["unavailable"], feed.feed_entries.pending.pluck(:uid)
+    assert_equal 2, FeedEntryUid.where(feed: feed).count
+    first_event = feed.events.where(type: "feed_refresh").sole
+    assert_equal 1, first_event.metadata.dig("stats", "deferred_entries")
+    assert_equal "deferred", first_event.details.sole.dig("stats", "outcome")
+
+    stub_feed
+    stub_comic("unavailable")
+
+    assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
+      FeedRefreshWorkflow.new(feed).execute
+    end
+
+    assert_equal %w[available unavailable], feed.posts.order(:uid).pluck(:uid)
+    assert_empty feed.feed_entries.pending
+    assert_equal 2, FeedEntryUid.where(feed: feed).count
+    recovered_event = feed.events.where(type: "feed_refresh").order(:id).last
+    assert_equal ["unavailable"], recovered_event.references.map(&:uid)
+    assert_equal 1, recovered_event.metadata.dig("stats", "new_posts")
+
+    # Existing posts may still be awaiting publication, so refresh also restarts
+    # the publisher without recreating or renormalizing those posts.
+    assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
+      assert_empty FeedRefreshWorkflow.new(feed).execute
+    end
+
+    assert_equal 2, feed.posts.count
+    assert_equal 2, FeedMetric.find_by!(feed: feed, date: Date.current).posts_count
+    assert_requested :get, page_url("available"), times: 1
+    assert_requested :get, page_url("unavailable"), times: 2
+  end
+
+  test "#execute should defer required content on a server error" do
+    stub_feed("unavailable")
+    stub_request(:get, page_url("unavailable")).to_return(status: 503)
+
+    assert_no_enqueued_jobs(only: PostPublishJob) do
+      assert_empty FeedRefreshWorkflow.new(feed).execute
+    end
+
+    assert feed.feed_entries.sole.pending?
+    assert_empty feed.posts
+    event = feed.events.where(type: "feed_refresh").sole
+    assert_equal "completed", event.metadata["status"]
+    assert event.warning?
+    assert_equal 503, event.details.sole.dig("stats", "status")
+  end
+
+  test "#execute should retry required content after a TLS failure clears" do
+    stub_feed("unavailable")
+    stub_request(:get, page_url("unavailable")).to_raise(Faraday::SSLError.new("certificate has expired"))
+
+    reports = capture_error_reports { assert_empty FeedRefreshWorkflow.new(feed).execute }
+
+    assert_empty reports
+    assert_empty feed.posts
+    assert feed.feed_entries.sole.pending?
+    event = feed.events.where(type: "feed_refresh").sole
+    assert_equal "completed", event.metadata["status"]
+    assert_equal "HttpClient::SSLError", event.details.sole.dig("stats", "error_class")
+    assert_equal "deferred", event.details.sole.dig("stats", "outcome")
+
+    stub_feed
+    stub_comic("unavailable")
+    FeedRefreshWorkflow.new(feed).execute
+
+    assert feed.posts.sole.enqueued?
+    assert feed.feed_entries.sole.processed?
+    assert_requested :get, page_url("unavailable"), times: 2
+  end
+
+  test "#execute should keep permanent rejection out of later retries" do
+    stub_feed("missing")
+    stub_request(:get, page_url("missing")).to_return(status: 404)
+
+    FeedRefreshWorkflow.new(feed).execute
+
+    assert feed.posts.sole.rejected?
+    assert feed.feed_entries.sole.processed?
+    assert_empty FeedRefreshWorkflow.new(feed).execute
+    assert_equal 1, feed.posts.count
+    assert_requested :get, page_url("missing"), times: 1
+  end
+
   test "#execute should preserve earlier posts when another normalizer raises" do
     stub_feed("first", "broken", "last")
     stub_comic("first")

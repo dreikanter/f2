@@ -31,6 +31,11 @@ module Normalizer
       [].freeze
     end
 
+    # Whether to retry this entry later instead of saving the normalized post.
+    def deferred?
+      false
+    end
+
     private
 
     attr_reader :feed_entry

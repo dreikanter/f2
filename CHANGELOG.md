@@ -2,6 +2,7 @@
 
 ## 2026-11-01
 
+- Feed refreshes retry entries whose required supplementary pages are temporarily unavailable.
 - Feed refreshes preserve saved posts and resume unfinished imports after failures.
 - Feed refreshes restart pending publication even when no new posts arrive or normalization fails.
 - Daily import counts include all refreshes in the same day.

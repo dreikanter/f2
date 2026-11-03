@@ -93,7 +93,9 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
       feed_id: entry.feed_id,
       uid: entry.uid,
       url: PAGE_URL,
-      error_class: "HttpClient::ConnectionError"
+      error_class: "HttpClient::ConnectionError",
+      retryable: true,
+      required: true
     }, warnings.sole[:payload].except(:message))
     assert_empty reports
     assert_requested :get, PAGE_URL, times: 1
