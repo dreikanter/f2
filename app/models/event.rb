@@ -32,7 +32,8 @@ class Event < ApplicationRecord
     where("(expires_at IS NULL OR expires_at >= :now) AND (expires_at IS NOT NULL OR created_at >= :cutoff)",
           now: Time.current, cutoff: DEFAULT_RETENTION.ago)
   }
-  scope :user_relevant, -> { where.not(level: :debug).where.not(type: "entry_normalization").not_expired }
+  scope :top_level, -> { where.not(id: EventReference.where(reference_type: "Event").select(:reference_id)) }
+  scope :user_relevant, -> { where.not(level: :debug).not_expired.top_level }
 
   def details
     metadata.fetch("details", [])

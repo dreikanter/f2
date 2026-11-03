@@ -529,7 +529,8 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
       create(:event_reference, event: refresh, reference: create(:post, feed: feed))
     end
 
-    queries = count_queries(/\bevent_references\b/) do
+    # Count reference loads by parent, excluding the top-level events subquery.
+    queries = count_queries(/FROM "event_references" WHERE "event_references"\."event_id"/) do
       get events_path(format: :turbo_stream), params: { after_id: 0 }
     end
 

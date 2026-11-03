@@ -241,6 +241,23 @@ class EventTest < ActiveSupport::TestCase
     assert_equal 1500, event.metadata["timing"]["duration_ms"]
   end
 
+  test "#user_relevant should show parent events and exclude referenced children of any type" do
+    parent = create(:event, type: "parent_event")
+    child = create(:event, type: "arbitrary_child", level: :warning)
+    grandchild = create(:event, type: "another_child", level: :error)
+    standalone = create(:event, type: child.type)
+    parent.event_references.create!(reference: child)
+    child.event_references.create!(reference: grandchild)
+    parent.event_references.create!(reference: create(:post))
+
+    relevant_events = Event.user_relevant
+
+    assert_includes relevant_events, parent
+    assert_includes relevant_events, standalone
+    assert_not_includes relevant_events, child
+    assert_not_includes relevant_events, grandchild
+  end
+
   test "#user_relevant should exclude debug level events" do
     debug_event = Event.create!(type: "debug_event", level: :debug)
     info_event = Event.create!(type: "info_event", level: :info)
