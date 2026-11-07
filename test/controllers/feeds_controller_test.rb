@@ -225,6 +225,26 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "#create should not refresh a webhook feed when enabled" do
+    sign_in_as(user)
+
+    assert_no_enqueued_jobs(only: FeedRefreshJob) do
+      post feeds_path, params: {
+        feed: {
+          name: "Webhook Feed",
+          feed_profile_key: "webhook",
+          access_token_id: access_token.id,
+          target_group: "testgroup"
+        },
+        enable_feed: "1"
+      }
+    end
+
+    created_feed = Feed.last
+    assert_redirected_to created_feed
+    assert_predicate created_feed, :enabled?
+  end
+
   test "#create should not enqueue a refresh when the feed is saved as draft" do
     sign_in_as(user)
     access_token
@@ -1664,6 +1684,18 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_predicate disabled.reload, :enabled?
+  end
+
+  test "#update should not refresh a webhook feed when enabled" do
+    sign_in_as(user)
+    webhook = create(:feed, :webhook, :draft, user: user, access_token: access_token)
+
+    assert_no_enqueued_jobs(only: FeedRefreshJob) do
+      patch feed_url(webhook), params: { feed: { name: "Webhook Feed" }, enable_feed: "1" }
+    end
+
+    assert_redirected_to webhook
+    assert_predicate webhook.reload, :enabled?
   end
 
   test "#update should keep a disabled feed disabled when enable-validation fails" do

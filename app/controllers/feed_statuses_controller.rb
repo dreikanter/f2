@@ -18,13 +18,18 @@ class FeedStatusesController < ApplicationController
   private
 
   def enable(feed)
-    feed.with_lock do
-      if feed.can_be_enabled? && feed.enable
-        record_feed_enabled(feed)
-        respond_with_status(feed, success: "Feed enabled.")
-      else
-        respond_with_status(feed, alert: cannot_enable_alert(feed))
-      end
+    enabled = feed.with_lock do
+      next false unless feed.can_be_enabled? && feed.enable
+
+      record_feed_enabled(feed)
+      true
+    end
+
+    if enabled
+      FeedRefreshJob.perform_later(feed.id) if feed.saved_change_to_state? && feed.scheduled?
+      respond_with_status(feed, success: "Feed enabled.")
+    else
+      respond_with_status(feed, alert: cannot_enable_alert(feed))
     end
   end
 

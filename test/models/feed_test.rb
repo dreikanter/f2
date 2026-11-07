@@ -879,6 +879,16 @@ class FeedTest < ActiveSupport::TestCase
     assert_predicate feed.reload, :enabled?
   end
 
+  test "#enable should change state without enqueuing a refresh" do
+    feed = create(:feed, :disabled)
+
+    assert_no_enqueued_jobs(only: FeedRefreshJob) do
+      assert feed.enable, feed.errors.full_messages.inspect
+    end
+
+    assert_predicate feed.reload, :enabled?
+  end
+
   test "#enable should fail when a required enabled-state field is missing" do
     feed = create(:feed, :disabled,
       user: preview_user,

@@ -171,6 +171,7 @@ class FeedsController < ApplicationController
   def enable_and_respond(feed)
     if feed.enable
       record_feed_enabled(feed)
+      FeedRefreshJob.perform_later(feed.id) if feed.scheduled?
       redirect_to feed_path(feed), success: success_message_for(feed)
     else
       flash.now[:alert] = "Couldn't enable. See issues below."
@@ -187,6 +188,7 @@ class FeedsController < ApplicationController
     end
 
     if feed.enabled?
+      FeedRefreshJob.perform_later(feed.id) if feed.scheduled?
       redirect_to feed_path(feed), success: update_message_for(feed)
     else
       flash.now[:alert] = "Couldn't enable. See issues below."
