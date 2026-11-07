@@ -1,6 +1,8 @@
 require "test_helper"
 
 class FeedTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   test "#valid? should return true with all required attributes" do
     feed = build(:feed)
     assert feed.valid?

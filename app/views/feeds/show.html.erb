@@ -10,7 +10,7 @@
     </section>
   <% end %>
 
-  <%= render "live_content", locals: @live_content_locals %>
+  <%= render partial: "live_content", locals: @live_content_locals %>
 </div>
 
 <% if @feed.target_group.present? %>
