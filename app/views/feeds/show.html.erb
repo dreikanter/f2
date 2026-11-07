@@ -10,13 +10,7 @@
     </section>
   <% end %>
 
-  <%= render "live_content",
-             feed: @feed,
-             recent_events: @recent_events,
-             recent_posts: @recent_posts,
-             llm_usage_totals: @llm_usage_totals,
-             refresh_in_progress: @refresh_in_progress %>
-
+  <%= render "live_content", @live_content_locals %>
 </div>
 
 <% if @feed.target_group.present? %>
