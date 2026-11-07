@@ -3,6 +3,26 @@ require "test_helper"
 class FeedPreviewJobTest < ActiveJob::TestCase
   RUN_ID = "11111111-1111-4111-8111-111111111111"
 
+  test "#perform should report an unexpected page error once at the job boundary" do
+    feed_url = "https://example.com/feed.xml"
+    page_url = "https://example.com/comic"
+    preview = create(:feed_preview, feed_profile_key: "buni", params: { "url" => feed_url }, run_id: RUN_ID)
+    stub_request(:get, feed_url).to_return(body: <<~RSS)
+      <rss version="2.0"><channel><title>Comics</title><item>
+        <guid>comic-1</guid><title>Comic</title><link>#{page_url}</link>
+      </item></channel></rss>
+    RSS
+    error = HttpClient::Error.new("unexpected client failure")
+    stub_request(:get, page_url).to_raise(error)
+
+    reports = capture_error_reports { FeedPreviewJob.perform_now(preview.id, RUN_ID) }
+
+    assert_same error, reports.sole.error
+    assert reports.sole.handled?
+    assert_equal preview.id, reports.sole.context[:feed_preview_id]
+    assert preview.reload.failed?
+  end
+
   test "#perform should leave a preview for a worker with the expected profile configuration" do
     url = "https://wumo.com/wumo?view=rss"
     preview = create(:feed_preview, feed_profile_key: "wumo", params: { "url" => url }, run_id: RUN_ID)

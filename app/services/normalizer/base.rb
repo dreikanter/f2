@@ -26,6 +26,16 @@ module Normalizer
       post
     end
 
+    # @return [Array<Diagnostic>] warnings available even if normalization raises
+    def diagnostics
+      [].freeze
+    end
+
+    # Whether to retry this entry later instead of saving the normalized post.
+    def deferred?
+      false
+    end
+
     private
 
     attr_reader :feed_entry

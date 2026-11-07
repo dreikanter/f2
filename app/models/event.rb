@@ -13,6 +13,8 @@ class Event < ApplicationRecord
            class_name: "EventReference",
            dependent: :delete_all
 
+  has_many :referenced_events, through: :event_references, source: :reference, source_type: "Event"
+
   enum :level, { debug: 0, info: 1, warning: 2, error: 3 }
 
   validates :type, presence: true
@@ -23,14 +25,15 @@ class Event < ApplicationRecord
   # never set one, once it ages past DEFAULT_RETENTION. This is what the purge
   # job deletes.
   scope :expired, -> {
-    where("expires_at < :now OR (expires_at IS NULL AND created_at < :cutoff)",
+    where("events.expires_at < :now OR (events.expires_at IS NULL AND events.created_at < :cutoff)",
           now: Time.current, cutoff: DEFAULT_RETENTION.ago)
   }
   scope :not_expired, -> {
-    where("(expires_at IS NULL OR expires_at >= :now) AND (expires_at IS NOT NULL OR created_at >= :cutoff)",
+    where("(events.expires_at IS NULL OR events.expires_at >= :now) AND (events.expires_at IS NOT NULL OR events.created_at >= :cutoff)",
           now: Time.current, cutoff: DEFAULT_RETENTION.ago)
   }
-  scope :user_relevant, -> { where.not(level: :debug).not_expired }
+  scope :top_level, -> { where.missing(:incoming_event_references) }
+  scope :user_relevant, -> { where.not(level: :debug).not_expired.top_level }
 
   def details
     metadata.fetch("details", [])

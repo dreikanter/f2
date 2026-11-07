@@ -95,13 +95,20 @@ class PostWithdrawalJobTest < ActiveJob::TestCase
     assert_equal "test_post_123", post.reload.freefeed_post_id
   end
 
-  test ".perform_now should handle FreeFeed API errors gracefully" do
+  test "#perform should report FreeFeed API errors with feed and post context" do
     stub_request(:delete, "#{access_token.host}/v4/posts/test_post_123")
       .to_return(status: 500, body: "Internal Server Error")
 
-    assert_nothing_raised do
+    reports = capture_error_reports do
       PostWithdrawalJob.perform_now(feed.id, "test_post_123")
     end
+
+    context = reports.sole.context
+    assert_equal feed.id, context[:feed_id]
+    assert_equal user.id, context[:feed_owner_id]
+    assert_equal "candy.freefeed.net", context[:freefeed_instance]
+    assert_equal feed.target_group, context[:target_group]
+    assert_equal "test_post_123", context[:freefeed_post_id]
   end
 
   test ".perform_now should handle missing feed gracefully" do

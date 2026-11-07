@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-11-03
+
+- Feed refresh events link to individual entry normalization attempts and their diagnostics.
+
+## 2026-11-01
+
+- Feed refreshes retry entries whose required supplementary pages are temporarily unavailable.
+- Feed refreshes preserve saved posts and resume unfinished imports after failures.
+- Feed refreshes restart pending publication even when no new posts arrive or normalization fails.
+- Daily import counts include all refreshes in the same day.
+
+## 2026-10-31
+
+- Feed refresh events show details when supplementary pages could not be loaded.
+
 ## 2026-10-23
 
 - Admin feed pages show configuration, credentials status, and scheduling diagnostics in a details list.

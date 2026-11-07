@@ -14,7 +14,7 @@ class FeedMetric < ApplicationRecord
     joins(:feed).where(feeds: { user_id: user.id })
   }
 
-  # Keep daily import metrics sparse by recording days with activity.
+  # Accumulate imports across refreshes, keeping days without activity sparse.
   # @param feed [Feed] source feed
   # @param date [Date] activity date
   # @param posts_count [Integer] imported post count
@@ -29,7 +29,12 @@ class FeedMetric < ApplicationRecord
         posts_count: posts_count,
         invalid_posts_count: invalid_posts_count
       },
-      unique_by: [:feed_id, :date]
+      unique_by: [:feed_id, :date],
+      on_duplicate: Arel.sql(<<~SQL.squish)
+        posts_count = feed_metrics.posts_count + EXCLUDED.posts_count,
+        invalid_posts_count = feed_metrics.invalid_posts_count + EXCLUDED.invalid_posts_count,
+        updated_at = EXCLUDED.updated_at
+      SQL
     )
   end
 

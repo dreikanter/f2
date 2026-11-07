@@ -5,6 +5,59 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     @feed ||= create(:feed, feed_profile_key: "rss")
   end
 
+  test "#perform should leave unexpected page errors to the outer error boundary" do
+    feed = create(:feed, feed_profile_key: "buni")
+    page_url = "https://example.com/comic"
+    stub_request(:get, feed.url).to_return(body: <<~RSS)
+      <rss version="2.0"><channel><title>Comics</title><item>
+        <guid>comic-1</guid><title>Comic</title><link>#{page_url}</link>
+      </item></channel></rss>
+    RSS
+    error = HttpClient::Error.new("unexpected client failure")
+    stub_request(:get, page_url).to_raise(error)
+
+    reports = capture_error_reports do
+      assert_same error, assert_raises(HttpClient::Error) {
+        Rails.error.record { FeedRefreshJob.perform_now(feed.id) }
+      }
+    end
+
+    assert_same error, reports.sole.error
+    assert_not reports.sole.handled?
+    assert_equal feed.id, reports.sole.context[:feed_id]
+    event = feed.events.find_by!(type: "feed_refresh")
+    assert_equal "failed", event.metadata["status"]
+    assert_equal "normalize_entries", event.metadata.dig("error", "stage")
+  end
+
+  test "#perform should preserve the whole batch when an optional page has a TLS failure" do
+    feed = create(:feed, feed_profile_key: "smbc")
+    stub_request(:get, feed.url).to_return(body: <<~RSS)
+      <rss version="2.0"><channel><title>Comics</title>
+        <item>
+          <guid>first</guid><title>First</title><link>https://example.com/first</link>
+          <pubDate>#{2.hours.ago.rfc822}</pubDate>
+        </item>
+        <item>
+          <guid>second</guid><title>Second</title><link>https://example.com/second</link>
+          <pubDate>#{1.hour.ago.rfc822}</pubDate>
+        </item>
+      </channel></rss>
+    RSS
+    stub_request(:get, "https://example.com/first").to_return(body: "<html></html>")
+    stub_request(:get, "https://example.com/second").to_raise(Faraday::SSLError.new("certificate has expired"))
+
+    reports = capture_error_reports do
+      assert_enqueued_with(job: PostPublishJob, args: [feed.id]) { FeedRefreshJob.perform_now(feed.id) }
+    end
+
+    assert_empty reports
+    assert_equal %w[first second], feed.posts.enqueued.order(:uid).pluck(:uid)
+    assert_equal %w[first second], feed.feed_entries.processed.order(:uid).pluck(:uid)
+    assert_equal 2, FeedEntryUid.where(feed: feed).count
+    assert_equal "completed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
+  end
+
   test "#perform should ignore a missing feed" do
     assert_nothing_raised do
       FeedRefreshJob.perform_now(-1)
@@ -79,11 +132,100 @@ class FeedRefreshJobTest < ActiveJob::TestCase
 
     report = reports.sole
     assert_kind_of Loader::Error, report.error
-    assert_equal feed.id, report.context[:feed_id]
+    assert_equal({
+      feed_id: feed.id,
+      feed_owner_id: feed.user_id,
+      feed_owner_label: feed.user.name,
+      freefeed_instance: "candy.freefeed.net",
+      target_group: feed.target_group
+    }, report.context.except(:job, :rails))
+
     assert report.handled?
     assert_equal "failed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
     assert_equal 1, feed.reload.consecutive_failures
     assert_requested request, times: 4
+  end
+
+  test "#perform should enrich errors reported inside the workflow" do
+    feed = create(:feed, feed_profile_key: "pluralistic")
+    entry_url = "https://example.com/test-entry"
+    rss = <<~XML
+      <rss version="2.0">
+        <channel>
+          <title>Test feed</title>
+          <item>
+            <title>Test entry title</title>
+            <link>#{entry_url}</link>
+            <guid isPermaLink="false">test-entry-123</guid>
+            <pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate>
+          </item>
+        </channel>
+      </rss>
+    XML
+
+    stub_request(:get, feed.url).to_return(body: rss)
+    stub_request(:get, entry_url).to_return(body: "<html><body>Test page without an image</body></html>")
+
+    reports = capture_error_reports { FeedRefreshJob.perform_now(feed.id) }
+
+    context = reports.sole.context
+    assert_equal feed.id, context[:feed_id]
+    assert_equal feed.user_id, context[:feed_owner_id]
+    assert_equal "pluralistic", context[:profile]
+    assert_equal "test-entry-123", context[:entry_uid]
+    assert_equal entry_url, context[:entry_url]
+    assert_equal "completed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
+  end
+
+  test "#perform should retain context for an unhandled error reported outside the job" do
+    feed = create(:feed, feed_profile_key: "json_feed")
+    stub_request(:get, feed.url).to_return(body: "invalid JSON")
+
+    reports = capture_error_reports do
+      assert_raises(JSON::ParserError) do
+        Rails.error.record { FeedRefreshJob.perform_now(feed.id) }
+      end
+    end
+
+    report = reports.sole
+    assert_kind_of JSON::ParserError, report.error
+    assert_not report.handled?
+    assert_equal feed.id, report.context[:feed_id]
+    assert_equal feed.user_id, report.context[:feed_owner_id]
+    assert_equal "failed", feed.events.find_by!(type: "feed_refresh").metadata["status"]
+  end
+
+  test "#perform should fall back to the owner's masked email when the name is blank" do
+    owner = create(:user, name: "", email_address: "test-owner@example.com")
+    feed = create(:feed, user: owner)
+    stub_request(:get, feed.url).to_return(status: 302, headers: { "Location" => feed.url })
+
+    reports = capture_error_reports { FeedRefreshJob.perform_now(feed.id) }
+
+    assert_equal "t...r@example.com", reports.sole.context[:feed_owner_label]
+  end
+
+  test "#perform should isolate feed context between job executions" do
+    other_feed = create(:feed, :without_access_token)
+    stub_request(:get, feed.url).to_return(status: 302, headers: { "Location" => feed.url })
+
+    reports = capture_error_reports do
+      perform_enqueued_jobs(only: FeedRefreshJob) do
+        FeedRefreshJob.perform_later(feed.id)
+        FeedRefreshJob.perform_later(other_feed.id)
+      end
+
+      Rails.error.report(RuntimeError.new("Unrelated failure"))
+    end
+
+    first, second, unrelated = reports
+    assert_equal 3, reports.size
+    assert_equal "candy.freefeed.net", first.context[:freefeed_instance]
+    assert_equal other_feed.id, second.context[:feed_id]
+    assert_equal other_feed.user_id, second.context[:feed_owner_id]
+    assert_not second.context.key?(:freefeed_instance)
+    assert_not second.context.key?(:target_group)
+    assert_empty unrelated.context.slice(:feed_id, :feed_owner_id, :feed_owner_label, :freefeed_instance, :target_group)
   end
 
   test "#perform should record invalid source content without reporting a bug or retrying" do

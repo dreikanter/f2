@@ -19,15 +19,19 @@ class EventsController < ApplicationController
   private
 
   def owned_events
-    Event.where(user: Current.user).user_relevant
+    Event.where(user: Current.user).where.not(level: :debug).not_expired
   end
+
+  alias_method :related_events_scope, :owned_events
 
   # The user's own log, unfiltered: the previous and next links walk the whole
   # timeline rather than whatever the index was last narrowed to.
-  alias_method :navigable_events, :owned_events
+  def navigable_events
+    owned_events.user_relevant
+  end
 
   def events_scope
-    apply_filters(owned_events)
+    apply_filters(navigable_events)
   end
 
   def events_log_path(**params)

@@ -29,6 +29,24 @@ class UpdateFeedSubscribersCountJobTest < ActiveJob::TestCase
     assert_not_requested :get, /\/v2\/users\//
   end
 
+  test "#perform should retain feed context for unexpected statistics errors" do
+    feed = create(:feed, :enabled)
+    stub_request(:get, "#{feed.access_token.host}/v2/users/#{feed.target_group}/statistics")
+      .to_return(status: 500)
+
+    reports = capture_error_reports do
+      assert_raises(FreefeedClient::Error) do
+        Rails.error.record { UpdateFeedSubscribersCountJob.perform_now(feed) }
+      end
+    end
+
+    context = reports.sole.context
+    assert_equal feed.id, context[:feed_id]
+    assert_equal feed.user_id, context[:feed_owner_id]
+    assert_equal "candy.freefeed.net", context[:freefeed_instance]
+    assert_equal feed.target_group, context[:target_group]
+  end
+
   test "does nothing for an inactive access token" do
     feed = create(:feed, :enabled)
     feed.access_token.inactive!

@@ -163,8 +163,9 @@ class FeedMetricTest < ActiveSupport::TestCase
     end
   end
 
-  test "#record should update existing metric via upsert" do
-    create(:feed_metric, feed: feed, date: Date.current, posts_count: 3)
+  test "#record should add imports without changing publication metrics" do
+    create(:feed_metric, feed: feed, date: Date.current,
+                        posts_count: 3, invalid_posts_count: 2, published_posts_count: 1)
 
     assert_no_difference "FeedMetric.count" do
       FeedMetric.record(
@@ -176,8 +177,9 @@ class FeedMetricTest < ActiveSupport::TestCase
     end
 
     metric = FeedMetric.find_by(feed: feed, date: Date.current)
-    assert_equal 10, metric.posts_count
-    assert_equal 5, metric.invalid_posts_count
+    assert_equal 13, metric.posts_count
+    assert_equal 7, metric.invalid_posts_count
+    assert_equal 1, metric.published_posts_count
   end
 
   test "#record should create metric when only posts_count is non-zero" do
