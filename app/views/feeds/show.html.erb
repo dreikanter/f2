@@ -1,7 +1,7 @@
 <% content_for :title, @feed.display_name %>
 
 <div class="space-y-10">
-  <%= render "header", feed: @feed %>
+  <%= render "header", feed: @feed, refresh_status: @refresh_status %>
 
   <% if @feed.webhook_endpoint %>
     <section class="space-y-4">

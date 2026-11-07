@@ -69,12 +69,27 @@ class FeedsController < ApplicationController
     if polling?
       return head :ok unless live_content_changed?(recent_events)
 
-      render turbo_stream: turbo_stream.replace(
-        "feed-live-content",
-        partial: "feeds/live_content",
-        locals: live_content_locals(recent_events)
-      )
+      @refresh_status = Feed::RefreshStatus.new(feed: @feed)
+
+      streams = [
+        turbo_stream.replace(
+          "feed-live-content",
+          partial: "feeds/live_content",
+          locals: live_content_locals(recent_events)
+        )
+      ]
+
+      # Other activity must not clear a refresh that is still queued.
+      if @refresh_status.cursor != params[:refresh_after]
+        streams << turbo_stream.replace(
+          helpers.dom_id(@feed, :refresh_status),
+          FeedRefreshStatusComponent.new(status: @refresh_status)
+        )
+      end
+
+      render turbo_stream: streams
     else
+      @refresh_status = Feed::RefreshStatus.new(feed: @feed, pending_after: params[:refresh_after])
       @live_content_locals = live_content_locals(recent_events)
     end
   end
@@ -309,8 +324,6 @@ class FeedsController < ApplicationController
 
   def live_content_locals(recent_events)
     recent_posts = recent_posts(@feed)
-    refresh_in_progress = @feed.events.user_relevant.where(type: "feed_refresh")
-                               .where("metadata ->> 'status' = 'started'").exists?
     llm_usage_totals = LlmUsageReport.for_feed(@feed, period: LlmUsageReport::STATS_PERIOD.ago..Time.current).totals
 
     {
@@ -318,7 +331,7 @@ class FeedsController < ApplicationController
       recent_events: recent_events,
       recent_posts: recent_posts,
       llm_usage_totals: llm_usage_totals,
-      refresh_in_progress: refresh_in_progress
+      refresh_status: @refresh_status
     }
   end
 

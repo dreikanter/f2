@@ -681,7 +681,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#feed-live-content[data-controller='polling']" do
       assert_select "[data-key='feed.refreshing']", count: 0
     end
-    assert_select "#feed-live-content[data-polling-endpoint-value=?]", feed_path(enabled, format: :turbo_stream)
+    assert_select "#feed-live-content[data-polling-endpoint-value=?]",
+                  feed_path(enabled, format: :turbo_stream, refresh_after: "none")
     assert_select "#feed-live-content[data-last-event-id]", count: 0
   end
 
@@ -732,7 +733,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "#feed-live-content[data-last-event-id=?]", started.id
-    assert_select "[data-key='feed.refreshing'][role='status']", text: /Refreshing feed/
+    assert_select "h1 + [data-key='feed.refresh-status'] [data-key='feed.refreshing']", text: /Refreshing feed/
+    assert_select "#feed-live-content [data-key='feed.refreshing']", count: 0
   end
 
   test "#show should stream updated events and posts after refresh completes" do
@@ -754,6 +756,64 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       assert_select "[data-event-id=?]", completed.id
       assert_select "a[href=?]", post_path(post), text: /Newly imported story/
       assert_select "[data-key='feed.refreshing']", count: 0
+    end
+  end
+
+  test "#show should replace title progress with successful and failed refresh results" do
+    sign_in_as(user)
+    enabled = create(:feed, :enabled, user: user)
+
+    %w[completed failed].each do |status|
+      event = create(:event, type: "feed_refresh", user: user, subject: enabled,
+                             metadata: { status: status, stats: { new_posts: 2 } })
+      get feed_path(enabled, format: :turbo_stream)
+
+      assert_response :success
+      assert_select "turbo-stream[target='refresh_status_feed_#{enabled.id}']" do
+        assert_select '[data-key="feed.refreshing"]', count: 0
+        assert_select '[data-key="feed.refresh-status"]', text: /2 new posts/
+        assert_select '[data-key="feed.refresh-status"]', text: status == "failed" ? /couldn.t refresh/ : /refreshed/
+      end
+      event.destroy!
+    end
+  end
+
+  test "#show should preserve queued refresh progress across unrelated events" do
+    sign_in_as(user)
+
+    [nil, "completed"].each do |previous_status|
+      enabled = create(:feed, :enabled, user: user)
+      previous = nil
+      if previous_status
+        previous = create(:event, type: "feed_refresh", user: user, subject: enabled,
+                                  metadata: { status: previous_status })
+      end
+      cursor = previous&.id || "none"
+      post feed_refresh_path(enabled), as: :turbo_stream
+      assert_select '[data-key="feed.refreshing"]'
+
+      unrelated = create(:event, type: "feed_post_comments_failed", user: user, subject: enabled)
+      get feed_path(enabled, format: :turbo_stream), params: { after_id: previous&.id, refresh_after: cursor }
+
+      assert_response :success
+      assert_select "turbo-stream[target='feed-live-content']"
+      assert_select "turbo-stream[target='refresh_status_feed_#{enabled.id}']", count: 0
+      assert_select "#feed-live-content[data-polling-endpoint-value=?]",
+                    feed_path(enabled, format: :turbo_stream, refresh_after: cursor)
+
+      started = create(:event, type: "feed_refresh", user: user, subject: enabled,
+                              metadata: { status: "started" })
+      get feed_path(enabled, format: :turbo_stream), params: { after_id: unrelated.id, refresh_after: cursor }
+      assert_select "turbo-stream[target='refresh_status_feed_#{enabled.id}'] [data-key='feed.refreshing']"
+
+      started.destroy!
+      create(:event, type: "feed_refresh", user: user, subject: enabled,
+                     metadata: { status: "completed", stats: { new_posts: 2 } })
+      get feed_path(enabled, format: :turbo_stream), params: { after_id: started.id, refresh_after: started.id }
+      assert_select "turbo-stream[target='refresh_status_feed_#{enabled.id}']" do
+        assert_select '[data-key="feed.refreshing"]', count: 0
+        assert_select '[data-key="feed.refresh-status"]', text: /2 new posts/
+      end
     end
   end
 

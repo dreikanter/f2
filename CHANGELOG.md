@@ -2,6 +2,8 @@
 
 ## 2026-11-07
 
+- Queued feed refreshes keep their progress indicator when other activity updates.
+- Feed refreshes show a spinner beside the title and display the result when finished.
 - Repeated enable or pause requests no longer add duplicate feed activity entries.
 - Feed disabled events use an info icon instead of a warning icon.
 
