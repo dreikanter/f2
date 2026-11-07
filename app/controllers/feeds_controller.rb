@@ -1,7 +1,7 @@
 class FeedsController < ApplicationController
   include Pagination
   include Sortable
-  include FeedStateEvents
+  include FeedStateTransitions
   include StatePolling
   include FeedListing
 
@@ -65,9 +65,19 @@ class FeedsController < ApplicationController
   def show
     @feed = load_feed
     authorize @feed
-    @recent_posts = recent_posts(@feed)
-    @recent_events = recent_events(@feed)
-    @llm_usage_totals = LlmUsageReport.for_feed(@feed, period: LlmUsageReport::STATS_PERIOD.ago..Time.current).totals
+    recent_events = recent_events(@feed)
+
+    if polling?
+      return head :ok unless live_content_changed?(recent_events)
+
+      render turbo_stream: turbo_stream.replace(
+        "feed-live-content",
+        partial: "feeds/live_content",
+        locals: live_content_locals(recent_events)
+      )
+    else
+      @live_content_locals = live_content_locals(recent_events)
+    end
   end
 
   def edit
@@ -159,8 +169,8 @@ class FeedsController < ApplicationController
   end
 
   def enable_and_respond(feed)
-    if feed.enable
-      record_feed_enabled(feed)
+    if enable_feed(feed)
+      FeedRefreshJob.perform_later(feed.id) if feed.scheduled?
       redirect_to feed_path(feed), success: success_message_for(feed)
     else
       flash.now[:alert] = "Couldn't enable. See issues below."
@@ -169,14 +179,8 @@ class FeedsController < ApplicationController
   end
 
   def promote_and_redirect(feed, interval_changed)
-    feed.transaction do
-      if feed.enable
-        record_feed_enabled(feed)
-        feed.reset_schedule! if interval_changed
-      end
-    end
-
-    if feed.enabled?
+    if enable_feed(feed, reset_schedule: interval_changed)
+      FeedRefreshJob.perform_later(feed.id) if feed.scheduled?
       redirect_to feed_path(feed), success: update_message_for(feed)
     else
       flash.now[:alert] = "Couldn't enable. See issues below."
@@ -288,8 +292,32 @@ class FeedsController < ApplicationController
     feeds_path(sort_params)
   end
 
+  def polling?
+    request.format.turbo_stream?
+  end
+
+  # A feed refresh replaces its started event with a new completion event.
+  def live_content_changed?(recent_events)
+    params[:after_id].to_s != recent_events.first&.id.to_s
+  end
+
+  def live_content_locals(recent_events)
+    recent_posts = recent_posts(@feed)
+    refresh_in_progress = @feed.events.user_relevant.where(type: "feed_refresh")
+                               .where("metadata ->> 'status' = 'started'").exists?
+    llm_usage_totals = LlmUsageReport.for_feed(@feed, period: LlmUsageReport::STATS_PERIOD.ago..Time.current).totals
+
+    {
+      feed: @feed,
+      recent_events: recent_events,
+      recent_posts: recent_posts,
+      llm_usage_totals: llm_usage_totals,
+      refresh_in_progress: refresh_in_progress
+    }
+  end
+
   def recent_events(feed)
-    feed.events.user_relevant.recent.limit(MAX_RECENT_EVENTS)
+    feed.events.user_relevant.recent.limit(MAX_RECENT_EVENTS).to_a
   end
 
   def pagination_scope

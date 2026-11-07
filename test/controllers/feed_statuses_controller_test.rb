@@ -47,6 +47,18 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_predicate webhook.reload, :enabled?
   end
 
+  test "#update should not refresh an already enabled feed" do
+    sign_in_as(user)
+    enabled = create(:feed, :enabled, user: user)
+
+    assert_no_enqueued_jobs(only: FeedRefreshJob) do
+      patch feed_status_path(enabled), params: { status: "enabled" }
+    end
+
+    assert_redirected_to enabled
+    assert_predicate enabled.reload, :enabled?
+  end
+
   test "#update should disable feed" do
     sign_in_as(user)
     feed.update!(state: :enabled)

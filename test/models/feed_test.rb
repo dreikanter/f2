@@ -1,6 +1,8 @@
 require "test_helper"
 
 class FeedTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   test "#valid? should return true with all required attributes" do
     feed = build(:feed)
     assert feed.valid?
@@ -876,6 +878,16 @@ class FeedTest < ActiveSupport::TestCase
       params: { "url" => "https://example.com/feed.xml" })
 
     assert feed.enable, feed.errors.full_messages.inspect
+    assert_predicate feed.reload, :enabled?
+  end
+
+  test "#enable should change state without enqueuing a refresh" do
+    feed = create(:feed, :disabled)
+
+    assert_no_enqueued_jobs(only: FeedRefreshJob) do
+      assert feed.enable, feed.errors.full_messages.inspect
+    end
+
     assert_predicate feed.reload, :enabled?
   end
 
