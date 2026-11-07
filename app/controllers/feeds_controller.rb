@@ -69,6 +69,8 @@ class FeedsController < ApplicationController
     if polling?
       return head :ok unless live_content_changed?(recent_events)
 
+      @refresh_status = Feed::RefreshStatus.new(feed: @feed)
+
       render turbo_stream: [
         turbo_stream.replace(
           "feed-live-content",
@@ -77,11 +79,11 @@ class FeedsController < ApplicationController
         ),
         turbo_stream.replace(
           helpers.dom_id(@feed, :refresh_status),
-          partial: "feeds/refresh_status",
-          locals: { feed: @feed }
+          FeedRefreshStatusComponent.new(status: @refresh_status)
         )
       ]
     else
+      @refresh_status = Feed::RefreshStatus.new(feed: @feed, pending_after: params[:refresh_after])
       @live_content_locals = live_content_locals(recent_events)
     end
   end

@@ -52,6 +52,7 @@ class FeedStatusesController < ApplicationController
     respond_to do |format|
       format.html { redirect_to feed, success: success, alert: alert }
       format.turbo_stream do
+        @refresh_status = Feed::RefreshStatus.new(feed: feed)
         flash.now[:success] = success if success
         flash.now[:alert] = alert if alert
         render :update
