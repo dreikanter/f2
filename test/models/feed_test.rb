@@ -891,6 +891,37 @@ class FeedTest < ActiveSupport::TestCase
     assert_predicate feed.reload, :enabled?
   end
 
+  test "#record_state_change! should record an interactive enable event" do
+    feed = create(:feed, :disabled)
+    feed.enable
+
+    event = feed.record_state_change!
+
+    assert_equal "feed_enabled", event.type
+    assert_equal "info", event.level
+    assert_equal feed, event.subject
+    assert_equal feed.user, event.user
+  end
+
+  test "#record_state_change! should record an interactive pause as a warning" do
+    feed = create(:feed, :enabled)
+    feed.disable
+
+    event = feed.record_state_change!
+
+    assert_equal "feed_disabled", event.type
+    assert_equal "warning", event.level
+  end
+
+  test "#record_state_change! should ignore ordinary attribute edits" do
+    feed = create(:feed, :disabled)
+    feed.update!(name: "Renamed feed")
+
+    assert_no_difference "Event.count" do
+      assert_nil feed.record_state_change!
+    end
+  end
+
   test "#enable should fail when a required enabled-state field is missing" do
     feed = create(:feed, :disabled,
       user: preview_user,

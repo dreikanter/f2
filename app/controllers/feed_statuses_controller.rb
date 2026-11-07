@@ -1,6 +1,4 @@
 class FeedStatusesController < ApplicationController
-  include FeedStateTransitions
-
   def update
     @feed = load_feed
 
@@ -18,10 +16,10 @@ class FeedStatusesController < ApplicationController
   private
 
   def enable(feed)
-    enabled = feed.with_lock { feed.can_be_enabled? && enable_feed(feed) }
+    result = Feed::StateTransition.new(feed).enable
 
-    if enabled
-      FeedRefreshJob.perform_later(feed.id) if feed.saved_change_to_state? && feed.scheduled?
+    if result.success?
+      FeedRefreshJob.perform_later(feed.id) if result.changed? && feed.scheduled?
       respond_with_status(feed, success: "Feed enabled.")
     else
       respond_with_status(feed, alert: cannot_enable_alert(feed))
@@ -39,9 +37,9 @@ class FeedStatusesController < ApplicationController
   end
 
   def disable(feed)
-    disabled = feed.with_lock { disable_feed(feed) }
+    result = Feed::StateTransition.new(feed).disable
 
-    if disabled
+    if result.success?
       respond_with_status(feed, success: "Feed disabled.")
     else
       respond_with_status(feed, alert: "Cannot disable feed: #{feed.errors.full_messages.join('; ')}.")

@@ -1763,6 +1763,35 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "#update should roll back form edits and pause when event recording fails" do
+    sign_in_as(user)
+    enabled = create(:feed, :enabled, user: user, access_token: access_token)
+    name = enabled.name
+    fail_event = ->(**) { raise ActiveRecord::RecordInvalid.new(Event.new) }
+
+    assert_no_difference "Event.count" do
+      Event.stub(:create!, fail_event) do
+        patch feed_url(enabled), params: { feed: { name: "Renamed feed" } }
+      end
+    end
+
+    assert_response :unprocessable_entity
+    assert_predicate enabled.reload, :enabled?
+    assert_equal name, enabled.name
+  end
+
+  test "#update should save ordinary edits without recording a state event" do
+    sign_in_as(user)
+    disabled = create(:feed, :disabled, user: user, access_token: access_token)
+
+    assert_no_difference "Event.count" do
+      patch feed_url(disabled), params: { feed: { name: "Renamed feed" } }
+    end
+
+    assert_redirected_to disabled
+    assert_equal "Renamed feed", disabled.reload.name
+  end
+
   test "#update should record a feed_disabled event when pausing a feed" do
     sign_in_as(user)
     enabled_feed = create(:feed, :enabled, user: user, access_token: access_token)
