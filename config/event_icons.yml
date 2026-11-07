@@ -16,6 +16,7 @@ feed_target_group_unavailable: users
 feed_post_comments_failed: message-circle
 feed_post_publication_interrupted: triangle-alert
 feed_auto_disabled: circle-pause
+feed_disabled: info
 ai_credential_deactivated: sparkles
 search_credential_deactivated: search
 access_token_validation_failed: key

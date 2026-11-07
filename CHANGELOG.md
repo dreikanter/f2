@@ -3,6 +3,7 @@
 ## 2026-11-07
 
 - Repeated enable or pause requests no longer add duplicate feed activity entries.
+- Feed disabled events use an info icon instead of a warning icon.
 
 ## 2026-11-03
 
