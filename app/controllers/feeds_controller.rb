@@ -1,7 +1,6 @@
 class FeedsController < ApplicationController
   include Pagination
   include Sortable
-  include FeedStateTransitions
   include StatePolling
   include FeedListing
 
@@ -102,26 +101,14 @@ class FeedsController < ApplicationController
     source_change = deterministic_source_change?
     return propose_source_redetection if source_change && !source_change_confirmed?
 
-    @feed.assign_attributes(update_feed_params)
-    # Overwrite the raw submitted URL with the canonical, verified source and its
-    # detected profile (the confirm path).
-    apply_confirmed_source if source_change
-    @feed.assign_attributes(FeedProfile.defaults_for(@feed.feed_profile_key))
-
-    # Unticked Enable on an enabled feed = pause request (gate flow skips this
-    # because the gate only appears for drafts without usable credentials).
-    gate_path = setup_gate_path(@feed)
-    @feed.state = :disabled if @feed.enabled? && !enable_feed? && gate_path.nil?
-
-    if @feed.save
+    if save_feed_changes(source_change)
       sync_webhook_endpoint(@feed)
       # Capture interval-change signal from the first save before the
       # promotion attempt's save overwrites `saved_changes`.
       interval_changed = @feed.saved_change_to_cron_expression? || @feed.saved_change_to_refresh_interval?
-      record_feed_disabled(@feed) if @feed.saved_change_to_state? && @feed.disabled?
       cleanup_feed_identification(@feed.source_input)
 
-      if gate_path
+      if (gate_path = setup_gate_path(@feed))
         redirect_to gate_path
       elsif enable_feed? && !@feed.enabled?
         promote_and_redirect(@feed, interval_changed)
@@ -168,9 +155,26 @@ class FeedsController < ApplicationController
     end
   end
 
+  def save_feed_changes(source_change)
+    @feed.with_lock do
+      @feed.assign_attributes(update_feed_params)
+      # Overwrite the raw submitted URL with the verified source and profile.
+      apply_confirmed_source if source_change
+      @feed.assign_attributes(FeedProfile.defaults_for(@feed.feed_profile_key))
+
+      # The setup gate only appears for drafts without usable credentials.
+      @feed.state = :disabled if @feed.enabled? && !enable_feed? && setup_gate_path(@feed).nil?
+      saved = @feed.save
+      @feed.record_state_change! if saved
+      saved
+    end
+  end
+
   def enable_and_respond(feed)
-    if enable_feed(feed)
-      FeedRefreshJob.perform_later(feed.id) if feed.scheduled?
+    result = Feed::StateTransition.new(feed).enable
+
+    if result.success?
+      FeedRefreshJob.perform_later(feed.id) if result.changed? && feed.scheduled?
       redirect_to feed_path(feed), success: success_message_for(feed)
     else
       flash.now[:alert] = "Couldn't enable. See issues below."
@@ -179,8 +183,10 @@ class FeedsController < ApplicationController
   end
 
   def promote_and_redirect(feed, interval_changed)
-    if enable_feed(feed, reset_schedule: interval_changed)
-      FeedRefreshJob.perform_later(feed.id) if feed.scheduled?
+    result = Feed::StateTransition.new(feed).enable(reset_schedule: interval_changed)
+
+    if result.success?
+      FeedRefreshJob.perform_later(feed.id) if result.changed? && feed.scheduled?
       redirect_to feed_path(feed), success: update_message_for(feed)
     else
       flash.now[:alert] = "Couldn't enable. See issues below."

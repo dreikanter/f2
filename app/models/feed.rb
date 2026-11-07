@@ -249,6 +249,18 @@ class Feed < ApplicationRecord
     transition_state(:disabled)
   end
 
+  # Interactive callers record events explicitly; background changes have their own events.
+  def record_state_change!
+    return unless saved_change_to_state?
+
+    Event.create!(
+      type: "feed_#{state}",
+      level: enabled? ? :info : :warning,
+      subject: self,
+      user: user
+    )
+  end
+
   def can_be_previewed?
     return false unless source_input.present? && feed_profile_present?
     return true unless depends_on_ai?

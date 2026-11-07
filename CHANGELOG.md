@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-07
+
+- Repeated enable or pause requests no longer add duplicate feed activity entries.
+
 ## 2026-11-03
 
 - Feed refresh events link to individual entry normalization attempts and their diagnostics.
