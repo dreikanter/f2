@@ -70,14 +70,13 @@ class FeedsController < ApplicationController
     if polling?
       return head :ok unless live_content_changed?(recent_events)
 
-      prepare_live_content(recent_events)
       render turbo_stream: turbo_stream.replace(
         "feed-live-content",
         partial: "feeds/live_content",
-        locals: @live_content_locals
+        locals: live_content_locals(recent_events)
       )
     else
-      prepare_live_content(recent_events)
+      @live_content_locals = live_content_locals(recent_events)
     end
   end
 
@@ -308,13 +307,13 @@ class FeedsController < ApplicationController
     params[:after_id].to_s != recent_events.first&.id.to_s
   end
 
-  def prepare_live_content(recent_events)
+  def live_content_locals(recent_events)
     recent_posts = recent_posts(@feed)
     refresh_in_progress = @feed.events.user_relevant.where(type: "feed_refresh")
                                .where("metadata ->> 'status' = 'started'").exists?
     llm_usage_totals = LlmUsageReport.for_feed(@feed, period: LlmUsageReport::STATS_PERIOD.ago..Time.current).totals
 
-    @live_content_locals = {
+    {
       feed: @feed,
       recent_events: recent_events,
       recent_posts: recent_posts,
