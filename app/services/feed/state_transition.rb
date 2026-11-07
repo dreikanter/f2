@@ -28,30 +28,13 @@ class Feed::StateTransition
     @feed.with_lock { persist { @feed.disable } }
   end
 
-  # Assign form changes after acquiring the lock, including a requested pause.
-  def update
-    @feed.with_lock do
-      yield @feed
-      persist { @feed.save }
-    end
-  end
-
   private
 
   def persist
     return Result.new(success: false, changed: false) unless yield
 
     changed = @feed.saved_change_to_state?
-    record_event if changed
+    @feed.record_state_change! if changed
     Result.new(success: true, changed: changed)
-  end
-
-  def record_event
-    Event.create!(
-      type: "feed_#{@feed.state}",
-      level: @feed.enabled? ? :info : :warning,
-      subject: @feed,
-      user: @feed.user
-    )
   end
 end
