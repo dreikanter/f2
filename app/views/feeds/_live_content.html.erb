@@ -1,4 +1,4 @@
-<%# locals: (feed:, recent_events:, recent_posts:, llm_usage_totals:, refresh_in_progress:) %>
+<%# locals: (feed:, recent_events:, recent_posts:, llm_usage_totals:) %>
 <%# The polling host owns its cursor and reconnects after a new event replaces it. %>
 <%# Keep polling while disabled: the Turbo enable action updates only the header. %>
 <% polling_data = if feed.scheduled?
@@ -13,14 +13,6 @@
                     }
                   end %>
 <%= tag.div id: "feed-live-content", class: "space-y-10", data: polling_data do %>
-  <% if refresh_in_progress %>
-    <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3"
-         role="status" data-key="feed.refreshing">
-      <%= render SpinnerComponent.new %>
-      <p class="font-semibold text-heading">Refreshing feed…</p>
-    </div>
-  <% end %>
-
   <% unless feed.draft? %>
     <section class="space-y-4">
       <%= h2 "Stats" %>

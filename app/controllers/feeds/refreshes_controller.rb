@@ -10,14 +10,18 @@ class Feeds::RefreshesController < ApplicationController
     @feed = Current.user.feeds.find(params[:feed_id])
     authorize @feed, :refresh?
 
+    refresh_after = @feed.events.where(type: "feed_refresh").order(id: :desc).pick(:id) || "none"
     FeedRefreshJob.perform_later(@feed.id)
 
     respond_to do |format|
       format.turbo_stream do
-        flash.now[:notice] = "Feed refresh started"
-        render turbo_stream: turbo_stream.replace("flash-messages", partial: "layouts/flash")
+        render turbo_stream: turbo_stream.replace(
+          helpers.dom_id(@feed, :refresh_status),
+          partial: "feeds/refresh_status",
+          locals: { feed: @feed, refreshing: true }
+        )
       end
-      format.html { redirect_to feed_path(@feed), notice: "Feed refresh started" }
+      format.html { redirect_to feed_path(@feed, refresh_after: refresh_after) }
     end
   end
 

@@ -2,6 +2,7 @@
 
 ## 2026-11-07
 
+- Feed refreshes show a spinner beside the title and display the result when finished.
 - Repeated enable or pause requests no longer add duplicate feed activity entries.
 
 ## 2026-11-03

@@ -4,7 +4,10 @@
   <% end %>
   <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
     <div class="flex flex-col gap-5">
-      <%= tag.h1(@title, class: "text-4xl font-semibold mb-0 text-heading", data: @title_data) %>
+      <div class="flex flex-wrap items-center gap-3">
+        <%= tag.h1(@title, class: "text-4xl font-semibold mb-0 text-heading", data: @title_data) %>
+        <%= title_suffix if title_suffix? %>
+      </div>
       <% if context_paragraphs? %>
         <% context_paragraphs.each do |paragraph| %>
           <p class="text-body"><%= paragraph %></p>

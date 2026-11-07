@@ -1,4 +1,6 @@
 class PageHeaderComponent < ViewComponent::Base
+  renders_one :title_suffix
+
   renders_one :breadcrumb, ->(label:, url:) do
     link_to label, url, class: "text-muted hover:text-heading transition-colors"
   end

@@ -1,0 +1,13 @@
+<%# locals: (feed:, refreshing: false, pending_after: nil) %>
+<% event = feed.events.user_relevant.where(type: "feed_refresh").recent.first %>
+<% refreshing ||= pending_after == (event&.id || "none") || event&.metadata&.fetch("status", nil) == "started" %>
+<%= tag.div id: dom_id(feed, :refresh_status), role: "status", class: "text-sm text-body", data: { key: "feed.refresh-status" } do %>
+  <% if refreshing %>
+    <span data-key="feed.refreshing" role="status" class="inline-flex items-center gap-2">
+      <%= render SpinnerComponent.new %>
+      <span class="sr-only">Refreshing feed</span>
+    </span>
+  <% elsif event %>
+    <%= render FeedRefreshDescriptionComponent.new(event: event) %>
+  <% end %>
+<% end %>

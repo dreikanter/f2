@@ -58,8 +58,8 @@ class Feeds::RefreshesControllerTest < ActionDispatch::IntegrationTest
       post feed_refresh_path(feed)
     end
 
-    assert_redirected_to feed_path(feed)
-    assert_equal "Feed refresh started", flash[:notice]
+    assert_redirected_to feed_path(feed, refresh_after: "none")
+    assert_nil flash[:notice]
   end
 
   test "create responds with turbo stream" do
@@ -71,9 +71,10 @@ class Feeds::RefreshesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html", response.media_type
-    assert_select "turbo-stream[action='replace'][target='flash-messages']" do
-      assert_select "#flash-messages [data-key='flash.notice']", text: /Feed refresh started/
+    assert_select "turbo-stream[action='replace'][target='refresh_status_feed_#{feed.id}']" do
+      assert_select '[data-key="feed.refreshing"] svg'
     end
+    assert_select "#flash-messages", count: 0
   end
 
   test "create throttles repeated refreshes for the same feed" do
@@ -90,6 +91,20 @@ class Feeds::RefreshesControllerTest < ActionDispatch::IntegrationTest
       end
       assert_response :too_many_requests
     end
+  end
+
+  test "#create should show progress beside the title after an HTML redirect" do
+    sign_in_as(user)
+    post feed_refresh_path(feed)
+    location = response.location
+    follow_redirect!
+    assert_select 'h1 + [data-key="feed.refresh-status"] [data-key="feed.refreshing"]'
+
+    create(:event, type: "feed_refresh", subject: feed, user: user,
+                   metadata: { status: "completed", stats: { new_posts: 2 } })
+    get location
+    assert_select '[data-key="feed.refreshing"]', count: 0
+    assert_select '[data-key="feed.refresh-status"]', text: /2 new posts/
   end
 
   # rate_limit counts in Rails.cache, which is the no-op :null_store in tests.

@@ -2,6 +2,9 @@
 <% action_button = class_names(secondary_button_classes(compact: true), "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50") %>
 <div id="<%= dom_id(feed, :header) %>" class="space-y-5">
   <%= render PageHeaderComponent.new(title: feed.display_name) do |header| %>
+    <% header.with_title_suffix do %>
+      <%= render "feeds/refresh_status", feed: feed, pending_after: params[:refresh_after] %>
+    <% end %>
     <% header.with_breadcrumb(label: "Feeds", url: feeds_path) %>
     <% header.with_context_paragraph do %>
       <%= render feed_status_badge(feed) %>
