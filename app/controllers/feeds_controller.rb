@@ -65,7 +65,7 @@ class FeedsController < ApplicationController
   def show
     @feed = load_feed
     authorize @feed
-    recent_events = recent_events(@feed).to_a
+    recent_events = recent_events(@feed)
 
     if polling?
       return head :ok unless live_content_changed?(recent_events)
@@ -323,7 +323,7 @@ class FeedsController < ApplicationController
   end
 
   def recent_events(feed)
-    feed.events.user_relevant.recent.limit(MAX_RECENT_EVENTS)
+    feed.events.user_relevant.recent.limit(MAX_RECENT_EVENTS).to_a
   end
 
   def pagination_scope
