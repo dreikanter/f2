@@ -1,7 +1,7 @@
 class FeedsController < ApplicationController
   include Pagination
   include Sortable
-  include FeedStateEvents
+  include FeedStateTransitions
   include StatePolling
   include FeedListing
 
@@ -169,8 +169,7 @@ class FeedsController < ApplicationController
   end
 
   def enable_and_respond(feed)
-    if feed.enable
-      record_feed_enabled(feed)
+    if enable_feed(feed)
       FeedRefreshJob.perform_later(feed.id) if feed.scheduled?
       redirect_to feed_path(feed), success: success_message_for(feed)
     else
@@ -180,14 +179,7 @@ class FeedsController < ApplicationController
   end
 
   def promote_and_redirect(feed, interval_changed)
-    feed.transaction do
-      if feed.enable
-        record_feed_enabled(feed)
-        feed.reset_schedule! if interval_changed
-      end
-    end
-
-    if feed.enabled?
+    if enable_feed(feed, reset_schedule: interval_changed)
       FeedRefreshJob.perform_later(feed.id) if feed.scheduled?
       redirect_to feed_path(feed), success: update_message_for(feed)
     else

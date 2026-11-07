@@ -1637,6 +1637,26 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_in_delta Time.current, enabled_feed.feed_schedule.next_run_at, 5.seconds
   end
 
+  test "#update should reset the schedule when re-enabling with a new interval" do
+    sign_in_as(user)
+    disabled = create(:feed, :disabled, user: user, access_token: access_token,
+                                        cron_expression: nil, refresh_interval: 2.hours.to_i)
+    disabled.create_feed_schedule!(next_run_at: 12.hours.from_now, last_run_at: Time.current)
+
+    assert_enqueued_with(job: FeedRefreshJob, args: [disabled.id]) do
+      patch feed_url(disabled), params: {
+        feed: { schedule_interval: "10m" },
+        enable_feed: "1"
+      }
+    end
+
+    assert_redirected_to disabled
+    assert_predicate disabled.reload, :enabled?
+    assert_equal "10m", disabled.schedule_interval
+    assert_in_delta Time.current, disabled.feed_schedule.reload.next_run_at, 5.seconds
+    assert_equal 1, disabled.events.where(type: "feed_enabled").count
+  end
+
   test "#update should not allow direct cron_expression updates" do
     sign_in_as(user)
     feed.update!(schedule_interval: "1h")
