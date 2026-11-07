@@ -35,11 +35,17 @@ class FeedProfile
         "type" => "object",
         "properties" => {
           "url" => { "type" => "string", "format" => "uri" },
-          "content_in_comments" => {
-            "type" => "boolean",
-            "title" => "Post article text as comments",
-            "description" => "Use the title as the post body and split article text into size-limited comments, preserving paragraph breaks.",
-            "default" => false
+          "article_presentation" => {
+            "type" => "string",
+            "title" => "Article presentation",
+            "enum" => %w[title_only title_and_text text_in_comment text_in_paragraph_comments],
+            "enumNames" => [
+              "Title only",
+              "Title and article text in the post",
+              "Title in the post, article text in a comment",
+              "Title in the post, article text in comments, one paragraph per comment"
+            ],
+            "default" => "title_and_text"
           },
           "max_comments" => {
             "type" => "integer",

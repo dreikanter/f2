@@ -18,8 +18,14 @@ class FeedProfile
       @description = schema["description"]
       @default = schema["default"]
       @choices = schema["enum"]
+      @choice_labels = schema["enumNames"]
       @minimum = schema["minimum"]
       @maximum = schema["maximum"]
+    end
+
+    def choice_label(value)
+      index = choices&.index(value)
+      (index && @choice_labels&.[](index)) || value.to_s.humanize
     end
 
     def boolean?

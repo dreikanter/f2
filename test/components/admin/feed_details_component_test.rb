@@ -63,13 +63,13 @@ class Admin::FeedDetailsComponentTest < ViewComponent::TestCase
 
   test "#call should show import settings and explicit profile options" do
     feed.update!(import_after: 3.days.ago, images_only: true, consecutive_failures: 4,
-                 params: feed.params.merge("content_in_comments" => true, "max_comments" => 5))
+                 params: feed.params.merge("article_presentation" => "text_in_comment", "max_comments" => 5))
 
     result = render_component
 
     assert_equal feed.import_after.iso8601, value(result, :import_after).at_css("time")["datetime"]
     assert_equal "Yes", value(result, :images_only).text
-    assert_equal "Yes", value(result, "option.content_in_comments").text
+    assert_equal "Title in the post, article text in a comment", value(result, "option.article_presentation").text
     assert_equal "5", value(result, "option.max_comments").text
     assert_equal "4 / 10", value(result, :failures).text
   end
@@ -79,11 +79,11 @@ class Admin::FeedDetailsComponentTest < ViewComponent::TestCase
 
     assert_equal "No cutoff", value(result, :import_after).text
     assert_equal "No", value(result, :images_only).text
-    assert_equal "No (default)", value(result, "option.content_in_comments").text
+    assert_equal "Title and article text in the post (default)", value(result, "option.article_presentation").text
     assert_equal "No limit", value(result, "option.max_comments").text
 
-    feed.update!(params: feed.params.merge("content_in_comments" => false))
-    assert_equal "No", value(render_component, "option.content_in_comments").text
+    feed.update!(params: feed.params.merge("article_presentation" => "title_and_text"))
+    assert_equal "Title and article text in the post", value(render_component, "option.article_presentation").text
   end
 
   test "#call should show incomplete draft setup and preserve an unlinked target group" do

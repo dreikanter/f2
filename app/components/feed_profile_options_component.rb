@@ -43,7 +43,7 @@ class FeedProfileOptionsComponent < ViewComponent::Base
   # @param option [FeedProfile::ParamOption] the option to render
   # @return [Array<Array>] label/value pairs for a select
   def choices_for(option)
-    option.choices.map { |choice| [choice.to_s.humanize, choice] }
+    option.choices.map { |choice| [option.choice_label(choice), choice] }
   end
 
   private

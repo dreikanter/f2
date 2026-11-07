@@ -39,6 +39,22 @@ class FeedProfileOptionsComponentTest < ViewComponent::TestCase
     result.css("label").map { |label| label.text.strip }
   end
 
+  test "#render should show RSS presentation labels and select the stored choice" do
+    result = render_inline(FeedProfileOptionsComponent.new(
+      feed: feed(feed_profile_key: "rss", "article_presentation" => "text_in_paragraph_comments")
+    ))
+
+    select = result.at_css('[data-key="form.profile-option-input.rss.article_presentation"]')
+    assert_equal "select", select.name
+    assert_equal [
+      "Title only",
+      "Title and article text in the post",
+      "Title in the post, article text in a comment",
+      "Title in the post, article text in comments, one paragraph per comment"
+    ], select.css("option").map(&:text)
+    assert_equal "text_in_paragraph_comments", select.at_css("option[selected]")["value"]
+  end
+
   test "#render should render a checkbox for a boolean option" do
     result = render_typed
 

@@ -119,7 +119,7 @@ class FeedTest < ActiveSupport::TestCase
   test "#save should persist the RSS comment limit as an integer" do
     feed = build(:feed, feed_profile_key: "rss", params: {
       "url" => "https://example.com/feed.xml",
-      "content_in_comments" => true,
+      "article_presentation" => "text_in_comment",
       "max_comments" => "2"
     })
 

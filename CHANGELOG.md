@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-07
+
+- Choose whether RSS articles appear as a title, text in the post, a single comment, or one comment per paragraph.
+
 ## 2026-11-03
 
 - Feed refresh events link to individual entry normalization attempts and their diagnostics.
