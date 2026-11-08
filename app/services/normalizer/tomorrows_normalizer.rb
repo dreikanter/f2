@@ -1,5 +1,6 @@
 module Normalizer
   class TomorrowsNormalizer < RssNormalizer
+    include CommentSplitting
     include PageFetching
 
     PROFILE_KEY = "tomorrows"
