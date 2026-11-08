@@ -1,6 +1,19 @@
-<%# locals: (feed:, refresh_status:) %>
+<%# locals: (feed:, refresh_status:, refresh_failed: false) %>
 <% action_button = class_names(secondary_button_classes(compact: true), "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50") %>
-<div id="<%= dom_id(feed, :header) %>" class="space-y-5">
+<% polling_data = if refresh_status.refreshing?
+                    {
+                      controller: "polling",
+                      polling_endpoint_value: feed_path(feed, format: :turbo_stream, refresh_after: refresh_status.cursor),
+                      polling_interval_value: 5_000,
+                      polling_initial_delay_value: 5_000,
+                      polling_max_polls_value: 60,
+                      polling_indicate_busy_value: false,
+                      last_event_id: refresh_status.event&.id
+                    }
+                  else
+                    {}
+                  end %>
+<%= tag.div id: dom_id(feed, :header), class: "space-y-5", data: { key: "feed.header" }.merge(polling_data) do %>
   <%= render PageHeaderComponent.new(title: feed.display_name) do |header| %>
     <% header.with_title_suffix do %>
       <%= render FeedRefreshStatusComponent.new(status: refresh_status) %>
@@ -45,6 +58,18 @@
     <% end %>
   <% end %>
 
+  <% if refresh_status.refreshing? || refresh_failed %>
+    <%= tag.div hidden: !refresh_failed, data: { polling_target: "timeoutMessage" } do %>
+      <%= render AlertComponent.new(variant: :error, data: { key: "feed.refresh-notice" }) do %>
+        <% if refresh_failed %>
+          Couldn't refresh the feed. See Recent Activity for details.
+        <% else %>
+          Couldn't check the refresh. Reload the page to check its progress.
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
   <%# The disabled Enable button carries the same hint, but a title on a
       disabled button goes unseen in most browsers. %>
   <% unless feed.enabled? || feed.can_be_enabled? %>
@@ -52,4 +77,4 @@
       <p><%= feed_enable_hint(feed) %></p>
     <% end %>
   <% end %>
-</div>
+<% end %>

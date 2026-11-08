@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-09
+
+- Feed refresh errors appear in an alert below the header and clear on reload or a new refresh.
+
 ## 2026-11-08
 
 - Feed refresh spinners clear when finished, with results shown in Recent Activity.

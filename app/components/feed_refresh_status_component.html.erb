@@ -1,11 +1,8 @@
-<%= tag.div id: dom_id(status.feed, :refresh_status), role: "status", class: "text-sm text-body", data: { key: "feed.refresh-status" }.merge(polling_data) do %>
+<%= tag.div id: dom_id(status.feed, :refresh_status), role: "status", class: "text-sm text-body", data: { key: "feed.refresh-status" } do %>
   <% if status.refreshing? %>
     <span data-key="feed.refreshing" data-polling-target="content" class="inline-flex items-center gap-2">
       <%= render SpinnerComponent.new %>
       <span class="sr-only">Refreshing feed</span>
-    </span>
-    <span hidden data-polling-target="timeoutMessage" data-key="feed.refresh-notice">
-      Couldn't check the refresh. Reload the page to check its progress.
     </span>
   <% end %>
 <% end %>

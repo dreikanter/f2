@@ -82,8 +82,13 @@ class FeedsController < ApplicationController
       # Other activity must not clear a refresh that is still queued.
       if @refresh_status.cursor != params[:refresh_after]
         streams << turbo_stream.replace(
-          helpers.dom_id(@feed, :refresh_status),
-          FeedRefreshStatusComponent.new(status: @refresh_status)
+          helpers.dom_id(@feed, :header),
+          partial: "feeds/header",
+          locals: {
+            feed: @feed,
+            refresh_status: @refresh_status,
+            refresh_failed: @refresh_status.event&.metadata&.dig("status") == "failed"
+          }
         )
       end
 

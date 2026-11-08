@@ -16,8 +16,9 @@ class Feeds::RefreshesController < ApplicationController
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: turbo_stream.replace(
-          helpers.dom_id(@feed, :refresh_status),
-          FeedRefreshStatusComponent.new(status: refresh_status)
+          helpers.dom_id(@feed, :header),
+          partial: "feeds/header",
+          locals: { feed: @feed, refresh_status: refresh_status }
         )
       end
       format.html { redirect_to feed_path(@feed, refresh_after: refresh_status.cursor) }
