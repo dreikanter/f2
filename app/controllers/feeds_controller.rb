@@ -64,12 +64,11 @@ class FeedsController < ApplicationController
   def show
     @feed = load_feed
     authorize @feed
-    pending_after = params[:refresh_after] unless polling?
-    # Read progress first so stopping polling cannot leave stale activity on the page.
-    @refresh_status = Feed::RefreshStatus.new(feed: @feed, pending_after: pending_after)
-    recent_events = recent_events(@feed)
 
     if polling?
+      # Read progress first so stopping polling cannot leave stale activity on the page.
+      @refresh_status = Feed::RefreshStatus.new(feed: @feed)
+      recent_events = recent_events(@feed)
       return head :ok unless live_content_changed?(recent_events)
 
       streams = [
@@ -90,7 +89,8 @@ class FeedsController < ApplicationController
 
       render turbo_stream: streams
     else
-      @live_content_locals = live_content_locals(recent_events)
+      @refresh_status = Feed::RefreshStatus.new(feed: @feed, pending_after: params[:refresh_after])
+      @live_content_locals = live_content_locals(recent_events(@feed))
     end
   end
 
