@@ -68,14 +68,14 @@ class FeedsController < ApplicationController
     if polling?
       # Read progress first so stopping polling cannot leave stale activity on the page.
       @refresh_status = Feed::RefreshStatus.new(feed: @feed)
-      recent_events = recent_events(@feed)
-      return head :ok unless live_content_changed?(recent_events)
+      feed_events = recent_events(@feed)
+      return head :ok unless live_content_changed?(feed_events)
 
       streams = [
         turbo_stream.replace(
           "feed-live-content",
           partial: "feeds/live_content",
-          locals: live_content_locals(recent_events)
+          locals: live_content_locals(feed_events)
         )
       ]
 
