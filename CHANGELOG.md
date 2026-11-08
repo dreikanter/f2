@@ -3,7 +3,7 @@
 ## 2026-11-08
 
 - Feed refresh spinners clear when finished, with results shown in Recent Activity.
-- Feed pages check progress only during refreshes and show a reload notice if progress cannot be checked.
+- Feed pages check progress only during refreshes, with a reload notice if a refresh takes too long.
 - The feed preview button now sits beside Save, after all configuration options.
 
 ## 2026-11-07

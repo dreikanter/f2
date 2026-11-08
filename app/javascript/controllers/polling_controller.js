@@ -34,13 +34,12 @@ export default class extends Controller {
     if (this._running) return
     this._running = true
     this._pollCount = 0
-    this._deadline = this.maxPollsValue > 0 ? Date.now() + this.maxPollsValue * this.intervalValue : null
     if (this.indicateBusyValue) this.element.setAttribute("aria-busy", "true")
     this._scheduleNext(this.initialDelayValue)
   }
 
   refresh() {
-    if (!this._running) this.startPolling()
+    if (!this._running) this._running = true
     clearTimeout(this._timerId)
     return this._tick({ force: true })
   }
@@ -62,18 +61,18 @@ export default class extends Controller {
   async _tick(options = {}) {
     if (!this._running) return
 
+    // Skip polling when offline to avoid failed requests
+    if (typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine) {
+      return this._scheduleNext(this.intervalValue)
+    }
+
     if (this.stopConditionSatisfied()) {
       return this.stopPolling()
     }
 
-    if (this.maxPollsValue > 0 && (this._pollCount >= this.maxPollsValue || Date.now() >= this._deadline)) {
+    if (this.maxPollsValue > 0 && this._pollCount >= this.maxPollsValue) {
       this._onTimeout()
       return this.stopPolling()
-    }
-
-    // Offline time still counts toward the polling timeout.
-    if (typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine) {
-      return this._scheduleNext(this.intervalValue)
     }
 
     this._pollCount += 1
@@ -104,17 +103,14 @@ export default class extends Controller {
     const response = await fetch(url.toString(), {
       headers: { Accept: "text/vnd.turbo-stream.html" },
       credentials: "same-origin",
-      signal: this._deadline
-        ? AbortSignal.any([this._abort.signal, AbortSignal.timeout(Math.max(1, this._deadline - Date.now()))])
-        : this._abort.signal
+      signal: this._abort.signal
     })
 
     return response
   }
 
   async _handlePollResponse(response) {
-    if (!response.ok || response.redirected) {
-      this._onTimeout()
+    if (!response.ok) {
       return this.stopPolling()
     }
 
@@ -132,9 +128,8 @@ export default class extends Controller {
 
   _handlePollError(err) {
     if (err.name === "AbortError") return
-    if (err.name !== "TimeoutError") this.application.handleError(err, "Polling error", { controller: this })
-    this._onTimeout()
-    this.stopPolling()
+    this.application.handleError(err, "Polling error", { controller: this })
+    this._scheduleNext(this.intervalValue)
   }
 
   stopConditionSatisfied() {
