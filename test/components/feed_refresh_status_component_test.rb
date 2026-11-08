@@ -11,6 +11,7 @@ class FeedRefreshStatusComponentTest < ViewComponent::TestCase
 
     assert_empty result.at_css('[data-key="feed.refresh-status"]').text.strip
     assert_empty result.css('[data-key="feed.refreshing"]')
+    assert_empty result.css('[data-controller="polling"]')
   end
 
   test "#render should show an accessible spinner while refreshing" do
@@ -20,6 +21,12 @@ class FeedRefreshStatusComponentTest < ViewComponent::TestCase
     assert_not_nil result.at_css('[data-key="feed.refresh-status"][role="status"]')
     assert_not_nil result.at_css('[data-key="feed.refreshing"] svg')
     assert_includes result.at_css('[data-key="feed.refreshing"]').text, "Refreshing feed"
+    polling = result.at_css('[data-key="feed.refresh-status"][data-controller="polling"]')
+    assert_equal "60", polling["data-polling-max-polls-value"]
+    assert_equal "5000", polling["data-polling-interval-value"]
+    assert_includes polling["data-polling-endpoint-value"], "refresh_after=none"
+    assert_not_nil result.at_css('[data-key="feed.refreshing"][data-polling-target="content"]')
+    assert_not_nil result.at_css('[data-key="feed.refresh-notice"][data-polling-target="timeoutMessage"][hidden]')
   end
 
   %w[completed failed interrupted].each do |outcome|
@@ -30,6 +37,7 @@ class FeedRefreshStatusComponentTest < ViewComponent::TestCase
 
       assert_empty result.at_css('[data-key="feed.refresh-status"]').text.strip
       assert_empty result.css('[data-key="feed.refreshing"]')
+      assert_empty result.css('[data-controller="polling"]')
     end
   end
 end

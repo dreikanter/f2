@@ -206,7 +206,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to feed_path(feed, refresh_after: "none")
     assert_match "Feed created and enabled.", flash[:success]
     follow_redirect!
-    assert_select '[data-feed-refresh-target="progress"][data-refresh-after="none"]'
+    assert_select '[data-key="feed.refresh-status"][data-controller="polling"][data-polling-endpoint-value*="refresh_after=none"]'
   end
 
   test "#create should enqueue a refresh when the feed is enabled" do
@@ -673,36 +673,34 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{edit_feed_path(feed)}']", text: "Edit"
   end
 
-  test "#show should prepare refresh polling without starting it on an idle feed" do
+  test "#show should not poll an idle feed" do
     sign_in_as(user)
     enabled = create(:feed, :enabled, user: user)
 
     get feed_url(enabled)
 
     assert_response :success
-    assert_select "[data-controller='feed-refresh']" do
+    assert_select "[data-key='feed.refresh-status']" do
       assert_select "[data-key='feed.refreshing']", count: 0
-      assert_select "[data-feed-refresh-target='notice'][hidden]"
     end
-    assert_select "[data-feed-refresh-endpoint-value=?]", feed_path(enabled, format: :turbo_stream)
-    assert_select "#feed-live-content[data-controller='polling']", count: 0
+    assert_select "[data-controller='polling']", count: 0
     assert_select "#feed-live-content[data-last-event-id]", count: 0
   end
 
-  test "#show should prepare refresh polling for scheduled feeds but not webhooks" do
+  test "#show should not poll idle draft, disabled, or webhook feeds" do
     sign_in_as(user)
     draft = create(:feed, :draft, user: user)
     disabled = create(:feed, :disabled, user: user)
     webhook = create(:feed, :webhook, :enabled, user: user)
 
     get feed_url(draft)
-    assert_select "[data-controller='feed-refresh']"
+    assert_select "[data-controller='polling']", count: 0
 
     get feed_url(disabled)
-    assert_select "[data-controller='feed-refresh']"
+    assert_select "[data-controller='polling']", count: 0
 
     get feed_url(webhook)
-    assert_select "[data-controller='feed-refresh']", count: 0
+    assert_select "[data-controller='polling']", count: 0
   end
 
   test "#show should pick up enablement without a page reload" do
@@ -710,7 +708,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     disabled = create(:feed, :disabled, user: user)
 
     get feed_url(disabled)
-    assert_select "[data-controller='feed-refresh']"
+    assert_select "[data-controller='polling']", count: 0
     assert_select "#feed-live-content[data-last-event-id]", count: 0
 
     assert_enqueued_with(job: FeedRefreshJob, args: [disabled.id]) do
@@ -718,7 +716,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
-    assert_select "[data-feed-refresh-target='progress'][data-refresh-after='none']"
+    assert_select "[data-key='feed.refresh-status'][data-controller='polling'][data-polling-endpoint-value*='refresh_after=none']"
     get feed_path(disabled, format: :turbo_stream)
 
     assert_response :success
@@ -785,6 +783,31 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "#show should include the outcome when a refresh finishes between progress and activity reads" do
+    sign_in_as(user)
+    enabled = create(:feed, :enabled, user: user)
+    started = create(:event, type: "feed_refresh", user: user, subject: enabled,
+                            metadata: { status: "started" })
+    build_status = Feed::RefreshStatus.method(:new)
+    completed = nil
+    finish_refresh = lambda do |**options|
+      started.destroy!
+      completed = create(:event, type: "feed_refresh", user: user, subject: enabled,
+                                 metadata: { status: "completed", stats: { new_posts: 2 } })
+      build_status.call(**options)
+    end
+
+    Feed::RefreshStatus.stub(:new, finish_refresh) do
+      get feed_path(enabled, format: :turbo_stream), params: { after_id: started.id, refresh_after: started.id }
+    end
+
+    assert_select "turbo-stream[target='feed-live-content'] [data-event-id=?]", completed.id
+    assert_select "turbo-stream[target='refresh_status_feed_#{enabled.id}']" do
+      assert_select '[data-key="feed.refresh-status"]', text: ""
+      assert_select '[data-controller="polling"]', count: 0
+    end
+  end
+
   test "#show should preserve queued refresh progress across unrelated events" do
     sign_in_as(user)
 
@@ -805,7 +828,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       assert_response :success
       assert_select "turbo-stream[target='feed-live-content']"
       assert_select "turbo-stream[target='refresh_status_feed_#{enabled.id}']", count: 0
-      assert_select "#feed-live-content[data-feed-refresh-target='activity']"
+      assert_select "#feed-live-content"
       assert_select "[data-controller='polling']", count: 0
 
       started = create(:event, type: "feed_refresh", user: user, subject: enabled,

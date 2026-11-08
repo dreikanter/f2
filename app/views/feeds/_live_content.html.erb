@@ -1,5 +1,5 @@
 <%# locals: (feed:, recent_events:, recent_posts:, llm_usage_totals:) %>
-<%= tag.div id: "feed-live-content", class: "space-y-10", data: { feed_refresh_target: "activity", last_event_id: recent_events.first&.id } do %>
+<%= tag.div id: "feed-live-content", class: "space-y-10", data: { last_event_id: recent_events.first&.id } do %>
   <% unless feed.draft? %>
     <section class="space-y-4">
       <%= h2 "Stats" %>

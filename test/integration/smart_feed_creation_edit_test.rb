@@ -125,7 +125,7 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to feed_path(disabled, refresh_after: "none")
     follow_redirect!
-    assert_select '[data-feed-refresh-target="progress"][data-refresh-after="none"]'
+    assert_select '[data-key="feed.refresh-status"][data-controller="polling"][data-polling-endpoint-value*="refresh_after=none"]'
     disabled.reload
     assert_equal new_url, disabled.url
     assert_equal "enabled", disabled.state

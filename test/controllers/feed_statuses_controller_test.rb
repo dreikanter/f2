@@ -19,7 +19,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to feed_path(feed, refresh_after: "none")
     follow_redirect!
     assert_includes response.body, "Feed enabled"
-    assert_select '[data-feed-refresh-target="progress"][data-refresh-after="none"]'
+    assert_select '[data-key="feed.refresh-status"][data-controller="polling"][data-polling-endpoint-value*="refresh_after=none"]'
 
     feed.reload
     assert_equal "enabled", feed.state
@@ -117,7 +117,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, ActionView::RecordIdentifier.dom_id(feed, :header)
     assert_includes response.body, ActionView::RecordIdentifier.dom_id(feed)
     assert_includes response.body, "Feed enabled"
-    assert_select '[data-feed-refresh-target="progress"][data-refresh-after="none"]'
+    assert_select '[data-key="feed.refresh-status"][data-controller="polling"][data-polling-endpoint-value*="refresh_after=none"]'
 
     feed.reload
     assert_equal "enabled", feed.state

@@ -1,15 +1,7 @@
 <% content_for :title, @feed.display_name %>
 
-<% refresh_data = if @feed.scheduled?
-                    {
-                      controller: "feed-refresh",
-                      feed_refresh_endpoint_value: feed_path(@feed, format: :turbo_stream)
-                    }
-                  end %>
-<%= tag.div class: "space-y-10", data: refresh_data do %>
+<div class="space-y-10">
   <%= render "header", feed: @feed, refresh_status: @refresh_status %>
-
-  <p hidden role="status" class="text-sm text-muted" data-feed-refresh-target="notice" data-key="feed.refresh-notice"></p>
 
   <% if @feed.webhook_endpoint %>
     <section class="space-y-4">
@@ -19,7 +11,7 @@
   <% end %>
 
   <%= render partial: "live_content", locals: @live_content_locals %>
-<% end %>
+</div>
 
 <% if @feed.target_group.present? %>
   <%= render ConfirmationModalComponent.new(
