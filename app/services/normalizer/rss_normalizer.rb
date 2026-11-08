@@ -1,8 +1,6 @@
 module Normalizer
   # RSS-specific normalizer for feed entries
   class RssNormalizer < Base
-    include CommentSplitting
-
     # Where an entry's text may live, best source first.
     CONTENT_FIELDS = %w[content summary description].freeze
     TRUNCATION_SUFFIX = " [...]".freeze
@@ -51,15 +49,21 @@ module Normalizer
 
     def normalize_content
       title = strip_html(raw_data["title"])
-      return title if content_in_comments?
+      return title unless article_presentation == "title_and_text"
 
       [title, body_text].compact_blank.uniq.join("\n\n")
     end
 
     def normalize_comments
-      return [] unless content_in_comments?
-
-      comments = split_comment(body_text.to_s)
+      comments = case article_presentation
+      when "text_in_comment"
+        [body_text].compact_blank
+      when "text_in_paragraph_comments"
+        body_text.to_s.split(/\n{2,}/).map(&:strip).compact_blank
+      else
+        []
+      end
+      comments.map! { |comment| Post.clamp_comment(comment) }
       limit = feed_entry.feed.params["max_comments"].presence
       return comments if limit.nil? || comments.size <= limit
 
@@ -72,8 +76,8 @@ module Normalizer
       CONTENT_FIELDS.lazy.filter_map { |field| feed_text(raw_data[field]).presence }.first
     end
 
-    def content_in_comments?
-      feed_entry.feed.params["content_in_comments"] == true
+    def article_presentation
+      feed_entry.feed.params["article_presentation"] || "title_and_text"
     end
 
     def feed_text(html)

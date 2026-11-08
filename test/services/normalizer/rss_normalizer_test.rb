@@ -273,11 +273,11 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
   end
 
   test "#normalize should preserve article paragraphs within comments when enabled" do
-    post = normalize_article(
+    post = normalize_article({
       "title" => "An <em>article</em>",
       "content" => '<p>First &amp; foremost.<br>A second line.</p><p>See <a href="https://example.com/more">details</a>.</p><p><img src="https://example.com/image.jpg"></p>',
       "summary" => "An excerpt."
-    )
+    })
 
     assert_equal "An article - https://example.com/article", post.content
     assert_equal ["First & foremost.\nA second line.\n\nSee details (https://example.com/more)."], post.comments
@@ -291,7 +291,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
       "content" => "<p>First paragraph.</p><p>Second paragraph.</p>",
       "link" => "https://example.com/article"
     })
-    entry.feed.params["content_in_comments"] = false
+    entry.feed.params["article_presentation"] = "title_and_text"
     entry.feed.params["max_comments"] = 1
 
     post = Normalizer::RssNormalizer.new(entry).normalize
@@ -301,29 +301,29 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
   end
 
   test "#normalize should fall back to summary paragraphs when content has no text" do
-    post = normalize_article(
+    post = normalize_article({
       "content" => "<p> </p>",
       "summary" => "<p>First paragraph.</p><p>Second paragraph.</p>"
-    )
+    })
 
     assert_equal ["First paragraph.\n\nSecond paragraph."], post.comments
   end
 
   test "#normalize should fall back to description paragraphs" do
-    post = normalize_article("description" => "<p>Description.</p>")
+    post = normalize_article({ "description" => "<p>Description.</p>" })
 
     assert_equal ["Description."], post.comments
   end
 
   test "#normalize should omit empty comments" do
-    post = normalize_article("content" => "<p> </p>")
+    post = normalize_article({ "content" => "<p> </p>" })
 
     assert_empty post.comments
     assert_equal "Article - https://example.com/article", post.content
   end
 
   test "#normalize should use the source URL as body when the title is missing" do
-    post = normalize_article("title" => nil, "content" => "<p>Article text.</p>")
+    post = normalize_article({ "title" => nil, "content" => "<p>Article text.</p>" })
 
     assert_equal "https://example.com/article", post.content
     assert_equal ["Article text."], post.comments
@@ -333,117 +333,59 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
   test "#normalize should retain a paragraph exactly at the comment limit" do
     paragraph = "Ж" * Post::MAX_COMMENT_LENGTH
 
-    post = normalize_article("content" => "<p>#{paragraph}</p>")
+    post = normalize_article({ "content" => "<p>#{paragraph}</p>" })
 
     assert_equal [paragraph], post.comments
   end
 
-  test "#normalize should split long paragraphs at sentence boundaries and retain quotes" do
-    first = "Sample says, “This is fake.” " * 70
-    second = "fake sample " * 120 + "ending."
+  test "#normalize should trim a single comment with an ellipsis" do
+    post = normalize_article({ "content" => "<p>#{'Ж' * 4000}</p><p>Last.</p>" })
 
-    post = normalize_article("content" => "<p>#{first}#{second}</p>")
-
-    assert_equal [first.strip, second], post.comments
+    assert_equal [("Ж" * (Post::MAX_COMMENT_LENGTH - 1)) + "…"], post.comments
   end
 
-  test "#normalize should split an oversized sentence at a word boundary" do
-    first = ("samples " * 375).strip
-    second = "the remaining words."
+  test "#normalize should post one comment per paragraph and trim oversized paragraphs" do
+    post = normalize_article(
+      { "content" => "<p>First.<br>Same paragraph.</p><p>#{'Ж' * 4000}</p><p>Last.</p>" },
+      presentation: "text_in_paragraph_comments"
+    )
 
-    post = normalize_article("content" => "<p>#{first} #{second}</p>")
-
-    assert_equal [first, second], post.comments
-  end
-
-  test "#normalize should split unbroken text without truncation or a comment count cap" do
-    chunk = "Ж" * Post::MAX_COMMENT_LENGTH
-
-    post = normalize_article("content" => "<p>#{chunk * 4}ending</p>")
-
-    assert_equal [chunk, chunk, chunk, chunk, "ending"], post.comments
-  end
-
-  test "#normalize should preserve paragraph breaks when all text fits one comment" do
-    post = normalize_article("content" => "<p>Repeat.</p><p>Repeat.</p><p>End.</p>")
-
-    assert_equal ["Repeat.\n\nRepeat.\n\nEnd."], post.comments
-  end
-
-  test "#normalize should pack paragraphs up to the comment size limit" do
-    first = "A" * 900
-    second = "B" * 1700
-    third = "C" * 1500
-
-    post = normalize_article("content" => "<p>#{first}</p><p>#{second}</p><p>#{third}</p>")
-
-    assert_equal ["#{first}\n\n#{second}", third], post.comments
-  end
-
-  test "#normalize should keep only the first size-limited comments up to the configured limit" do
-    chunk = "Ж" * Post::MAX_COMMENT_LENGTH
-
-    post = normalize_article({ "content" => "<p>#{chunk}</p>" * 3 }, 2)
-
-    suffix = " [...]"
-    expected_tail = ("Ж" * (Post::MAX_COMMENT_LENGTH - suffix.length - 1)) + "…#{suffix}"
-
-    assert_equal [chunk, expected_tail], post.comments
-    assert_equal Post::MAX_COMMENT_LENGTH, post.comments.last.length
-    assert_equal "Article - https://example.com/article", post.content
+    assert_equal ["First.\nSame paragraph.", ("Ж" * 2999) + "…", "Last."], post.comments
     assert_predicate post, :enqueued?
   end
 
-  test "#normalize should count an oversized paragraph toward the comment limit" do
-    chunk = "Ж" * Post::MAX_COMMENT_LENGTH
+  test "#normalize should mark omitted paragraphs at the comment count limit" do
+    post = normalize_article(
+      { "content" => "<p>First.</p><p>Second.</p><p>Last.</p>" },
+      2,
+      presentation: "text_in_paragraph_comments"
+    )
 
-    post = normalize_article({ "content" => "<p>#{chunk}Remainder.</p><p>Next paragraph.</p>" }, 1)
-
-    suffix = " [...]"
-    expected = ("Ж" * (Post::MAX_COMMENT_LENGTH - suffix.length - 1)) + "…#{suffix}"
-
-    assert_equal [expected], post.comments
-    assert_equal Post::MAX_COMMENT_LENGTH, post.comments.first.length
+    assert_equal ["First.", "Second. [...]"], post.comments
   end
 
-  test "#normalize should add a notice without trimming a short final comment" do
-    first = "A" * 2800
-    second = "B" * 2800
-    third = "C" * 2800
+  test "#normalize should show only the title and URL in title only mode" do
+    post = normalize_article({ "content" => "<p>Article text.</p>" }, presentation: "title_only")
 
-    post = normalize_article({ "content" => "<p>#{first}</p><p>#{second}</p><p>#{third}</p>" }, 2)
-
-    assert_equal [first, "#{second} [...]"], post.comments
+    assert_equal "Article - https://example.com/article", post.content
+    assert_empty post.comments
   end
 
-  test "#normalize should not mark the last comment when the content fits the limit" do
-    chunk = "Ж" * Post::MAX_COMMENT_LENGTH
+  test "#normalize should trim long titles and preserve the URL" do
+    post = normalize_article({ "title" => "Ж" * 4000 }, presentation: "title_only")
 
-    post = normalize_article({ "content" => "<p>#{chunk}</p>" * 2 }, 2)
-
-    assert_equal [chunk, chunk], post.comments
-  end
-
-  test "#normalize should handle an oversized stored comment limit" do
-    post = normalize_article({ "content" => "<p>First.</p><p>Second.</p>" }, 10**20)
-
-    assert_equal ["First.\n\nSecond."], post.comments
-  end
-
-  test "#normalize should retain packed paragraphs below the configured limit" do
-    post = normalize_article({ "content" => "<p>First.</p><p>Second.</p>" }, 3)
-
-    assert_equal ["First.\n\nSecond."], post.comments
+    assert_equal Post::MAX_CONTENT_LENGTH, post.content.length
+    assert post.content.end_with?("… - https://example.com/article")
   end
 
   private
 
-  def normalize_article(raw_data, max_comments = nil)
+  def normalize_article(raw_data, max_comments = nil, presentation: "text_in_comment")
     entry = build(:feed_entry, raw_data: {
       "title" => "Article",
       "link" => "https://example.com/article"
     }.merge(raw_data))
-    entry.feed.params["content_in_comments"] = true
+    entry.feed.params["article_presentation"] = presentation
     entry.feed.params["max_comments"] = max_comments if max_comments
 
     Normalizer::RssNormalizer.new(entry).normalize

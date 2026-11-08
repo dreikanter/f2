@@ -131,7 +131,11 @@ class Admin::FeedDetailsComponent < ViewComponent::Base
     value = stored.nil? ? option.default : stored
     return option.name == "max_comments" ? "No limit" : "Not set" if value.nil?
 
-    formatted = option.boolean? ? yes_no(value) : value.to_s
+    formatted = if option.choices?
+      option.choice_label(value)
+    else
+      option.boolean? ? yes_no(value) : value.to_s
+    end
     stored.nil? ? "#{formatted} (default)" : formatted
   end
 end

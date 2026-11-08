@@ -2,6 +2,7 @@
 
 ## 2026-11-07
 
+- Choose whether RSS articles appear as a title, text in the post, a single comment, or one comment per paragraph.
 - Queued feed refreshes keep their progress indicator when other activity updates.
 - Feed refreshes show a spinner beside the title and display the result when finished.
 - Repeated enable or pause requests no longer add duplicate feed activity entries.
