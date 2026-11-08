@@ -16,9 +16,10 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
       patch feed_status_path(feed), params: { status: "enabled" }
     end
 
-    assert_redirected_to feed
+    assert_redirected_to feed_path(feed, refresh_after: "none")
     follow_redirect!
     assert_includes response.body, "Feed enabled"
+    assert_select '[data-feed-refresh-target="progress"][data-refresh-after="none"]'
 
     feed.reload
     assert_equal "enabled", feed.state
@@ -32,7 +33,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
       patch feed_status_path(draft), params: { status: "enabled" }
     end
 
-    assert_redirected_to draft
+    assert_redirected_to feed_path(draft, refresh_after: "none")
     assert_equal "enabled", draft.reload.state
   end
 
@@ -116,6 +117,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, ActionView::RecordIdentifier.dom_id(feed, :header)
     assert_includes response.body, ActionView::RecordIdentifier.dom_id(feed)
     assert_includes response.body, "Feed enabled"
+    assert_select '[data-feed-refresh-target="progress"][data-refresh-after="none"]'
 
     feed.reload
     assert_equal "enabled", feed.state
@@ -177,7 +179,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
 
     patch feed_status_path(disabled_feed), params: { status: "enabled" }
 
-    assert_redirected_to disabled_feed
+    assert_redirected_to feed_path(disabled_feed, refresh_after: "none")
     follow_redirect!
     assert_includes response.body, "Feed enabled"
 
@@ -223,7 +225,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
 
     patch feed_status_path(ai_feed), params: { status: "enabled" }
 
-    assert_redirected_to ai_feed
+    assert_redirected_to feed_path(ai_feed, refresh_after: "none")
     assert ai_feed.reload.enabled?
     assert_equal 1, ai_feed.events.where(type: "feed_enabled").count
   end
@@ -302,7 +304,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     # The update should still work because we're using pessimistic locking
     patch feed_status_path(feed), params: { status: "enabled" }
 
-    assert_redirected_to feed
+    assert_redirected_to feed_path(feed, refresh_after: "none")
     follow_redirect!
     assert_includes response.body, "Feed enabled"
   end

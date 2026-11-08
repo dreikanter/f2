@@ -104,7 +104,8 @@ class Feeds::RefreshesControllerTest < ActionDispatch::IntegrationTest
                    metadata: { status: "completed", stats: { new_posts: 2 } })
     get location
     assert_select '[data-key="feed.refreshing"]', count: 0
-    assert_select '[data-key="feed.refresh-status"]', text: /2 new posts/
+    assert_select '[data-key="feed.refresh-status"]', text: ""
+    assert_select '#feed-live-content [data-key="events.posts_count"]', text: "2 new posts"
   end
 
   # rate_limit counts in Rails.cache, which is the no-op :null_store in tests.

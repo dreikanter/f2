@@ -1,18 +1,5 @@
-<%# locals: (feed:, recent_events:, recent_posts:, llm_usage_totals:, refresh_status:) %>
-<%# The polling host owns its cursor and reconnects after a new event replaces it. %>
-<%# Keep polling while disabled: the Turbo enable action updates only the header. %>
-<% polling_data = if feed.scheduled?
-                    {
-                      controller: "polling",
-                      polling_endpoint_value: feed_path(feed, format: :turbo_stream, refresh_after: refresh_status.cursor),
-                      polling_interval_value: 5_000,
-                      polling_initial_delay_value: 5_000,
-                      polling_max_polls_value: 0,
-                      polling_indicate_busy_value: false,
-                      last_event_id: recent_events.first&.id
-                    }
-                  end %>
-<%= tag.div id: "feed-live-content", class: "space-y-10", data: polling_data do %>
+<%# locals: (feed:, recent_events:, recent_posts:, llm_usage_totals:) %>
+<%= tag.div id: "feed-live-content", class: "space-y-10", data: { feed_refresh_target: "activity", last_event_id: recent_events.first&.id } do %>
   <% unless feed.draft? %>
     <section class="space-y-4">
       <%= h2 "Stats" %>

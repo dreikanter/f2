@@ -1,10 +1,8 @@
 <%= tag.div id: dom_id(status.feed, :refresh_status), role: "status", class: "text-sm text-body", data: { key: "feed.refresh-status" } do %>
   <% if status.refreshing? %>
-    <span data-key="feed.refreshing" class="inline-flex items-center gap-2">
+    <span data-key="feed.refreshing" data-feed-refresh-target="progress" data-refresh-after="<%= status.cursor %>" class="inline-flex items-center gap-2">
       <%= render SpinnerComponent.new %>
       <span class="sr-only">Refreshing feed</span>
     </span>
-  <% elsif status.event %>
-    <%= render FeedRefreshDescriptionComponent.new(event: status.event) %>
   <% end %>
 <% end %>

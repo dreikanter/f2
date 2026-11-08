@@ -189,8 +189,8 @@ class FeedsController < ApplicationController
     result = Feed::StateTransition.new(feed).enable
 
     if result.success?
-      FeedRefreshJob.perform_later(feed.id) if result.changed? && feed.scheduled?
-      redirect_to feed_path(feed), success: success_message_for(feed)
+      refresh_after = enqueue_initial_refresh(feed) if result.changed? && feed.scheduled?
+      redirect_to feed_path(feed, refresh_after: refresh_after), success: success_message_for(feed)
     else
       flash.now[:alert] = "Couldn't enable. See issues below."
       render :new, status: :unprocessable_entity
@@ -201,12 +201,18 @@ class FeedsController < ApplicationController
     result = Feed::StateTransition.new(feed).enable(reset_schedule: interval_changed)
 
     if result.success?
-      FeedRefreshJob.perform_later(feed.id) if result.changed? && feed.scheduled?
-      redirect_to feed_path(feed), success: update_message_for(feed)
+      refresh_after = enqueue_initial_refresh(feed) if result.changed? && feed.scheduled?
+      redirect_to feed_path(feed, refresh_after: refresh_after), success: update_message_for(feed)
     else
       flash.now[:alert] = "Couldn't enable. See issues below."
       render :edit, status: :unprocessable_entity
     end
+  end
+
+  def enqueue_initial_refresh(feed)
+    cursor = Feed::RefreshStatus.new(feed: feed).cursor
+    FeedRefreshJob.perform_later(feed.id)
+    cursor
   end
 
   # True when a live deterministic feed's submitted source URL differs from the
@@ -330,8 +336,7 @@ class FeedsController < ApplicationController
       feed: @feed,
       recent_events: recent_events,
       recent_posts: recent_posts,
-      llm_usage_totals: llm_usage_totals,
-      refresh_status: @refresh_status
+      llm_usage_totals: llm_usage_totals
     }
   end
 
