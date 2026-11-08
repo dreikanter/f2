@@ -9,6 +9,10 @@ class EventIconsTest < ActiveSupport::TestCase
     assert_nil EventIcons.icon_for("some_unmapped_type")
   end
 
+  test "#icon_for should return info for a disabled feed" do
+    assert_equal "info", EventIcons.icon_for("feed_disabled")
+  end
+
   test "#icon_for should ignore entries naming an unbundled icon" do
     EventIcons.stub(:table, { "custom_event" => "no-such-icon" }) do
       assert_nil EventIcons.icon_for("custom_event")

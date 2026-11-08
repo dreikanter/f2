@@ -1,6 +1,4 @@
 class FeedStatusesController < ApplicationController
-  include FeedStateEvents
-
   def update
     @feed = load_feed
 
@@ -18,13 +16,13 @@ class FeedStatusesController < ApplicationController
   private
 
   def enable(feed)
-    feed.with_lock do
-      if feed.can_be_enabled? && feed.enable
-        record_feed_enabled(feed)
-        respond_with_status(feed, success: "Feed enabled.")
-      else
-        respond_with_status(feed, alert: cannot_enable_alert(feed))
-      end
+    result = Feed::StateTransition.new(feed).enable
+
+    if result.success?
+      FeedRefreshJob.perform_later(feed.id) if result.changed? && feed.scheduled?
+      respond_with_status(feed, success: "Feed enabled.")
+    else
+      respond_with_status(feed, alert: cannot_enable_alert(feed))
     end
   end
 
@@ -39,13 +37,12 @@ class FeedStatusesController < ApplicationController
   end
 
   def disable(feed)
-    feed.with_lock do
-      if feed.disable
-        record_feed_disabled(feed)
-        respond_with_status(feed, success: "Feed disabled.")
-      else
-        respond_with_status(feed, alert: "Cannot disable feed: #{feed.errors.full_messages.join('; ')}.")
-      end
+    result = Feed::StateTransition.new(feed).disable
+
+    if result.success?
+      respond_with_status(feed, success: "Feed disabled.")
+    else
+      respond_with_status(feed, alert: "Cannot disable feed: #{feed.errors.full_messages.join('; ')}.")
     end
   end
 
@@ -55,6 +52,7 @@ class FeedStatusesController < ApplicationController
     respond_to do |format|
       format.html { redirect_to feed, success: success, alert: alert }
       format.turbo_stream do
+        @refresh_status = Feed::RefreshStatus.new(feed: feed)
         flash.now[:success] = success if success
         flash.now[:alert] = alert if alert
         render :update

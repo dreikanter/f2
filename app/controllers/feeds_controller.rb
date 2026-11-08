@@ -1,7 +1,6 @@
 class FeedsController < ApplicationController
   include Pagination
   include Sortable
-  include FeedStateEvents
   include StatePolling
   include FeedListing
 
@@ -65,9 +64,34 @@ class FeedsController < ApplicationController
   def show
     @feed = load_feed
     authorize @feed
-    @recent_posts = recent_posts(@feed)
-    @recent_events = recent_events(@feed)
-    @llm_usage_totals = LlmUsageReport.for_feed(@feed, period: LlmUsageReport::STATS_PERIOD.ago..Time.current).totals
+    recent_events = recent_events(@feed)
+
+    if polling?
+      return head :ok unless live_content_changed?(recent_events)
+
+      @refresh_status = Feed::RefreshStatus.new(feed: @feed)
+
+      streams = [
+        turbo_stream.replace(
+          "feed-live-content",
+          partial: "feeds/live_content",
+          locals: live_content_locals(recent_events)
+        )
+      ]
+
+      # Other activity must not clear a refresh that is still queued.
+      if @refresh_status.cursor != params[:refresh_after]
+        streams << turbo_stream.replace(
+          helpers.dom_id(@feed, :refresh_status),
+          FeedRefreshStatusComponent.new(status: @refresh_status)
+        )
+      end
+
+      render turbo_stream: streams
+    else
+      @refresh_status = Feed::RefreshStatus.new(feed: @feed, pending_after: params[:refresh_after])
+      @live_content_locals = live_content_locals(recent_events)
+    end
   end
 
   def edit
@@ -92,26 +116,14 @@ class FeedsController < ApplicationController
     source_change = deterministic_source_change?
     return propose_source_redetection if source_change && !source_change_confirmed?
 
-    @feed.assign_attributes(update_feed_params)
-    # Overwrite the raw submitted URL with the canonical, verified source and its
-    # detected profile (the confirm path).
-    apply_confirmed_source if source_change
-    @feed.assign_attributes(FeedProfile.defaults_for(@feed.feed_profile_key))
-
-    # Unticked Enable on an enabled feed = pause request (gate flow skips this
-    # because the gate only appears for drafts without usable credentials).
-    gate_path = setup_gate_path(@feed)
-    @feed.state = :disabled if @feed.enabled? && !enable_feed? && gate_path.nil?
-
-    if @feed.save
+    if save_feed_changes(source_change)
       sync_webhook_endpoint(@feed)
       # Capture interval-change signal from the first save before the
       # promotion attempt's save overwrites `saved_changes`.
       interval_changed = @feed.saved_change_to_cron_expression? || @feed.saved_change_to_refresh_interval?
-      record_feed_disabled(@feed) if @feed.saved_change_to_state? && @feed.disabled?
       cleanup_feed_identification(@feed.source_input)
 
-      if gate_path
+      if (gate_path = setup_gate_path(@feed))
         redirect_to gate_path
       elsif enable_feed? && !@feed.enabled?
         promote_and_redirect(@feed, interval_changed)
@@ -158,9 +170,26 @@ class FeedsController < ApplicationController
     end
   end
 
+  def save_feed_changes(source_change)
+    @feed.with_lock do
+      @feed.assign_attributes(update_feed_params)
+      # Overwrite the raw submitted URL with the verified source and profile.
+      apply_confirmed_source if source_change
+      @feed.assign_attributes(FeedProfile.defaults_for(@feed.feed_profile_key))
+
+      # The setup gate only appears for drafts without usable credentials.
+      @feed.state = :disabled if @feed.enabled? && !enable_feed? && setup_gate_path(@feed).nil?
+      saved = @feed.save
+      @feed.record_state_change! if saved
+      saved
+    end
+  end
+
   def enable_and_respond(feed)
-    if feed.enable
-      record_feed_enabled(feed)
+    result = Feed::StateTransition.new(feed).enable
+
+    if result.success?
+      FeedRefreshJob.perform_later(feed.id) if result.changed? && feed.scheduled?
       redirect_to feed_path(feed), success: success_message_for(feed)
     else
       flash.now[:alert] = "Couldn't enable. See issues below."
@@ -169,14 +198,10 @@ class FeedsController < ApplicationController
   end
 
   def promote_and_redirect(feed, interval_changed)
-    feed.transaction do
-      if feed.enable
-        record_feed_enabled(feed)
-        feed.reset_schedule! if interval_changed
-      end
-    end
+    result = Feed::StateTransition.new(feed).enable(reset_schedule: interval_changed)
 
-    if feed.enabled?
+    if result.success?
+      FeedRefreshJob.perform_later(feed.id) if result.changed? && feed.scheduled?
       redirect_to feed_path(feed), success: update_message_for(feed)
     else
       flash.now[:alert] = "Couldn't enable. See issues below."
@@ -288,8 +313,30 @@ class FeedsController < ApplicationController
     feeds_path(sort_params)
   end
 
+  def polling?
+    request.format.turbo_stream?
+  end
+
+  # A feed refresh replaces its started event with a new completion event.
+  def live_content_changed?(recent_events)
+    params[:after_id].to_s != recent_events.first&.id.to_s
+  end
+
+  def live_content_locals(recent_events)
+    recent_posts = recent_posts(@feed)
+    llm_usage_totals = LlmUsageReport.for_feed(@feed, period: LlmUsageReport::STATS_PERIOD.ago..Time.current).totals
+
+    {
+      feed: @feed,
+      recent_events: recent_events,
+      recent_posts: recent_posts,
+      llm_usage_totals: llm_usage_totals,
+      refresh_status: @refresh_status
+    }
+  end
+
   def recent_events(feed)
-    feed.events.user_relevant.recent.limit(MAX_RECENT_EVENTS)
+    feed.events.user_relevant.recent.limit(MAX_RECENT_EVENTS).to_a
   end
 
   def pagination_scope

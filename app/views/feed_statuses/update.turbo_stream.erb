@@ -2,7 +2,7 @@
     index). Targets absent from the current page are ignored by Turbo, so this
     one template serves both pages. %>
 <%= turbo_stream.replace dom_id(@feed, :header) do %>
-  <%= render "feeds/header", feed: @feed %>
+  <%= render "feeds/header", feed: @feed, refresh_status: @refresh_status %>
 <% end %>
 
 <%= turbo_stream.replace dom_id(@feed) do %>
