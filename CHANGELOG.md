@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-08
+
+- The feed preview button now sits beside Save, after all configuration options.
+
 ## 2026-11-07
 
 - Choose whether RSS articles appear as a title, text in the post, a single comment, or one comment per paragraph.
