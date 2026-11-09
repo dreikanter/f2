@@ -22,6 +22,7 @@
     modal_id: "purge-modal-#{@feed.id}"
   ) do %>
     <%= render AlertComponent.new(variant: :warning) do %>
+      <p>This disables the feed when the purge starts. You can enable it again after the purge finishes.</p>
       <p>This removes only the posts this feed published to <strong><%= @feed.target_group %></strong> on FreeFeed.</p>
       <p>Other posts in the group, including anything added by other people, aren't affected.</p>
       <p>Feeder keeps its own record of the removed posts, so they'll still show up here and won't be posted again the next time this feed refreshes.</p>

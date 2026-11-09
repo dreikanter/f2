@@ -69,7 +69,9 @@ class FeedsController < ApplicationController
       # Read progress first so stopping polling cannot leave stale activity on the page.
       @refresh_status = Feed::RefreshStatus.new(feed: @feed)
       feed_events = recent_events(@feed)
-      return head :ok unless live_content_changed?(feed_events)
+      purging = @feed.purging?
+      purge_changed = purging != (params[:purging] == "1")
+      return head :ok unless live_content_changed?(feed_events) || purge_changed
 
       streams = [
         turbo_stream.replace(
@@ -80,7 +82,7 @@ class FeedsController < ApplicationController
       ]
 
       # Other activity must not clear a refresh that is still queued.
-      if @refresh_status.cursor != params[:refresh_after]
+      if @refresh_status.cursor != params[:refresh_after] || purging || purge_changed
         streams << turbo_stream.replace(
           helpers.dom_id(@feed, :header),
           partial: "feeds/header",

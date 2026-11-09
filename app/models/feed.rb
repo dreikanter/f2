@@ -249,6 +249,10 @@ class Feed < ApplicationRecord
     transition_state(:disabled)
   end
 
+  def purging?
+    WithdrawAllPostsJob.in_progress_for?(id)
+  end
+
   # Interactive callers record events explicitly; background changes have their own events.
   def record_state_change!
     return unless saved_change_to_state?

@@ -25,6 +25,20 @@ class WithdrawAllPostsJobTest < ActiveJob::TestCase
     assert_equal user, called_with_user
   end
 
+  test "#perform should disable an enabled feed before withdrawing posts" do
+    feed.update!(state: :enabled)
+    fake = Object.new
+    current_feed = feed
+    fake.define_singleton_method(:call) { raise "feed still enabled" unless current_feed.reload.disabled? }
+
+    WithdrawAllPosts.stub(:new, ->(*) { fake }) do
+      WithdrawAllPostsJob.perform_now(feed.id, user.id)
+    end
+
+    assert feed.reload.disabled?
+    assert_equal 1, feed.events.where(type: "feed_disabled").count
+  end
+
   test ".perform_now should exit gracefully if feed not found" do
     assert_nothing_raised do
       WithdrawAllPostsJob.perform_now(999999, user.id)

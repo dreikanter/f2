@@ -2,6 +2,7 @@
 
 ## 2026-11-09
 
+- Purging a feed disables it, shows progress on its page, and prevents another purge until it finishes.
 - Feed refresh feedback keeps the title, controls, and page spacing stable.
 - Feed refresh failures appear in a page alert that clears on reload or a new refresh.
 
