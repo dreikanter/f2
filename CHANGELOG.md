@@ -2,6 +2,7 @@
 
 ## 2026-11-09
 
+- Feed refresh feedback keeps the title, controls, and page spacing stable.
 - Feed refresh failures appear in a page alert that clears on reload or a new refresh.
 
 ## 2026-11-08
