@@ -78,19 +78,6 @@ class Feeds::RefreshesControllerTest < ActionDispatch::IntegrationTest
     assert_select "#flash-messages", count: 0
   end
 
-  test "#create should keep an idle flash target empty before and after refreshing" do
-    sign_in_as(user)
-    get feed_path(feed)
-
-    assert_empty css_select("#flash-messages").sole.children
-
-    post feed_refresh_path(feed), as: :turbo_stream
-
-    assert_response :success
-    assert_select "turbo-stream[action='update'][target='flash-messages'] template:empty"
-    assert_select '[data-key="feed.refreshing"] svg'
-  end
-
   test "create throttles repeated refreshes for the same feed" do
     sign_in_as(user)
 

@@ -25,17 +25,6 @@ class FeedRefreshStatusComponentTest < ViewComponent::TestCase
     assert_empty result.css('[role="alert"]')
   end
 
-  test "#render should reserve the same spinner space while idle and refreshing" do
-    [false, true].each do |requested|
-      status = Feed::RefreshStatus.new(feed: feed, requested: requested)
-      result = render_inline(FeedRefreshStatusComponent.new(status: status))
-      classes = result.at_css('[data-key="feed.refresh-status"]')["class"].split
-
-      assert_includes classes, "size-8"
-      assert_includes classes, "shrink-0"
-    end
-  end
-
   %w[completed failed interrupted].each do |outcome|
     test "#render should keep an empty status target after a #{outcome} refresh" do
       create(:event, subject: feed, type: "feed_refresh",

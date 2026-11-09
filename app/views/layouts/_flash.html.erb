@@ -1,5 +1,5 @@
 <%# locals: () %>
-<% messages = capture do %>
+<div class="space-y-3 has-[*]:mb-6" id="flash-messages">
   <% if success %>
     <%= render AlertComponent.new(variant: :success, data: { key: "flash.success" }) do %>
       <span><%= sanitize(success) %></span>
@@ -17,6 +17,4 @@
       <span><%= sanitize(alert) %></span>
     <% end %>
   <% end %>
-<% end %>
-<%# Whitespace would keep the empty target's margin until a Turbo update clears it. %>
-<%= tag.div (messages if success || notice || alert), class: "space-y-3 mb-6 empty:hidden", id: "flash-messages" %>
+</div>
