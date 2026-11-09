@@ -22,7 +22,7 @@ class FeedRefreshStatusComponentTest < ViewComponent::TestCase
     assert_not_nil result.at_css('[data-key="feed.refreshing"] svg')
     assert_includes result.at_css('[data-key="feed.refreshing"]').text, "Refreshing feed"
     assert_not_nil result.at_css('[data-key="feed.refreshing"][data-polling-target="content"]')
-    assert_empty result.css('[data-key="feed.refresh-notice"]')
+    assert_empty result.css('[role="alert"]')
   end
 
   %w[completed failed interrupted].each do |outcome|

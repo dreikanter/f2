@@ -74,6 +74,7 @@ class Feeds::RefreshesControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-stream[action='replace'][target='header_feed_#{feed.id}']" do
       assert_select '[data-key="feed.refreshing"] svg'
     end
+    assert_select "turbo-stream[action='update'][target='flash-messages']", text: ""
     assert_select "#flash-messages", count: 0
   end
 

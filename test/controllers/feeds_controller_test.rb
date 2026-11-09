@@ -738,8 +738,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1 + [data-key='feed.refresh-status'] [data-key='feed.refreshing']", text: /Refreshing feed/
     assert_select "#feed-live-content [data-key='feed.refreshing']", count: 0
     assert_select '[data-key="feed.header"][data-controller="polling"][data-polling-max-polls-value="60"][data-polling-interval-value="5000"]'
-    assert_select '[data-polling-target="timeoutMessage"][hidden] [data-key="feed.refresh-notice"][role="alert"]'
-    assert_select '[data-key="feed.refresh-status"] [data-key="feed.refresh-notice"]', count: 0
+    assert_select '[data-key="feed.header"] [data-polling-target="timeoutMessage"]', count: 0
+    assert_select '[data-key="feed.header"] [role="alert"]', count: 0
   end
 
   test "#show should stream updated events and posts after refresh completes" do
@@ -777,9 +777,10 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       assert_select "turbo-stream[target='header_feed_#{enabled.id}']" do
         assert_select '[data-key="feed.refreshing"]', count: 0
         assert_select '[data-key="feed.refresh-status"]', text: ""
-        assert_select '[data-key="feed.refresh-notice"][role="alert"]', count: status == "failed" ? 1 : 0
-        assert_select '[data-polling-target="timeoutMessage"][hidden]', count: 0
+        assert_select '[role="alert"]', count: 0
       end
+      assert_select "turbo-stream[target='flash-messages'] [data-key='flash.alert'][role='alert']",
+                    count: status == "failed" ? 1 : 0
       assert_select "turbo-stream[target='feed-live-content'] [data-event-id=?]", event.id do
         assert_select '[data-key="events.posts_count"]', text: "2 new posts"
         assert_select '[data-key="events.description"]', text: status == "failed" ? /couldn.t refresh/ : /refreshed/
@@ -794,17 +795,19 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     create(:event, type: "feed_refresh", user: user, subject: enabled, metadata: { status: "failed" })
 
     get feed_path(enabled, format: :turbo_stream)
-    assert_select '[data-key="feed.refresh-notice"][role="alert"]', text: /Couldn't refresh the feed/
+    assert_select "turbo-stream[target='flash-messages'] [data-key='flash.alert'][role='alert']", text: /Couldn't refresh the feed/
     assert_select '[data-key="feed.refreshing"]', count: 0
+
+    get feed_url(enabled)
+    assert_select '[data-key="flash.alert"]', count: 0
+
+    get feed_path(enabled, format: :turbo_stream)
+    assert_select '[data-key="flash.alert"]', text: /Couldn't refresh the feed/
 
     post feed_refresh_path(enabled), as: :turbo_stream
     assert_select '[data-key="feed.refreshing"] svg'
-    assert_select '[data-polling-target="timeoutMessage"][hidden] [data-key="feed.refresh-notice"][role="alert"]',
-                  text: /Couldn't check the refresh/
-    assert_select '[data-key="feed.refresh-notice"]', text: /Couldn't refresh the feed/, count: 0
-
-    get feed_url(enabled)
-    assert_select '[data-key="feed.refresh-notice"]', count: 0
+    assert_select "turbo-stream[action='update'][target='flash-messages']", text: ""
+    assert_select '[data-key="flash.alert"]', count: 0
   end
 
   test "#show should include the outcome when a refresh finishes between progress and activity reads" do

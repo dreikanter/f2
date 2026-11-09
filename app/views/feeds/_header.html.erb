@@ -1,4 +1,4 @@
-<%# locals: (feed:, refresh_status:, refresh_failed: false) %>
+<%# locals: (feed:, refresh_status:) %>
 <% action_button = class_names(secondary_button_classes(compact: true), "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50") %>
 <% polling_data = if refresh_status.refreshing?
                     {
@@ -55,18 +55,6 @@
     <% end %>
     <% header.with_action_button do %>
       <%= render HeaderMenuComponent.new(menu_id: "feed-header-menu-#{feed.id}", items: feed_actions_menu_items(feed), width: "w-44") %>
-    <% end %>
-  <% end %>
-
-  <% if refresh_status.refreshing? || refresh_failed %>
-    <%= tag.div hidden: !refresh_failed, data: { polling_target: "timeoutMessage" } do %>
-      <%= render AlertComponent.new(variant: :error, data: { key: "feed.refresh-notice" }) do %>
-        <% if refresh_failed %>
-          Couldn't refresh the feed. See Recent Activity for details.
-        <% else %>
-          Couldn't check the refresh. Reload the page to check its progress.
-        <% end %>
-      <% end %>
     <% end %>
   <% end %>
 

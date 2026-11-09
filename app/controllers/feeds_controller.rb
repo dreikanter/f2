@@ -86,10 +86,14 @@ class FeedsController < ApplicationController
           partial: "feeds/header",
           locals: {
             feed: @feed,
-            refresh_status: @refresh_status,
-            refresh_failed: @refresh_status.event&.metadata&.dig("status") == "failed"
+            refresh_status: @refresh_status
           }
         )
+
+        if @refresh_status.event&.metadata&.dig("status") == "failed"
+          flash.now[:alert] = "Couldn't refresh the feed. See Recent Activity for details."
+          streams << turbo_stream.replace("flash-messages", partial: "layouts/flash")
+        end
       end
 
       render turbo_stream: streams
