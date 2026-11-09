@@ -1,14 +1,15 @@
 <%# locals: (feed:, refresh_status:) %>
 <% action_button = class_names(secondary_button_classes(compact: true), "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50") %>
-<% polling_data = if refresh_status.refreshing?
+<% purging = feed.purging? %>
+<% polling_data = if refresh_status.refreshing? || purging
                     {
                       controller: "polling",
-                      polling_endpoint_value: feed_path(feed, format: :turbo_stream, refresh_after: refresh_status.cursor),
+                      polling_endpoint_value: feed_path(feed, format: :turbo_stream, refresh_after: refresh_status.cursor, purging: ("1" if purging)),
                       polling_interval_value: 5_000,
                       polling_initial_delay_value: 5_000,
-                      polling_max_polls_value: 60,
+                      polling_max_polls_value: purging ? 0 : 60,
                       polling_indicate_busy_value: false,
-                      last_event_id: refresh_status.event&.id
+                      last_event_id: purging ? feed.events.user_relevant.recent.pick(:id) : refresh_status.event&.id
                     }
                   else
                     {}
@@ -55,6 +56,12 @@
     <% end %>
     <% header.with_action_button do %>
       <%= render HeaderMenuComponent.new(menu_id: "feed-header-menu-#{feed.id}", items: feed_actions_menu_items(feed), width: "w-44") %>
+    <% end %>
+  <% end %>
+
+  <% if purging %>
+    <%= render AlertComponent.new(variant: :info, data: { key: "feed.purging" }) do %>
+      <p>Feed purge is in progress. The feed has been disabled.</p>
     <% end %>
   <% end %>
 

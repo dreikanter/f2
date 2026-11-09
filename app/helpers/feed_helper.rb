@@ -67,7 +67,7 @@ module FeedHelper
     items << { label: "Refresh", href: feed_refresh_path(feed), method: :post, data: { key: "feed.#{feed.id}.refresh" } } if policy(feed).refresh?
     items << { label: "Edit", href: edit_feed_path(feed), data: { key: "feed.#{feed.id}.edit" } }
 
-    if feed.target_group.present?
+    if feed.target_group.present? && !feed.purging?
       items << { separator: true }
       items << { label: "Purge feed…", href: "#",
                  data: { key: "feed.#{feed.id}.purge", controller: "modal-trigger",
