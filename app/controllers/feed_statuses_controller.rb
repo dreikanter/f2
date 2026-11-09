@@ -19,8 +19,10 @@ class FeedStatusesController < ApplicationController
     result = Feed::StateTransition.new(feed).enable
 
     if result.success?
-      FeedRefreshJob.perform_later(feed.id) if result.changed? && feed.scheduled?
-      respond_with_status(feed, success: "Feed enabled.")
+      refresh_requested = result.changed? && feed.scheduled?
+      @refresh_status = Feed::RefreshStatus.new(feed: feed, requested: refresh_requested)
+      FeedRefreshJob.perform_later(feed.id) if refresh_requested
+      respond_with_status(feed, success: "Feed enabled.", refresh_requested: refresh_requested)
     else
       respond_with_status(feed, alert: cannot_enable_alert(feed))
     end
@@ -48,11 +50,15 @@ class FeedStatusesController < ApplicationController
 
   # HTML clients redirect to the feed page; Turbo clients get a stream that
   # re-renders the feed heading (feed page) or the feed card (feeds index).
-  def respond_with_status(feed, success: nil, alert: nil)
+  def respond_with_status(feed, success: nil, alert: nil, refresh_requested: false)
+    @refresh_status ||= Feed::RefreshStatus.new(feed: feed)
+
     respond_to do |format|
-      format.html { redirect_to feed, success: success, alert: alert }
+      format.html do
+        redirect_to feed_path(feed, refresh_after: (@refresh_status.cursor if refresh_requested)),
+                    success: success, alert: alert
+      end
       format.turbo_stream do
-        @refresh_status = Feed::RefreshStatus.new(feed: feed)
         flash.now[:success] = success if success
         flash.now[:alert] = alert if alert
         render :update

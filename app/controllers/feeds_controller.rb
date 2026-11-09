@@ -64,33 +64,42 @@ class FeedsController < ApplicationController
   def show
     @feed = load_feed
     authorize @feed
-    recent_events = recent_events(@feed)
 
     if polling?
-      return head :ok unless live_content_changed?(recent_events)
-
+      # Read progress first so stopping polling cannot leave stale activity on the page.
       @refresh_status = Feed::RefreshStatus.new(feed: @feed)
+      feed_events = recent_events(@feed)
+      return head :ok unless live_content_changed?(feed_events)
 
       streams = [
         turbo_stream.replace(
           "feed-live-content",
           partial: "feeds/live_content",
-          locals: live_content_locals(recent_events)
+          locals: live_content_locals(feed_events)
         )
       ]
 
       # Other activity must not clear a refresh that is still queued.
       if @refresh_status.cursor != params[:refresh_after]
         streams << turbo_stream.replace(
-          helpers.dom_id(@feed, :refresh_status),
-          FeedRefreshStatusComponent.new(status: @refresh_status)
+          helpers.dom_id(@feed, :header),
+          partial: "feeds/header",
+          locals: {
+            feed: @feed,
+            refresh_status: @refresh_status
+          }
         )
+
+        if @refresh_status.event&.metadata&.dig("status") == "failed"
+          flash.now[:alert] = "Couldn't refresh the feed. See Recent Activity for details."
+          streams << turbo_stream.replace("flash-messages", partial: "layouts/flash")
+        end
       end
 
       render turbo_stream: streams
     else
       @refresh_status = Feed::RefreshStatus.new(feed: @feed, pending_after: params[:refresh_after])
-      @live_content_locals = live_content_locals(recent_events)
+      @live_content_locals = live_content_locals(recent_events(@feed))
     end
   end
 
@@ -189,8 +198,8 @@ class FeedsController < ApplicationController
     result = Feed::StateTransition.new(feed).enable
 
     if result.success?
-      FeedRefreshJob.perform_later(feed.id) if result.changed? && feed.scheduled?
-      redirect_to feed_path(feed), success: success_message_for(feed)
+      refresh_after = enqueue_initial_refresh(feed) if result.changed? && feed.scheduled?
+      redirect_to feed_path(feed, refresh_after: refresh_after), success: success_message_for(feed)
     else
       flash.now[:alert] = "Couldn't enable. See issues below."
       render :new, status: :unprocessable_entity
@@ -201,12 +210,18 @@ class FeedsController < ApplicationController
     result = Feed::StateTransition.new(feed).enable(reset_schedule: interval_changed)
 
     if result.success?
-      FeedRefreshJob.perform_later(feed.id) if result.changed? && feed.scheduled?
-      redirect_to feed_path(feed), success: update_message_for(feed)
+      refresh_after = enqueue_initial_refresh(feed) if result.changed? && feed.scheduled?
+      redirect_to feed_path(feed, refresh_after: refresh_after), success: update_message_for(feed)
     else
       flash.now[:alert] = "Couldn't enable. See issues below."
       render :edit, status: :unprocessable_entity
     end
+  end
+
+  def enqueue_initial_refresh(feed)
+    cursor = Feed::RefreshStatus.new(feed: feed).cursor
+    FeedRefreshJob.perform_later(feed.id)
+    cursor
   end
 
   # True when a live deterministic feed's submitted source URL differs from the
@@ -330,8 +345,7 @@ class FeedsController < ApplicationController
       feed: @feed,
       recent_events: recent_events,
       recent_posts: recent_posts,
-      llm_usage_totals: llm_usage_totals,
-      refresh_status: @refresh_status
+      llm_usage_totals: llm_usage_totals
     }
   end
 

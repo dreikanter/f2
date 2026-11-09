@@ -123,7 +123,9 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
 
     patch feed_url(disabled), params: { feed: { params: { url: new_url }, feed_profile_key: "rss" }, enable_feed: "1" }
 
-    assert_redirected_to feed_path(disabled)
+    assert_redirected_to feed_path(disabled, refresh_after: "none")
+    follow_redirect!
+    assert_select '[data-key="feed.header"][data-controller="polling"][data-polling-endpoint-value*="refresh_after=none"]'
     disabled.reload
     assert_equal new_url, disabled.url
     assert_equal "enabled", disabled.state

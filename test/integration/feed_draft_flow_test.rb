@@ -76,7 +76,7 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
       enable_feed: "1"
     }
 
-    assert_redirected_to draft
+    assert_redirected_to feed_path(draft, refresh_after: "none")
     assert_predicate draft.reload, :enabled?
     assert_equal "Renamed AI draft", draft.name
     assert_equal "follow a different blog", draft.source_input

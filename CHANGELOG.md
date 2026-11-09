@@ -1,7 +1,13 @@
 # Changelog
 
+## 2026-11-09
+
+- Feed refresh failures appear in a page alert that clears on reload or a new refresh.
+
 ## 2026-11-08
 
+- Feed refresh spinners clear when finished, with results shown in Recent Activity.
+- Feed pages check progress only during refreshes.
 - The feed preview button now sits beside Save, after all configuration options.
 
 ## 2026-11-07

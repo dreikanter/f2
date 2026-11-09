@@ -71,9 +71,10 @@ class Feeds::RefreshesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html", response.media_type
-    assert_select "turbo-stream[action='replace'][target='refresh_status_feed_#{feed.id}']" do
+    assert_select "turbo-stream[action='replace'][target='header_feed_#{feed.id}']" do
       assert_select '[data-key="feed.refreshing"] svg'
     end
+    assert_select "turbo-stream[action='update'][target='flash-messages']", text: ""
     assert_select "#flash-messages", count: 0
   end
 
@@ -104,7 +105,8 @@ class Feeds::RefreshesControllerTest < ActionDispatch::IntegrationTest
                    metadata: { status: "completed", stats: { new_posts: 2 } })
     get location
     assert_select '[data-key="feed.refreshing"]', count: 0
-    assert_select '[data-key="feed.refresh-status"]', text: /2 new posts/
+    assert_select '[data-key="feed.refresh-status"]', text: ""
+    assert_select '#feed-live-content [data-key="events.posts_count"]', text: "2 new posts"
   end
 
   # rate_limit counts in Rails.cache, which is the no-op :null_store in tests.

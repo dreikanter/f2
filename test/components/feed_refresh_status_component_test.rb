@@ -11,6 +11,7 @@ class FeedRefreshStatusComponentTest < ViewComponent::TestCase
 
     assert_empty result.at_css('[data-key="feed.refresh-status"]').text.strip
     assert_empty result.css('[data-key="feed.refreshing"]')
+    assert_empty result.css('[data-controller="polling"]')
   end
 
   test "#render should show an accessible spinner while refreshing" do
@@ -20,14 +21,19 @@ class FeedRefreshStatusComponentTest < ViewComponent::TestCase
     assert_not_nil result.at_css('[data-key="feed.refresh-status"][role="status"]')
     assert_not_nil result.at_css('[data-key="feed.refreshing"] svg')
     assert_includes result.at_css('[data-key="feed.refreshing"]').text, "Refreshing feed"
+    assert_not_nil result.at_css('[data-key="feed.refreshing"][data-polling-target="content"]')
+    assert_empty result.css('[role="alert"]')
   end
 
-  test "#render should show the result after refreshing" do
-    create(:event, subject: feed, type: "feed_refresh",
-                   metadata: { status: "completed", stats: { new_posts: 2 } })
-    result = render_inline(FeedRefreshStatusComponent.new(status: Feed::RefreshStatus.new(feed: feed)))
+  %w[completed failed interrupted].each do |outcome|
+    test "#render should keep an empty status target after a #{outcome} refresh" do
+      create(:event, subject: feed, type: "feed_refresh",
+                     metadata: { status: outcome, stats: { new_posts: 2 } })
+      result = render_inline(FeedRefreshStatusComponent.new(status: Feed::RefreshStatus.new(feed: feed)))
 
-    assert_includes result.at_css('[data-key="feed.refresh-status"]').text, "2 new posts"
-    assert_empty result.css('[data-key="feed.refreshing"]')
+      assert_empty result.at_css('[data-key="feed.refresh-status"]').text.strip
+      assert_empty result.css('[data-key="feed.refreshing"]')
+      assert_empty result.css('[data-controller="polling"]')
+    end
   end
 end
