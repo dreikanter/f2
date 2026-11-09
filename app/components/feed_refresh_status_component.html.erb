@@ -1,4 +1,4 @@
-<%= tag.div id: dom_id(status.feed, :refresh_status), role: "status", class: "text-sm text-body", data: { key: "feed.refresh-status" } do %>
+<%= tag.div id: dom_id(status.feed, :refresh_status), role: "status", class: "flex size-8 shrink-0 items-center text-sm text-body", data: { key: "feed.refresh-status" } do %>
   <% if status.refreshing? %>
     <span data-key="feed.refreshing" data-polling-target="content" class="inline-flex items-center gap-2">
       <%= render SpinnerComponent.new %>

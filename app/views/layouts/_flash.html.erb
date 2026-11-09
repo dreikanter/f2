@@ -1,5 +1,5 @@
 <%# locals: () %>
-<div class="space-y-3 mb-6 empty:hidden" id="flash-messages">
+<div class="space-y-3 has-[*]:mb-6" id="flash-messages">
   <% if success %>
     <%= render AlertComponent.new(variant: :success, data: { key: "flash.success" }) do %>
       <span><%= sanitize(success) %></span>
