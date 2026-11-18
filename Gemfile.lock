@@ -238,6 +238,7 @@ GEM
       activesupport (>= 6.1)
     hana (1.3.7)
     hashdiff (1.2.2)
+    herb (0.11.2)
     herb (0.11.2-aarch64-linux-gnu)
     herb (0.11.2-aarch64-linux-musl)
     herb (0.11.2-arm-linux-gnu)
@@ -309,6 +310,7 @@ GEM
     mcp (1.9.0)
       json_schemer (>= 2.4)
     mini_mime (1.1.5)
+    mini_portile2 (2.8.9)
     minitest (5.27.0)
     minitest-rails (8.1.0)
       minitest (~> 5.20)
@@ -346,6 +348,9 @@ GEM
     net-ssh (7.3.10)
       logger
     nio4r (2.7.5)
+    nokogiri (1.19.7)
+      mini_portile2 (~> 2.8.2)
+      racc (~> 1.4)
     nokogiri (1.19.7-aarch64-linux-gnu)
       racc (~> 1.4)
     nokogiri (1.19.7-aarch64-linux-musl)
@@ -481,13 +486,14 @@ GEM
       prism (>= 1.2, < 2.0)
       rbs (>= 3, < 5)
     ruby-progressbar (1.13.0)
-    ruby_llm (2.1.1)
+    ruby_llm (2.2.2)
       base64
       faraday (>= 1.10.0, != 2.0.0)
       faraday-multipart (>= 1)
       faraday-net_http (>= 1)
       faraday-retry (>= 1)
       json (< 4)
+      logger
       marcel (>= 1.0, < 3)
       schematist (~> 1.1)
       zeitwerk (~> 2)
@@ -681,7 +687,7 @@ DEPENDENCIES
   resend
   rubocop-rails-omakase
   ruby-lsp
-  ruby_llm (= 2.1.1)
+  ruby_llm (= 2.2.2)
   rubycritic
   simplecov
   simplecov-cobertura
