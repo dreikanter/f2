@@ -6,7 +6,7 @@ GIT
 
 GIT
   remote: https://github.com/rails/rails.git
-  revision: 7023f49426868da510e89197a6546b7fefa047f4
+  revision: df8c05111eff6302d32df1920a3408533f091e3a
   branch: main
   specs:
     actioncable (8.2.0.alpha)
@@ -25,7 +25,6 @@ GIT
     actionmailer (8.2.0.alpha)
       actionpack (= 8.2.0.alpha)
       actionview (= 8.2.0.alpha)
-      activejob (= 8.2.0.alpha)
       activesupport (= 8.2.0.alpha)
       mail (>= 2.8.0)
       rails-dom-testing (~> 2.2)
@@ -143,7 +142,7 @@ GEM
     commander (5.0.0)
       highline (~> 3.0.0)
     concurrent-ruby (1.3.8)
-    connection_pool (3.0.2)
+    connection_pool (3.0.3)
     cov-loupe (6.1.0)
       amazing_print (~> 2.0)
       logger
@@ -238,6 +237,7 @@ GEM
       activesupport (>= 6.1)
     hana (1.3.7)
     hashdiff (1.2.2)
+    herb (0.11.2)
     herb (0.11.2-aarch64-linux-gnu)
     herb (0.11.2-aarch64-linux-musl)
     herb (0.11.2-arm-linux-gnu)
@@ -309,6 +309,7 @@ GEM
     mcp (1.9.0)
       json_schemer (>= 2.4)
     mini_mime (1.1.5)
+    mini_portile2 (2.8.9)
     minitest (5.27.0)
     minitest-rails (8.1.0)
       minitest (~> 5.20)
@@ -346,6 +347,9 @@ GEM
     net-ssh (7.3.10)
       logger
     nio4r (2.7.5)
+    nokogiri (1.19.7)
+      mini_portile2 (~> 2.8.2)
+      racc (~> 1.4)
     nokogiri (1.19.7-aarch64-linux-gnu)
       racc (~> 1.4)
     nokogiri (1.19.7-aarch64-linux-musl)
@@ -623,10 +627,10 @@ GEM
       addressable (>= 2.8.0)
       crack (>= 0.3.2)
       hashdiff (>= 0.4.0, < 2.0.0)
-    websocket-driver (0.8.2)
+    websocket-driver (0.9.0)
       base64
-      websocket-extensions (>= 0.1.0)
-    websocket-extensions (0.1.5)
+      websocket-extensions (>= 0.2.0)
+    websocket-extensions (0.2.0)
     with_advisory_lock (7.6.0)
       activerecord (>= 7.2)
     yard (0.9.45)
